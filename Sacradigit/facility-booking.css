@@ -1,0 +1,187 @@
+/* ============================================
+   SacraDigit Admin — Facility Booking Styles
+   Pairs with facility-booking.html + .js
+   Extends dashboard.css + digital-archives.css
+   + record-requests.css (all loaded first)
+   ============================================ */
+
+/* ---------- Toggle state for Calendar View button ---------- */
+#btn-calendar-view[aria-pressed="true"] {
+  background-color: #1e2a4a;
+  color: #ffffff;
+}
+
+#btn-calendar-view[aria-pressed="true"]:hover {
+  background-color: #16213a;
+}
+
+/* ---------- Calendar nav (in panel header) ---------- */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calendar-nav-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.calendar-nav-btn:hover {
+  background-color: #f3f4f6;
+  color: #1e2a4a;
+}
+
+.calendar-month-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+  min-width: 7.5rem;
+  text-align: center;
+}
+
+/* ---------- Calendar grid ---------- */
+.calendar-wrap {
+  padding: 1rem 1.25rem 0.5rem;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9ca3af;
+  text-align: center;
+  padding-bottom: 0.5rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  padding-bottom: 1rem;
+}
+
+.calendar-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 1px solid #eef0f4;
+  border-radius: 0.5rem;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  background-color: #fafbfc;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.calendar-cell:hover {
+  border-color: #c7c9e8;
+  background-color: #f9faff;
+}
+
+.calendar-cell.empty {
+  background: none;
+  border: none;
+  cursor: default;
+}
+
+.calendar-cell.today {
+  border-color: #c9a84c;
+  box-shadow: inset 0 0 0 1px #c9a84c;
+}
+
+.calendar-cell.selected {
+  border-color: #8b8fc7;
+  background-color: #f3f3ff;
+  box-shadow: inset 0 0 0 1px #8b8fc7;
+}
+
+.calendar-date-num {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.calendar-dots {
+  display: flex;
+  gap: 0.2rem;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.calendar-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background-color: #8b8fc7;
+}
+
+.calendar-dot.pending {
+  background-color: #c9a84c;
+}
+
+/* ---------- Selected day detail panel ---------- */
+.calendar-day-detail {
+  border-top: 1px solid #f1f2f5;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.calendar-day-detail-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  margin-bottom: 0.625rem;
+}
+
+.calendar-day-booking {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid #f5f6f8;
+}
+
+.calendar-day-booking:last-child {
+  border-bottom: none;
+}
+
+.calendar-day-booking .time {
+  font-weight: 700;
+  color: #111827;
+  width: 4.75rem;
+  flex-shrink: 0;
+}
+
+.calendar-day-booking .facility {
+  flex: 1;
+  color: #374151;
+}
+
+/* ---------- Responsive: smaller calendar cells on mobile ---------- */
+@media (max-width: 640px) {
+  .calendar-cell {
+    aspect-ratio: 1 / 1.1;
+    padding: 0.25rem;
+  }
+
+  .calendar-date-num {
+    font-size: 0.6875rem;
+  }
+}

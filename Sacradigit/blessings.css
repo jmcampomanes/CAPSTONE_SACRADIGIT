@@ -1,0 +1,197 @@
+/* ============================================
+   SacraDigit Admin — Blessings Styles
+   Pairs with blessings.html + blessings.js
+   Extends dashboard.css + digital-archives.css
+   + masses.css (all loaded first)
+   ============================================ */
+
+/* ---------- Upcoming blessing rows ---------- */
+.blessing-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.blessing-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: rgba(139, 143, 199, 0.16);
+  color: #6c6fb0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.blessing-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.blessing-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.blessing-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.05rem;
+}
+
+.blessing-datetime {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ---------- New request rows (with Approve/Decline) ---------- */
+.request-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.request-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: rgba(201, 168, 76, 0.16);
+  color: #b5943e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.request-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.request-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.request-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.05rem;
+}
+
+.request-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+.req-approve {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #15803d;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.req-approve:hover {
+  color: #0f5c2c;
+}
+
+.req-decline {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #b91c1c;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.req-decline:hover {
+  color: #8f1414;
+}
+
+/* ---------- Completed blessing rows ---------- */
+.completed-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.completed-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: #ecfdf3;
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.completed-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.completed-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.completed-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.05rem;
+}
+
+.completed-date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ---------- Danger button (decline modal submit) ---------- */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #b91c1c;
+  color: #ffffff;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background-color: #991616;
+}

@@ -1,0 +1,138 @@
+/* ============================================
+   SacraDigit Admin — Masses (Special Masses) Styles
+   Pairs with masses.html + masses.js
+   Extends dashboard.css + digital-archives.css
+   (both loaded first)
+   ============================================ */
+
+/* ---------- Date picker input ---------- */
+.date-input {
+  display: inline-flex;
+  padding: 0.6rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #8b8fc7;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.15);
+}
+
+/* ---------- Schedule list rows (Date's Schedule) ---------- */
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.schedule-time {
+  font-weight: 700;
+  color: #111827;
+  width: 5.25rem;
+  flex-shrink: 0;
+}
+
+.schedule-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-type {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.schedule-note {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.05rem;
+}
+
+.schedule-special-tag {
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background-color: rgba(201, 168, 76, 0.18);
+  color: #9c7d2e;
+}
+
+/* ---------- Upcoming special masses list ---------- */
+.special-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.special-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: rgba(201, 168, 76, 0.16);
+  color: #b5943e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.special-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.special-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.special-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.05rem;
+}
+
+/* ---------- Weekly schedule table ---------- */
+.weekly-table .day-cell {
+  font-weight: 700;
+  color: #111827;
+}
+
+.time-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  margin: 0.1rem 0.25rem 0.1rem 0;
+}
+
+/* ---------- Checkbox (modal) ---------- */
+.checkbox-input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #8b8fc7;
+  cursor: pointer;
+}
+
+/* ---------- Empty state (smaller variant for schedule panel) ---------- */
+#date-schedule-empty {
+  padding: 2.5rem 1.5rem;
+}

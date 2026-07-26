@@ -1,0 +1,183 @@
+/* ============================================
+   SacraDigit Admin — Cloud Access Styles
+   Pairs with cloud-access.html + .js
+   Extends dashboard.css + digital-archives.css
+   (both loaded first)
+   ============================================ */
+
+/* ---------- Service health cards ---------- */
+.health-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 1.125rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.health-card:hover {
+  box-shadow: 0 4px 14px rgba(30, 42, 74, 0.06);
+  border-color: #d8dbe3;
+}
+
+.health-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.health-icon.ok {
+  background-color: #ecfdf3;
+  color: #15803d;
+}
+
+.health-icon.warn {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
+.health-icon.down {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.health-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.health-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.1rem;
+}
+
+.health-status.ok {
+  color: #15803d;
+}
+
+.health-status.warn {
+  color: #b45309;
+}
+
+.health-status.down {
+  color: #b91c1c;
+}
+
+.health-meta {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  margin-top: 0.15rem;
+}
+
+/* ---------- Storage folders list ---------- */
+.folder-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.folder-row:hover {
+  background-color: #fafbfc;
+}
+
+.folder-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: rgba(201, 168, 76, 0.16);
+  color: #b5943e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.folder-name {
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+}
+
+.folder-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.folder-meta .folder-size {
+  display: block;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+/* ---------- Access log table ---------- */
+.access-log-table th,
+.access-log-table td {
+  padding: 0.6rem 1.25rem;
+}
+
+.action-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+.action-view {
+  background-color: #eef2ff;
+  color: #4338ca;
+}
+
+.action-download {
+  background-color: #ecfdf3;
+  color: #15803d;
+}
+
+.action-edit {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
+/* ---------- Roles table ---------- */
+.roles-table td {
+  vertical-align: top;
+}
+
+.permission-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  margin: 0.1rem 0.25rem 0.1rem 0;
+}
+
+.permission-tag.granted {
+  background-color: rgba(139, 143, 199, 0.16);
+  color: #5b5fa8;
+}
+
+.assigned-users {
+  font-size: 0.75rem;
+  color: #6b7280;
+}

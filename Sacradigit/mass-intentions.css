@@ -1,0 +1,36 @@
+/* ============================================
+   SacraDigit Admin — Mass Intentions Styles
+   Pairs with mass-intentions.html + .js
+   Extends dashboard.css + digital-archives.css
+   + record-requests.css (all loaded first)
+   ============================================ */
+
+/* ---------- Offering amount in table ---------- */
+.records-table .offering-amount {
+  font-weight: 700;
+  color: #111827;
+}
+
+/* ---------- Assign button (row action for Pending) ---------- */
+.row-assign {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #5b5fa8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.row-assign:hover {
+  color: #1e2a4a;
+}
+
+/* ---------- Status badge variant for "Completed" ---------- */
+.badge-blue {
+  background-color: #eef2ff;
+  color: #4338ca;
+}

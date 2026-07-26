@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donations – SacraDigit Admin</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              DEFAULT: '#1e2a4a',
+              dark: '#16213a',
+              light: '#2a3a5c',
+            },
+            gold: '#c9a84c',
+            lavender: '#8b8fc7',
+            'lavender-light': '#a8acda',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="digital-archives.css" />
+  <link rel="stylesheet" href="donations.css" />
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="admin-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
+          <span class="text-white font-bold text-xs">SD</span>
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Parish Management</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="Admin navigation">
+
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="dashboard.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Dashboard
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Records</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="digital-archives.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+              Digital Archives
+            </a>
+          </li>
+          <li>
+            <a href="record-requests.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Record Requests
+            </a>
+          </li>
+          <li>
+            <a href="cloud-access.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
+              Cloud Access
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Operations</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="masses.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Masses
+            </a>
+          </li>
+          <li>
+            <a href="blessings.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Blessings
+            </a>
+          </li>
+          <li>
+            <a href="facility-booking.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Facility Booking
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Finance</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="mass-intentions.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              Mass Intentions
+            </a>
+          </li>
+          <li>
+            <a href="donations.html" class="sidebar-link active">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Donations
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Communications</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="announcements.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+              Announcements
+            </a>
+          </li>
+          <li>
+            <a href="special-schedules.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
+              Special Schedules
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
+          <div class="w-9 h-9 rounded-full bg-navy flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs">AD</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate">Admin User</p>
+            <p class="text-gray-400 text-xs truncate">System Admin</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Donations</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <!-- Page content -->
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
+
+        <!-- Page heading + actions -->
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Donations</h2>
+            <p class="text-gray-500 text-sm mt-1">Track parish donations, collections, and financial contributions.</p>
+          </div>
+          <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btn-export" type="button" class="btn-lavender">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+              Export Report
+            </button>
+          </div>
+        </div>
+
+        <!-- Stat boxes -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Total This Week</p>
+              <div class="stat-icon stat-icon-green">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value" id="stat-week">₱0</p>
+            <p class="stat-sub">collected this week</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Total This Month</p>
+              <div class="stat-icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value" id="stat-month">₱0</p>
+            <p class="stat-sub">June 2026 total</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Number of Donors</p>
+              <div class="stat-icon stat-icon-amber">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-3.5-5.93"/></svg>
+              </div>
+            </div>
+            <p class="stat-value" id="stat-donors">0</p>
+            <p class="stat-sub">unique donors this month</p>
+          </div>
+        </div>
+
+        <!-- Recent Donations -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Recent Donations</h2>
+            <p id="donations-count" class="text-xs text-gray-400 font-medium"></p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>Donor</th>
+                  <th>Amount</th>
+                  <th>Payment Method</th>
+                  <th>Fund / Purpose</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="donations-tbody">
+                <!-- Rows injected by donations.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Scripts -->
+  <script src="dashboard.js"></script>
+  <script src="donations.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+/* ============================================
+   SacraDigit Admin — Record Requests Styles
+   Pairs with record-requests.html + .js
+   Extends dashboard.css + digital-archives.css
+   (both loaded first)
+   ============================================ */
+
+/* ---------- Stat icon variant (rejected) ---------- */
+.stat-icon-red {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+/* ---------- Status badges (Pending / Approved / Rejected) ---------- */
+.badge-amber-solid {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
+.badge-red {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+/* ---------- Row action buttons (Approve / Reject / View) ---------- */
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+
+.row-approve {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #15803d;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.row-approve:hover {
+  color: #0f5c2c;
+}
+
+.row-reject {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #b91c1c;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.row-reject:hover {
+  color: #8f1414;
+}
+
+/* ---------- Danger button (reject modal submit) ---------- */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #b91c1c;
+  color: #ffffff;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background-color: #991616;
+}
+
+/* ---------- Purpose column truncation ---------- */
+.records-table td.purpose-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,236 @@
+/* ============================================
+   SacraDigit — User Donations Styles
+   Extends user-shell.css
+   ============================================ */
+
+/* ---------- Fund card grid ---------- */
+.donation-fund-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.fund-card {
+  background: #ffffff;
+  border: 2px solid #eef0f4;
+  border-radius: 0.875rem;
+  padding: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  text-align: left;
+  width: 100%;
+  border: 1px solid #eef0f4;
+}
+
+.fund-card:hover {
+  border-color: #c7c9e8;
+  box-shadow: 0 4px 14px rgba(30, 42, 74, 0.07);
+  transform: translateY(-2px);
+}
+
+.fund-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fund-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.fund-desc {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+.fund-total {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #15803d;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eef0f4;
+}
+
+/* ---------- Stat cards ---------- */
+.donation-stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 1.125rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.donation-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.donation-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.donation-stat-sub {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* ---------- History table amount ---------- */
+.user-table .donation-amount {
+  font-weight: 700;
+  color: #15803d;
+}
+
+/* ---------- Modal — fund selector ---------- */
+.donate-fund-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
+}
+
+.donate-fund-btn {
+  padding: 0.5rem 0.625rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.donate-fund-btn:hover { border-color: #8b8fc7; }
+
+.donate-fund-btn.selected {
+  border-color: #8b8fc7;
+  background-color: rgba(139, 143, 199, 0.08);
+  color: #5b5fa8;
+}
+
+/* ---------- Quick amount buttons ---------- */
+.quick-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quick-amount-btn {
+  padding: 0.45rem 0.875rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #4b5563;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.quick-amount-btn:hover {
+  border-color: #8b8fc7;
+  color: #5b5fa8;
+}
+
+.quick-amount-btn.selected {
+  background-color: #8b8fc7;
+  border-color: #8b8fc7;
+  color: #ffffff;
+}
+
+/* ---------- Payment method grid ---------- */
+.payment-method-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.payment-method-btn {
+  padding: 0.55rem 0.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.payment-method-btn:hover { border-color: #8b8fc7; }
+
+.payment-method-btn.selected {
+  border-color: #8b8fc7;
+  background-color: rgba(139, 143, 199, 0.1);
+  color: #5b5fa8;
+}
+
+.payment-method-label { pointer-events: none; }
+
+/* ---------- Checkbox ---------- */
+.checkbox-input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #8b8fc7;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ---------- Peso prefix ---------- */
+.offering-input-wrap {
+  position: relative;
+}
+
+.offering-peso {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.offering-input { padding-left: 1.75rem !important; }
+
+/* ---------- Payment pill in history table ---------- */
+.payment-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+/* ---------- Security note ---------- */
+.donate-security-note {
+  display: flex;
+  gap: 0.625rem;
+  background-color: rgba(21, 128, 61, 0.07);
+  border: 1px solid rgba(21, 128, 61, 0.2);
+  border-radius: 0.625rem;
+  padding: 0.75rem 0.875rem;
+}

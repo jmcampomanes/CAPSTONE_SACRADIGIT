@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Archives – SacraDigit Admin</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              DEFAULT: '#1e2a4a',
+              dark: '#16213a',
+              light: '#2a3a5c',
+            },
+            gold: '#c9a84c',
+            lavender: '#8b8fc7',
+            'lavender-light': '#a8acda',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="digital-archives.css" />
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="admin-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
+          <span class="text-white font-bold text-xs">SD</span>
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Parish Management</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="Admin navigation">
+
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="dashboard.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Dashboard
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Records</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="digital-archives.html" class="sidebar-link active">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+              Digital Archives
+            </a>
+          </li>
+          <li>
+            <a href="record-requests.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Record Requests
+            </a>
+          </li>
+          <li>
+            <a href="cloud-access.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
+              Cloud Access
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Operations</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="masses.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Masses
+            </a>
+          </li>
+          <li>
+            <a href="blessings.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Blessings
+            </a>
+          </li>
+          <li>
+            <a href="facility-booking.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Facility Booking
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Finance</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="mass-intentions.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              Mass Intentions
+            </a>
+          </li>
+          <li>
+            <a href="donations.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Donations
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Communications</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="announcements.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+              Announcements
+            </a>
+          </li>
+          <li>
+            <a href="special-schedules.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
+              Special Schedules
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
+          <div class="w-9 h-9 rounded-full bg-navy flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs">AD</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate">Admin User</p>
+            <p class="text-gray-400 text-xs truncate">System Admin</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Digital Archives</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <!-- Page content -->
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
+
+        <!-- Page heading + actions -->
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Digital Archives</h2>
+            <p class="text-gray-500 text-sm mt-1">Browse, search, and manage all digitized sacramental records.</p>
+          </div>
+          <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btn-upload" type="button" class="btn-gold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0-9l-3 3m3-3l3 3"/></svg>
+              Upload
+            </button>
+            <button id="btn-new-record" type="button" class="btn-lavender">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              New Record
+            </button>
+          </div>
+        </div>
+
+        <!-- Stat boxes -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Total Records</p>
+              <div class="stat-icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+              </div>
+            </div>
+            <p class="stat-value">1,284</p>
+            <p class="stat-sub">across all record types</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Digitized</p>
+              <div class="stat-icon stat-icon-green">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>
+              </div>
+            </div>
+            <p class="stat-value">1,196</p>
+            <p class="stat-sub">93% of total archive</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Pending</p>
+              <div class="stat-icon stat-icon-amber">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value">88</p>
+            <p class="stat-sub">awaiting digitization</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Storage Used</p>
+              <div class="stat-icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value">6.8 GB</p>
+            <p class="stat-sub">of 10 GB used</p>
+          </div>
+        </div>
+
+        <!-- Search + Filters -->
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg class="w-4 h-4 search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+            <input id="search-input" type="text" placeholder="Search by name, record type, or reference no." class="search-input" />
+          </div>
+
+          <div class="relative shrink-0">
+            <select id="type-filter" class="filter-select">
+              <option value="">Type Filter</option>
+              <option value="Baptismal">Baptismal</option>
+              <option value="Confirmation">Confirmation</option>
+              <option value="Marriage">Marriage</option>
+              <option value="Death">Death</option>
+            </select>
+          </div>
+
+          <div class="relative shrink-0">
+            <select id="date-filter" class="filter-select">
+              <option value="">Date Filter</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="all">All time</option>
+            </select>
+          </div>
+
+          <button id="btn-clear-filters" type="button" class="btn-filter">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 4h18M6 4v16a1 1 0 001 1h10a1 1 0 001-1V4M10 10v6m4-6v6"/></svg>
+            Clear
+          </button>
+        </div>
+
+        <!-- Records table -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">All Records</h2>
+            <p id="results-count" class="text-xs text-gray-400 font-medium"></p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>Record Name</th>
+                  <th>Type</th>
+                  <th>Date Added</th>
+                  <th>Added By</th>
+                  <th>Status</th>
+                  <th class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="records-tbody">
+                <!-- Rows injected by digital-archives.js -->
+              </tbody>
+            </table>
+            <div id="empty-state" class="empty-state hidden">
+              <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+              <p class="text-sm font-medium text-gray-600">No records match your filters</p>
+              <p class="text-xs text-gray-400 mt-1">Try a different search term or clear your filters.</p>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ========== UPLOAD MODAL ========== -->
+  <div id="upload-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Upload Scanned Record</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label for="upload-dropzone" class="dropzone" id="upload-dropzone">
+          <svg class="w-8 h-8 text-lavender mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0-9l-3 3m3-3l3 3"/></svg>
+          <p class="text-sm font-medium text-gray-700">Drag &amp; drop a file, or <span class="text-lavender underline">browse</span></p>
+          <p class="text-xs text-gray-400 mt-1">Supports PDF, JPG, PNG · Max 20 MB</p>
+          <input type="file" id="upload-file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png" />
+        </label>
+        <p id="upload-filename" class="text-xs text-gray-600 mt-3 hidden"></p>
+
+        <div class="grid grid-cols-2 gap-3 mt-4">
+          <div>
+            <label class="form-label" for="upload-type">Record Type</label>
+            <select id="upload-type" class="form-input">
+              <option value="">Select type</option>
+              <option value="Baptismal">Baptismal</option>
+              <option value="Confirmation">Confirmation</option>
+              <option value="Marriage">Marriage</option>
+              <option value="Death">Death</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="upload-name">Record Name</label>
+            <input type="text" id="upload-name" class="form-input" placeholder="e.g. Santos, Maria T." />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="upload-submit" class="btn-gold">Upload Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== NEW RECORD MODAL ========== -->
+  <div id="new-record-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">New Record — Manual Entry</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="new-name">Full Name</label>
+            <input type="text" id="new-name" class="form-input" placeholder="e.g. Dela Cruz, Juan P." />
+          </div>
+          <div>
+            <label class="form-label" for="new-type">Record Type</label>
+            <select id="new-type" class="form-input">
+              <option value="">Select type</option>
+              <option value="Baptismal">Baptismal</option>
+              <option value="Confirmation">Confirmation</option>
+              <option value="Marriage">Marriage</option>
+              <option value="Death">Death</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="new-date">Date of Record</label>
+            <input type="date" id="new-date" class="form-input" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="new-officiant">Officiant / Recorded By</label>
+            <input type="text" id="new-officiant" class="form-input" placeholder="e.g. Fr. Mark D." />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="new-notes">Notes (optional)</label>
+            <textarea id="new-notes" class="form-input" rows="2" placeholder="Additional remarks..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="new-record-submit" class="btn-lavender">Save Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Scripts -->
+  <script src="dashboard.js"></script>
+  <script src="digital-archives.js"></script>
+</body>
+</html>

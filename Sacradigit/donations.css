@@ -1,0 +1,40 @@
+/* ============================================
+   SacraDigit Admin — Donations Styles
+   Pairs with donations.html + donations.js
+   Extends dashboard.css + digital-archives.css
+   (both loaded first)
+   ============================================ */
+
+/* ---------- Amount column ---------- */
+.records-table .donation-amount {
+  font-weight: 700;
+  color: #15803d;
+}
+
+/* ---------- Payment method tag ---------- */
+.payment-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.payment-tag.cash {
+  background-color: rgba(201, 168, 76, 0.16);
+  color: #9c7d2e;
+}
+
+.payment-tag.online {
+  background-color: rgba(139, 143, 199, 0.16);
+  color: #5b5fa8;
+}
+
+.payment-tag.check {
+  background-color: #eef2ff;
+  color: #4338ca;
+}

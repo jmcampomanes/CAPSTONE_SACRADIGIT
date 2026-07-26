@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – SacraDigit Admin</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              DEFAULT: '#1e2a4a',
+              dark: '#16213a',
+              light: '#2a3a5c',
+            },
+            gold: '#c9a84c',
+            lavender: '#8b8fc7',
+            'lavender-light': '#a8acda',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="admin-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <!-- Logo -->
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
+          <span class="text-white font-bold text-xs">SD</span>
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Parish Management</p>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="Admin navigation">
+
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="dashboard.html" data-nav="dashboard" class="sidebar-link active">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Dashboard
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Records</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="digital-archives.html" data-nav="digital-archives" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+              Digital Archives
+            </a>
+          </li>
+          <li>
+            <a href="record-requests.html" data-nav="record-requests" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Record Requests
+            </a>
+          </li>
+          <li>
+            <a href="cloud-access.html" data-nav="cloud-access" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
+              Cloud Access
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Operations</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="masses.html" data-nav="masses" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Masses
+            </a>
+          </li>
+          <li>
+            <a href="blessings.html" data-nav="blessings" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Blessings
+            </a>
+          </li>
+          <li>
+            <a href="facility-booking.html" data-nav="facility-booking" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Facility Booking
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Finance</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="mass-intentions.html" data-nav="mass-intentions" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              Mass Intentions
+            </a>
+          </li>
+          <li>
+            <a href="donations.html" data-nav="donations" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Donations
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Communications</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="announcements.html" data-nav="announcements" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+              Announcements
+            </a>
+          </li>
+          <li>
+            <a href="special-schedules.html" data-nav="special-schedules" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
+              Special Schedules
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- User -->
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
+          <div class="w-9 h-9 rounded-full bg-navy flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs">AD</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate">Admin User</p>
+            <p class="text-gray-400 text-xs truncate">System Admin</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <!-- Page content -->
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-6">
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Today's Masses</p>
+              <div class="stat-icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value">4</p>
+            <p class="stat-sub">3 regular · 1 special</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Pending Requests</p>
+              <div class="stat-icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value">4</p>
+            <p class="stat-sub">3 regular · 1 special</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Records Digitized</p>
+              <div class="stat-icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2"/></svg>
+              </div>
+            </div>
+            <p class="stat-value">1,284</p>
+            <p class="stat-sub">+12 this week</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Cloud Storage</p>
+              <div class="stat-icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value">6.8 GB</p>
+            <p class="stat-sub">of 10 GB used</p>
+          </div>
+        </div>
+
+        <!-- Schedule + Requests -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          <!-- Today's Schedule -->
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Today's Schedule</h2>
+              <a href="masses.html" class="panel-link">View all →</a>
+            </div>
+            <ul class="divide-y divide-gray-100">
+              <li class="list-row">
+                <span class="list-time">3:00 AM</span>
+                <span class="list-name">Binyag</span>
+                <a href="masses.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-time">7:00 AM</span>
+                <span class="list-name">Daily Mass</span>
+                <a href="masses.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-time">10:30 AM</span>
+                <span class="list-name">Special Mass</span>
+                <a href="masses.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-time">5:30 PM</span>
+                <span class="list-name">Anticipated Mass</span>
+                <a href="masses.html" class="list-action">Details ›</a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Pending Requests -->
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Pending Requests</h2>
+              <a href="record-requests.html" class="panel-link">View all →</a>
+            </div>
+            <ul class="divide-y divide-gray-100">
+              <li class="list-row">
+                <span class="list-name flex-1">Maria T. Santos — Baptismal Certificate</span>
+                <a href="record-requests.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-name flex-1">Jose R. Cruz — Confirmation Certificate</span>
+                <a href="record-requests.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-name flex-1">Ana L. Reyes — Marriage Certificate</span>
+                <a href="record-requests.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-name flex-1">Pedro M. Garcia — Death Certificate</span>
+                <a href="record-requests.html" class="list-action">Details ›</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Cloud Status -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Cloud Status</h2>
+            <a href="cloud-access.html" class="panel-link">Firebase console ›</a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-1">
+
+            <div class="cloud-box">
+              <div class="cloud-box-icon bg-green-50 text-green-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <p class="cloud-box-label">Firestore</p>
+              <p class="cloud-box-value">Operational</p>
+            </div>
+
+            <div class="cloud-box">
+              <div class="cloud-box-icon bg-green-50 text-green-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <p class="cloud-box-label">Storage Bucket</p>
+              <p class="cloud-box-value">6.8 / 10 GB</p>
+            </div>
+
+            <div class="cloud-box">
+              <div class="cloud-box-icon bg-amber-50 text-amber-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-8.93 4.93h.01"/></svg>
+              </div>
+              <p class="cloud-box-label">Last Backup</p>
+              <p class="cloud-box-value">2 hrs ago</p>
+            </div>
+
+            <div class="cloud-box">
+              <div class="cloud-box-icon bg-green-50 text-green-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <p class="cloud-box-label">Auth Service</p>
+              <p class="cloud-box-value">Operational</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Recent Records -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Recent Records</h2>
+            <a href="digital-archives.html" class="panel-link">View all →</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>Record Name</th>
+                  <th>Type</th>
+                  <th>Date Added</th>
+                  <th>Added By</th>
+                  <th>Status</th>
+                  <th class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-medium text-gray-900">Santos, Maria T.</td>
+                  <td>Baptismal Record</td>
+                  <td>Jun 18, 2026</td>
+                  <td>Sis. Elena R.</td>
+                  <td><span class="badge badge-green">Digitized</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-gray-900">Cruz, Jose R.</td>
+                  <td>Confirmation Record</td>
+                  <td>Jun 18, 2026</td>
+                  <td>Sis. Elena R.</td>
+                  <td><span class="badge badge-green">Digitized</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-gray-900">Reyes, Ana L.</td>
+                  <td>Marriage Record</td>
+                  <td>Jun 17, 2026</td>
+                  <td>Fr. Mark D.</td>
+                  <td><span class="badge badge-amber">Processing</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-gray-900">Garcia, Pedro M.</td>
+                  <td>Death Record</td>
+                  <td>Jun 17, 2026</td>
+                  <td>Sis. Elena R.</td>
+                  <td><span class="badge badge-green">Digitized</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-gray-900">Dela Cruz, Juan P.</td>
+                  <td>Baptismal Record</td>
+                  <td>Jun 16, 2026</td>
+                  <td>Fr. Mark D.</td>
+                  <td><span class="badge badge-gray">Queued</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Custom JS -->
+  <script src="dashboard.js"></script>
+</body>
+</html>

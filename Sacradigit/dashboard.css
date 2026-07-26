@@ -1,0 +1,322 @@
+/* ============================================
+   SacraDigit Admin — Dashboard Styles
+   Pairs with dashboard.html + dashboard.js
+   ============================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f7f8fa;
+}
+
+/* ---------- Shell / Layout ---------- */
+.admin-shell {
+  background-color: #f7f8fa;
+}
+
+.sidebar {
+  width: 264px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 40;
+  transition: transform 0.25s ease;
+}
+
+/* ---------- Sidebar labels ---------- */
+.sidebar-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  padding: 0 0.625rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ---------- Sidebar links ---------- */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+  color: #9ca3af;
+  transition: color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background-color: #f3f4f6;
+  color: #1e2a4a;
+}
+
+.sidebar-link:hover svg {
+  color: #1e2a4a;
+}
+
+.sidebar-link.active {
+  background-color: rgba(201, 168, 76, 0.18);
+  color: #1e2a4a;
+  font-weight: 600;
+}
+
+.sidebar-link.active svg {
+  color: #c9a84c;
+}
+
+/* ---------- Sidebar overlay (mobile) ---------- */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  z-index: 30;
+}
+
+/* ---------- Stat cards ---------- */
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 1.125rem 1.25rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 14px rgba(30, 42, 74, 0.06);
+  border-color: #d8dbe3;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.stat-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: rgba(139, 143, 199, 0.18);
+  color: #6c6fb0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.stat-sub {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid #f1f2f5;
+}
+
+.panel-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.panel-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c6fb0;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.panel-link:hover {
+  color: #1e2a4a;
+}
+
+/* ---------- List rows (schedule / requests) ---------- */
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.list-time {
+  font-weight: 600;
+  color: #111827;
+  width: 5.5rem;
+  flex-shrink: 0;
+}
+
+.list-name {
+  color: #374151;
+}
+
+.list-action {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #6c6fb0;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.list-action:hover {
+  color: #1e2a4a;
+}
+
+/* ---------- Cloud status boxes ---------- */
+.cloud-box {
+  border: 1px solid #eef0f4;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background-color: #fafbfc;
+}
+
+.cloud-box-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.625rem;
+}
+
+.cloud-box-label {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.2rem;
+}
+
+.cloud-box-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ---------- Records table ---------- */
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.records-table thead th {
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  padding: 0.625rem 1.25rem;
+  border-bottom: 1px solid #f1f2f5;
+  white-space: nowrap;
+}
+
+.records-table tbody td {
+  padding: 0.75rem 1.25rem;
+  color: #4b5563;
+  border-bottom: 1px solid #f5f6f8;
+  white-space: nowrap;
+}
+
+.records-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.records-table tbody tr:hover {
+  background-color: #fafbfc;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.badge-green {
+  background-color: #ecfdf3;
+  color: #15803d;
+}
+
+.badge-amber {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
+.badge-gray {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ---------- Focus states ---------- */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #8b8fc7;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- Responsive: collapsible sidebar on mobile ---------- */
+@media (max-width: 767px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%);
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .sidebar-overlay {
+    display: none !important;
+  }
+}

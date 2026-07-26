@@ -1,0 +1,191 @@
+/* ============================================
+   SacraDigit — User Announcements Styles
+   Extends user-shell.css
+   ============================================ */
+
+/* ---------- Filter bar ---------- */
+.ann-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.ann-search-wrap {
+  position: relative;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.ann-search-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.ann-search-input {
+  width: 100%;
+  padding: 0.6rem 0.875rem 0.6rem 2.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  font-size: 0.8125rem;
+  background-color: #ffffff;
+  color: #111827;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ann-search-input::placeholder { color: #9ca3af; }
+
+.ann-search-input:focus {
+  outline: none;
+  border-color: #8b8fc7;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.15);
+}
+
+.ann-filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.6rem 2.25rem 0.6rem 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #4b5563;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%239ca3af'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.ann-filter-select:focus {
+  outline: none;
+  border-color: #8b8fc7;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.15);
+}
+
+.ann-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.6rem 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  background-color: #ffffff;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.ann-clear-btn:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* ---------- Full card grid ---------- */
+.ann-full-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* ---------- Announcement card ---------- */
+.ann-card {
+  background: #ffffff;
+  border: 1px solid #eef0f4;
+  border-radius: 0.875rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ann-card:hover {
+  border-color: #c7c9e8;
+  box-shadow: 0 4px 14px rgba(30, 42, 74, 0.07);
+  transform: translateY(-2px);
+}
+
+.ann-card-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.35;
+}
+
+.ann-card-excerpt {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.ann-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eef0f4;
+  gap: 0.5rem;
+}
+
+.ann-card-date {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.ann-audience-tag {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ann-audience-tag.all {
+  background-color: rgba(201, 168, 76, 0.18);
+  color: #9c7d2e;
+}
+
+.ann-audience-tag.ministry {
+  background-color: rgba(139, 143, 199, 0.18);
+  color: #5b5fa8;
+}
+
+.ann-read-more {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #6c6fb0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.ann-read-more:hover { color: #1e2a4a; }
+
+/* ---------- Detail modal ---------- */
+.ann-detail-card {
+  max-width: 560px;
+}

@@ -1,0 +1,246 @@
+/* ============================================
+   SacraDigit — User Mass Schedule Styles
+   Extends user-shell.css
+   ============================================ */
+
+/* ---------- Liturgical season banner ---------- */
+.season-banner {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.season-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.season-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background-color: #9ca3af;
+  flex-shrink: 0;
+  transition: background-color 0.3s ease;
+}
+
+/* Season colours applied via JS */
+.season-dot.ordinary  { background-color: #16a34a; }
+.season-dot.advent    { background-color: #7c3aed; }
+.season-dot.christmas { background-color: #c9a84c; }
+.season-dot.lent      { background-color: #7c3aed; }
+.season-dot.holy-week { background-color: #b91c1c; }
+.season-dot.easter    { background-color: #d97706; }
+
+.season-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.season-week {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.05rem;
+}
+
+.season-progress-wrap {
+  flex: 1;
+  min-width: 180px;
+}
+
+.season-progress-track {
+  height: 6px;
+  border-radius: 3px;
+  background-color: #e5e7eb;
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+}
+
+.season-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background-color: #8b8fc7;
+  transition: width 0.5s ease;
+}
+
+/* Fill colour per season */
+.season-progress-fill.ordinary  { background-color: #16a34a; }
+.season-progress-fill.advent    { background-color: #7c3aed; }
+.season-progress-fill.christmas { background-color: #c9a84c; }
+.season-progress-fill.lent      { background-color: #7c3aed; }
+.season-progress-fill.holy-week { background-color: #b91c1c; }
+.season-progress-fill.easter    { background-color: #d97706; }
+
+.season-progress-label {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* ---------- Date picker + Today button ---------- */
+.date-input {
+  padding: 0.6rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #8b8fc7;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.15);
+}
+
+.btn-today {
+  padding: 0.6rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #4b5563;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-today:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* ---------- Mass list row ---------- */
+.mass-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.mass-time-col {
+  font-weight: 700;
+  color: #111827;
+  width: 5.5rem;
+  flex-shrink: 0;
+}
+
+.mass-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mass-type-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.mass-note-text {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.1rem;
+}
+
+.mass-special-tag {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background-color: rgba(201, 168, 76, 0.18);
+  color: #9c7d2e;
+  flex-shrink: 0;
+}
+
+/* Reminder button */
+.btn-reminder {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6c6fb0;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.btn-reminder:hover {
+  background-color: rgba(139, 143, 199, 0.1);
+  border-color: #8b8fc7;
+  color: #1e2a4a;
+}
+
+.btn-reminder.set {
+  background-color: rgba(139, 143, 199, 0.16);
+  border-color: #8b8fc7;
+  color: #5b5fa8;
+}
+
+/* ---------- Weekly schedule table time pills ---------- */
+.time-pill {
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  margin: 0.1rem 0.25rem 0.1rem 0;
+}
+
+/* ---------- Special mass list row ---------- */
+.special-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.special-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: rgba(201, 168, 76, 0.16);
+  color: #b5943e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.special-info { flex: 1; min-width: 0; }
+
+.special-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.special-date-text {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.05rem;
+}
