@@ -1,0 +1,27 @@
+{
+  "name": "capstone-main",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmcampomanes/CAPSTONE_SACRADIGIT.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jmcampomanes/CAPSTONE_SACRADIGIT/issues"
+  },
+  "homepage": "https://github.com/jmcampomanes/CAPSTONE_SACRADIGIT#readme",
+  "devDependencies": {
+    "vite": "^8.2.1"
+  },
+  "dependencies": {
+    "aws-amplify": "^6.20.0"
+  }
+}

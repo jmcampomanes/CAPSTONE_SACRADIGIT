@@ -34,3 +34,285 @@
   background-color: #eef2ff;
   color: #4338ca;
 }
+/* ---------- Name chip input (Add Mass Intention modal) ---------- */
+.name-chip-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.name-chip-input-row .form-input {
+  flex: 1;
+}
+
+.name-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+.name-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: rgba(139, 143, 199, 0.12);
+  color: #4a4e8a;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(139, 143, 199, 0.25);
+}
+
+.name-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(139, 143, 199, 0.25);
+  color: #4a4e8a;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.name-chip-remove:hover {
+  background: rgba(139, 143, 199, 0.4);
+}
+
+.name-count-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #8b8fc7;
+  background-color: rgba(139, 143, 199, 0.12);
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+
+/* ---------- Timeline note (Mass Intentions Log table) ---------- */
+.intention-timeline {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.05rem;
+}
+
+/* ---------- Danger button (Remove Intention modal) ---------- */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #b91c1c;
+  color: #ffffff;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background-color: #991616;
+}
+
+/* ---------- Row actions (Edit / View / Remove) ---------- */
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.row-edit,
+.row-view,
+.row-remove {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.row-edit {
+  color: #5b5fa8;
+}
+.row-edit:hover {
+  color: #1e2a4a;
+}
+
+.row-view {
+  color: #6c6fb0;
+}
+.row-view:hover {
+  color: #1e2a4a;
+}
+
+.row-remove {
+  color: #b91c1c;
+}
+.row-remove:hover {
+  color: #8f1414;
+}
+
+/* ---------- Detail grid (Intention Details modal) ---------- */
+.so-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem 1rem;
+  background-color: #f7f8fa;
+  border-radius: 0.625rem;
+  padding: 0.75rem 1rem;
+}
+
+.so-detail-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  margin-bottom: 0.1rem;
+}
+
+.so-detail-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ---------- Print-only header (hidden on screen) ---------- */
+.print-only-header {
+  display: none;
+}
+
+/* ---------- Print styles: isolate the Mass Intentions Log as a clean table ---------- */
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #intentions-print-area,
+  #intentions-print-area * {
+    visibility: visible;
+  }
+
+  #intentions-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .records-table th.no-print,
+  .records-table td.no-print {
+    display: none !important;
+    width: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+
+  .print-only-header {
+    display: block;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #1e2a4a;
+  }
+
+  .print-only-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e2a4a;
+    margin: 0 0 0.2rem 0;
+  }
+
+  .print-only-header p {
+    font-size: 0.8rem;
+    color: #4b5563;
+    margin: 0.1rem 0 0 0;
+  }
+
+  #intentions-print-area {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .panel-header {
+    border-bottom: none;
+    padding-bottom: 0.25rem;
+  }
+
+  .panel-title {
+    font-size: 1rem;
+  }
+
+  #log-count {
+    display: none;
+  }
+
+  .overflow-x-auto {
+    overflow: visible !important;
+    width: 100% !important;
+  }
+
+  .records-table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+  }
+
+  .records-table th,
+  .records-table td {
+    border: 1px solid #d1d5db;
+    padding: 0.35rem 0.5rem;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal !important;
+  }
+
+  .records-table th {
+    font-size: 0.7rem;
+    line-height: 1.25;
+  }
+
+  .records-table th {
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .badge {
+    border: 1px solid #9ca3af;
+    background: none !important;
+    color: #111827 !important;
+    padding: 0.1rem 0.4rem;
+  }
+
+  .intention-timeline,
+  .text-gray-400 {
+    color: #4b5563 !important;
+  }
+}

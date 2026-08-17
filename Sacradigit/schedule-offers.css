@@ -1,0 +1,78 @@
+/* ============================================
+   SacraDigit Admin — Schedule Offers Styles
+   Extends dashboard.css + digital-archives.css
+   + record-requests.css
+   ============================================ */
+
+/* ---------- Detail grid in assign modal ---------- */
+.so-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem 1rem;
+  background-color: #f7f8fa;
+  border-radius: 0.625rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.so-detail-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  margin-bottom: 0.1rem;
+}
+
+.so-detail-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ---------- Service type tag in table ---------- */
+.service-type-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ---------- Confirmed date chip ---------- */
+.confirmed-chip {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background-color: rgba(139, 143, 199, 0.14);
+  color: #5b5fa8;
+  display: inline-block;
+  margin-top: 0.2rem;
+}
+
+/* ---------- Neutral callout (View Details modal note) ---------- */
+.reason-callout-neutral {
+  color: #4b5563;
+  background-color: #f7f8fa;
+  border-color: #e5e7eb;
+}
+
+/* ---------- Row view action (View Details) ---------- */
+.row-view {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #5b5fa8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.row-view:hover {
+  color: #1e2a4a;
+}

@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     {
       type: 'For the Soul of…',
       typeId: 'soul',
+      names: ['Lola Remedios Santos'],
       note: 'Lola Remedios Santos',
       submitted: '2026-06-15',
       massDate: '2026-06-21',
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     {
       type: 'Thanksgiving',
       typeId: 'thanksgiving',
+      names: ['For a safe surgery'],
       note: 'For a safe surgery',
       submitted: '2026-06-10',
       massDate: '2026-06-14',
@@ -74,7 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     {
       type: 'Healing',
       typeId: 'healing',
-      note: "For Rosa's full recovery",
+      names: ["Rosa's full recovery", 'Tita Elena Reyes'],
+      note: "Rosa's full recovery",
       submitted: '2026-06-18',
       massDate: null,
       offering: 300,
@@ -142,6 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     list.innerHTML = sorted.map(it => {
       const cfg = typeConfig(it.typeId);
+      const realIndex = myIntentions.indexOf(it);
+      const names = (it.names && it.names.length) ? it.names : [it.note];
+      const namesDisplay = names.length > 1
+        ? `${escapeHtml(names[0])} <span class="text-gray-400 font-medium">+${names.length - 1} more</span>`
+        : escapeHtml(names[0]);
+
       return `
         <li>
           <div class="intention-row">
@@ -151,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="intention-info">
               <p class="intention-type">${escapeHtml(it.type)}</p>
-              <p class="intention-note">${escapeHtml(it.note)}</p>
+              <p class="intention-note">${namesDisplay}</p>
               <div class="intention-meta">
                 <span class="intention-date">Submitted ${formatShort(it.submitted)}</span>
                 ${it.massDate
@@ -160,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="badge ${badgeClass[it.status] || 'badge-gray'}"
                       style="font-size:0.625rem;">${escapeHtml(it.status)}</span>
               </div>
+              <button type="button" class="intention-details-btn" data-index="${realIndex}">See Details ›</button>
             </div>
             <div class="intention-offering">${formatPeso(it.offering)}</div>
           </div>
@@ -167,6 +177,12 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
   }
+
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('.intention-details-btn');
+    if (!btn) return;
+    openDetailsModal(parseInt(btn.dataset.index, 10));
+  });
 
   renderStats();
   renderList();
@@ -176,11 +192,58 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   const modal     = document.getElementById('intention-modal');
   const typeGrid   = document.getElementById('intention-type-grid');
-  const noteInput   = document.getElementById('mi-note');
+  const nameInput    = document.getElementById('mi-name-input');
+  const addNameBtn    = document.getElementById('mi-add-name');
+  const nameChipsBox   = document.getElementById('mi-name-chips');
+  const nameCountLabel  = document.getElementById('mi-name-count');
   const dateInput    = document.getElementById('mi-date');
   const offeringInput = document.getElementById('mi-offering');
 
   let selectedTypeId = null;
+  let intentionNames = [];
+
+  /* ---- Name chip helpers: each added name becomes its own box ---- */
+  function renderNameChips() {
+    nameChipsBox.innerHTML = intentionNames.map((n, i) => `
+      <span class="name-chip" data-index="${i}">
+        ${escapeHtml(n)}
+        <button type="button" class="name-chip-remove" data-index="${i}" aria-label="Remove ${escapeHtml(n)}">×</button>
+      </span>
+    `).join('');
+
+    if (intentionNames.length > 0) {
+      nameCountLabel.textContent = intentionNames.length;
+      nameCountLabel.classList.remove('hidden');
+    } else {
+      nameCountLabel.classList.add('hidden');
+    }
+  }
+
+  function addName() {
+    const val = nameInput.value.trim();
+    if (!val) return;
+    intentionNames.push(val);
+    nameInput.value = '';
+    nameInput.classList.remove('border-red-400');
+    renderNameChips();
+    nameInput.focus();
+  }
+
+  addNameBtn.addEventListener('click', addName);
+
+  nameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addName();
+    }
+  });
+
+  nameChipsBox.addEventListener('click', e => {
+    const btn = e.target.closest('.name-chip-remove');
+    if (!btn) return;
+    intentionNames.splice(parseInt(btn.dataset.index, 10), 1);
+    renderNameChips();
+  });
 
   // Render type selector buttons
   typeGrid.innerHTML = intentionTypes.map(t => `
@@ -204,42 +267,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openModal() {
     selectedTypeId = null;
+    intentionNames = [];
     document.querySelectorAll('.intention-type-btn')
       .forEach(b => b.classList.remove('selected'));
-    noteInput.value = '';
+    nameInput.value = '';
+    renderNameChips();
     dateInput.value = '';
     offeringInput.value = '';
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    showModal(modal);
   }
 
   function closeModal() {
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
+    hideModal(modal);
   }
 
   document.getElementById('btn-submit-intention').addEventListener('click', openModal);
   document.getElementById('btn-empty-submit')?.addEventListener('click', openModal);
 
-  document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', closeModal);
+  /* ---- Generic modal open/close (shared by Submit + Details modals) ---- */
+  function showModal(el) {
+    el.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideModal(el) {
+    el.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(overlayEl => {
+    overlayEl.addEventListener('click', e => {
+      if (e.target === overlayEl) hideModal(overlayEl);
+    });
+    overlayEl.querySelectorAll('[data-close-modal]').forEach(btn => {
+      btn.addEventListener('click', () => hideModal(overlayEl));
+    });
   });
-  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay').forEach(hideModal);
+    }
+  });
 
   /* Submit handler */
   document.getElementById('mi-submit').addEventListener('click', () => {
-    const note     = noteInput.value.trim();
-    const offering  = parseInt(offeringInput.value, 10);
+    // If the person typed a name but forgot to hit Add/Enter, add it for them.
+    if (nameInput.value.trim()) addName();
+
+    const offering = parseInt(offeringInput.value, 10);
 
     if (!selectedTypeId) {
       window.showToast('Please select an intention type.', true);
       return;
     }
-    if (!note) {
-      noteInput.classList.add('border-red-400');
-      noteInput.addEventListener('input', () => noteInput.classList.remove('border-red-400'), { once: true });
-      window.showToast('Please enter a name or note.', true);
+    if (intentionNames.length === 0) {
+      nameInput.classList.add('border-red-400');
+      nameInput.addEventListener('input', () => nameInput.classList.remove('border-red-400'), { once: true });
+      window.showToast('Please add at least one name.', true);
       return;
     }
     if (!offering || offering <= 0) {
@@ -250,11 +335,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const cfg = typeConfig(selectedTypeId);
+    const names = intentionNames.slice();
 
     myIntentions.unshift({
       type: cfg.label,
       typeId: selectedTypeId,
-      note,
+      names,
+      note: names[0],
       submitted: TODAY_ISO,
       massDate: dateInput.value || null,
       offering,
@@ -264,7 +351,59 @@ document.addEventListener('DOMContentLoaded', () => {
     renderStats();
     renderList();
     closeModal();
-    window.showToast(`Mass intention submitted — ${cfg.label} for ${note}.`);
+    window.showToast(
+      `Mass intention submitted — ${cfg.label} for ${names.length} name${names.length === 1 ? '' : 's'}.`
+    );
   });
+
+  /* ------------------------------------------
+     5. INTENTION DETAILS MODAL
+  ------------------------------------------ */
+  const detailsModal = document.getElementById('details-modal');
+  const detailsBody   = document.getElementById('details-body');
+
+  function openDetailsModal(idx) {
+    const it = myIntentions[idx];
+    if (!it) return;
+    const cfg = typeConfig(it.typeId);
+    const names = (it.names && it.names.length) ? it.names : [it.note];
+
+    detailsBody.innerHTML = `
+      <div class="details-header-row">
+        <div class="intention-icon" style="background-color:${cfg.iconBg};color:${cfg.iconColor};">
+          ${cfg.icon}
+        </div>
+        <div>
+          <p class="intention-type">${escapeHtml(it.type)}</p>
+          <span class="badge ${badgeClass[it.status] || 'badge-gray'}" style="font-size:0.625rem;">${escapeHtml(it.status)}</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="details-label">Name${names.length === 1 ? '' : 's'} (${names.length})</p>
+        <div class="name-chip-list">
+          ${names.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="details-grid">
+        <div>
+          <p class="details-label">Submitted</p>
+          <p class="details-value">${formatShort(it.submitted)}</p>
+        </div>
+        <div>
+          <p class="details-label">Mass Date</p>
+          <p class="details-value">${it.massDate ? formatShort(it.massDate) : 'Awaiting assignment'}</p>
+        </div>
+      </div>
+
+      <div>
+        <p class="details-label">Offering</p>
+        <p class="details-value text-green-700">${formatPeso(it.offering)}</p>
+      </div>
+    `;
+
+    showModal(detailsModal);
+  }
 
 });

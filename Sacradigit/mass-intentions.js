@@ -27,6 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const intentionsEmpty  = document.getElementById('intentions-empty');
   const logCount         = document.getElementById('log-count');
 
+  const searchInput = document.getElementById('search-input');
+  const typeFilter    = document.getElementById('type-filter');
+  const statusFilter   = document.getElementById('status-filter');
+
   const badgeClass = {
     'Pending':   'badge-amber',
     'Scheduled': 'badge-green',
@@ -47,6 +51,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function formatPeso(amount) {
     return '₱' + amount.toLocaleString('en-US');
+  }
+
+  function matchesFilters(it) {
+    const query    = searchInput.value.trim().toLowerCase();
+    const typeVal   = typeFilter.value;
+    const statusVal  = statusFilter.value;
+
+    const matchesQuery = !query ||
+      it.donor.toLowerCase().includes(query) ||
+      (it.note && it.note.toLowerCase().includes(query));
+
+    const matchesType   = !typeVal || it.type === typeVal;
+    const matchesStatus  = !statusVal || it.status === statusVal;
+
+    return matchesQuery && matchesType && matchesStatus;
   }
 
 
@@ -77,28 +96,30 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   function renderTable() {
     const sorted = intentions.slice().sort((a, b) => new Date(b.submittedDate) - new Date(a.submittedDate));
+    const filtered = sorted.filter(matchesFilters);
 
-    logCount.textContent = `${sorted.length} intention${sorted.length === 1 ? '' : 's'}`;
+    logCount.textContent = `${filtered.length} intention${filtered.length === 1 ? '' : 's'}`;
 
-    if (sorted.length === 0) {
+    if (filtered.length === 0) {
       tbody.innerHTML = '';
       intentionsEmpty.classList.remove('hidden');
       return;
     }
     intentionsEmpty.classList.add('hidden');
 
-    tbody.innerHTML = sorted.map((it) => {
+    tbody.innerHTML = filtered.map((it) => {
       const realIndex = intentions.indexOf(it);
       const massDateLabel = it.massDate
         ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}`
         : '—';
 
-      let actionHtml = '';
-      if (it.status === 'Pending') {
-        actionHtml = `<button type="button" class="row-assign" data-index="${realIndex}">Assign Mass ›</button>`;
-      } else {
-        actionHtml = `<button type="button" class="row-action" data-index="${realIndex}">View ›</button>`;
-      }
+      const actionHtml = `
+        <div class="row-actions">
+          <button type="button" class="row-edit" data-index="${realIndex}">Edit</button>
+          <button type="button" class="row-view" data-index="${realIndex}">View</button>
+          <button type="button" class="row-remove" data-index="${realIndex}">Remove</button>
+        </div>
+      `;
 
       return `
         <tr>
@@ -106,31 +127,36 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>
             ${escapeHtml(it.type)}
             ${it.note ? `<div class="text-xs text-gray-400 mt-0.5">${escapeHtml(it.note)}</div>` : ''}
+            ${it.startTime && it.endTime ? `<div class="intention-timeline">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</div>` : ''}
           </td>
           <td>${massDateLabel}</td>
           <td class="offering-amount">${formatPeso(it.offering)}</td>
           <td><span class="badge ${badgeClass[it.status] || 'badge-gray'}">${escapeHtml(it.status)}</span></td>
-          <td class="text-right">${actionHtml}</td>
+          <td class="text-right no-print">${actionHtml}</td>
         </tr>
       `;
     }).join('');
   }
 
   tbody.addEventListener('click', (e) => {
-    const assignBtn = e.target.closest('.row-assign');
-    const viewBtn    = e.target.closest('.row-action');
+    const editBtn   = e.target.closest('.row-edit');
+    const viewBtn    = e.target.closest('.row-view');
+    const removeBtn   = e.target.closest('.row-remove');
 
-    if (assignBtn) {
-      const idx = parseInt(assignBtn.dataset.index, 10);
-      openAssignModal(idx);
-    }
+    if (editBtn)   openEditModal(parseInt(editBtn.dataset.index, 10));
+    if (viewBtn)    openDetailsModal(parseInt(viewBtn.dataset.index, 10));
+    if (removeBtn)  openRemoveModal(parseInt(removeBtn.dataset.index, 10));
+  });
 
-    if (viewBtn) {
-      const idx = parseInt(viewBtn.dataset.index, 10);
-      const it = intentions[idx];
-      const massInfo = it.massDate ? ` Assigned to ${formatShortDate(it.massDate)} ${it.massTime || ''}.` : '';
-      showToast(`${it.donor} — ${it.type} (${it.status}).${massInfo}`);
-    }
+  searchInput.addEventListener('input', renderTable);
+  typeFilter.addEventListener('change', renderTable);
+  statusFilter.addEventListener('change', renderTable);
+
+  document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
+    searchInput.value = '';
+    typeFilter.value = '';
+    statusFilter.value = '';
+    renderTable();
   });
 
   renderStats();
@@ -142,80 +168,260 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   const addModal = document.getElementById('add-modal');
 
-  document.getElementById('btn-add-intention').addEventListener('click', () => openModal(addModal));
+  const addNameInput  = document.getElementById('add-name-input');
+  const addAddNameBtn  = document.getElementById('add-add-name');
+  const addNameChipsBox = document.getElementById('add-name-chips');
+  const addNameCountLabel = document.getElementById('add-name-count');
+
+  let addIntentionNames = [];
+  let editTargetIndex = null; // null = Add mode, otherwise index into `intentions` being edited
+
+  const addModalTitle = document.getElementById('add-modal-title');
+  const addSubmitBtn   = document.getElementById('add-submit');
+
+  function renderAddNameChips() {
+    addNameChipsBox.innerHTML = addIntentionNames.map((n, i) => `
+      <span class="name-chip" data-index="${i}">
+        ${escapeHtml(n)}
+        <button type="button" class="name-chip-remove" data-index="${i}" aria-label="Remove ${escapeHtml(n)}">×</button>
+      </span>
+    `).join('');
+
+    if (addIntentionNames.length > 0) {
+      addNameCountLabel.textContent = addIntentionNames.length;
+      addNameCountLabel.classList.remove('hidden');
+    } else {
+      addNameCountLabel.classList.add('hidden');
+    }
+  }
+
+  function addIntentionName() {
+    const val = addNameInput.value.trim();
+    if (!val) return;
+    addIntentionNames.push(val);
+    addNameInput.value = '';
+    addNameInput.classList.remove('border-red-400');
+    renderAddNameChips();
+    addNameInput.focus();
+  }
+
+  addAddNameBtn.addEventListener('click', addIntentionName);
+
+  addNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addIntentionName();
+    }
+  });
+
+  addNameChipsBox.addEventListener('click', (e) => {
+    const btn = e.target.closest('.name-chip-remove');
+    if (!btn) return;
+    addIntentionNames.splice(parseInt(btn.dataset.index, 10), 1);
+    renderAddNameChips();
+  });
+
+  function resetAddForm() {
+    document.getElementById('add-donor').value = '';
+    document.getElementById('add-type').value = '';
+    document.getElementById('add-start-time').value = '';
+    document.getElementById('add-end-time').value = '';
+    document.getElementById('add-offering').value = '';
+    document.getElementById('add-status').value = 'Pending';
+    document.getElementById('add-mass-date').value = '';
+    document.getElementById('add-mass-time').value = '';
+    addIntentionNames = [];
+    renderAddNameChips();
+  }
+
+  document.getElementById('btn-add-intention').addEventListener('click', () => {
+    editTargetIndex = null;
+    addModalTitle.textContent = 'Add Mass Intention';
+    addSubmitBtn.textContent = 'Save Intention';
+    resetAddForm();
+    openModal(addModal);
+  });
+
+  function openEditModal(idx) {
+    const it = intentions[idx];
+    if (!it) return;
+
+    editTargetIndex = idx;
+    addModalTitle.textContent = 'Edit Mass Intention';
+    addSubmitBtn.textContent = 'Save Changes';
+
+    document.getElementById('add-donor').value = it.donor;
+    document.getElementById('add-type').value = it.type;
+    document.getElementById('add-start-time').value = it.startTime ? to24hInput(it.startTime) : '';
+    document.getElementById('add-end-time').value = it.endTime ? to24hInput(it.endTime) : '';
+    document.getElementById('add-offering').value = it.offering;
+    document.getElementById('add-status').value = it.status;
+    document.getElementById('add-mass-date').value = it.massDate || '';
+    document.getElementById('add-mass-time').value = it.massTime ? to24hInput(it.massTime) : '';
+
+    addIntentionNames = it.names && it.names.length ? it.names.slice() : (it.note ? [it.note] : []);
+    renderAddNameChips();
+
+    openModal(addModal);
+  }
+
+  // Convert a "08:00 AM" style string back into a 24h "HH:MM" value for <input type="time">
+  function to24hInput(time12) {
+    const [time, meridiem] = time12.split(' ');
+    let [h, m] = time.split(':').map(Number);
+    if (meridiem === 'PM' && h !== 12) h += 12;
+    if (meridiem === 'AM' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
 
   document.getElementById('add-submit').addEventListener('click', () => {
-    const donor    = document.getElementById('add-donor').value.trim();
-    const type      = document.getElementById('add-type').value;
-    const note       = document.getElementById('add-note').value.trim();
-    const offering    = parseInt(document.getElementById('add-offering').value, 10);
+    // If a name was typed but not added yet, add it for them.
+    if (addNameInput.value.trim()) addIntentionName();
 
-    if (!donor || !type || !offering) {
-      showToast('Please fill in donor name, intention type, and offering amount.', true);
+    const donor       = document.getElementById('add-donor').value.trim();
+    const type          = document.getElementById('add-type').value;
+    const startTime24    = document.getElementById('add-start-time').value;
+    const endTime24        = document.getElementById('add-end-time').value;
+    const offering          = parseInt(document.getElementById('add-offering').value, 10);
+    const status              = document.getElementById('add-status').value;
+    const massDate              = document.getElementById('add-mass-date').value;
+    const massTime24              = document.getElementById('add-mass-time').value;
+
+    if (!donor || !type || addIntentionNames.length === 0 || !offering) {
+      showToast('Please fill in donor name, intention type, at least one name, and offering amount.', true);
       return;
     }
 
-    intentions.unshift({
-      donor,
-      type,
-      note,
-      submittedDate: TODAY_ISO,
-      massDate: null,
-      massTime: null,
-      offering,
-      status: 'Pending',
-    });
+    const names = addIntentionNames.slice();
+    const startTime = startTime24 ? formatTime12(startTime24) : null;
+    const endTime     = endTime24 ? formatTime12(endTime24) : null;
+    const massTime      = massTime24 ? formatTime12(massTime24) : null;
+
+    if (editTargetIndex === null) {
+      // ADD mode
+      intentions.unshift({
+        donor,
+        type,
+        names,
+        note: names.join(', '),
+        startTime,
+        endTime,
+        submittedDate: TODAY_ISO,
+        massDate: massDate || null,
+        massTime: massDate ? massTime : null,
+        offering,
+        status,
+      });
+      showToast(`Intention logged for ${donor}.`);
+    } else {
+      // EDIT mode — update in place
+      const it = intentions[editTargetIndex];
+      it.donor      = donor;
+      it.type        = type;
+      it.names        = names;
+      it.note          = names.join(', ');
+      it.startTime      = startTime;
+      it.endTime          = endTime;
+      it.offering          = offering;
+      it.status              = status;
+      it.massDate              = massDate || null;
+      it.massTime                = massDate ? massTime : null;
+      showToast(`Changes saved for ${donor}.`);
+      editTargetIndex = null;
+    }
 
     renderStats();
     renderTable();
     closeModal(addModal);
-    showToast(`Intention logged for ${donor}.`);
-
-    // Reset form
-    document.getElementById('add-donor').value = '';
-    document.getElementById('add-type').value = '';
-    document.getElementById('add-note').value = '';
-    document.getElementById('add-offering').value = '';
+    resetAddForm();
   });
 
 
   /* ------------------------------------------
-     4. ASSIGN MASS DATE MODAL
+     4. VIEW (DETAILS) MODAL
   ------------------------------------------ */
-  const assignModal = document.getElementById('assign-modal');
-  const assignTargetName = document.getElementById('assign-target-name');
-  let assignTargetIndex = null;
+  const detailsModal = document.getElementById('details-modal');
+  const detailsBody   = document.getElementById('details-body');
 
-  function openAssignModal(idx) {
-    assignTargetIndex = idx;
-    assignTargetName.textContent = intentions[idx].donor;
-    document.getElementById('assign-date').value = '';
-    document.getElementById('assign-time').value = '';
-    openModal(assignModal);
+  function openDetailsModal(idx) {
+    const it = intentions[idx];
+    if (!it) return;
+
+    const names = (it.names && it.names.length) ? it.names : (it.note ? [it.note] : []);
+
+    detailsBody.innerHTML = `
+      <div class="so-detail-grid">
+        <div>
+          <p class="so-detail-label">Donor</p>
+          <p class="so-detail-value">${escapeHtml(it.donor)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Intention Type</p>
+          <p class="so-detail-value">${escapeHtml(it.type)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Status</p>
+          <p class="so-detail-value">${escapeHtml(it.status)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Offering</p>
+          <p class="so-detail-value">${formatPeso(it.offering)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Submitted</p>
+          <p class="so-detail-value">${formatShortDate(it.submittedDate)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Mass Date Assigned</p>
+          <p class="so-detail-value">${it.massDate ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}` : '—'}</p>
+        </div>
+        ${it.startTime && it.endTime ? `
+        <div class="col-span-2">
+          <p class="so-detail-label">Timeline</p>
+          <p class="so-detail-value">${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</p>
+        </div>` : ''}
+      </div>
+      <div class="mt-3">
+        <p class="so-detail-label">Name${names.length === 1 ? '' : 's'} (${names.length})</p>
+        <div class="name-chip-list">
+          ${names.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('') || '<span class="text-xs text-gray-400">—</span>'}
+        </div>
+      </div>
+    `;
+
+    openModal(detailsModal);
   }
 
-  document.getElementById('assign-submit').addEventListener('click', () => {
-    if (assignTargetIndex === null) return;
 
-    const date    = document.getElementById('assign-date').value;
-    const time24   = document.getElementById('assign-time').value;
+  /* ------------------------------------------
+     5. REMOVE INTENTION MODAL
+  ------------------------------------------ */
+  const removeModal = document.getElementById('remove-modal');
+  const removeTargetName = document.getElementById('remove-target-name');
+  let removeTargetIndex = null;
 
-    if (!date || !time24) {
-      showToast('Please select a mass date and time.', true);
-      return;
-    }
+  function openRemoveModal(idx) {
+    const it = intentions[idx];
+    if (!it) return;
+    removeTargetIndex = idx;
+    removeTargetName.textContent = it.donor;
+    openModal(removeModal);
+  }
 
-    intentions[assignTargetIndex].massDate = date;
-    intentions[assignTargetIndex].massTime = formatTime12(time24);
-    intentions[assignTargetIndex].status = 'Scheduled';
+  document.getElementById('remove-submit').addEventListener('click', () => {
+    if (removeTargetIndex === null) return;
+
+    const it = intentions[removeTargetIndex];
+    intentions.splice(removeTargetIndex, 1);
 
     renderStats();
     renderTable();
-    closeModal(assignModal);
-    showToast(`${intentions[assignTargetIndex].donor}'s intention assigned to ${formatShortDate(date)}.`);
+    closeModal(removeModal);
+    showToast(`Intention for ${it.donor} removed.`);
 
-    assignTargetIndex = null;
+    removeTargetIndex = null;
   });
+
 
   function formatTime12(time24) {
     let [h, m] = time24.split(':').map(Number);
@@ -226,25 +432,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     5. MODAL HELPERS (shared open/close/escape)
+     6. MODAL HELPERS (shared open/close/escape)
   ------------------------------------------ */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
-      closeModal(addModal);
-      closeModal(assignModal);
+      const overlay = btn.closest('.modal-overlay');
+      if (overlay) closeModal(overlay);
     });
   });
 
-  [addModal, assignModal].forEach(modal => {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal(modal);
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal(overlay);
     });
   });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      closeModal(addModal);
-      closeModal(assignModal);
+      document.querySelectorAll('.modal-overlay').forEach(closeModal);
     }
   });
 
@@ -261,22 +466,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     6. PRINT INTENTIONS
+     7. PRINT INTENTIONS
   ------------------------------------------ */
   document.getElementById('btn-print').addEventListener('click', () => {
+    const printDateEl = document.getElementById('print-date-value');
+    if (printDateEl) {
+      const d = new Date(TODAY_ISO + 'T00:00:00');
+      printDateEl.textContent = `Printed ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    }
     window.print();
   });
 
 
   /* ------------------------------------------
-     7. TOAST NOTIFICATIONS
+     8. TOAST NOTIFICATIONS
   ------------------------------------------ */
   const toast = document.getElementById('toast');
   let toastTimer = null;
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.textContent = message;
+    toast.querySelector('.toast-message').textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));

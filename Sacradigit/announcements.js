@@ -90,8 +90,24 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `<button type="button" class="ann-unpublish" data-index="${realIndex}">Unpublish</button>`
         : `<button type="button" class="ann-republish" data-index="${realIndex}">Republish</button>`;
 
+      const media = a.media || [];
+      const firstMedia = media[0];
+      let mediaHtml = '';
+      if (firstMedia) {
+        const thumb = firstMedia.type === 'video'
+          ? `<video class="announcement-image" src="${firstMedia.dataUrl}" muted></video><span class="announcement-video-badge"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
+          : `<img class="announcement-image" src="${firstMedia.dataUrl}" alt="${escapeHtml(a.title)}" />`;
+        mediaHtml = `
+          <div class="announcement-image-wrap">
+            ${thumb}
+            ${media.length > 1 ? `<span class="announcement-media-count">+${media.length - 1} more</span>` : ''}
+          </div>
+        `;
+      }
+
       return `
         <div class="announcement-card ${a.published ? '' : 'unpublished'}">
+          ${mediaHtml}
           <div class="announcement-top">
             <p class="announcement-title">${escapeHtml(a.title)}</p>
           </div>
@@ -149,7 +165,78 @@ document.addEventListener('DOMContentLoaded', () => {
   const bodyInput            = document.getElementById('ann-body');
   const audienceSelect        = document.getElementById('ann-audience');
 
+  const dropzone            = document.getElementById('ann-dropzone');
+  const mediaInput            = document.getElementById('ann-media-input');
+  const mediaGrid                = document.getElementById('ann-media-grid');
+
   let editTargetIndex = null;
+  let currentMedia = []; // array of { type: 'image'|'video', dataUrl, name }
+
+  function renderMediaGrid() {
+    mediaGrid.innerHTML = currentMedia.map((m, i) => `
+      <div class="ann-media-item" data-index="${i}">
+        ${m.type === 'video'
+          ? `<video src="${m.dataUrl}" muted></video><span class="media-video-badge"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
+          : `<img src="${m.dataUrl}" alt="${escapeHtml(m.name)}" />`}
+        <button type="button" class="ann-media-remove" data-index="${i}" aria-label="Remove ${escapeHtml(m.name)}">×</button>
+      </div>
+    `).join('');
+  }
+
+  function handleMediaFiles(files) {
+    Array.from(files).forEach(file => {
+      const isImage = ['image/png', 'image/jpeg'].includes(file.type);
+      const isVideo = ['video/mp4', 'video/webm'].includes(file.type);
+
+      if (!isImage && !isVideo) {
+        showToast(`"${file.name}" isn't a supported image or video type.`, true);
+        return;
+      }
+      const maxSize = isVideo ? 20 * 1024 * 1024 : 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        showToast(`"${file.name}" is too large (max ${isVideo ? '20 MB for videos' : '5 MB for images'}).`, true);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        currentMedia.push({ type: isVideo ? 'video' : 'image', dataUrl: reader.result, name: file.name });
+        renderMediaGrid();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  mediaInput.addEventListener('change', () => {
+    if (mediaInput.files.length > 0) handleMediaFiles(mediaInput.files);
+    mediaInput.value = '';
+  });
+
+  ['dragover', 'dragenter'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+  });
+
+  ['dragleave', 'dragend'].forEach(evt => {
+    dropzone.addEventListener(evt, () => dropzone.classList.remove('dragover'));
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+      handleMediaFiles(e.dataTransfer.files);
+    }
+  });
+
+  mediaGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.ann-media-remove');
+    if (!btn) return;
+    currentMedia.splice(parseInt(btn.dataset.index, 10), 1);
+    renderMediaGrid();
+  });
 
   document.getElementById('btn-new-announcement').addEventListener('click', () => {
     editTargetIndex = null;
@@ -158,6 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
     titleInput.value = '';
     bodyInput.value = '';
     audienceSelect.value = 'All Parishioners';
+    currentMedia = [];
+    renderMediaGrid();
     openModal(modal);
   });
 
@@ -169,6 +258,8 @@ document.addEventListener('DOMContentLoaded', () => {
     titleInput.value = a.title;
     bodyInput.value = a.body;
     audienceSelect.value = a.audience;
+    currentMedia = a.media ? a.media.slice() : [];
+    renderMediaGrid();
     openModal(modal);
   }
 
@@ -182,11 +273,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const media = currentMedia.slice();
+
     if (editTargetIndex !== null) {
       // Editing an existing announcement
       announcements[editTargetIndex].title = title;
       announcements[editTargetIndex].body = body;
       announcements[editTargetIndex].audience = audience;
+      announcements[editTargetIndex].media = media;
       showToast(`"${title}" updated.`);
     } else {
       // Creating + publishing a new one
@@ -194,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         title,
         body,
         audience,
+        media,
         date: TODAY_ISO,
         published: true,
       });
@@ -240,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.textContent = message;
+    toast.querySelector('.toast-message').textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));

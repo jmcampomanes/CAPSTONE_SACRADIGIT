@@ -72,6 +72,23 @@ document.addEventListener('DOMContentLoaded', () => {
     return div.innerHTML;
   }
 
+  function setFieldError(input, message) {
+    input.classList.add('has-error');
+    let msg = input.parentElement.querySelector('.form-error-msg');
+    if (!msg) {
+      msg = document.createElement('p');
+      msg.className = 'form-error-msg';
+      input.insertAdjacentElement('afterend', msg);
+    }
+    msg.textContent = message;
+  }
+
+  function clearFieldError(input) {
+    input.classList.remove('has-error');
+    const msg = input.parentElement.querySelector('.form-error-msg');
+    if (msg) msg.remove();
+  }
+
   function parseDate(iso) {
     return new Date(iso + 'T00:00:00');
   }
@@ -178,10 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (deleteBtn) {
       const idx = parseInt(deleteBtn.dataset.index, 10);
-      const name = schedules[idx].name;
-      schedules.splice(idx, 1);
-      renderGrid();
-      showToast(`"${name}" removed.`);
+      openDeleteModal(idx);
     }
   });
 
@@ -213,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startInput.value = '';
     endInput.value = '';
     noteInput.value = '';
+    [nameInput, startInput, endInput].forEach(clearFieldError);
     openModal(modal);
   });
 
@@ -227,8 +242,13 @@ document.addEventListener('DOMContentLoaded', () => {
     startInput.value = s.startDate;
     endInput.value = s.endDate;
     noteInput.value = s.note;
+    [nameInput, startInput, endInput].forEach(clearFieldError);
     openModal(modal);
   }
+
+  [nameInput, startInput, endInput].forEach(input => {
+    input.addEventListener('input', () => clearFieldError(input));
+  });
 
   submitBtn.addEventListener('click', () => {
     const name   = nameInput.value.trim();
@@ -238,13 +258,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const end      = endInput.value;
     const note     = noteInput.value.trim();
 
-    if (!name || !start || !end) {
-      showToast('Please fill in name, start date, and end date.', true);
-      return;
+    [nameInput, startInput, endInput].forEach(clearFieldError);
+
+    let hasError = false;
+    if (!name)  { setFieldError(nameInput, 'Event or season name is required.'); hasError = true; }
+    if (!start) { setFieldError(startInput, 'Start date is required.'); hasError = true; }
+    if (!end)   { setFieldError(endInput, 'End date is required.'); hasError = true; }
+
+    if (!hasError && parseDate(start) > parseDate(end)) {
+      setFieldError(endInput, 'End date must be on or after the start date.');
+      hasError = true;
     }
 
-    if (parseDate(start) > parseDate(end)) {
-      showToast('End date must be on or after the start date.', true);
+    if (hasError) {
+      showToast('Please fix the highlighted fields.', true);
       return;
     }
 
@@ -262,18 +289,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
+     2b. DELETE CONFIRMATION MODAL
+     Deleting a schedule used to happen instantly
+     on click with no way back — now it routes
+     through a confirmation step first.
+  ------------------------------------------ */
+  const deleteModal      = document.getElementById('delete-modal');
+  const deleteTargetName  = document.getElementById('delete-target-name');
+  let deleteTargetIndex = null;
+
+  function openDeleteModal(idx) {
+    deleteTargetIndex = idx;
+    deleteTargetName.textContent = schedules[idx].name;
+    openModal(deleteModal);
+  }
+
+  document.getElementById('delete-confirm-submit').addEventListener('click', () => {
+    if (deleteTargetIndex === null) return;
+    const name = schedules[deleteTargetIndex].name;
+    schedules.splice(deleteTargetIndex, 1);
+    renderGrid();
+    closeModal(deleteModal);
+    showToast(`"${name}" removed.`);
+    deleteTargetIndex = null;
+  });
+
+
+  /* ------------------------------------------
      3. MODAL HELPERS
   ------------------------------------------ */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => closeModal(modal));
+    btn.addEventListener('click', () => {
+      closeModal(modal);
+      closeModal(deleteModal);
+    });
   });
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal(modal);
+  [modal, deleteModal].forEach(m => {
+    m.addEventListener('click', (e) => {
+      if (e.target === m) closeModal(m);
+    });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal(modal);
+    if (e.key === 'Escape') {
+      closeModal(modal);
+      closeModal(deleteModal);
+    }
   });
 
   function openModal(m) {
@@ -296,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.textContent = message;
+    toast.querySelector('.toast-message').textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));

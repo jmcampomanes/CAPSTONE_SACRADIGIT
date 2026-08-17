@@ -95,9 +95,9 @@
         <p class="sidebar-label">Operations</p>
         <ul class="space-y-0.5 mb-5">
           <li>
-            <a href="masses.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Masses
+            <a href="schedule-offers.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Schedule Offers
             </a>
           </li>
           <li>
@@ -142,6 +142,12 @@
             <a href="special-schedules.html" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
               Special Schedules
+            </a>
+          </li>
+          <li>
+            <a href="masses.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Masses
             </a>
           </li>
         </ul>
@@ -205,6 +211,10 @@
             </div>
             <p class="stat-value" id="stat-week">₱0</p>
             <p class="stat-sub">collected this week</p>
+            <button type="button" id="btn-view-graph" class="stat-graph-link">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg>
+              View Graph
+            </button>
           </div>
 
           <div class="stat-card">
@@ -230,6 +240,32 @@
           </div>
         </div>
 
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg class="w-4 h-4 search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+            <input id="search-input" type="text" placeholder="Search by donor or fund" class="search-input" />
+          </div>
+          <select id="method-filter" class="filter-select">
+            <option value="">All Methods</option>
+            <option value="Cash">Cash</option>
+            <option value="Online">Online</option>
+            <option value="Check">Check</option>
+          </select>
+          <select id="fund-filter" class="filter-select">
+            <option value="">All Funds</option>
+            <option value="Sunday Collection">Sunday Collection</option>
+            <option value="Mass Intention Offering">Mass Intention Offering</option>
+            <option value="Building Fund">Building Fund</option>
+            <option value="Poor Box">Poor Box</option>
+            <option value="Youth Ministry">Youth Ministry</option>
+          </select>
+          <button id="btn-clear-filters" type="button" class="btn-filter">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
+            Clear
+          </button>
+        </div>
+
         <!-- Recent Donations -->
         <div class="panel">
           <div class="panel-header">
@@ -251,10 +287,36 @@
                 <!-- Rows injected by donations.js -->
               </tbody>
             </table>
+            <div id="donations-empty" class="empty-state hidden">
+              <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <p class="text-sm font-medium text-gray-600">No donations match your filters</p>
+            </div>
+          </div>
+          <div id="donations-pagination" class="pagination-bar">
+            <!-- Injected by donations.js -->
           </div>
         </div>
 
       </main>
+    </div>
+  </div>
+
+  <!-- ========== DONATION TRACKER GRAPH MODAL ========== -->
+  <div id="graph-modal" class="modal-overlay hidden">
+    <div class="modal-card graph-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Donation Tracker — This Week</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-gray-500 mb-3">Daily totals for the last 7 days.</p>
+        <div id="donation-chart"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
     </div>
   </div>
 

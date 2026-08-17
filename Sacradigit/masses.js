@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   datePicker.value = TODAY_ISO;
 
+  let currentDateMasses = []; // sorted masses for the currently selected date, indexed for the details modal
+
   /* ------------------------------------------
      1. RENDER — Date's Schedule
   ------------------------------------------ */
@@ -68,15 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
     dateScheduleList.innerHTML = '';
 
     if (masses.length === 0) {
+      currentDateMasses = [];
       dateScheduleEmpty.classList.remove('hidden');
       return;
     }
     dateScheduleEmpty.classList.add('hidden');
 
-    masses
-      .slice()
-      .sort((a, b) => to24h(a.time) - to24h(b.time))
-      .forEach(m => {
+    currentDateMasses = masses.slice().sort((a, b) => to24h(a.time) - to24h(b.time));
+
+    currentDateMasses.forEach((m, idx) => {
         const li = document.createElement('li');
         li.innerHTML = `
           <div class="schedule-row">
@@ -86,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${m.note ? `<p class="schedule-note">${escapeHtml(m.note)}</p>` : ''}
             </div>
             ${m.special ? '<span class="schedule-special-tag">Special</span>' : ''}
+            <button type="button" class="schedule-details-btn" data-index="${idx}">See Full Details ›</button>
           </div>
         `;
         dateScheduleList.appendChild(li);
@@ -117,6 +120,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   datePicker.addEventListener('change', renderDateSchedule);
+
+  dateScheduleList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.schedule-details-btn');
+    if (!btn) return;
+    openMassDetailsModal(parseInt(btn.dataset.index, 10));
+  });
 
 
   /* ------------------------------------------
@@ -194,15 +203,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => closeModal(scheduleModal));
+    btn.addEventListener('click', () => {
+      const overlay = btn.closest('.modal-overlay');
+      if (overlay) closeModal(overlay);
+    });
   });
 
-  scheduleModal.addEventListener('click', (e) => {
-    if (e.target === scheduleModal) closeModal(scheduleModal);
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal(overlay);
+    });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal(scheduleModal);
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay').forEach(closeModal);
+    }
   });
 
   function openModal(modal) {
@@ -261,6 +277,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
+     5.5 MASS DETAILS MODAL (Date's Schedule)
+  ------------------------------------------ */
+  const massDetailsModal = document.getElementById('mass-details-modal');
+  const massDetailsBody   = document.getElementById('mass-details-body');
+
+  function openMassDetailsModal(idx) {
+    const m = currentDateMasses[idx];
+    if (!m) return;
+
+    massDetailsBody.innerHTML = `
+      <div class="so-detail-grid">
+        <div>
+          <p class="so-detail-label">Date</p>
+          <p class="so-detail-value">${escapeHtml(formatLongDate(datePicker.value))}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Time</p>
+          <p class="so-detail-value">${escapeHtml(m.time)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Mass Type</p>
+          <p class="so-detail-value">${escapeHtml(m.type)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Special Mass</p>
+          <p class="so-detail-value">${m.special ? 'Yes' : 'No'}</p>
+        </div>
+      </div>
+      <div class="mt-3">
+        <p class="so-detail-label">Intention / Note</p>
+        <p class="so-detail-value">${m.note ? escapeHtml(m.note) : '—'}</p>
+      </div>
+    `;
+
+    openModal(massDetailsModal);
+  }
+
+
+  /* ------------------------------------------
      6. TOAST NOTIFICATIONS
   ------------------------------------------ */
   const toast = document.getElementById('toast');
@@ -268,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.textContent = message;
+    toast.querySelector('.toast-message').textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));

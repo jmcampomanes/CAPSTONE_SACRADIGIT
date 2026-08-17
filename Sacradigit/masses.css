@@ -136,3 +136,50 @@
 #date-schedule-empty {
   padding: 2.5rem 1.5rem;
 }
+/* ---------- "See Full Details" row action (Date's Schedule) ---------- */
+.schedule-row {
+  flex-wrap: wrap;
+}
+
+.schedule-details-btn {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #5b5fa8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.schedule-details-btn:hover {
+  color: #1e2a4a;
+}
+
+/* ---------- Detail grid (Mass Details modal) ---------- */
+.so-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem 1rem;
+  background-color: #f7f8fa;
+  border-radius: 0.625rem;
+  padding: 0.75rem 1rem;
+}
+
+.so-detail-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  margin-bottom: 0.1rem;
+}
+
+.so-detail-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+}

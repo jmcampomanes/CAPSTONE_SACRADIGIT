@@ -179,6 +179,13 @@
   z-index: 100;
 }
 
+/* Guarantees a hidden modal actually disappears regardless of the load
+   order of the Tailwind CDN stylesheet vs. this one (two-class selector
+   always outranks Tailwind's single-class .hidden either way). */
+.modal-overlay.hidden {
+  display: none;
+}
+
 .modal-card {
   background: #ffffff;
   border-radius: 1rem;
@@ -305,15 +312,73 @@
   color: #ffffff;
   font-size: 0.8125rem;
   font-weight: 600;
-  padding: 0.7rem 1.25rem;
+  padding: 0.7rem 0.75rem 0.7rem 1.25rem;
   border-radius: 0.6rem;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
   z-index: 200;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  max-width: min(90vw, 420px);
   opacity: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-message {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.toast-dismiss:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* ---------- Inline field validation ---------- */
+.form-input.has-error {
+  border-color: #dc2626;
+}
+
+.form-input.has-error:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+}
+
+.form-error-msg {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-top: 0.3rem;
+}
+
+/* ---------- Clickable stat cards (used as quick filters) ---------- */
+.stat-card-clickable {
+  cursor: pointer;
+}
+
+.stat-card-clickable:hover {
+  border-color: #8b8fc7;
+}
+
+.stat-card-clickable.stat-card-active {
+  border-color: #5b5fa8;
+  box-shadow: 0 0 0 2px rgba(139, 143, 199, 0.25);
 }
 
 .toast.show {

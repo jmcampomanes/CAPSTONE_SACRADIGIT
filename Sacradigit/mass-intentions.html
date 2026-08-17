@@ -96,9 +96,9 @@
         <p class="sidebar-label">Operations</p>
         <ul class="space-y-0.5 mb-5">
           <li>
-            <a href="masses.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Masses
+            <a href="schedule-offers.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Schedule Offers
             </a>
           </li>
           <li>
@@ -143,6 +143,12 @@
             <a href="special-schedules.html" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
               Special Schedules
+            </a>
+          </li>
+          <li>
+            <a href="masses.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Masses
             </a>
           </li>
         </ul>
@@ -235,8 +241,38 @@
           </div>
         </div>
 
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg class="w-4 h-4 search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+            <input id="search-input" type="text" placeholder="Search by donor or name(s)" class="search-input" />
+          </div>
+          <select id="type-filter" class="filter-select">
+            <option value="">All Types</option>
+            <option value="For the Soul of...">For the Soul of...</option>
+            <option value="Thanksgiving">Thanksgiving</option>
+            <option value="Healing">Healing</option>
+            <option value="Birthday Blessing">Birthday Blessing</option>
+            <option value="Special Intention">Special Intention</option>
+          </select>
+          <select id="status-filter" class="filter-select">
+            <option value="">All Statuses</option>
+            <option value="Scheduled">Scheduled</option>
+            <option value="Completed">Completed</option>
+          </select>
+          <button id="btn-clear-filters" type="button" class="btn-filter">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
+            Clear
+          </button>
+        </div>
+
         <!-- Mass Intentions Log -->
-        <div class="panel">
+        <div class="panel" id="intentions-print-area">
+          <div class="print-only-header">
+            <h1>SacraDigit — Mass Intentions Log</h1>
+            <p>Our Lady of Fatima Parish · Diocese of Cubao</p>
+            <p id="print-date-value"></p>
+          </div>
           <div class="panel-header">
             <h2 class="panel-title">Mass Intentions Log</h2>
             <p id="log-count" class="text-xs text-gray-400 font-medium"></p>
@@ -250,7 +286,7 @@
                   <th>Mass Date Assigned</th>
                   <th>Offering</th>
                   <th>Status</th>
-                  <th class="text-right">Action</th>
+                  <th class="text-right no-print">Action</th>
                 </tr>
               </thead>
               <tbody id="intentions-tbody">
@@ -268,11 +304,11 @@
     </div>
   </div>
 
-  <!-- ========== ADD INTENTION MODAL ========== -->
+  <!-- ========== ADD / EDIT INTENTION MODAL ========== -->
   <div id="add-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Add Mass Intention</h3>
+        <h3 class="modal-title" id="add-modal-title">Add Mass Intention</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -295,12 +331,42 @@
             </select>
           </div>
           <div class="col-span-2">
-            <label class="form-label" for="add-note">Name(s) / Note</label>
-            <input type="text" id="add-note" class="form-input" placeholder="e.g. Lola Remedios Santos" />
+            <label class="form-label" for="add-name-input">
+              Name(s) <span class="text-red-500">*</span><span id="add-name-count" class="name-count-label hidden">0</span>
+            </label>
+            <div class="name-chip-input-row">
+              <input type="text" id="add-name-input" class="form-input" placeholder="Type a name, then press Enter or Add" />
+              <button type="button" id="add-add-name" class="btn-secondary shrink-0">Add</button>
+            </div>
+            <div id="add-name-chips" class="name-chip-list"></div>
+          </div>
+          <div>
+            <label class="form-label" for="add-start-time">Start Time</label>
+            <input type="time" id="add-start-time" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="add-end-time">End Time</label>
+            <input type="time" id="add-end-time" class="form-input" />
           </div>
           <div>
             <label class="form-label" for="add-offering">Offering (₱)</label>
             <input type="number" id="add-offering" class="form-input" placeholder="e.g. 300" min="0" step="50" />
+          </div>
+          <div>
+            <label class="form-label" for="add-status">Status</label>
+            <select id="add-status" class="form-input">
+              <option value="Pending">Pending</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="add-mass-date">Mass Date Assigned</label>
+            <input type="date" id="add-mass-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="add-mass-time">Mass Time Assigned</label>
+            <input type="time" id="add-mass-time" class="form-input" />
           </div>
         </div>
       </div>
@@ -311,31 +377,39 @@
     </div>
   </div>
 
-  <!-- ========== ASSIGN MASS DATE MODAL ========== -->
-  <div id="assign-modal" class="modal-overlay hidden">
+  <!-- ========== INTENTION DETAILS (VIEW) MODAL ========== -->
+  <div id="details-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Assign to a Mass</h3>
+        <h3 class="modal-title">Intention Details</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="details-body">
+        <!-- Injected by mass-intentions.js -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== REMOVE INTENTION CONFIRM MODAL ========== -->
+  <div id="remove-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Remove Intention</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <p class="text-sm text-gray-600 mb-3">Assigning intention from <span id="assign-target-name" class="font-semibold text-gray-900"></span>.</p>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="form-label" for="assign-date">Mass Date</label>
-            <input type="date" id="assign-date" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label" for="assign-time">Mass Time</label>
-            <input type="time" id="assign-time" class="form-input" />
-          </div>
-        </div>
+        <p class="text-sm text-gray-600">Remove the intention for <span id="remove-target-name" class="font-semibold text-gray-900"></span>? This can't be undone.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="assign-submit" class="btn-lavender">Assign Mass</button>
+        <button type="button" id="remove-submit" class="btn-danger">Remove Intention</button>
       </div>
     </div>
   </div>

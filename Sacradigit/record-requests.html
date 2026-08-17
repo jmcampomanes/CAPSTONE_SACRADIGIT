@@ -95,9 +95,9 @@
         <p class="sidebar-label">Operations</p>
         <ul class="space-y-0.5 mb-5">
           <li>
-            <a href="masses.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Masses
+            <a href="schedule-offers.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Schedule Offers
             </a>
           </li>
           <li>
@@ -142,6 +142,12 @@
             <a href="special-schedules.html" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
               Special Schedules
+            </a>
+          </li>
+          <li>
+            <a href="masses.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Masses
             </a>
           </li>
         </ul>
@@ -406,6 +412,52 @@
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
         <button type="button" id="reject-submit" class="btn-danger">Reject Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== VIEW REQUEST DETAILS MODAL ========== -->
+  <div id="view-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Request Details</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body space-y-3">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-semibold text-gray-900" id="view-name"></p>
+          <span id="view-status-badge" class="badge"></span>
+        </div>
+        <div class="so-detail-grid">
+          <div>
+            <p class="so-detail-label">Certificate Type</p>
+            <p class="so-detail-value" id="view-type"></p>
+          </div>
+          <div>
+            <p class="so-detail-label">Date Requested</p>
+            <p class="so-detail-value" id="view-date"></p>
+          </div>
+          <div class="col-span-2" style="grid-column: 1 / -1;">
+            <p class="so-detail-label">Purpose</p>
+            <p class="so-detail-value" id="view-purpose"></p>
+          </div>
+        </div>
+        <div id="view-certificate-wrap" class="hidden">
+          <p class="so-detail-label mb-1">Attached Certificate</p>
+          <span class="certificate-chip" id="view-certificate-chip">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span id="view-certificate-name"></span>
+          </span>
+        </div>
+        <div id="view-reason-wrap" class="hidden">
+          <p class="so-detail-label mb-1">Reason for Rejection</p>
+          <p class="reason-callout" id="view-reason"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>
   </div>

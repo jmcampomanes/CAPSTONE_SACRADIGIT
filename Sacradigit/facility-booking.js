@@ -47,6 +47,23 @@ document.addEventListener('DOMContentLoaded', () => {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
+  function setFieldError(input, message) {
+    input.classList.add('has-error');
+    let msg = input.parentElement.querySelector('.form-error-msg');
+    if (!msg) {
+      msg = document.createElement('p');
+      msg.className = 'form-error-msg';
+      input.insertAdjacentElement('afterend', msg);
+    }
+    msg.textContent = message;
+  }
+
+  function clearFieldError(input) {
+    input.classList.remove('has-error');
+    const msg = input.parentElement.querySelector('.form-error-msg');
+    if (msg) msg.remove();
+  }
+
 
   /* ------------------------------------------
      1. STAT BOXES
@@ -121,11 +138,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (cancelBtn) {
       const idx = parseInt(cancelBtn.dataset.index, 10);
-      const removed = bookings[idx];
-      bookings.splice(idx, 1);
-      renderAll();
-      showToast(`Booking for ${removed.facility} on ${formatShortDate(removed.date)} cancelled.`);
+      openCancelModal(idx);
     }
+  });
+
+
+  /* ------------------------------------------
+     2b. CANCEL BOOKING CONFIRMATION MODAL
+     Cancelling used to splice the booking out
+     instantly with no way back — now it routes
+     through a confirmation step first.
+  ------------------------------------------ */
+  const cancelModal      = document.getElementById('cancel-modal');
+  const cancelTargetName  = document.getElementById('cancel-target-name');
+  let cancelTargetIndex = null;
+
+  function openCancelModal(idx) {
+    cancelTargetIndex = idx;
+    const b = bookings[idx];
+    cancelTargetName.textContent = `${b.facility} — ${formatShortDate(b.date)}, ${b.time}`;
+    openModal(cancelModal);
+  }
+
+  document.getElementById('cancel-confirm-submit').addEventListener('click', () => {
+    if (cancelTargetIndex === null) return;
+    const removed = bookings[cancelTargetIndex];
+    bookings.splice(cancelTargetIndex, 1);
+    renderAll();
+    closeModal(cancelModal);
+    showToast(`Booking for ${removed.facility} on ${formatShortDate(removed.date)} cancelled.`);
+    cancelTargetIndex = null;
   });
 
 
@@ -293,19 +335,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-new-booking').addEventListener('click', () => {
     document.getElementById('booking-date').value = TODAY_ISO;
+    [bookingFacilitySelect, bookingPurposeInput, bookingDateInput, bookingTimeInput].forEach(clearFieldError);
     openModal(bookingModal);
   });
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => closeModal(bookingModal));
+    btn.addEventListener('click', () => {
+      closeModal(bookingModal);
+      closeModal(cancelModal);
+    });
   });
 
-  bookingModal.addEventListener('click', (e) => {
-    if (e.target === bookingModal) closeModal(bookingModal);
+  [bookingModal, cancelModal].forEach(m => {
+    m.addEventListener('click', (e) => {
+      if (e.target === m) closeModal(m);
+    });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal(bookingModal);
+    if (e.key === 'Escape') {
+      closeModal(bookingModal);
+      closeModal(cancelModal);
+    }
   });
 
   function openModal(modal) {
@@ -319,14 +370,31 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow = '';
   }
 
+  const bookingPurposeInput = document.getElementById('booking-purpose');
+  const bookingDateInput     = document.getElementById('booking-date');
+  const bookingTimeInput       = document.getElementById('booking-time');
+
+  [bookingFacilitySelect, bookingPurposeInput, bookingDateInput, bookingTimeInput].forEach(input => {
+    input.addEventListener('input', () => clearFieldError(input));
+    input.addEventListener('change', () => clearFieldError(input));
+  });
+
   document.getElementById('booking-submit').addEventListener('click', () => {
     const facility = bookingFacilitySelect.value;
-    const purpose   = document.getElementById('booking-purpose').value.trim();
-    const date       = document.getElementById('booking-date').value;
-    const time24      = document.getElementById('booking-time').value;
+    const purpose   = bookingPurposeInput.value.trim();
+    const date       = bookingDateInput.value;
+    const time24      = bookingTimeInput.value;
 
-    if (!facility || !purpose || !date || !time24) {
-      showToast('Please fill in facility, purpose, date, and time.', true);
+    [bookingFacilitySelect, bookingPurposeInput, bookingDateInput, bookingTimeInput].forEach(clearFieldError);
+
+    let hasError = false;
+    if (!facility) { setFieldError(bookingFacilitySelect, 'Please select a facility.'); hasError = true; }
+    if (!purpose)  { setFieldError(bookingPurposeInput, 'Purpose is required.'); hasError = true; }
+    if (!date)     { setFieldError(bookingDateInput, 'Date is required.'); hasError = true; }
+    if (!time24)   { setFieldError(bookingTimeInput, 'Time is required.'); hasError = true; }
+
+    if (hasError) {
+      showToast('Please fix the highlighted fields.', true);
       return;
     }
 
@@ -343,8 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`Booking request submitted for ${facility} on ${formatShortDate(date)}.`);
 
     // Reset form
-    document.getElementById('booking-purpose').value = '';
-    document.getElementById('booking-time').value = '';
+    bookingPurposeInput.value = '';
+    bookingTimeInput.value = '';
   });
 
   function formatTime12(time24) {
@@ -363,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.textContent = message;
+    toast.querySelector('.toast-message').textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));

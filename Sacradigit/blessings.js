@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const completedList    = document.getElementById('completed-list');
   const completedCount    = document.getElementById('completed-count');
 
+  const searchInput = document.getElementById('search-input');
+  const typeFilter    = document.getElementById('type-filter');
+
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
@@ -60,6 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`;
   }
 
+  function matchesFilters(record) {
+    const query   = searchInput.value.trim().toLowerCase();
+    const typeVal = typeFilter.value;
+
+    const matchesQuery = !query ||
+      record.requester.toLowerCase().includes(query) ||
+      record.type.toLowerCase().includes(query);
+
+    const matchesType = !typeVal || record.type === typeVal;
+
+    return matchesQuery && matchesType;
+  }
+
 
   /* ------------------------------------------
      1. STAT BOXES
@@ -75,17 +91,20 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   function renderUpcoming() {
     const sorted = upcoming.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    const filtered = sorted.filter(matchesFilters);
 
-    upcomingCount.textContent = `${sorted.length} scheduled`;
+    upcomingCount.textContent = `${filtered.length} scheduled`;
 
-    if (sorted.length === 0) {
+    if (filtered.length === 0) {
       upcomingList.innerHTML = '';
       upcomingEmpty.classList.remove('hidden');
       return;
     }
     upcomingEmpty.classList.add('hidden');
 
-    upcomingList.innerHTML = sorted.map(b => `
+    upcomingList.innerHTML = filtered.map(b => {
+      const realIdx = upcoming.indexOf(b);
+      return `
       <li>
         <div class="blessing-row">
           <div class="blessing-icon">${blessingIconSvg()}</div>
@@ -93,12 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="blessing-name">${escapeHtml(b.requester)}</p>
             <p class="blessing-meta">${escapeHtml(b.type)} · ${escapeHtml(b.location)}</p>
           </div>
-          <div class="blessing-datetime">
-            ${formatLongDate(b.date)}<br/>${escapeHtml(b.time)}
+          <div>
+            <div class="blessing-datetime">
+              ${formatLongDate(b.date)}<br/>${escapeHtml(b.time)}
+            </div>
+            <button type="button" class="blessing-details-btn" data-section="upcoming" data-index="${realIdx}">Details ›</button>
           </div>
         </div>
       </li>
-    `).join('');
+    `;
+    }).join('');
   }
 
 
@@ -106,16 +129,20 @@ document.addEventListener('DOMContentLoaded', () => {
      3. RENDER — New Blessing Requests
   ------------------------------------------ */
   function renderRequests() {
-    requestsCount.textContent = `${requests.length} pending`;
+    const filtered = requests.filter(matchesFilters);
 
-    if (requests.length === 0) {
+    requestsCount.textContent = `${filtered.length} pending`;
+
+    if (filtered.length === 0) {
       requestsList.innerHTML = '';
       requestsEmpty.classList.remove('hidden');
       return;
     }
     requestsEmpty.classList.add('hidden');
 
-    requestsList.innerHTML = requests.map((r, idx) => `
+    requestsList.innerHTML = filtered.map((r) => {
+      const realIdx = requests.indexOf(r);
+      return `
       <li>
         <div class="request-row">
           <div class="request-icon">
@@ -126,12 +153,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="request-meta">${escapeHtml(r.type)} · requested for ${formatLongDate(r.preferredDate)}</p>
           </div>
           <div class="request-actions">
-            <button type="button" class="req-approve" data-index="${idx}">Approve</button>
-            <button type="button" class="req-decline" data-index="${idx}">Decline</button>
+            <div class="request-action-row">
+              <button type="button" class="req-approve" data-index="${realIdx}">Approve</button>
+              <button type="button" class="req-decline" data-index="${realIdx}">Decline</button>
+            </div>
+            <button type="button" class="blessing-details-btn" data-section="requests" data-index="${realIdx}">Details ›</button>
           </div>
         </div>
       </li>
-    `).join('');
+    `;
+    }).join('');
   }
 
   requestsList.addEventListener('click', (e) => {
@@ -174,9 +205,13 @@ document.addEventListener('DOMContentLoaded', () => {
      4. RENDER — Completed Blessings (May 2026)
   ------------------------------------------ */
   function renderCompleted() {
-    completedCount.textContent = `${completed.length} completed`;
+    const filtered = completed.filter(matchesFilters);
 
-    completedList.innerHTML = completed.map(c => `
+    completedCount.textContent = `${filtered.length} completed`;
+
+    completedList.innerHTML = filtered.map(c => {
+      const realIdx = completed.indexOf(c);
+      return `
       <li>
         <div class="completed-row">
           <div class="completed-icon">
@@ -186,16 +221,48 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="completed-name">${escapeHtml(c.requester)}</p>
             <p class="completed-meta">${escapeHtml(c.type)}</p>
           </div>
-          <div class="completed-date">${formatLongDate(c.date)}</div>
+          <div>
+            <div class="completed-date">${formatLongDate(c.date)}</div>
+            <button type="button" class="blessing-details-btn" data-section="completed" data-index="${realIdx}">Details ›</button>
+          </div>
         </div>
       </li>
-    `).join('');
+    `;
+    }).join('');
   }
 
   renderStats();
   renderUpcoming();
   renderRequests();
   renderCompleted();
+
+  searchInput.addEventListener('input', () => {
+    renderUpcoming();
+    renderRequests();
+    renderCompleted();
+  });
+
+  typeFilter.addEventListener('change', () => {
+    renderUpcoming();
+    renderRequests();
+    renderCompleted();
+  });
+
+  document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
+    searchInput.value = '';
+    typeFilter.value = '';
+    renderUpcoming();
+    renderRequests();
+    renderCompleted();
+  });
+
+  [upcomingList, requestsList, completedList].forEach(listEl => {
+    listEl.addEventListener('click', (e) => {
+      const detailsBtn = e.target.closest('.blessing-details-btn');
+      if (!detailsBtn) return;
+      openDetailsModal(detailsBtn.dataset.section, parseInt(detailsBtn.dataset.index, 10));
+    });
+  });
 
 
   /* ------------------------------------------
@@ -281,14 +348,18 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------
      7. MODAL HELPERS (shared open/close/escape)
   ------------------------------------------ */
+  const detailsModal = document.getElementById('details-modal');
+  const detailsBody   = document.getElementById('details-body');
+
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
       closeModal(scheduleModal);
       closeModal(declineModal);
+      closeModal(detailsModal);
     });
   });
 
-  [scheduleModal, declineModal].forEach(modal => {
+  [scheduleModal, declineModal, detailsModal].forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeModal(modal);
     });
@@ -298,6 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       closeModal(scheduleModal);
       closeModal(declineModal);
+      closeModal(detailsModal);
     }
   });
 
@@ -312,6 +384,65 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow = '';
   }
 
+  function openDetailsModal(section, idx) {
+    let record, statusLabel, dateLabel, dateValue, extraRows = '';
+
+    if (section === 'upcoming') {
+      record = upcoming[idx];
+      statusLabel = 'Scheduled';
+      dateLabel = 'Date & Time';
+      dateValue = `${formatLongDate(record.date)} · ${record.time}`;
+      extraRows = `
+        <div>
+          <p class="so-detail-label">Location</p>
+          <p class="so-detail-value">${escapeHtml(record.location)}</p>
+        </div>
+      `;
+    } else if (section === 'requests') {
+      record = requests[idx];
+      statusLabel = 'Pending Approval';
+      dateLabel = 'Preferred Date';
+      dateValue = formatLongDate(record.preferredDate);
+      extraRows = `
+        <div>
+          <p class="so-detail-label">Requested On</p>
+          <p class="so-detail-value">${formatLongDate(record.requestedDate)}</p>
+        </div>
+      `;
+    } else {
+      record = completed[idx];
+      statusLabel = 'Completed';
+      dateLabel = 'Date Completed';
+      dateValue = formatLongDate(record.date);
+    }
+
+    if (!record) return;
+
+    detailsBody.innerHTML = `
+      <div class="so-detail-grid">
+        <div>
+          <p class="so-detail-label">Requester</p>
+          <p class="so-detail-value">${escapeHtml(record.requester)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Blessing Type</p>
+          <p class="so-detail-value">${escapeHtml(record.type)}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">Status</p>
+          <p class="so-detail-value">${statusLabel}</p>
+        </div>
+        <div>
+          <p class="so-detail-label">${dateLabel}</p>
+          <p class="so-detail-value">${dateValue}</p>
+        </div>
+        ${extraRows}
+      </div>
+    `;
+
+    openModal(detailsModal);
+  }
+
 
   /* ------------------------------------------
      8. TOAST NOTIFICATIONS
@@ -321,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.textContent = message;
+    toast.querySelector('.toast-message').textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));

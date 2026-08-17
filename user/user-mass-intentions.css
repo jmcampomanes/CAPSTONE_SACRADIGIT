@@ -199,3 +199,110 @@
 .offering-input {
   padding-left: 1.75rem !important;
 }
+/* ---------- Name chip input (Submit Intention modal) ---------- */
+.name-chip-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.name-chip-input-row .form-input {
+  flex: 1;
+}
+
+.name-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+.name-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: rgba(139, 143, 199, 0.12);
+  color: #4a4e8a;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(139, 143, 199, 0.25);
+}
+
+.name-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(139, 143, 199, 0.25);
+  color: #4a4e8a;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.name-chip-remove:hover {
+  background: rgba(139, 143, 199, 0.4);
+}
+
+.name-count-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #8b8fc7;
+  background-color: rgba(139, 143, 199, 0.12);
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+
+/* ---------- "See Details" row action (My Intentions list) ---------- */
+.intention-details-btn {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #5b5fa8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 0.5rem;
+  transition: color 0.15s ease;
+}
+
+.intention-details-btn:hover {
+  color: #1e2a4a;
+}
+
+/* ---------- Intention Details modal ---------- */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.details-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #9ca3af;
+  margin-bottom: 0.3rem;
+}
+
+.details-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.details-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
