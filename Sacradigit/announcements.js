@@ -1,52 +1,16 @@
 /* ============================================
-   SacraDigit Admin — Announcements Scripts
+   SacraDigit Admin — Announcements Scripts (AWS Amplify)
+   Backed by the Announcement model. Media files
+   (images/videos) upload to S3 via Amplify Storage
+   under announcements/{filename}.
    ============================================ */
+
+import { client } from '../amplify-init.js';
+import { uploadData } from 'aws-amplify/storage';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ------------------------------------------
-     0. SAMPLE DATA
-     "Today" fixed to match the rest of the app.
-  ------------------------------------------ */
-  const TODAY_ISO = '2026-06-19';
-
-  let announcements = [
-    {
-      title: 'Parish Fiesta Schedule — June 2026',
-      body: 'Join us in celebrating Our Lady of Fatima Parish Fiesta this June! Mass schedules, procession routes, and activity highlights are now available. All parishioners and visitors are warmly welcome to take part in the festivities.',
-      audience: 'All Parishioners',
-      date: '2026-06-17',
-      published: true,
-    },
-    {
-      title: 'Lectors & Commentators Meeting',
-      body: 'A mandatory meeting for all lectors and commentators will be held this Sunday after the 10:00 AM mass. Please bring your assigned reading schedules for the next quarter.',
-      audience: 'Lectors & Commentators',
-      date: '2026-06-16',
-      published: true,
-    },
-    {
-      title: 'Online Giving Now Available',
-      body: 'You can now give your Sunday offering, mass intentions, and other contributions online through SacraDigit. Look for the Donations tab on the parish portal to get started.',
-      audience: 'All Parishioners',
-      date: '2026-06-14',
-      published: true,
-    },
-    {
-      title: 'Youth Ministry Summer Retreat Sign-ups',
-      body: 'Registration is now open for the Youth Ministry Summer Retreat happening this July. Slots are limited — please coordinate with your ministry coordinator to reserve a spot.',
-      audience: 'Youth Ministry',
-      date: '2026-06-10',
-      published: true,
-    },
-    {
-      title: 'Choir Rehearsal Schedule Update',
-      body: 'Choir rehearsals have moved to Thursdays at 7:00 PM starting this week, to better prepare for the upcoming feast day celebrations.',
-      audience: 'Choir',
-      date: '2026-06-05',
-      published: false,
-    },
-  ];
+  let announcements = []; // kept in sync via observeQuery, each has .id
 
   const grid              = document.getElementById('announcements-grid');
   const announcementsEmpty  = document.getElementById('announcements-empty');
@@ -54,12 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = str;
+    div.textContent = str || '';
     return div.innerHTML;
   }
 
-  function formatShortDate(iso) {
-    const d = new Date(iso + 'T00:00:00');
+  function formatShortDate(input) {
+    if (!input) return '';
+    const d = new Date(input);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
@@ -68,35 +33,45 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* --- Live data --- */
+  client.models.Announcement.observeQuery().subscribe({
+    next: ({ items }) => {
+      announcements = items.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      renderGrid();
+    },
+    error: (err) => {
+      console.error('Failed to load announcements:', err);
+      showToast("Couldn't load announcements from the database.", true);
+    },
+  });
+
+
   /* ------------------------------------------
      1. RENDER — Announcement card grid
   ------------------------------------------ */
   function renderGrid() {
-    const sorted = announcements.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
     const publishedCount = announcements.filter(a => a.published).length;
-
     announcementsCount.textContent = `${publishedCount} published`;
 
-    if (sorted.length === 0) {
+    if (announcements.length === 0) {
       grid.innerHTML = '';
       announcementsEmpty.classList.remove('hidden');
       return;
     }
     announcementsEmpty.classList.add('hidden');
 
-    grid.innerHTML = sorted.map((a) => {
-      const realIndex = announcements.indexOf(a);
+    grid.innerHTML = announcements.map((a) => {
       const statusActions = a.published
-        ? `<button type="button" class="ann-unpublish" data-index="${realIndex}">Unpublish</button>`
-        : `<button type="button" class="ann-republish" data-index="${realIndex}">Republish</button>`;
+        ? `<button type="button" class="ann-unpublish" data-id="${a.id}">Unpublish</button>`
+        : `<button type="button" class="ann-republish" data-id="${a.id}">Republish</button>`;
 
-      const media = a.media || [];
+      const media = a.media ? JSON.parse(a.media) : [];
       const firstMedia = media[0];
       let mediaHtml = '';
       if (firstMedia) {
         const thumb = firstMedia.type === 'video'
-          ? `<video class="announcement-image" src="${firstMedia.dataUrl}" muted></video><span class="announcement-video-badge"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
-          : `<img class="announcement-image" src="${firstMedia.dataUrl}" alt="${escapeHtml(a.title)}" />`;
+          ? `<video class="announcement-image" src="${firstMedia.url}" muted></video><span class="announcement-video-badge"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
+          : `<img class="announcement-image" src="${firstMedia.url}" alt="${escapeHtml(a.title)}" />`;
         mediaHtml = `
           <div class="announcement-image-wrap">
             ${thumb}
@@ -113,11 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <p class="announcement-excerpt">${escapeHtml(a.body)}</p>
           <div class="announcement-meta">
-            <span class="announcement-date">${formatShortDate(a.date)}</span>
+            <span class="announcement-date">${formatShortDate(a.createdAt)}</span>
             <span class="audience-tag ${audienceClass(a.audience)}">${escapeHtml(a.audience)}</span>
           </div>
           <div class="announcement-actions">
-            <button type="button" class="ann-edit" data-index="${realIndex}">Edit</button>
+            <button type="button" class="ann-edit" data-id="${a.id}">Edit</button>
             ${statusActions}
           </div>
         </div>
@@ -125,38 +100,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  grid.addEventListener('click', (e) => {
+  grid.addEventListener('click', async (e) => {
     const editBtn       = e.target.closest('.ann-edit');
     const unpublishBtn   = e.target.closest('.ann-unpublish');
     const republishBtn   = e.target.closest('.ann-republish');
 
-    if (editBtn) {
-      const idx = parseInt(editBtn.dataset.index, 10);
-      openEditModal(idx);
-    }
+    if (editBtn) openEditModal(editBtn.dataset.id);
 
     if (unpublishBtn) {
-      const idx = parseInt(unpublishBtn.dataset.index, 10);
-      announcements[idx].published = false;
-      renderGrid();
-      showToast(`"${announcements[idx].title}" unpublished.`);
+      const a = announcements.find(x => x.id === unpublishBtn.dataset.id);
+      try {
+        const result = await client.models.Announcement.update({ id: unpublishBtn.dataset.id, published: false });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`"${a ? a.title : 'Announcement'}" unpublished.`);
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || "Couldn't unpublish.", true);
+      }
     }
 
     if (republishBtn) {
-      const idx = parseInt(republishBtn.dataset.index, 10);
-      announcements[idx].published = true;
-      renderGrid();
-      showToast(`"${announcements[idx].title}" republished.`);
+      const a = announcements.find(x => x.id === republishBtn.dataset.id);
+      try {
+        const result = await client.models.Announcement.update({ id: republishBtn.dataset.id, published: true });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`"${a ? a.title : 'Announcement'}" republished.`);
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || "Couldn't republish.", true);
+      }
     }
   });
-
-  renderGrid();
 
 
   /* ------------------------------------------
      2. NEW / EDIT ANNOUNCEMENT MODAL
-     (shared modal — editTargetIndex is null
-     when creating a new announcement)
   ------------------------------------------ */
   const modal          = document.getElementById('announcement-modal');
   const modalTitle       = document.getElementById('announcement-modal-title');
@@ -169,15 +147,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const mediaInput            = document.getElementById('ann-media-input');
   const mediaGrid                = document.getElementById('ann-media-grid');
 
-  let editTargetIndex = null;
-  let currentMedia = []; // array of { type: 'image'|'video', dataUrl, name }
+  let editTargetId = null;
+  // Each item: { type, name, url (existing, uploaded) OR file (new, pending upload), previewUrl }
+  let currentMedia = [];
 
   function renderMediaGrid() {
     mediaGrid.innerHTML = currentMedia.map((m, i) => `
       <div class="ann-media-item" data-index="${i}">
         ${m.type === 'video'
-          ? `<video src="${m.dataUrl}" muted></video><span class="media-video-badge"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
-          : `<img src="${m.dataUrl}" alt="${escapeHtml(m.name)}" />`}
+          ? `<video src="${m.previewUrl}" muted></video><span class="media-video-badge"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
+          : `<img src="${m.previewUrl}" alt="${escapeHtml(m.name)}" />`}
         <button type="button" class="ann-media-remove" data-index="${i}" aria-label="Remove ${escapeHtml(m.name)}">×</button>
       </div>
     `).join('');
@@ -200,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const reader = new FileReader();
       reader.onload = () => {
-        currentMedia.push({ type: isVideo ? 'video' : 'image', dataUrl: reader.result, name: file.name });
+        currentMedia.push({ type: isVideo ? 'video' : 'image', file, name: file.name, previewUrl: reader.result });
         renderMediaGrid();
       };
       reader.readAsDataURL(file);
@@ -239,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-new-announcement').addEventListener('click', () => {
-    editTargetIndex = null;
+    editTargetId = null;
     modalTitle.textContent = 'New Announcement';
     submitBtn.textContent = 'Publish Now';
     titleInput.value = '';
@@ -250,20 +229,44 @@ document.addEventListener('DOMContentLoaded', () => {
     openModal(modal);
   });
 
-  function openEditModal(idx) {
-    editTargetIndex = idx;
-    const a = announcements[idx];
+  function openEditModal(id) {
+    const a = announcements.find(x => x.id === id);
+    if (!a) return;
+    editTargetId = id;
     modalTitle.textContent = 'Edit Announcement';
     submitBtn.textContent = 'Save Changes';
     titleInput.value = a.title;
     bodyInput.value = a.body;
     audienceSelect.value = a.audience;
-    currentMedia = a.media ? a.media.slice() : [];
+    // Existing media already has an S3 url; new items added in this
+    // session get a `file` instead until they're uploaded on save.
+    currentMedia = (a.media ? JSON.parse(a.media) : []).map(m => ({ ...m, previewUrl: m.url }));
     renderMediaGrid();
     openModal(modal);
   }
 
-  submitBtn.addEventListener('click', () => {
+  async function uploadPendingMedia(mediaList) {
+    const uploaded = [];
+    for (const m of mediaList) {
+      if (m.url) {
+        // Already uploaded (kept from a previous edit)
+        uploaded.push({ type: m.type, url: m.url, name: m.name });
+        continue;
+      }
+
+      const path = `announcements/${Date.now()}_${m.name}`;
+      await uploadData({ path, data: m.file }).result;
+
+      // Public URL pattern for an S3 object served via the bucket's
+      // public read access (configured in amplify/storage/resource.ts).
+      // If your bucket isn't public, swap this for getUrl({ path })
+      // from 'aws-amplify/storage' to get a signed URL instead.
+      uploaded.push({ type: m.type, url: path, name: m.name });
+    }
+    return uploaded;
+  }
+
+  submitBtn.addEventListener('click', async () => {
     const title    = titleInput.value.trim();
     const body      = bodyInput.value.trim();
     const audience   = audienceSelect.value;
@@ -273,30 +276,29 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const media = currentMedia.slice();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving…';
 
-    if (editTargetIndex !== null) {
-      // Editing an existing announcement
-      announcements[editTargetIndex].title = title;
-      announcements[editTargetIndex].body = body;
-      announcements[editTargetIndex].audience = audience;
-      announcements[editTargetIndex].media = media;
-      showToast(`"${title}" updated.`);
-    } else {
-      // Creating + publishing a new one
-      announcements.unshift({
-        title,
-        body,
-        audience,
-        media,
-        date: TODAY_ISO,
-        published: true,
-      });
-      showToast(`"${title}" published.`);
+    try {
+      const media = JSON.stringify(await uploadPendingMedia(currentMedia));
+
+      if (editTargetId !== null) {
+        const result = await client.models.Announcement.update({ id: editTargetId, title, body, audience, media });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`"${title}" updated.`);
+      } else {
+        const result = await client.models.Announcement.create({ title, body, audience, media, published: true });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`"${title}" published.`);
+      }
+      closeModal(modal);
+    } catch (err) {
+      console.error('Failed to save announcement:', err);
+      showToast(err.message || "Couldn't save the announcement.", true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = editTargetId !== null ? 'Save Changes' : 'Publish Now';
     }
-
-    renderGrid();
-    closeModal(modal);
   });
 
 
@@ -335,7 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.querySelector('.toast-message').textContent = message;
+    const msgEl = toast.querySelector('.toast-message');
+    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));

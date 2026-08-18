@@ -1,35 +1,20 @@
 /* ============================================
-   SacraDigit Admin — Blessings Scripts
+   SacraDigit Admin — Blessings Scripts (AWS Amplify)
+   Backed by the Blessing model.
+   Fields: requesterName, type, location,
+   status ('pending'|'scheduled'|'completed'|'declined'),
+   preferredDate, date, time, declineReason
    ============================================ */
+
+import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ------------------------------------------
-     0. SAMPLE DATA
-     "Today" fixed to match the rest of the app.
-  ------------------------------------------ */
-  const TODAY_ISO = '2026-06-19';
+  const todayISO = new Date().toISOString().slice(0, 10);
 
-  let upcoming = [
-    { requester: 'Santos Family',     type: 'House Blessing',      location: '42 Maligaya St., Cubao', date: '2026-06-20', time: '09:00 AM' },
-    { requester: 'Reyes Bakery',      type: 'Business Dedication', location: 'Aurora Blvd. corner 8th',  date: '2026-06-21', time: '02:00 PM' },
-    { requester: 'Cruz, Jose R.',     type: 'Vehicle Blessing',    location: 'Parish grounds',           date: '2026-06-22', time: '10:30 AM' },
-    { requester: 'Villanueva Family', type: 'House Blessing',      location: '15 Sampaguita St.',        date: '2026-06-25', time: '04:00 PM' },
-  ];
-
-  let requests = [
-    { requester: 'Garcia, Pedro M.',  type: 'House Blessing',      requestedDate: '2026-06-18', preferredDate: '2026-06-28' },
-    { requester: 'Fernandez Eatery',  type: 'Business Dedication', requestedDate: '2026-06-17', preferredDate: '2026-06-30' },
-    { requester: 'Mendoza, Carmen P.', type: 'Vehicle Blessing',    requestedDate: '2026-06-16', preferredDate: '2026-07-02' },
-  ];
-
-  const completed = [
-    { requester: 'Bautista Family',   type: 'House Blessing',      date: '2026-05-28' },
-    { requester: 'Ramos Auto Shop',   type: 'Business Dedication', date: '2026-05-24' },
-    { requester: 'Dela Cruz, Juan P.', type: 'Vehicle Blessing',    date: '2026-05-19' },
-    { requester: 'Torres Family',     type: 'House Blessing',      date: '2026-05-12' },
-    { requester: 'Aquino Bakeshop',   type: 'Business Dedication', date: '2026-05-06' },
-  ];
+  let upcoming = [];
+  let requests = [];
+  let completed = [];
 
   const upcomingList   = document.getElementById('upcoming-list');
   const upcomingEmpty   = document.getElementById('upcoming-empty');
@@ -45,16 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = str;
+    div.textContent = str || '';
     return div.innerHTML;
   }
 
-  function formatShortDate(iso) {
-    const d = new Date(iso + 'T00:00:00');
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
   function formatLongDate(iso) {
+    if (!iso) return '—';
     const d = new Date(iso + 'T00:00:00');
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
@@ -68,8 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const typeVal = typeFilter.value;
 
     const matchesQuery = !query ||
-      record.requester.toLowerCase().includes(query) ||
-      record.type.toLowerCase().includes(query);
+      (record.requesterName || '').toLowerCase().includes(query) ||
+      (record.type || '').toLowerCase().includes(query);
 
     const matchesType = !typeVal || record.type === typeVal;
 
@@ -77,18 +58,38 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     1. STAT BOXES
-  ------------------------------------------ */
+  /* --- Live data --- */
+  client.models.Blessing.observeQuery().subscribe({
+    next: ({ items }) => {
+      upcoming = [];
+      requests = [];
+      completed = [];
+
+      items.forEach(b => {
+        if (b.status === 'scheduled') upcoming.push(b);
+        else if (b.status === 'pending') requests.push(b);
+        else if (b.status === 'completed') completed.push(b);
+        // 'declined' records are intentionally not shown in any list
+      });
+
+      renderStats();
+      renderUpcoming();
+      renderRequests();
+      renderCompleted();
+    },
+    error: (err) => {
+      console.error('Failed to load blessings:', err);
+      showToast("Couldn't load blessings from the database.", true);
+    },
+  });
+
+
   function renderStats() {
     document.getElementById('stat-scheduled').textContent = upcoming.length;
     document.getElementById('stat-pending').textContent   = requests.length;
   }
 
 
-  /* ------------------------------------------
-     2. RENDER — Upcoming Blessings
-  ------------------------------------------ */
   function renderUpcoming() {
     const sorted = upcoming.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
     const filtered = sorted.filter(matchesFilters);
@@ -102,32 +103,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     upcomingEmpty.classList.add('hidden');
 
-    upcomingList.innerHTML = filtered.map(b => {
-      const realIdx = upcoming.indexOf(b);
-      return `
+    upcomingList.innerHTML = filtered.map(b => `
       <li>
         <div class="blessing-row">
           <div class="blessing-icon">${blessingIconSvg()}</div>
           <div class="blessing-info">
-            <p class="blessing-name">${escapeHtml(b.requester)}</p>
+            <p class="blessing-name">${escapeHtml(b.requesterName)}</p>
             <p class="blessing-meta">${escapeHtml(b.type)} · ${escapeHtml(b.location)}</p>
           </div>
           <div>
             <div class="blessing-datetime">
               ${formatLongDate(b.date)}<br/>${escapeHtml(b.time)}
             </div>
-            <button type="button" class="blessing-details-btn" data-section="upcoming" data-index="${realIdx}">Details ›</button>
+            <button type="button" class="blessing-details-btn" data-section="upcoming" data-id="${b.id}">Details ›</button>
           </div>
         </div>
       </li>
-    `;
-    }).join('');
+    `).join('');
   }
 
 
-  /* ------------------------------------------
-     3. RENDER — New Blessing Requests
-  ------------------------------------------ */
   function renderRequests() {
     const filtered = requests.filter(matchesFilters);
 
@@ -140,171 +135,147 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     requestsEmpty.classList.add('hidden');
 
-    requestsList.innerHTML = filtered.map((r) => {
-      const realIdx = requests.indexOf(r);
-      return `
+    requestsList.innerHTML = filtered.map((r) => `
       <li>
         <div class="request-row">
           <div class="request-icon">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
           <div class="request-info">
-            <p class="request-name">${escapeHtml(r.requester)}</p>
+            <p class="request-name">${escapeHtml(r.requesterName)}</p>
             <p class="request-meta">${escapeHtml(r.type)} · requested for ${formatLongDate(r.preferredDate)}</p>
           </div>
           <div class="request-actions">
             <div class="request-action-row">
-              <button type="button" class="req-approve" data-index="${realIdx}">Approve</button>
-              <button type="button" class="req-decline" data-index="${realIdx}">Decline</button>
+              <button type="button" class="req-approve" data-id="${r.id}">Approve</button>
+              <button type="button" class="req-decline" data-id="${r.id}">Decline</button>
             </div>
-            <button type="button" class="blessing-details-btn" data-section="requests" data-index="${realIdx}">Details ›</button>
+            <button type="button" class="blessing-details-btn" data-section="requests" data-id="${r.id}">Details ›</button>
           </div>
         </div>
       </li>
-    `;
-    }).join('');
+    `).join('');
   }
 
   requestsList.addEventListener('click', (e) => {
     const approveBtn = e.target.closest('.req-approve');
     const declineBtn = e.target.closest('.req-decline');
 
-    if (approveBtn) {
-      const idx = parseInt(approveBtn.dataset.index, 10);
-      approveRequest(idx);
-    }
-
-    if (declineBtn) {
-      const idx = parseInt(declineBtn.dataset.index, 10);
-      openDeclineModal(idx);
-    }
+    if (approveBtn) approveRequest(approveBtn.dataset.id);
+    if (declineBtn) openDeclineModal(declineBtn.dataset.id);
   });
 
-  function approveRequest(idx) {
-    const r = requests[idx];
+  async function approveRequest(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
 
-    // Move into the upcoming schedule (default to 9:00 AM unless rescheduled later)
-    upcoming.push({
-      requester: r.requester,
-      type: r.type,
-      location: 'To be confirmed',
-      date: r.preferredDate,
-      time: '09:00 AM',
-    });
-
-    requests.splice(idx, 1);
-
-    renderStats();
-    renderUpcoming();
-    renderRequests();
-    showToast(`Request approved — ${r.requester} added to the schedule.`);
+    try {
+      const result = await client.models.Blessing.update({
+        id,
+        status: 'scheduled',
+        date: r.preferredDate,
+        time: r.time || '09:00 AM',
+        location: r.location || 'To be confirmed',
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      showToast(`Request approved — ${r.requesterName} added to the schedule.`);
+    } catch (err) {
+      console.error('Failed to approve request:', err);
+      showToast(err.message || "Couldn't approve request.", true);
+    }
   }
 
 
-  /* ------------------------------------------
-     4. RENDER — Completed Blessings (May 2026)
-  ------------------------------------------ */
   function renderCompleted() {
-    const filtered = completed.filter(matchesFilters);
+    const sorted = completed.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    const filtered = sorted.filter(matchesFilters);
 
     completedCount.textContent = `${filtered.length} completed`;
 
-    completedList.innerHTML = filtered.map(c => {
-      const realIdx = completed.indexOf(c);
-      return `
+    completedList.innerHTML = filtered.map(c => `
       <li>
         <div class="completed-row">
           <div class="completed-icon">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>
           </div>
           <div class="completed-info">
-            <p class="completed-name">${escapeHtml(c.requester)}</p>
+            <p class="completed-name">${escapeHtml(c.requesterName)}</p>
             <p class="completed-meta">${escapeHtml(c.type)}</p>
           </div>
           <div>
             <div class="completed-date">${formatLongDate(c.date)}</div>
-            <button type="button" class="blessing-details-btn" data-section="completed" data-index="${realIdx}">Details ›</button>
+            <button type="button" class="blessing-details-btn" data-section="completed" data-id="${c.id}">Details ›</button>
           </div>
         </div>
       </li>
-    `;
-    }).join('');
+    `).join('');
   }
 
-  renderStats();
-  renderUpcoming();
-  renderRequests();
-  renderCompleted();
 
-  searchInput.addEventListener('input', () => {
-    renderUpcoming();
-    renderRequests();
-    renderCompleted();
-  });
-
-  typeFilter.addEventListener('change', () => {
-    renderUpcoming();
-    renderRequests();
-    renderCompleted();
-  });
+  searchInput.addEventListener('input', () => { renderUpcoming(); renderRequests(); renderCompleted(); });
+  typeFilter.addEventListener('change', () => { renderUpcoming(); renderRequests(); renderCompleted(); });
 
   document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
     searchInput.value = '';
     typeFilter.value = '';
-    renderUpcoming();
-    renderRequests();
-    renderCompleted();
+    renderUpcoming(); renderRequests(); renderCompleted();
   });
 
   [upcomingList, requestsList, completedList].forEach(listEl => {
     listEl.addEventListener('click', (e) => {
       const detailsBtn = e.target.closest('.blessing-details-btn');
       if (!detailsBtn) return;
-      openDetailsModal(detailsBtn.dataset.section, parseInt(detailsBtn.dataset.index, 10));
+      openDetailsModal(detailsBtn.dataset.section, detailsBtn.dataset.id);
     });
   });
 
 
-  /* ------------------------------------------
-     5. SCHEDULE BLESSING MODAL
-  ------------------------------------------ */
+  /* --- Schedule Blessing Modal --- */
   const scheduleModal = document.getElementById('schedule-modal');
 
   document.getElementById('btn-schedule-blessing').addEventListener('click', () => {
-    document.getElementById('schedule-date').value = TODAY_ISO;
+    document.getElementById('schedule-date').value = todayISO;
     openModal(scheduleModal);
   });
 
-  document.getElementById('schedule-submit').addEventListener('click', () => {
-    const requester = document.getElementById('schedule-requester').value.trim();
+  document.getElementById('schedule-submit').addEventListener('click', async () => {
+    const requesterName = document.getElementById('schedule-requester').value.trim();
     const date       = document.getElementById('schedule-date').value;
     const time24     = document.getElementById('schedule-time').value;
     const type        = document.getElementById('schedule-type').value;
     const location     = document.getElementById('schedule-location').value.trim();
 
-    if (!requester || !date || !time24 || !type) {
+    if (!requesterName || !date || !time24 || !type) {
       showToast('Please fill in requester, date, time, and blessing type.', true);
       return;
     }
 
-    upcoming.push({
-      requester,
-      type,
-      location: location || 'Not specified',
-      date,
-      time: formatTime12(time24),
-    });
+    const submitBtn = document.getElementById('schedule-submit');
+    submitBtn.disabled = true;
 
-    renderStats();
-    renderUpcoming();
-    closeModal(scheduleModal);
-    showToast(`Blessing scheduled for ${requester} on ${formatShortDate(date)}.`);
+    try {
+      const result = await client.models.Blessing.create({
+        requesterName,
+        type,
+        location: location || 'Not specified',
+        date,
+        time: formatTime12(time24),
+        status: 'scheduled',
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
-    // Reset form
-    document.getElementById('schedule-requester').value = '';
-    document.getElementById('schedule-time').value = '';
-    document.getElementById('schedule-type').value = '';
-    document.getElementById('schedule-location').value = '';
+      closeModal(scheduleModal);
+      showToast(`Blessing scheduled for ${requesterName} on ${formatLongDate(date)}.`);
+      document.getElementById('schedule-requester').value = '';
+      document.getElementById('schedule-time').value = '';
+      document.getElementById('schedule-type').value = '';
+      document.getElementById('schedule-location').value = '';
+    } catch (err) {
+      console.error('Failed to schedule blessing:', err);
+      showToast("Couldn't save the blessing.", true);
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
   function formatTime12(time24) {
@@ -315,39 +286,45 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     6. DECLINE REASON MODAL
-  ------------------------------------------ */
+  /* --- Decline Reason Modal --- */
   const declineModal = document.getElementById('decline-modal');
   const declineTargetName = document.getElementById('decline-target-name');
   const declineReasonInput = document.getElementById('decline-reason');
-  let declineTargetIndex = null;
+  let declineTargetId = null;
 
-  function openDeclineModal(idx) {
-    declineTargetIndex = idx;
-    declineTargetName.textContent = requests[idx].requester;
+  function openDeclineModal(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+    declineTargetId = id;
+    declineTargetName.textContent = r.requesterName;
     declineReasonInput.value = '';
     openModal(declineModal);
   }
 
-  document.getElementById('decline-submit').addEventListener('click', () => {
-    if (declineTargetIndex === null) return;
+  document.getElementById('decline-submit').addEventListener('click', async () => {
+    if (!declineTargetId) return;
 
-    const r = requests[declineTargetIndex];
-    requests.splice(declineTargetIndex, 1);
+    const r = requests.find(x => x.id === declineTargetId);
+    const reason = declineReasonInput.value.trim();
 
-    renderStats();
-    renderRequests();
-    closeModal(declineModal);
-    showToast(`Request from ${r.requester} declined.`);
-
-    declineTargetIndex = null;
+    try {
+      const result = await client.models.Blessing.update({
+        id: declineTargetId,
+        status: 'declined',
+        declineReason: reason || undefined,
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeModal(declineModal);
+      showToast(`Request from ${r ? r.requesterName : 'requester'} declined.`);
+      declineTargetId = null;
+    } catch (err) {
+      console.error('Failed to decline request:', err);
+      showToast("Couldn't decline the request.", true);
+    }
   });
 
 
-  /* ------------------------------------------
-     7. MODAL HELPERS (shared open/close/escape)
-  ------------------------------------------ */
+  /* --- Modal helpers --- */
   const detailsModal = document.getElementById('details-modal');
   const detailsBody   = document.getElementById('details-body');
 
@@ -360,82 +337,45 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   [scheduleModal, declineModal, detailsModal].forEach(modal => {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal(modal);
-    });
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeModal(scheduleModal);
-      closeModal(declineModal);
-      closeModal(detailsModal);
-    }
+    if (e.key === 'Escape') { closeModal(scheduleModal); closeModal(declineModal); closeModal(detailsModal); }
   });
 
-  function openModal(modal) {
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
+  function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+  function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
 
-  function closeModal(modal) {
-    if (modal.classList.contains('hidden')) return;
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-
-  function openDetailsModal(section, idx) {
+  function openDetailsModal(section, id) {
     let record, statusLabel, dateLabel, dateValue, extraRows = '';
 
     if (section === 'upcoming') {
-      record = upcoming[idx];
+      record = upcoming.find(x => x.id === id);
       statusLabel = 'Scheduled';
       dateLabel = 'Date & Time';
-      dateValue = `${formatLongDate(record.date)} · ${record.time}`;
-      extraRows = `
-        <div>
-          <p class="so-detail-label">Location</p>
-          <p class="so-detail-value">${escapeHtml(record.location)}</p>
-        </div>
-      `;
+      if (record) dateValue = `${formatLongDate(record.date)} · ${record.time}`;
+      if (record) extraRows = `<div><p class="so-detail-label">Location</p><p class="so-detail-value">${escapeHtml(record.location)}</p></div>`;
     } else if (section === 'requests') {
-      record = requests[idx];
+      record = requests.find(x => x.id === id);
       statusLabel = 'Pending Approval';
       dateLabel = 'Preferred Date';
-      dateValue = formatLongDate(record.preferredDate);
-      extraRows = `
-        <div>
-          <p class="so-detail-label">Requested On</p>
-          <p class="so-detail-value">${formatLongDate(record.requestedDate)}</p>
-        </div>
-      `;
+      if (record) dateValue = formatLongDate(record.preferredDate);
     } else {
-      record = completed[idx];
+      record = completed.find(x => x.id === id);
       statusLabel = 'Completed';
       dateLabel = 'Date Completed';
-      dateValue = formatLongDate(record.date);
+      if (record) dateValue = formatLongDate(record.date);
     }
 
     if (!record) return;
 
     detailsBody.innerHTML = `
       <div class="so-detail-grid">
-        <div>
-          <p class="so-detail-label">Requester</p>
-          <p class="so-detail-value">${escapeHtml(record.requester)}</p>
-        </div>
-        <div>
-          <p class="so-detail-label">Blessing Type</p>
-          <p class="so-detail-value">${escapeHtml(record.type)}</p>
-        </div>
-        <div>
-          <p class="so-detail-label">Status</p>
-          <p class="so-detail-value">${statusLabel}</p>
-        </div>
-        <div>
-          <p class="so-detail-label">${dateLabel}</p>
-          <p class="so-detail-value">${dateValue}</p>
-        </div>
+        <div><p class="so-detail-label">Requester</p><p class="so-detail-value">${escapeHtml(record.requesterName)}</p></div>
+        <div><p class="so-detail-label">Blessing Type</p><p class="so-detail-value">${escapeHtml(record.type)}</p></div>
+        <div><p class="so-detail-label">Status</p><p class="so-detail-value">${statusLabel}</p></div>
+        <div><p class="so-detail-label">${dateLabel}</p><p class="so-detail-value">${dateValue}</p></div>
         ${extraRows}
       </div>
     `;
@@ -444,19 +384,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     8. TOAST NOTIFICATIONS
-  ------------------------------------------ */
   const toast = document.getElementById('toast');
   let toastTimer = null;
-
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.querySelector('.toast-message').textContent = message;
+    const msgEl = toast.querySelector('.toast-message');
+    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));
-
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.classList.add('hidden'), 200);
