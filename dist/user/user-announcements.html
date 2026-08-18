@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Announcements – SacraDigit</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { DEFAULT: '#1e2a4a', dark: '#16213a', light: '#2a3a5c' },
+            gold: '#c9a84c', lavender: '#8b8fc7', 'lavender-light': '#a8acda',
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" crossorigin href="/assets/user-user-announcements-BROFjkyM.css">
+  <link rel="stylesheet" crossorigin href="/assets/user-shell-CrCGhYfV.css">
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="user-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
+          <span class="text-white font-bold text-xs">SD</span>
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Parish Portal</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="User navigation">
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li><a href="user-dashboard.html" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Dashboard</a></li>
+        </ul>
+        <p class="sidebar-label">Parish</p>
+        <ul class="space-y-0.5 mb-5">
+          <li><a href="user-mass-schedule.html" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Mass Schedule</a></li>
+          <li><a href="user-announcements.html" class="sidebar-link active">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+            Announcements</a></li>
+        </ul>
+        <p class="sidebar-label">Services</p>
+        <ul class="space-y-0.5 mb-5">
+          <li><a href="user-request-certificate.html" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Request Certificate</a></li>
+          <li><a href="user-my-requests.html" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+            My Requests</a></li>
+          <li><a href="user-mass-intentions.html" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Mass Intentions</a></li>
+          <li><a href="user-facility-booking.html" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Facility Booking</a></li>
+        </ul>
+        <p class="sidebar-label">Finance</p>
+        <ul class="space-y-0.5">
+          <li><a href="user-donations.html" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            Donations</a></li>
+        </ul>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left">
+          <div class="w-9 h-9 rounded-full bg-lavender flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs" id="avatar-initials">MP</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate" id="sidebar-user-name">Maria P. Santos</p>
+            <p class="text-gray-400 text-xs truncate">Parishioner</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Announcements</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
+
+        <!-- Page heading -->
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Announcements</h2>
+          <p class="text-gray-500 text-sm mt-1">Stay up to date with news and events from Our Lady of Fatima Parish.</p>
+        </div>
+
+        <!-- Search + filter bar -->
+        <div class="ann-filter-bar">
+          <div class="ann-search-wrap">
+            <svg class="w-4 h-4 ann-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+            <input id="search-input" type="text" placeholder="Search announcements…" class="ann-search-input" />
+          </div>
+          <div class="shrink-0">
+            <select id="audience-filter" class="ann-filter-select">
+              <option value="">All Audiences</option>
+              <option value="All Parishioners">All Parishioners</option>
+              <option value="Youth Ministry">Youth Ministry</option>
+              <option value="Lectors &amp; Commentators">Lectors &amp; Commentators</option>
+              <option value="Choir">Choir</option>
+              <option value="Catechists">Catechists</option>
+            </select>
+          </div>
+          <button id="btn-clear" type="button" class="ann-clear-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
+            Clear
+          </button>
+        </div>
+
+        <!-- Results count -->
+        <p id="results-label" class="text-xs text-gray-400 font-medium -mb-2"></p>
+
+        <!-- Announcements card grid -->
+        <div id="ann-grid" class="ann-full-grid"></div>
+
+        <!-- Empty state -->
+        <div id="ann-empty" class="empty-state hidden panel py-16">
+          <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+          <p class="text-sm font-medium text-gray-600">No announcements found</p>
+          <p class="text-xs text-gray-400 mt-1">Try a different search or clear your filters.</p>
+        </div>
+
+        <!-- Detail modal -->
+        <div id="detail-modal" class="modal-overlay hidden">
+          <div class="modal-card ann-detail-card">
+            <div class="modal-header">
+              <h3 class="modal-title" id="detail-title"></h3>
+              <button class="modal-close" data-close-modal aria-label="Close">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="flex items-center gap-2 mb-4">
+                <span id="detail-audience" class="ann-audience-tag"></span>
+                <span id="detail-date" class="text-xs text-gray-400 font-medium"></span>
+              </div>
+              <p id="detail-body" class="text-sm text-gray-700 leading-relaxed"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" data-close-modal>Close</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="user-shell.js"></script>
+  <script src="user-announcements.js"></script>
+</body>
+</html>

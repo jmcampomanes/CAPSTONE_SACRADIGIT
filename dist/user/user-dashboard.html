@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – SacraDigit</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { DEFAULT: '#1e2a4a', dark: '#16213a', light: '#2a3a5c' },
+            gold: '#c9a84c',
+            lavender: '#8b8fc7',
+            'lavender-light': '#a8acda',
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+
+  <!-- Shared user CSS -->
+  <link rel="stylesheet" crossorigin href="/assets/user-user-dashboard-BrI8-nDl.css">
+  <link rel="stylesheet" crossorigin href="/assets/user-shell-CrCGhYfV.css">
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="user-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <!-- Logo -->
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
+          <span class="text-white font-bold text-xs">SD</span>
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Parish Portal</p>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="User navigation">
+
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="user-dashboard.html" class="sidebar-link active">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Dashboard
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Parish</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="user-mass-schedule.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Mass Schedule
+            </a>
+          </li>
+          <li>
+            <a href="user-announcements.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+              Announcements
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Services</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="user-request-certificate.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Request Certificate
+            </a>
+          </li>
+          <li>
+            <a href="user-my-requests.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+              My Requests
+            </a>
+          </li>
+          <li>
+            <a href="user-mass-intentions.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              Mass Intentions
+            </a>
+          </li>
+          <li>
+            <a href="user-facility-booking.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Facility Booking
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Finance</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="user-donations.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Donations
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- User profile card -->
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left">
+          <div class="w-9 h-9 rounded-full bg-lavender flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs" id="avatar-initials">MP</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate" id="sidebar-user-name">Maria P. Santos</p>
+            <p class="text-gray-400 text-xs truncate">Parishioner</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <!-- Page content -->
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-6">
+
+        <!-- Personalized greeting -->
+        <div class="greeting-banner">
+          <div>
+            <p class="greeting-label">Welcome back,</p>
+            <h2 class="greeting-name" id="greeting-name">Maria</h2>
+            <p class="greeting-sub">Here's what's happening at Our Lady of Fatima Parish today.</p>
+          </div>
+          <div class="greeting-icon">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </div>
+        </div>
+
+        <!-- Quick action cards -->
+        <div>
+          <h3 class="section-heading">Quick Actions</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="quick-actions-grid">
+            <!-- Injected by user-dashboard.js -->
+          </div>
+        </div>
+
+        <!-- Today's mass schedule + Upcoming special masses -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          <!-- Today's Mass Schedule -->
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Today's Mass Schedule</h2>
+              <a href="user-mass-schedule.html" class="panel-link">Full schedule →</a>
+            </div>
+            <ul id="todays-masses" class="divide-y divide-gray-100">
+              <!-- Injected by user-dashboard.js -->
+            </ul>
+          </div>
+
+          <!-- Upcoming Special Masses -->
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Upcoming Special Masses</h2>
+              <a href="user-mass-schedule.html" class="panel-link">View all →</a>
+            </div>
+            <ul id="special-masses" class="divide-y divide-gray-100">
+              <!-- Injected by user-dashboard.js -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- Recent Announcements -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Recent Announcements</h2>
+            <a href="user-announcements.html" class="panel-link">View all →</a>
+          </div>
+          <div id="announcements-grid" class="user-announcements-grid">
+            <!-- Injected by user-dashboard.js -->
+          </div>
+        </div>
+
+        <!-- My Recent Requests (status at a glance) -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">My Recent Requests</h2>
+            <a href="user-my-requests.html" class="panel-link">View all →</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="user-table">
+              <thead>
+                <tr>
+                  <th>Certificate Type</th>
+                  <th>Date Submitted</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="my-requests-tbody">
+                <!-- Injected by user-dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Scripts -->
+  <script src="user-shell.js"></script>
+  <script src="user-dashboard.js"></script>
+</body>
+</html>
