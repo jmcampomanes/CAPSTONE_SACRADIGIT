@@ -1,14 +1,18 @@
 /* ============================================
-   SacraDigit Admin — Facility Booking Scripts
+   SacraDigit Admin — Facility Booking Scripts (AWS Amplify)
+   Backed by the FacilityBooking model.
+   facilityName/purpose/date/startTime/status map
+   directly; "Cancel" deletes the record (matching
+   the original splice-out behavior) rather than
+   using the 'declined' status, since declined is
+   meant for requests never approved in the first place.
    ============================================ */
+
+import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ------------------------------------------
-     0. SAMPLE DATA
-     "Today" fixed to match the rest of the app.
-  ------------------------------------------ */
-  const TODAY_ISO = '2026-06-19';
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   const facilities = [
     'Parish Hall',
@@ -18,27 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
     'Multi-Purpose Hall',
   ];
 
-  let bookings = [
-    { facility: 'Parish Hall',           purpose: 'Reyes Family — Wedding Reception', date: '2026-06-20', time: '02:00 PM', status: 'Approved' },
-    { facility: 'Adoration Chapel',      purpose: 'Couples for Christ — Prayer Meeting', date: '2026-06-21', time: '07:00 PM', status: 'Approved' },
-    { facility: 'Catechetical Room A',   purpose: 'Catechism Teachers Training',       date: '2026-06-22', time: '09:00 AM', status: 'Pending'  },
-    { facility: 'Multi-Purpose Hall',    purpose: 'Youth Ministry Retreat',             date: '2026-06-24', time: '08:00 AM', status: 'Pending'  },
-    { facility: 'Parish Hall',           purpose: 'Bautista Family — Baptismal Reception', date: '2026-06-27', time: '11:00 AM', status: 'Approved' },
-    { facility: 'Catechetical Room B',   purpose: 'Lectors & Commentators Meeting', date: '2026-06-30', time: '06:00 PM', status: 'Pending'  },
-  ];
+  let bookings = []; // kept in sync via observeQuery, each has .id
 
   const tbody          = document.getElementById('bookings-tbody');
   const bookingsEmpty   = document.getElementById('bookings-empty');
   const bookingsCount   = document.getElementById('bookings-count');
 
-  const badgeClass = {
-    'Pending':  'badge-amber',
-    'Approved': 'badge-green',
-  };
+  const badgeClass = { pending: 'badge-amber', approved: 'badge-green' };
+  const statusLabel = { pending: 'Pending', approved: 'Approved' };
 
   function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = str;
+    div.textContent = str || '';
     return div.innerHTML;
   }
 
@@ -65,11 +60,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     1. STAT BOXES
-  ------------------------------------------ */
+  /* --- Live data --- */
+  client.models.FacilityBooking.observeQuery().subscribe({
+    next: ({ items }) => {
+      bookings = items;
+      renderAll();
+    },
+    error: (err) => {
+      console.error('Failed to load bookings:', err);
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 text-sm py-8">Couldn't load bookings.</td></tr>`;
+    },
+  });
+
+
   function renderStats() {
-    const weekStart = new Date(TODAY_ISO + 'T00:00:00');
+    const weekStart = new Date(todayISO + 'T00:00:00');
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
 
@@ -80,15 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('stat-total-week').textContent = thisWeekCount;
     document.getElementById('stat-facilities').textContent = facilities.length;
-    document.getElementById('stat-pending').textContent = bookings.filter(b => b.status === 'Pending').length;
+    document.getElementById('stat-pending').textContent = bookings.filter(b => b.status === 'pending').length;
   }
 
 
-  /* ------------------------------------------
-     2. RENDER — Table view
-  ------------------------------------------ */
   function renderTable() {
-    const sorted = bookings.slice().sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+    const sorted = bookings.slice().sort((a, b) => new Date(a.date + ' ' + a.startTime) - new Date(b.date + ' ' + b.startTime));
 
     bookingsCount.textContent = `${sorted.length} booking${sorted.length === 1 ? '' : 's'}`;
 
@@ -100,81 +102,80 @@ document.addEventListener('DOMContentLoaded', () => {
     bookingsEmpty.classList.add('hidden');
 
     tbody.innerHTML = sorted.map((b) => {
-      const realIndex = bookings.indexOf(b);
       let actionsHtml = '';
-
-      if (b.status === 'Pending') {
+      if (b.status === 'pending') {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="row-approve" data-index="${realIndex}">Approve</button>
-            <button type="button" class="row-reject" data-index="${realIndex}">Cancel</button>
+            <button type="button" class="row-approve" data-id="${b.id}">Approve</button>
+            <button type="button" class="row-reject" data-id="${b.id}">Cancel</button>
           </div>`;
       } else {
-        actionsHtml = `<div class="row-actions"><button type="button" class="row-reject" data-index="${realIndex}">Cancel</button></div>`;
+        actionsHtml = `<div class="row-actions"><button type="button" class="row-reject" data-id="${b.id}">Cancel</button></div>`;
       }
 
       return `
         <tr>
-          <td class="font-medium text-gray-900">${escapeHtml(b.facility)}</td>
+          <td class="font-medium text-gray-900">${escapeHtml(b.facilityName)}</td>
           <td>${formatShortDate(b.date)}</td>
-          <td>${escapeHtml(b.time)}</td>
-          <td><span class="badge ${badgeClass[b.status] || 'badge-gray'}">${escapeHtml(b.status)}</span></td>
+          <td>${escapeHtml(b.startTime)}</td>
+          <td><span class="badge ${badgeClass[b.status] || 'badge-gray'}">${statusLabel[b.status] || b.status}</span></td>
           <td class="text-right">${actionsHtml}</td>
         </tr>
       `;
     }).join('');
   }
 
-  tbody.addEventListener('click', (e) => {
+  tbody.addEventListener('click', async (e) => {
     const approveBtn = e.target.closest('.row-approve');
     const cancelBtn  = e.target.closest('.row-reject');
 
     if (approveBtn) {
-      const idx = parseInt(approveBtn.dataset.index, 10);
-      bookings[idx].status = 'Approved';
-      renderAll();
-      showToast(`Booking for ${bookings[idx].facility} approved.`);
+      const b = bookings.find(x => x.id === approveBtn.dataset.id);
+      try {
+        const result = await client.models.FacilityBooking.update({ id: approveBtn.dataset.id, status: 'approved' });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`Booking for ${b ? b.facilityName : 'facility'} approved.`);
+      } catch (err) {
+        console.error('Failed to approve:', err);
+        showToast(err.message || "Couldn't approve booking.", true);
+      }
     }
 
-    if (cancelBtn) {
-      const idx = parseInt(cancelBtn.dataset.index, 10);
-      openCancelModal(idx);
-    }
+    if (cancelBtn) openCancelModal(cancelBtn.dataset.id);
   });
 
 
-  /* ------------------------------------------
-     2b. CANCEL BOOKING CONFIRMATION MODAL
-     Cancelling used to splice the booking out
-     instantly with no way back — now it routes
-     through a confirmation step first.
-  ------------------------------------------ */
+  /* --- Cancel confirmation modal --- */
   const cancelModal      = document.getElementById('cancel-modal');
   const cancelTargetName  = document.getElementById('cancel-target-name');
-  let cancelTargetIndex = null;
+  let cancelTargetId = null;
 
-  function openCancelModal(idx) {
-    cancelTargetIndex = idx;
-    const b = bookings[idx];
-    cancelTargetName.textContent = `${b.facility} — ${formatShortDate(b.date)}, ${b.time}`;
+  function openCancelModal(id) {
+    cancelTargetId = id;
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+    cancelTargetName.textContent = `${b.facilityName} — ${formatShortDate(b.date)}, ${b.startTime}`;
     openModal(cancelModal);
   }
 
-  document.getElementById('cancel-confirm-submit').addEventListener('click', () => {
-    if (cancelTargetIndex === null) return;
-    const removed = bookings[cancelTargetIndex];
-    bookings.splice(cancelTargetIndex, 1);
-    renderAll();
-    closeModal(cancelModal);
-    showToast(`Booking for ${removed.facility} on ${formatShortDate(removed.date)} cancelled.`);
-    cancelTargetIndex = null;
+  document.getElementById('cancel-confirm-submit').addEventListener('click', async () => {
+    if (cancelTargetId === null) return;
+    const removed = bookings.find(x => x.id === cancelTargetId);
+    try {
+      const result = await client.models.FacilityBooking.delete({ id: cancelTargetId });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeModal(cancelModal);
+      showToast(`Booking for ${removed ? removed.facilityName : 'facility'} cancelled.`);
+      cancelTargetId = null;
+    } catch (err) {
+      console.error('Failed to cancel booking:', err);
+      showToast(err.message || "Couldn't cancel booking.", true);
+    }
   });
 
 
-  /* ------------------------------------------
-     3. RENDER — Calendar view
-  ------------------------------------------ */
-  let calendarDate = new Date(TODAY_ISO + 'T00:00:00'); // tracks which month is shown
+  /* --- Calendar view --- */
+  let calendarDate = new Date(todayISO + 'T00:00:00');
   let selectedDateIso = null;
 
   const calMonthLabel  = document.getElementById('cal-month-label');
@@ -194,25 +195,20 @@ document.addEventListener('DOMContentLoaded', () => {
     calMonthLabel.textContent = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
     const firstDay = new Date(year, month, 1);
-    const startWeekday = firstDay.getDay(); // 0 = Sun
+    const startWeekday = firstDay.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     let cellsHtml = '';
-
-    // Leading empty cells
-    for (let i = 0; i < startWeekday; i++) {
-      cellsHtml += `<div class="calendar-cell empty"></div>`;
-    }
+    for (let i = 0; i < startWeekday; i++) cellsHtml += `<div class="calendar-cell empty"></div>`;
 
     for (let day = 1; day <= daysInMonth; day++) {
       const iso = isoFromParts(year, month, day);
       const dayBookings = bookings.filter(b => b.date === iso);
-
-      const isToday = iso === TODAY_ISO;
+      const isToday = iso === todayISO;
       const isSelected = iso === selectedDateIso;
 
       const dotsHtml = dayBookings.slice(0, 4).map(b =>
-        `<span class="calendar-dot ${b.status === 'Pending' ? 'pending' : ''}"></span>`
+        `<span class="calendar-dot ${b.status === 'pending' ? 'pending' : ''}"></span>`
       ).join('');
 
       cellsHtml += `
@@ -224,8 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     calGrid.innerHTML = cellsHtml;
-
-    // Wire up cell clicks
     calGrid.querySelectorAll('.calendar-cell:not(.empty)').forEach(cell => {
       cell.addEventListener('click', () => {
         const iso = cell.dataset.date;
@@ -243,13 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const dayBookings = bookings
-      .filter(b => b.date === selectedDateIso)
-      .sort((a, b) => a.time.localeCompare(b.time));
-
-    const label = new Date(selectedDateIso + 'T00:00:00').toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric',
-    });
+    const dayBookings = bookings.filter(b => b.date === selectedDateIso).sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const label = new Date(selectedDateIso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
     if (dayBookings.length === 0) {
       calDayDetail.innerHTML = `
@@ -261,9 +250,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="calendar-day-detail-title">${label}</p>
         ${dayBookings.map(b => `
           <div class="calendar-day-booking">
-            <span class="time">${escapeHtml(b.time)}</span>
-            <span class="facility">${escapeHtml(b.facility)} — ${escapeHtml(b.purpose)}</span>
-            <span class="badge ${badgeClass[b.status] || 'badge-gray'}">${escapeHtml(b.status)}</span>
+            <span class="time">${escapeHtml(b.startTime)}</span>
+            <span class="facility">${escapeHtml(b.facilityName)} — ${escapeHtml(b.purpose)}</span>
+            <span class="badge ${badgeClass[b.status] || 'badge-gray'}">${statusLabel[b.status] || b.status}</span>
           </div>
         `).join('')}
       `;
@@ -272,20 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
     calDayDetail.classList.remove('hidden');
   }
 
-  document.getElementById('cal-prev').addEventListener('click', () => {
-    calendarDate.setMonth(calendarDate.getMonth() - 1);
-    renderCalendar();
-  });
-
-  document.getElementById('cal-next').addEventListener('click', () => {
-    calendarDate.setMonth(calendarDate.getMonth() + 1);
-    renderCalendar();
-  });
+  document.getElementById('cal-prev').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); });
+  document.getElementById('cal-next').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); });
 
 
-  /* ------------------------------------------
-     4. VIEW TOGGLE — Table vs Calendar
-  ------------------------------------------ */
+  /* --- View toggle --- */
   const tableViewPanel    = document.getElementById('table-view-panel');
   const calendarViewPanel  = document.getElementById('calendar-view-panel');
   const calendarToggleBtn  = document.getElementById('btn-calendar-view');
@@ -297,89 +277,51 @@ document.addEventListener('DOMContentLoaded', () => {
     showingCalendar = !showingCalendar;
     calendarToggleBtn.setAttribute('aria-pressed', String(showingCalendar));
     calendarToggleLabel.textContent = showingCalendar ? 'Table View' : 'Calendar View';
-
     tableViewPanel.classList.toggle('hidden', showingCalendar);
     calendarViewPanel.classList.toggle('hidden', !showingCalendar);
-
-    if (showingCalendar) {
-      renderCalendar();
-      renderDayDetail();
-    }
+    if (showingCalendar) { renderCalendar(); renderDayDetail(); }
   });
 
 
-  /* ------------------------------------------
-     5. RENDER ALL (shared refresh helper)
-  ------------------------------------------ */
   function renderAll() {
     renderStats();
     renderTable();
-    if (showingCalendar) {
-      renderCalendar();
-      renderDayDetail();
-    }
+    if (showingCalendar) { renderCalendar(); renderDayDetail(); }
   }
 
-  renderAll();
 
-
-  /* ------------------------------------------
-     6. NEW BOOKING MODAL
-  ------------------------------------------ */
+  /* --- New booking modal --- */
   const bookingModal       = document.getElementById('booking-modal');
   const bookingFacilitySelect = document.getElementById('booking-facility');
 
-  bookingFacilitySelect.innerHTML = facilities
-    .map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`)
-    .join('');
+  bookingFacilitySelect.innerHTML = facilities.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+
+  const bookingPurposeInput = document.getElementById('booking-purpose');
+  const bookingDateInput     = document.getElementById('booking-date');
+  const bookingTimeInput       = document.getElementById('booking-time');
 
   document.getElementById('btn-new-booking').addEventListener('click', () => {
-    document.getElementById('booking-date').value = TODAY_ISO;
+    document.getElementById('booking-date').value = todayISO;
     [bookingFacilitySelect, bookingPurposeInput, bookingDateInput, bookingTimeInput].forEach(clearFieldError);
     openModal(bookingModal);
   });
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      closeModal(bookingModal);
-      closeModal(cancelModal);
-    });
+    btn.addEventListener('click', () => { closeModal(bookingModal); closeModal(cancelModal); });
   });
 
-  [bookingModal, cancelModal].forEach(m => {
-    m.addEventListener('click', (e) => {
-      if (e.target === m) closeModal(m);
-    });
-  });
+  [bookingModal, cancelModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(bookingModal); closeModal(cancelModal); } });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeModal(bookingModal);
-      closeModal(cancelModal);
-    }
-  });
-
-  function openModal(modal) {
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal(modal) {
-    if (modal.classList.contains('hidden')) return;
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-
-  const bookingPurposeInput = document.getElementById('booking-purpose');
-  const bookingDateInput     = document.getElementById('booking-date');
-  const bookingTimeInput       = document.getElementById('booking-time');
+  function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+  function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
 
   [bookingFacilitySelect, bookingPurposeInput, bookingDateInput, bookingTimeInput].forEach(input => {
     input.addEventListener('input', () => clearFieldError(input));
     input.addEventListener('change', () => clearFieldError(input));
   });
 
-  document.getElementById('booking-submit').addEventListener('click', () => {
+  document.getElementById('booking-submit').addEventListener('click', async () => {
     const facility = bookingFacilitySelect.value;
     const purpose   = bookingPurposeInput.value.trim();
     const date       = bookingDateInput.value;
@@ -393,26 +335,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!date)     { setFieldError(bookingDateInput, 'Date is required.'); hasError = true; }
     if (!time24)   { setFieldError(bookingTimeInput, 'Time is required.'); hasError = true; }
 
-    if (hasError) {
-      showToast('Please fix the highlighted fields.', true);
-      return;
+    if (hasError) { showToast('Please fix the highlighted fields.', true); return; }
+
+    try {
+      const result = await client.models.FacilityBooking.create({
+        facilityName: facility,
+        purpose,
+        date,
+        startTime: formatTime12(time24),
+        status: 'pending',
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      closeModal(bookingModal);
+      showToast(`Booking request submitted for ${facility} on ${formatShortDate(date)}.`);
+      bookingPurposeInput.value = '';
+      bookingTimeInput.value = '';
+    } catch (err) {
+      console.error('Failed to submit booking:', err);
+      showToast(err.message || "Couldn't submit booking.", true);
     }
-
-    bookings.push({
-      facility,
-      purpose,
-      date,
-      time: formatTime12(time24),
-      status: 'Pending',
-    });
-
-    renderAll();
-    closeModal(bookingModal);
-    showToast(`Booking request submitted for ${facility} on ${formatShortDate(date)}.`);
-
-    // Reset form
-    bookingPurposeInput.value = '';
-    bookingTimeInput.value = '';
   });
 
   function formatTime12(time24) {
@@ -423,19 +365,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     7. TOAST NOTIFICATIONS
-  ------------------------------------------ */
   const toast = document.getElementById('toast');
   let toastTimer = null;
-
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.querySelector('.toast-message').textContent = message;
+    const msgEl = toast.querySelector('.toast-message');
+    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));
-
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.classList.add('hidden'), 200);

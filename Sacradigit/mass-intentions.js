@@ -1,27 +1,19 @@
 /* ============================================
-   SacraDigit Admin — Mass Intentions Scripts
+   SacraDigit Admin — Mass Intentions Scripts (AWS Amplify)
+   Backed by the MassIntention model (extended with
+   donor, type, names, startTime/endTime, massDate/
+   massTime — see amplify/data/resource.ts).
+   The "names" field is a.json(), so it's stringified
+   before sending and parsed back when reading.
    ============================================ */
+
+import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ------------------------------------------
-     0. SAMPLE DATA
-     "Today" fixed to match the rest of the app.
-     submittedDate = when the donor submitted it
-     massDate/massTime = the assigned mass slot
-     (null until assigned)
-  ------------------------------------------ */
-  const TODAY_ISO = '2026-06-19';
+  const todayISO = new Date().toISOString().slice(0, 10);
 
-  let intentions = [
-    { donor: 'Santos Family',     type: 'For the Soul of...',    note: 'Lola Remedios Santos', submittedDate: '2026-06-18', massDate: '2026-06-21', massTime: '08:00 AM', offering: 300, status: 'Scheduled' },
-    { donor: 'Cruz, Jose R.',      type: 'Thanksgiving',           note: 'For a safe surgery',    submittedDate: '2026-06-18', massDate: '2026-06-21', massTime: '06:00 AM', offering: 250, status: 'Scheduled' },
-    { donor: 'Reyes Family',       type: 'Birthday Blessing',       note: "For Ana's 60th birthday", submittedDate: '2026-06-17', massDate: null,            massTime: null,        offering: 200, status: 'Pending'   },
-    { donor: 'Garcia, Pedro M.',   type: 'For the Soul of...',     note: 'Pedro Garcia Sr.',       submittedDate: '2026-06-17', massDate: null,            massTime: null,        offering: 300, status: 'Pending'   },
-    { donor: 'Villanueva Family',  type: 'Healing',                 note: 'For Rosa\'s recovery',    submittedDate: '2026-06-16', massDate: null,            massTime: null,        offering: 250, status: 'Pending'   },
-    { donor: 'Bautista, Carlo M.', type: 'Thanksgiving',             note: 'For passing the bar exam', submittedDate: '2026-05-30', massDate: '2026-06-05', massTime: '07:00 AM', offering: 300, status: 'Completed' },
-    { donor: 'Mendoza, Carmen P.', type: 'For the Soul of...',       note: 'Carmen\'s late husband', submittedDate: '2026-05-25', massDate: '2026-05-29', massTime: '06:00 AM', offering: 250, status: 'Completed' },
-  ];
+  let intentions = []; // kept in sync via observeQuery, each has .id
 
   const tbody          = document.getElementById('intentions-tbody');
   const intentionsEmpty  = document.getElementById('intentions-empty');
@@ -31,15 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const typeFilter    = document.getElementById('type-filter');
   const statusFilter   = document.getElementById('status-filter');
 
-  const badgeClass = {
-    'Pending':   'badge-amber',
-    'Scheduled': 'badge-green',
-    'Completed': 'badge-blue',
-  };
+  const badgeClass = { pending: 'badge-amber', scheduled: 'badge-green', completed: 'badge-blue' };
+  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', completed: 'Completed' };
 
   function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = str;
+    div.textContent = str || '';
     return div.innerHTML;
   }
 
@@ -50,7 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function formatPeso(amount) {
-    return '₱' + amount.toLocaleString('en-US');
+    return '₱' + (amount || 0).toLocaleString('en-US');
+  }
+
+  function getNames(it) {
+    if (!it.names) return [];
+    try { return JSON.parse(it.names); } catch { return []; }
   }
 
   function matchesFilters(it) {
@@ -59,8 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusVal  = statusFilter.value;
 
     const matchesQuery = !query ||
-      it.donor.toLowerCase().includes(query) ||
-      (it.note && it.note.toLowerCase().includes(query));
+      (it.donor || '').toLowerCase().includes(query) ||
+      getNames(it).some(n => n.toLowerCase().includes(query));
 
     const matchesType   = !typeVal || it.type === typeVal;
     const matchesStatus  = !statusVal || it.status === statusVal;
@@ -69,33 +63,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     1. STAT BOXES
-  ------------------------------------------ */
+  /* --- Live data --- */
+  client.models.MassIntention.observeQuery().subscribe({
+    next: ({ items }) => {
+      intentions = items;
+      renderStats();
+      renderTable();
+    },
+    error: (err) => {
+      console.error('Failed to load intentions:', err);
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Couldn't load intentions.</td></tr>`;
+    },
+  });
+
+
   function renderStats() {
-    const weekStart = new Date(TODAY_ISO + 'T00:00:00');
-    weekStart.setDate(weekStart.getDate() - 7); // count submissions from the past 7 days
-    const weekEnd = new Date(TODAY_ISO + 'T00:00:00');
+    const weekStart = new Date(todayISO + 'T00:00:00');
+    weekStart.setDate(weekStart.getDate() - 7);
+    const weekEnd = new Date(todayISO + 'T00:00:00');
     weekEnd.setDate(weekEnd.getDate() + 1);
 
     const thisWeek = intentions.filter(i => {
-      const d = new Date(i.submittedDate + 'T00:00:00');
+      const d = new Date(i.createdAt);
       return d >= weekStart && d < weekEnd;
     });
 
     document.getElementById('stat-total-week').textContent = thisWeek.length;
-    document.getElementById('stat-pending').textContent = intentions.filter(i => i.status === 'Pending').length;
+    document.getElementById('stat-pending').textContent = intentions.filter(i => i.status === 'pending').length;
 
-    const totalOfferings = thisWeek.reduce((sum, i) => sum + i.offering, 0);
+    const totalOfferings = thisWeek.reduce((sum, i) => sum + (i.offering || 0), 0);
     document.getElementById('stat-offerings').textContent = formatPeso(totalOfferings);
   }
 
 
-  /* ------------------------------------------
-     2. RENDER — Mass Intentions Log table
-  ------------------------------------------ */
   function renderTable() {
-    const sorted = intentions.slice().sort((a, b) => new Date(b.submittedDate) - new Date(a.submittedDate));
+    const sorted = intentions.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const filtered = sorted.filter(matchesFilters);
 
     logCount.textContent = `${filtered.length} intention${filtered.length === 1 ? '' : 's'}`;
@@ -108,16 +110,16 @@ document.addEventListener('DOMContentLoaded', () => {
     intentionsEmpty.classList.add('hidden');
 
     tbody.innerHTML = filtered.map((it) => {
-      const realIndex = intentions.indexOf(it);
       const massDateLabel = it.massDate
         ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}`
         : '—';
 
+      const names = getNames(it);
       const actionHtml = `
         <div class="row-actions">
-          <button type="button" class="row-edit" data-index="${realIndex}">Edit</button>
-          <button type="button" class="row-view" data-index="${realIndex}">View</button>
-          <button type="button" class="row-remove" data-index="${realIndex}">Remove</button>
+          <button type="button" class="row-edit" data-id="${it.id}">Edit</button>
+          <button type="button" class="row-view" data-id="${it.id}">View</button>
+          <button type="button" class="row-remove" data-id="${it.id}">Remove</button>
         </div>
       `;
 
@@ -126,12 +128,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="font-medium text-gray-900">${escapeHtml(it.donor)}</td>
           <td>
             ${escapeHtml(it.type)}
-            ${it.note ? `<div class="text-xs text-gray-400 mt-0.5">${escapeHtml(it.note)}</div>` : ''}
+            ${names.length ? `<div class="text-xs text-gray-400 mt-0.5">${escapeHtml(names.join(', '))}</div>` : ''}
             ${it.startTime && it.endTime ? `<div class="intention-timeline">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</div>` : ''}
           </td>
           <td>${massDateLabel}</td>
           <td class="offering-amount">${formatPeso(it.offering)}</td>
-          <td><span class="badge ${badgeClass[it.status] || 'badge-gray'}">${escapeHtml(it.status)}</span></td>
+          <td><span class="badge ${badgeClass[it.status] || 'badge-gray'}">${statusLabel[it.status] || it.status}</span></td>
           <td class="text-right no-print">${actionHtml}</td>
         </tr>
       `;
@@ -143,9 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewBtn    = e.target.closest('.row-view');
     const removeBtn   = e.target.closest('.row-remove');
 
-    if (editBtn)   openEditModal(parseInt(editBtn.dataset.index, 10));
-    if (viewBtn)    openDetailsModal(parseInt(viewBtn.dataset.index, 10));
-    if (removeBtn)  openRemoveModal(parseInt(removeBtn.dataset.index, 10));
+    if (editBtn)   openEditModal(editBtn.dataset.id);
+    if (viewBtn)    openDetailsModal(viewBtn.dataset.id);
+    if (removeBtn)  openRemoveModal(removeBtn.dataset.id);
   });
 
   searchInput.addEventListener('input', renderTable);
@@ -159,13 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTable();
   });
 
-  renderStats();
-  renderTable();
 
-
-  /* ------------------------------------------
-     3. ADD INTENTION MODAL
-  ------------------------------------------ */
+  /* --- Add/Edit Intention Modal --- */
   const addModal = document.getElementById('add-modal');
 
   const addNameInput  = document.getElementById('add-name-input');
@@ -174,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const addNameCountLabel = document.getElementById('add-name-count');
 
   let addIntentionNames = [];
-  let editTargetIndex = null; // null = Add mode, otherwise index into `intentions` being edited
+  let editTargetId = null; // null = Add mode, otherwise id of intention being edited
 
   const addModalTitle = document.getElementById('add-modal-title');
   const addSubmitBtn   = document.getElementById('add-submit');
@@ -208,10 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
   addAddNameBtn.addEventListener('click', addIntentionName);
 
   addNameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addIntentionName();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); addIntentionName(); }
   });
 
   addNameChipsBox.addEventListener('click', (e) => {
@@ -227,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-start-time').value = '';
     document.getElementById('add-end-time').value = '';
     document.getElementById('add-offering').value = '';
-    document.getElementById('add-status').value = 'Pending';
+    document.getElementById('add-status').value = 'pending';
     document.getElementById('add-mass-date').value = '';
     document.getElementById('add-mass-time').value = '';
     addIntentionNames = [];
@@ -235,18 +229,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('btn-add-intention').addEventListener('click', () => {
-    editTargetIndex = null;
+    editTargetId = null;
     addModalTitle.textContent = 'Add Mass Intention';
     addSubmitBtn.textContent = 'Save Intention';
     resetAddForm();
     openModal(addModal);
   });
 
-  function openEditModal(idx) {
-    const it = intentions[idx];
+  function openEditModal(id) {
+    const it = intentions.find(x => x.id === id);
     if (!it) return;
 
-    editTargetIndex = idx;
+    editTargetId = id;
     addModalTitle.textContent = 'Edit Mass Intention';
     addSubmitBtn.textContent = 'Save Changes';
 
@@ -259,13 +253,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-mass-date').value = it.massDate || '';
     document.getElementById('add-mass-time').value = it.massTime ? to24hInput(it.massTime) : '';
 
-    addIntentionNames = it.names && it.names.length ? it.names.slice() : (it.note ? [it.note] : []);
+    addIntentionNames = getNames(it);
     renderAddNameChips();
 
     openModal(addModal);
   }
 
-  // Convert a "08:00 AM" style string back into a 24h "HH:MM" value for <input type="time">
   function to24hInput(time12) {
     const [time, meridiem] = time12.split(' ');
     let [h, m] = time.split(':').map(Number);
@@ -274,8 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
-  document.getElementById('add-submit').addEventListener('click', () => {
-    // If a name was typed but not added yet, add it for them.
+  document.getElementById('add-submit').addEventListener('click', async () => {
     if (addNameInput.value.trim()) addIntentionName();
 
     const donor       = document.getElementById('add-donor').value.trim();
@@ -292,89 +284,61 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const names = addIntentionNames.slice();
-    const startTime = startTime24 ? formatTime12(startTime24) : null;
-    const endTime     = endTime24 ? formatTime12(endTime24) : null;
-    const massTime      = massTime24 ? formatTime12(massTime24) : null;
+    const names = JSON.stringify(addIntentionNames);
+    const startTime = startTime24 ? formatTime12(startTime24) : undefined;
+    const endTime     = endTime24 ? formatTime12(endTime24) : undefined;
+    const massTime      = massTime24 ? formatTime12(massTime24) : undefined;
 
-    if (editTargetIndex === null) {
-      // ADD mode
-      intentions.unshift({
-        donor,
-        type,
-        names,
-        note: names.join(', '),
-        startTime,
-        endTime,
-        submittedDate: TODAY_ISO,
-        massDate: massDate || null,
-        massTime: massDate ? massTime : null,
-        offering,
-        status,
-      });
-      showToast(`Intention logged for ${donor}.`);
-    } else {
-      // EDIT mode — update in place
-      const it = intentions[editTargetIndex];
-      it.donor      = donor;
-      it.type        = type;
-      it.names        = names;
-      it.note          = names.join(', ');
-      it.startTime      = startTime;
-      it.endTime          = endTime;
-      it.offering          = offering;
-      it.status              = status;
-      it.massDate              = massDate || null;
-      it.massTime                = massDate ? massTime : null;
-      showToast(`Changes saved for ${donor}.`);
-      editTargetIndex = null;
+    try {
+      if (editTargetId === null) {
+        const result = await client.models.MassIntention.create({
+          donor, type, names, startTime, endTime,
+          massDate: massDate || undefined,
+          massTime: massDate ? massTime : undefined,
+          offering, status,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`Intention logged for ${donor}.`);
+      } else {
+        const result = await client.models.MassIntention.update({
+          id: editTargetId,
+          donor, type, names, startTime, endTime,
+          massDate: massDate || undefined,
+          massTime: massDate ? massTime : undefined,
+          offering, status,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`Changes saved for ${donor}.`);
+        editTargetId = null;
+      }
+
+      closeModal(addModal);
+      resetAddForm();
+    } catch (err) {
+      console.error('Failed to save intention:', err);
+      showToast(err.message || "Couldn't save the intention.", true);
     }
-
-    renderStats();
-    renderTable();
-    closeModal(addModal);
-    resetAddForm();
   });
 
 
-  /* ------------------------------------------
-     4. VIEW (DETAILS) MODAL
-  ------------------------------------------ */
+  /* --- View (Details) Modal --- */
   const detailsModal = document.getElementById('details-modal');
   const detailsBody   = document.getElementById('details-body');
 
-  function openDetailsModal(idx) {
-    const it = intentions[idx];
+  function openDetailsModal(id) {
+    const it = intentions.find(x => x.id === id);
     if (!it) return;
 
-    const names = (it.names && it.names.length) ? it.names : (it.note ? [it.note] : []);
+    const names = getNames(it);
 
     detailsBody.innerHTML = `
       <div class="so-detail-grid">
-        <div>
-          <p class="so-detail-label">Donor</p>
-          <p class="so-detail-value">${escapeHtml(it.donor)}</p>
-        </div>
-        <div>
-          <p class="so-detail-label">Intention Type</p>
-          <p class="so-detail-value">${escapeHtml(it.type)}</p>
-        </div>
-        <div>
-          <p class="so-detail-label">Status</p>
-          <p class="so-detail-value">${escapeHtml(it.status)}</p>
-        </div>
-        <div>
-          <p class="so-detail-label">Offering</p>
-          <p class="so-detail-value">${formatPeso(it.offering)}</p>
-        </div>
-        <div>
-          <p class="so-detail-label">Submitted</p>
-          <p class="so-detail-value">${formatShortDate(it.submittedDate)}</p>
-        </div>
-        <div>
-          <p class="so-detail-label">Mass Date Assigned</p>
-          <p class="so-detail-value">${it.massDate ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}` : '—'}</p>
-        </div>
+        <div><p class="so-detail-label">Donor</p><p class="so-detail-value">${escapeHtml(it.donor)}</p></div>
+        <div><p class="so-detail-label">Intention Type</p><p class="so-detail-value">${escapeHtml(it.type)}</p></div>
+        <div><p class="so-detail-label">Status</p><p class="so-detail-value">${statusLabel[it.status] || it.status}</p></div>
+        <div><p class="so-detail-label">Offering</p><p class="so-detail-value">${formatPeso(it.offering)}</p></div>
+        <div><p class="so-detail-label">Submitted</p><p class="so-detail-value">${formatShortDate(it.createdAt ? it.createdAt.slice(0, 10) : null)}</p></div>
+        <div><p class="so-detail-label">Mass Date Assigned</p><p class="so-detail-value">${it.massDate ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}` : '—'}</p></div>
         ${it.startTime && it.endTime ? `
         <div class="col-span-2">
           <p class="so-detail-label">Timeline</p>
@@ -393,33 +357,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     5. REMOVE INTENTION MODAL
-  ------------------------------------------ */
+  /* --- Remove Intention Modal --- */
   const removeModal = document.getElementById('remove-modal');
   const removeTargetName = document.getElementById('remove-target-name');
-  let removeTargetIndex = null;
+  let removeTargetId = null;
 
-  function openRemoveModal(idx) {
-    const it = intentions[idx];
+  function openRemoveModal(id) {
+    const it = intentions.find(x => x.id === id);
     if (!it) return;
-    removeTargetIndex = idx;
+    removeTargetId = id;
     removeTargetName.textContent = it.donor;
     openModal(removeModal);
   }
 
-  document.getElementById('remove-submit').addEventListener('click', () => {
-    if (removeTargetIndex === null) return;
+  document.getElementById('remove-submit').addEventListener('click', async () => {
+    if (removeTargetId === null) return;
+    const it = intentions.find(x => x.id === removeTargetId);
 
-    const it = intentions[removeTargetIndex];
-    intentions.splice(removeTargetIndex, 1);
-
-    renderStats();
-    renderTable();
-    closeModal(removeModal);
-    showToast(`Intention for ${it.donor} removed.`);
-
-    removeTargetIndex = null;
+    try {
+      const result = await client.models.MassIntention.delete({ id: removeTargetId });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeModal(removeModal);
+      showToast(`Intention for ${it ? it.donor : 'donor'} removed.`);
+      removeTargetId = null;
+    } catch (err) {
+      console.error('Failed to remove intention:', err);
+      showToast(err.message || "Couldn't remove the intention.", true);
+    }
   });
 
 
@@ -431,66 +395,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     6. MODAL HELPERS (shared open/close/escape)
-  ------------------------------------------ */
+  /* --- Modal helpers --- */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const overlay = btn.closest('.modal-overlay');
-      if (overlay) closeModal(overlay);
-    });
+    btn.addEventListener('click', () => { const overlay = btn.closest('.modal-overlay'); if (overlay) closeModal(overlay); });
   });
 
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeModal(overlay);
-    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(overlay); });
   });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.modal-overlay').forEach(closeModal);
-    }
-  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(closeModal); });
 
-  function openModal(modal) {
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal(modal) {
-    if (modal.classList.contains('hidden')) return;
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
+  function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+  function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
 
 
-  /* ------------------------------------------
-     7. PRINT INTENTIONS
-  ------------------------------------------ */
+  /* --- Print --- */
   document.getElementById('btn-print').addEventListener('click', () => {
     const printDateEl = document.getElementById('print-date-value');
     if (printDateEl) {
-      const d = new Date(TODAY_ISO + 'T00:00:00');
+      const d = new Date();
       printDateEl.textContent = `Printed ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
     }
     window.print();
   });
 
 
-  /* ------------------------------------------
-     8. TOAST NOTIFICATIONS
-  ------------------------------------------ */
   const toast = document.getElementById('toast');
   let toastTimer = null;
-
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.querySelector('.toast-message').textContent = message;
+    const msgEl = toast.querySelector('.toast-message');
+    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));
-
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.classList.add('hidden'), 200);
