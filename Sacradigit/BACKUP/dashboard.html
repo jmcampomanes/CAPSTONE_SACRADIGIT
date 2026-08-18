@@ -197,8 +197,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
             </div>
-            <p class="stat-value" id="stat-todays-masses">–</p>
-            <p class="stat-sub" id="stat-todays-masses-sub">Loading…</p>
+            <p class="stat-value">4</p>
+            <p class="stat-sub">3 regular · 1 special</p>
           </div>
 
           <div class="stat-card">
@@ -208,8 +208,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               </div>
             </div>
-            <p class="stat-value" id="stat-pending-requests">–</p>
-            <p class="stat-sub" id="stat-pending-requests-sub">Loading…</p>
+            <p class="stat-value">4</p>
+            <p class="stat-sub">3 regular · 1 special</p>
           </div>
 
           <div class="stat-card">
@@ -219,8 +219,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2"/></svg>
               </div>
             </div>
-            <p class="stat-value" id="stat-records-digitized">–</p>
-            <p class="stat-sub" id="stat-records-digitized-sub">Loading…</p>
+            <p class="stat-value">1,284</p>
+            <p class="stat-sub">+12 this week</p>
           </div>
 
           <div class="stat-card">
@@ -244,8 +244,27 @@
               <h2 class="panel-title">Today's Schedule</h2>
               <a href="masses.html" class="panel-link">View all →</a>
             </div>
-            <ul class="divide-y divide-gray-100" id="todays-schedule-list">
-              <li class="list-row text-sm text-gray-400">Loading…</li>
+            <ul class="divide-y divide-gray-100">
+              <li class="list-row">
+                <span class="list-time">3:00 AM</span>
+                <span class="list-name">Binyag</span>
+                <a href="masses.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-time">7:00 AM</span>
+                <span class="list-name">Daily Mass</span>
+                <a href="masses.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-time">10:30 AM</span>
+                <span class="list-name">Special Mass</span>
+                <a href="masses.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-time">5:30 PM</span>
+                <span class="list-name">Anticipated Mass</span>
+                <a href="masses.html" class="list-action">Details ›</a>
+              </li>
             </ul>
           </div>
 
@@ -255,8 +274,23 @@
               <h2 class="panel-title">Pending Requests</h2>
               <a href="record-requests.html" class="panel-link">View all →</a>
             </div>
-            <ul class="divide-y divide-gray-100" id="pending-requests-list">
-              <li class="list-row text-sm text-gray-400">Loading…</li>
+            <ul class="divide-y divide-gray-100">
+              <li class="list-row">
+                <span class="list-name flex-1">Maria T. Santos — Baptismal Certificate</span>
+                <a href="record-requests.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-name flex-1">Jose R. Cruz — Confirmation Certificate</span>
+                <a href="record-requests.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-name flex-1">Ana L. Reyes — Marriage Certificate</span>
+                <a href="record-requests.html" class="list-action">Details ›</a>
+              </li>
+              <li class="list-row">
+                <span class="list-name flex-1">Pedro M. Garcia — Death Certificate</span>
+                <a href="record-requests.html" class="list-action">Details ›</a>
+              </li>
             </ul>
           </div>
         </div>
@@ -322,8 +356,47 @@
                   <th class="text-right">Action</th>
                 </tr>
               </thead>
-              <tbody id="recent-records-tbody">
-                <tr><td colspan="6" class="text-center text-gray-400 text-sm py-8">Loading…</td></tr>
+              <tbody>
+                <tr>
+                  <td class="font-medium text-gray-900">Santos, Maria T.</td>
+                  <td>Baptismal Record</td>
+                  <td>Jun 18, 2026</td>
+                  <td>Sis. Elena R.</td>
+                  <td><span class="badge badge-green">Digitized</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-gray-900">Cruz, Jose R.</td>
+                  <td>Confirmation Record</td>
+                  <td>Jun 18, 2026</td>
+                  <td>Sis. Elena R.</td>
+                  <td><span class="badge badge-green">Digitized</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-gray-900">Reyes, Ana L.</td>
+                  <td>Marriage Record</td>
+                  <td>Jun 17, 2026</td>
+                  <td>Fr. Mark D.</td>
+                  <td><span class="badge badge-amber">Processing</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-gray-900">Garcia, Pedro M.</td>
+                  <td>Death Record</td>
+                  <td>Jun 17, 2026</td>
+                  <td>Sis. Elena R.</td>
+                  <td><span class="badge badge-green">Digitized</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-gray-900">Dela Cruz, Juan P.</td>
+                  <td>Baptismal Record</td>
+                  <td>Jun 16, 2026</td>
+                  <td>Fr. Mark D.</td>
+                  <td><span class="badge badge-gray">Queued</span></td>
+                  <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -335,6 +408,5 @@
 
   <!-- Custom JS -->
   <script src="dashboard.js"></script>
-  <script type="module" src="dashboard-data.js"></script>
 </body>
 </html>

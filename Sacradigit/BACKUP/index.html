@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SacraDigit – Our Lady of Fatima Parish</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              DEFAULT: '#1e2a4a',
+              dark: '#16213a',
+              light: '#2a3a5c',
+            },
+            gold: '#c9a84c',
+            lavender: '#8b8fc7',
+            'lavender-light': '#a8acda',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <!-- ========== NAVBAR ========== -->
+  <header id="navbar" class="sticky top-0 z-50 bg-white shadow-sm transition-all duration-300">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2.5 no-underline" aria-label="SacraDigit Home">
+        <div class="w-9 h-9 rounded-lg bg-gold flex items-center justify-center shadow-sm">
+          <span class="text-white font-bold text-sm">SD</span>
+        </div>
+        <span class="text-gray-900 font-semibold text-lg tracking-tight">SacraDigit</span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center gap-1" role="navigation" aria-label="Main navigation">
+        <a href="#" class="nav-link active px-4 py-2 rounded-full text-sm font-medium">Home</a>
+        <a href="#mass-schedules" class="nav-link px-4 py-2 rounded-full text-sm font-medium">Mass Schedules</a>
+        <a href="#services" class="nav-link px-4 py-2 rounded-full text-sm font-medium">Services</a>
+        <a href="#donations" class="nav-link px-4 py-2 rounded-full text-sm font-medium">Donations</a>
+        <a href="#support" class="nav-link px-4 py-2 rounded-full text-sm font-medium">Support</a>
+      </nav>
+
+      <!-- CTA Button + Hamburger -->
+      <div class="flex items-center gap-3">
+        <a href="#" class="hidden md:inline-flex items-center px-5 py-2.5 rounded-full bg-lavender text-white text-sm font-semibold shadow hover:bg-lavender-light transition-colors duration-200">
+          Log in / Sign Up
+        </a>
+        <!-- Hamburger (mobile) -->
+        <button id="menu-toggle" class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gold" aria-label="Toggle menu" aria-expanded="false">
+          <svg id="icon-open" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+          <svg id="icon-close" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-6 py-4 space-y-1">
+      <a href="#" class="block px-4 py-2.5 rounded-lg text-sm font-medium text-navy bg-gold/10">Home</a>
+      <a href="#mass-schedules" class="block px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Mass Schedules</a>
+      <a href="#services" class="block px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Services</a>
+      <a href="#donations" class="block px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Donations</a>
+      <a href="#support" class="block px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Support</a>
+      <a href="#" class="block mt-3 px-4 py-2.5 rounded-full bg-lavender text-white text-sm font-semibold text-center hover:bg-lavender-light transition-colors">
+        Log in / Sign Up
+      </a>
+    </div>
+  </header>
+
+  <!-- ========== HERO ========== -->
+  <section id="hero" class="hero-section relative flex items-center justify-center text-center overflow-hidden">
+    <!-- Background overlay -->
+    <div class="absolute inset-0 bg-navy opacity-95 z-0"></div>
+    <!-- Subtle cross pattern overlay -->
+    <div class="absolute inset-0 hero-pattern z-0"></div>
+
+    <div class="relative z-10 px-6 py-24 md:py-32 max-w-2xl mx-auto">
+      <p class="text-lavender-light text-xs font-semibold tracking-widest uppercase mb-4 fade-in" style="animation-delay: 0s;">
+        Our Lady of Fatima Parish · Diocese of Cubao
+      </p>
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5 fade-in" style="animation-delay: 0.15s;">
+        Welcome to SacraDigit
+      </h1>
+      <p class="text-lavender-light text-base md:text-lg leading-relaxed mb-10 max-w-lg mx-auto fade-in" style="animation-delay: 0.3s;">
+        View mass schedules, request sacramental certificates, and connect with your parish — all in one place.
+      </p>
+      <div class="fade-in" style="animation-delay: 0.45s;">
+        <a href="#" class="btn-get-started inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-lavender text-white text-base font-semibold shadow-lg hover:bg-lavender-light transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-lavender-light focus:ring-offset-2 focus:ring-offset-navy">
+          Get Started
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== QUICK INFO CARDS ========== -->
+  <section class="max-w-6xl mx-auto px-6 -mt-8 relative z-10">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      <div class="info-card bg-white rounded-2xl shadow-md p-6 flex gap-4 items-start hover:shadow-lg transition-shadow duration-200 fade-in-up" style="animation-delay: 0.5s;">
+        <div class="icon-wrap bg-navy/8 text-navy rounded-xl p-3 shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 text-sm mb-1">Mass Schedules</h3>
+          <p class="text-gray-500 text-xs leading-relaxed">View all upcoming Masses and special liturgical events.</p>
+        </div>
+      </div>
+
+      <div class="info-card bg-white rounded-2xl shadow-md p-6 flex gap-4 items-start hover:shadow-lg transition-shadow duration-200 fade-in-up" style="animation-delay: 0.6s;">
+        <div class="icon-wrap bg-navy/8 text-navy rounded-xl p-3 shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 text-sm mb-1">Sacramental Records</h3>
+          <p class="text-gray-500 text-xs leading-relaxed">Request baptismal, confirmation, and marriage certificates.</p>
+        </div>
+      </div>
+
+      <div class="info-card bg-white rounded-2xl shadow-md p-6 flex gap-4 items-start hover:shadow-lg transition-shadow duration-200 fade-in-up" style="animation-delay: 0.7s;">
+        <div class="icon-wrap bg-navy/8 text-navy rounded-xl p-3 shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 text-sm mb-1">Connect with Parish</h3>
+          <p class="text-gray-500 text-xs leading-relaxed">Stay updated with announcements, events, and ministries.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========== FEATURES SECTION ========== -->
+  <section id="services" class="max-w-6xl mx-auto px-6 py-20">
+    <div class="text-center mb-12">
+      <p class="text-lavender font-semibold text-xs uppercase tracking-widest mb-3">What We Offer</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-navy mb-4">Parish Services, Online</h2>
+      <p class="text-gray-500 max-w-md mx-auto text-sm leading-relaxed">Everything your parish needs — now accessible from anywhere, at any time.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="feature-card rounded-2xl border border-gray-100 bg-white p-7 hover:border-lavender/40 hover:shadow-md transition-all duration-200">
+        <div class="w-10 h-10 rounded-xl bg-navy flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-2">Real-Time Mass Schedule</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Check daily and weekly Mass times, special feasts, and novena schedules updated by the parish office.</p>
+      </div>
+
+      <div class="feature-card rounded-2xl border border-gray-100 bg-white p-7 hover:border-lavender/40 hover:shadow-md transition-all duration-200">
+        <div class="w-10 h-10 rounded-xl bg-navy flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-2">Certificate Requests</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Submit requests for sacramental documents and track their status — no more lining up at the parish office.</p>
+      </div>
+
+      <div class="feature-card rounded-2xl border border-gray-100 bg-white p-7 hover:border-lavender/40 hover:shadow-md transition-all duration-200">
+        <div class="w-10 h-10 rounded-xl bg-navy flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-2">Online Donations</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Support the parish mission through secure online giving. Every peso goes directly to the community.</p>
+      </div>
+
+      <div class="feature-card rounded-2xl border border-gray-100 bg-white p-7 hover:border-lavender/40 hover:shadow-md transition-all duration-200">
+        <div class="w-10 h-10 rounded-xl bg-navy flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-2">Parish Announcements</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Receive timely updates on parish activities, ministry events, and important announcements.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="bg-navy text-white">
+    <div class="max-w-6xl mx-auto px-6 py-12">
+      <div class="flex flex-col md:flex-row justify-between gap-8">
+        <div class="max-w-xs">
+          <div class="flex items-center gap-2.5 mb-3">
+            <div class="w-8 h-8 rounded-lg bg-gold flex items-center justify-center">
+              <span class="text-white font-bold text-xs">SD</span>
+            </div>
+            <span class="font-semibold text-base">SacraDigit</span>
+          </div>
+          <p class="text-lavender-light text-xs leading-relaxed">Our Lady of Fatima Parish<br/>Diocese of Cubao</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-8 text-sm">
+          <div>
+            <p class="font-semibold text-white mb-3">Site</p>
+            <ul class="space-y-2 text-lavender-light">
+              <li><a href="#" class="hover:text-white transition-colors">Home</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Mass Schedules</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Services</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold text-white mb-3">Parish</p>
+            <ul class="space-y-2 text-lavender-light">
+              <li><a href="#" class="hover:text-white transition-colors">Donations</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Support</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Contact</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-white/10 mt-10 pt-6 text-center text-lavender-light text-xs">
+        &copy; 2026 SacraDigit · Our Lady of Fatima Parish, Diocese of Cubao. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Custom JS -->
+  <script src="scripts.js"></script>
+</body>
+</html>

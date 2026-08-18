@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Donations – SacraDigit Admin</title>
+  <title>Facility Booking – SacraDigit Admin</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -39,7 +39,8 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="dashboard.css" />
   <link rel="stylesheet" href="digital-archives.css" />
-  <link rel="stylesheet" href="donations.css" />
+  <link rel="stylesheet" href="record-requests.css" />
+  <link rel="stylesheet" href="facility-booking.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -107,7 +108,7 @@
             </a>
           </li>
           <li>
-            <a href="facility-booking.html" class="sidebar-link">
+            <a href="facility-booking.html" class="sidebar-link active">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               Facility Booking
             </a>
@@ -123,7 +124,7 @@
             </a>
           </li>
           <li>
-            <a href="donations.html" class="sidebar-link active">
+            <a href="donations.html" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               Donations
             </a>
@@ -177,7 +178,7 @@
           <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Donations</h1>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Facility Booking</h1>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
       </header>
@@ -188,13 +189,17 @@
         <!-- Page heading + actions -->
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Donations</h2>
-            <p class="text-gray-500 text-sm mt-1">Track parish donations, collections, and financial contributions.</p>
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Facility Booking</h2>
+            <p class="text-gray-500 text-sm mt-1">Manage bookings for parish rooms, halls, and chapels.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
-            <button id="btn-export" type="button" class="btn-lavender">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
-              Export Report
+            <button id="btn-calendar-view" type="button" class="btn-gold" aria-pressed="false">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span id="calendar-toggle-label">Calendar View</span>
+            </button>
+            <button id="btn-new-booking" type="button" class="btn-lavender">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              New Booking
             </button>
           </div>
         </div>
@@ -204,96 +209,90 @@
 
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Total This Week</p>
-              <div class="stat-icon stat-icon-green">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-            </div>
-            <p class="stat-value" id="stat-week">₱0</p>
-            <p class="stat-sub">collected this week</p>
-            <button type="button" id="btn-view-graph" class="stat-graph-link">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg>
-              View Graph
-            </button>
-          </div>
-
-          <div class="stat-card">
-            <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Total This Month</p>
+              <p class="stat-label">Total Bookings This Week</p>
               <div class="stat-icon">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               </div>
             </div>
-            <p class="stat-value" id="stat-month">₱0</p>
-            <p class="stat-sub">June 2026 total</p>
+            <p class="stat-value" id="stat-total-week">0</p>
+            <p class="stat-sub">across all facilities</p>
           </div>
 
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Number of Donors</p>
-              <div class="stat-icon stat-icon-amber">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-3.5-5.93"/></svg>
+              <p class="stat-label">Facilities Available</p>
+              <div class="stat-icon stat-icon-green">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2M5 21H3m4 0h6m-3-9h.01M12 12h.01M9 12h.01M9 16h.01"/></svg>
               </div>
             </div>
-            <p class="stat-value" id="stat-donors">0</p>
-            <p class="stat-sub">unique donors this month</p>
+            <p class="stat-value" id="stat-facilities">0</p>
+            <p class="stat-sub">rooms, halls &amp; chapels</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Pending Approval</p>
+              <div class="stat-icon stat-icon-amber">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value" id="stat-pending">0</p>
+            <p class="stat-sub">awaiting review</p>
           </div>
         </div>
 
-        <!-- Filter bar -->
-        <div class="filter-bar">
-          <div class="search-wrap">
-            <svg class="w-4 h-4 search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-            <input id="search-input" type="text" placeholder="Search by donor or fund" class="search-input" />
-          </div>
-          <select id="method-filter" class="filter-select">
-            <option value="">All Methods</option>
-            <option value="Cash">Cash</option>
-            <option value="Online">Online</option>
-            <option value="Check">Check</option>
-          </select>
-          <select id="fund-filter" class="filter-select">
-            <option value="">All Funds</option>
-            <option value="Sunday Collection">Sunday Collection</option>
-            <option value="Mass Intention Offering">Mass Intention Offering</option>
-            <option value="Building Fund">Building Fund</option>
-            <option value="Poor Box">Poor Box</option>
-            <option value="Youth Ministry">Youth Ministry</option>
-          </select>
-          <button id="btn-clear-filters" type="button" class="btn-filter">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
-            Clear
-          </button>
-        </div>
-
-        <!-- Recent Donations -->
-        <div class="panel">
+        <!-- Upcoming Bookings: table view -->
+        <div class="panel" id="table-view-panel">
           <div class="panel-header">
-            <h2 class="panel-title">Recent Donations</h2>
-            <p id="donations-count" class="text-xs text-gray-400 font-medium"></p>
+            <h2 class="panel-title">Upcoming Bookings</h2>
+            <p id="bookings-count" class="text-xs text-gray-400 font-medium"></p>
           </div>
           <div class="overflow-x-auto">
             <table class="records-table">
               <thead>
                 <tr>
-                  <th>Donor</th>
-                  <th>Amount</th>
-                  <th>Payment Method</th>
-                  <th>Fund / Purpose</th>
+                  <th>Facility</th>
                   <th>Date</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                  <th class="text-right">Action</th>
                 </tr>
               </thead>
-              <tbody id="donations-tbody">
-                <!-- Rows injected by donations.js -->
+              <tbody id="bookings-tbody">
+                <!-- Rows injected by facility-booking.js -->
               </tbody>
             </table>
-            <div id="donations-empty" class="empty-state hidden">
-              <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <p class="text-sm font-medium text-gray-600">No donations match your filters</p>
+            <div id="bookings-empty" class="empty-state hidden">
+              <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <p class="text-sm font-medium text-gray-600">No upcoming bookings</p>
             </div>
           </div>
-          <div id="donations-pagination" class="pagination-bar">
-            <!-- Injected by donations.js -->
+        </div>
+
+        <!-- Upcoming Bookings: calendar view (hidden by default) -->
+        <div class="panel hidden" id="calendar-view-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Upcoming Bookings</h2>
+            <div class="calendar-nav">
+              <button type="button" id="cal-prev" class="calendar-nav-btn" aria-label="Previous month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span id="cal-month-label" class="calendar-month-label"></span>
+              <button type="button" id="cal-next" class="calendar-nav-btn" aria-label="Next month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="calendar-wrap">
+            <div class="calendar-weekdays">
+              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div id="calendar-grid" class="calendar-grid">
+              <!-- Cells injected by facility-booking.js -->
+            </div>
+          </div>
+          <div id="calendar-day-detail" class="calendar-day-detail hidden">
+            <!-- Selected day's bookings injected here -->
           </div>
         </div>
 
@@ -301,21 +300,57 @@
     </div>
   </div>
 
-  <!-- ========== DONATION TRACKER GRAPH MODAL ========== -->
-  <div id="graph-modal" class="modal-overlay hidden">
-    <div class="modal-card graph-modal-card">
+  <!-- ========== NEW BOOKING MODAL ========== -->
+  <div id="booking-modal" class="modal-overlay hidden">
+    <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Donation Tracker — This Week</h3>
+        <h3 class="modal-title">New Facility Booking</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <p class="text-sm text-gray-500 mb-3">Daily totals for the last 7 days.</p>
-        <div id="donation-chart"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="booking-facility">Facility</label>
+            <select id="booking-facility" class="form-input"></select>
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="booking-purpose">Booked By / Purpose</label>
+            <input type="text" id="booking-purpose" class="form-input" placeholder="e.g. Reyes Family — Wedding Reception" />
+          </div>
+          <div>
+            <label class="form-label" for="booking-date">Date</label>
+            <input type="date" id="booking-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="booking-time">Time</label>
+            <input type="time" id="booking-time" class="form-input" />
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="booking-submit" class="btn-lavender">Save Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CANCEL BOOKING CONFIRMATION MODAL ========== -->
+  <div id="cancel-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Cancel Booking</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-gray-600">Cancel the booking for <span id="cancel-target-name" class="font-semibold text-gray-900"></span>? This can't be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Keep Booking</button>
+        <button type="button" id="cancel-confirm-submit" class="btn-danger">Cancel Booking</button>
       </div>
     </div>
   </div>
@@ -325,6 +360,6 @@
 
   <!-- Scripts -->
   <script src="dashboard.js"></script>
-  <script type="module" src="donations.js"></script>
+  <script src="facility-booking.js"></script>
 </body>
 </html>
