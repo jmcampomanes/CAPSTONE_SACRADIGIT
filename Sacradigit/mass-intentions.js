@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const startTime24    = document.getElementById('add-start-time').value;
     const endTime24        = document.getElementById('add-end-time').value;
     const offering          = parseInt(document.getElementById('add-offering').value, 10);
-    const status              = document.getElementById('add-status').value;
+    const status              = document.getElementById('add-status').value.toLowerCase();
     const massDate              = document.getElementById('add-mass-date').value;
     const massTime24              = document.getElementById('add-mass-time').value;
 
