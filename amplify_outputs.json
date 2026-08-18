@@ -380,17 +380,59 @@
               "isRequired": true,
               "attributes": []
             },
-            "intentionFor": {
-              "name": "intentionFor",
+            "donor": {
+              "name": "donor",
               "isArray": false,
               "type": "String",
               "isRequired": true,
               "attributes": []
             },
-            "massId": {
-              "name": "massId",
+            "type": {
+              "name": "type",
               "isArray": false,
-              "type": "ID",
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "names": {
+              "name": "names",
+              "isArray": false,
+              "type": "AWSJSON",
+              "isRequired": false,
+              "attributes": []
+            },
+            "startTime": {
+              "name": "startTime",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "endTime": {
+              "name": "endTime",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "massDate": {
+              "name": "massDate",
+              "isArray": false,
+              "type": "AWSDate",
+              "isRequired": false,
+              "attributes": []
+            },
+            "massTime": {
+              "name": "massTime",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "offering": {
+              "name": "offering",
+              "isArray": false,
+              "type": "Float",
               "isRequired": false,
               "attributes": []
             },
@@ -400,13 +442,6 @@
               "type": {
                 "enum": "MassIntentionStatus"
               },
-              "isRequired": false,
-              "attributes": []
-            },
-            "offeringAmount": {
-              "name": "offeringAmount",
-              "isArray": false,
-              "type": "Float",
               "isRequired": false,
               "attributes": []
             },
@@ -1147,7 +1182,8 @@
           "name": "MassIntentionStatus",
           "values": [
             "pending",
-            "confirmed"
+            "scheduled",
+            "completed"
           ]
         },
         "FacilityBookingStatus": {
