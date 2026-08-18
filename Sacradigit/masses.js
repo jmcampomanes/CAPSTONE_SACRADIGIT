@@ -1,19 +1,42 @@
 /* ============================================
-   SacraDigit Admin — Masses (Special Masses) Scripts (AWS Amplify)
-   Backed by the Mass model.
-   Weekly Schedule table stays static reference data —
-   it represents a recurring pattern, not individual
-   Mass records, so it isn't wired to the database.
+   SacraDigit Admin — Masses (Special Masses) Scripts
    ============================================ */
-
-import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  /* ------------------------------------------
+     0. SAMPLE DATA
+     "Today" is fixed to match the rest of the
+     app's sample data (dashboard, archives).
+  ------------------------------------------ */
+  const TODAY_ISO = '2026-06-19';
 
-  let allMasses = []; // kept in sync via observeQuery, each has .id
-  let currentDateMasses = []; // sorted masses for the currently selected date
+  // Masses keyed by ISO date. Each entry: { time, type, note, special }
+  let massesByDate = {
+    '2026-06-19': [
+      { time: '06:00 AM', type: 'Daily Mass',      note: 'For the souls in purgatory', special: false },
+      { time: '07:00 AM', type: 'Daily Mass',      note: '',                            special: false },
+      { time: '05:30 PM', type: 'Anticipated Mass', note: '',                           special: false },
+    ],
+    '2026-06-21': [
+      { time: '06:00 AM', type: 'Sunday Mass',  note: '', special: false },
+      { time: '08:00 AM', type: 'Sunday Mass',  note: '', special: false },
+      { time: '10:00 AM', type: 'Sunday Mass',  note: '', special: false },
+      { time: '05:00 PM', type: 'Sunday Mass',  note: '', special: false },
+      { time: '03:00 PM', type: 'Special Mass', note: 'Feast of the Sacred Heart of Jesus', special: true },
+    ],
+    '2026-06-27': [
+      { time: '06:00 PM', type: 'Special Mass', note: 'Our Lady of Fatima Novena — Day 1', special: true },
+    ],
+  };
+
+  // Upcoming special masses (separate from the date-keyed map, shown regardless of selected date)
+  const specialMasses = [
+    { name: 'Feast of the Sacred Heart of Jesus',     date: '2026-06-21' },
+    { name: 'Our Lady of Fatima Novena — Day 1',       date: '2026-06-27' },
+    { name: 'Solemnity of Sts. Peter and Paul',        date: '2026-06-29' },
+    { name: 'First Friday Mass — Sacred Heart Devotion', date: '2026-07-03' },
+  ];
 
   const weeklySchedule = [
     { day: 'Monday',    times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
@@ -32,12 +55,44 @@ document.addEventListener('DOMContentLoaded', () => {
   const specialMassesList      = document.getElementById('special-masses-list');
   const weeklyTbody            = document.getElementById('weekly-tbody');
 
-  datePicker.value = todayISO;
+  datePicker.value = TODAY_ISO;
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
+  let currentDateMasses = []; // sorted masses for the currently selected date, indexed for the details modal
+
+  /* ------------------------------------------
+     1. RENDER — Date's Schedule
+  ------------------------------------------ */
+  function renderDateSchedule() {
+    const iso = datePicker.value;
+    const masses = massesByDate[iso] || [];
+
+    scheduleDateLabel.textContent = formatLongDate(iso);
+    dateScheduleList.innerHTML = '';
+
+    if (masses.length === 0) {
+      currentDateMasses = [];
+      dateScheduleEmpty.classList.remove('hidden');
+      return;
+    }
+    dateScheduleEmpty.classList.add('hidden');
+
+    currentDateMasses = masses.slice().sort((a, b) => to24h(a.time) - to24h(b.time));
+
+    currentDateMasses.forEach((m, idx) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="schedule-row">
+            <span class="schedule-time">${escapeHtml(m.time)}</span>
+            <div class="schedule-info">
+              <p class="schedule-type">${escapeHtml(m.type)}</p>
+              ${m.note ? `<p class="schedule-note">${escapeHtml(m.note)}</p>` : ''}
+            </div>
+            ${m.special ? '<span class="schedule-special-tag">Special</span>' : ''}
+            <button type="button" class="schedule-details-btn" data-index="${idx}">See Full Details ›</button>
+          </div>
+        `;
+        dateScheduleList.appendChild(li);
+      });
   }
 
   function to24h(timeStr) {
@@ -58,53 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
-
-  /* --- Live data --- */
-  client.models.Mass.observeQuery().subscribe({
-    next: ({ items }) => {
-      allMasses = items;
-      renderDateSchedule();
-      renderSpecialMasses();
-    },
-    error: (err) => {
-      console.error('Failed to load masses:', err);
-      dateScheduleList.innerHTML = `<li class="text-sm text-red-500 py-4">Couldn't load masses.</li>`;
-    },
-  });
-
-
-  /* --- Date's Schedule --- */
-  function renderDateSchedule() {
-    const iso = datePicker.value;
-    const masses = allMasses.filter(m => m.date === iso);
-
-    scheduleDateLabel.textContent = formatLongDate(iso);
-    dateScheduleList.innerHTML = '';
-
-    if (masses.length === 0) {
-      currentDateMasses = [];
-      dateScheduleEmpty.classList.remove('hidden');
-      return;
-    }
-    dateScheduleEmpty.classList.add('hidden');
-
-    currentDateMasses = masses.slice().sort((a, b) => to24h(a.time) - to24h(b.time));
-
-    currentDateMasses.forEach((m, idx) => {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div class="schedule-row">
-          <span class="schedule-time">${escapeHtml(m.time)}</span>
-          <div class="schedule-info">
-            <p class="schedule-type">${escapeHtml(m.title || m.type)}</p>
-            ${m.note ? `<p class="schedule-note">${escapeHtml(m.note)}</p>` : ''}
-          </div>
-          ${m.isSpecial ? '<span class="schedule-special-tag">Special</span>' : ''}
-          <button type="button" class="schedule-details-btn" data-index="${idx}">See Full Details ›</button>
-        </div>
-      `;
-      dateScheduleList.appendChild(li);
-    });
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 
   datePicker.addEventListener('change', renderDateSchedule);
@@ -116,23 +128,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  /* --- Upcoming Special Masses --- */
+  /* ------------------------------------------
+     2. RENDER — Upcoming Special Masses
+     (independent of the date picker — always
+     shows what's coming up next)
+  ------------------------------------------ */
   function renderSpecialMasses() {
-    const today = new Date(todayISO + 'T00:00:00');
+    const today = new Date(TODAY_ISO + 'T00:00:00');
 
-    const upcoming = allMasses
-      .filter(m => m.isSpecial && new Date(m.date + 'T00:00:00') >= today)
+    const upcoming = specialMasses
+      .filter(s => new Date(s.date + 'T00:00:00') >= today)
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    specialMassesList.innerHTML = upcoming.map(m => `
+    specialMassesList.innerHTML = upcoming.map(s => `
       <li>
         <div class="special-row">
           <div class="special-icon">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
           </div>
           <div class="special-info">
-            <p class="special-name">${escapeHtml(m.title || m.note)}</p>
-            <p class="special-date">${formatLongDate(m.date)}</p>
+            <p class="special-name">${escapeHtml(s.name)}</p>
+            <p class="special-date">${formatLongDate(s.date)}</p>
           </div>
         </div>
       </li>
@@ -140,7 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* --- Regular Weekly Mass Schedule (static reference) --- */
+  /* ------------------------------------------
+     3. RENDER — Regular Weekly Mass Schedule
+  ------------------------------------------ */
   function renderWeeklySchedule() {
     weeklyTbody.innerHTML = weeklySchedule.map((w, idx) => `
       <tr>
@@ -157,17 +175,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn) {
       const idx = parseInt(btn.dataset.dayIndex, 10);
       showToast(`Editing ${weeklySchedule[idx].day}'s schedule… (not yet wired to a form)`);
+      // TODO: open an edit modal for the weekly schedule once that flow is designed.
     }
   });
 
+  renderDateSchedule();
+  renderSpecialMasses();
   renderWeeklySchedule();
 
 
-  /* --- Print --- */
-  document.getElementById('btn-print').addEventListener('click', () => window.print());
+  /* ------------------------------------------
+     4. PRINT SCHEDULE
+  ------------------------------------------ */
+  document.getElementById('btn-print').addEventListener('click', () => {
+    window.print();
+  });
 
 
-  /* --- Schedule Mass Modal --- */
+  /* ------------------------------------------
+     5. SCHEDULE MASS MODAL
+  ------------------------------------------ */
   const scheduleModal = document.getElementById('schedule-modal');
 
   document.getElementById('btn-schedule-mass').addEventListener('click', () => {
@@ -176,19 +203,36 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { const overlay = btn.closest('.modal-overlay'); if (overlay) closeModal(overlay); });
+    btn.addEventListener('click', () => {
+      const overlay = btn.closest('.modal-overlay');
+      if (overlay) closeModal(overlay);
+    });
   });
 
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(overlay); });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal(overlay);
+    });
   });
 
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(closeModal); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay').forEach(closeModal);
+    }
+  });
 
-  function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
-  function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
+  function openModal(modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
 
-  document.getElementById('schedule-submit').addEventListener('click', async () => {
+  function closeModal(modal) {
+    if (modal.classList.contains('hidden')) return;
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('schedule-submit').addEventListener('click', () => {
     const date    = document.getElementById('schedule-date').value;
     const time24  = document.getElementById('schedule-time').value;
     const type    = document.getElementById('schedule-type').value;
@@ -202,31 +246,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const time12 = formatTime12(time24);
 
-    try {
-      const result = await client.models.Mass.create({
-        date,
-        time: time12,
-        type,
-        title: isSpecial ? (note || type) : type,
-        note: note || undefined,
-        isSpecial,
-      });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+    if (!massesByDate[date]) massesByDate[date] = [];
+    massesByDate[date].push({ time: time12, type, note, special: isSpecial });
 
-      datePicker.value = date;
-      renderDateSchedule();
-
-      closeModal(scheduleModal);
-      showToast(`Mass scheduled for ${formatShortDate(date)} at ${time12}.`);
-
-      document.getElementById('schedule-time').value = '';
-      document.getElementById('schedule-type').value = '';
-      document.getElementById('schedule-note').value = '';
-      document.getElementById('schedule-special').checked = false;
-    } catch (err) {
-      console.error('Failed to schedule mass:', err);
-      showToast(err.message || "Couldn't schedule the mass.", true);
+    if (isSpecial) {
+      specialMasses.push({ name: note || type, date });
+      renderSpecialMasses();
     }
+
+    // Jump the date picker to the newly scheduled date so the user sees it land
+    datePicker.value = date;
+    renderDateSchedule();
+
+    closeModal(scheduleModal);
+    showToast(`Mass scheduled for ${formatShortDate(date)} at ${time12}.`);
+
+    // Reset form
+    document.getElementById('schedule-time').value = '';
+    document.getElementById('schedule-type').value = '';
+    document.getElementById('schedule-note').value = '';
+    document.getElementById('schedule-special').checked = false;
   });
 
   function formatTime12(time24) {
@@ -237,7 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* --- Mass Details Modal --- */
+  /* ------------------------------------------
+     5.5 MASS DETAILS MODAL (Date's Schedule)
+  ------------------------------------------ */
   const massDetailsModal = document.getElementById('mass-details-modal');
   const massDetailsBody   = document.getElementById('mass-details-body');
 
@@ -261,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div>
           <p class="so-detail-label">Special Mass</p>
-          <p class="so-detail-value">${m.isSpecial ? 'Yes' : 'No'}</p>
+          <p class="so-detail-value">${m.special ? 'Yes' : 'No'}</p>
         </div>
       </div>
       <div class="mt-3">
@@ -274,15 +315,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* ------------------------------------------
+     6. TOAST NOTIFICATIONS
+  ------------------------------------------ */
   const toast = document.getElementById('toast');
   let toastTimer = null;
+
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
+    toast.querySelector('.toast-message').textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));
+
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.classList.add('hidden'), 200);
