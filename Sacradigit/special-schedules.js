@@ -1,59 +1,15 @@
 /* ============================================
-   SacraDigit Admin — Special Schedules Scripts
+   SacraDigit Admin — Special Schedules Scripts (AWS Amplify)
+   Backed by the SpecialSchedule model.
    ============================================ */
+
+import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ------------------------------------------
-     0. SAMPLE DATA
-     "Today" fixed to match the rest of the app.
-     startDate / endDate = ISO strings for the
-     full liturgical season/event range.
-  ------------------------------------------ */
-  const TODAY_ISO = '2026-06-19';
+  const todayISO = new Date().toISOString().slice(0, 10);
 
-  let schedules = [
-    {
-      name: 'Parish Fiesta — Our Lady of Fatima',
-      type: 'Special Event',
-      status: 'Ongoing',
-      startDate: '2026-06-13',
-      endDate: '2026-06-21',
-      note: 'Solemn procession on June 21. Special masses every evening at 6:00 PM with choir.',
-    },
-    {
-      name: 'Feast of Sts. Peter and Paul',
-      type: 'Feast Day Series',
-      status: 'Upcoming',
-      startDate: '2026-06-28',
-      endDate: '2026-06-29',
-      note: 'Vigil Mass on June 28 at 7:00 PM. Solemn Mass on June 29 at 9:00 AM.',
-    },
-    {
-      name: 'Our Lady of Fatima Novena',
-      type: 'Novena',
-      status: 'Upcoming',
-      startDate: '2026-06-27',
-      endDate: '2026-07-05',
-      note: '9-day novena with evening prayers at 6:00 PM. Final day includes a procession.',
-    },
-    {
-      name: 'Simbang Gabi 2026',
-      type: 'Liturgical Season',
-      status: 'Upcoming',
-      startDate: '2026-12-16',
-      endDate: '2026-12-24',
-      note: 'Dawn masses at 5:00 AM. Special choir each night. Traditional food stalls in the courtyard.',
-    },
-    {
-      name: 'Advent Season 2026',
-      type: 'Liturgical Season',
-      status: 'Upcoming',
-      startDate: '2026-11-29',
-      endDate: '2026-12-24',
-      note: 'Weekly Advent reflections after Sunday mass. Penitential services on Saturdays.',
-    },
-  ];
+  let schedules = []; // kept in sync via observeQuery, each has .id
 
   const grid           = document.getElementById('schedules-grid');
   const schedulesEmpty  = document.getElementById('schedules-empty');
@@ -68,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = str;
+    div.textContent = str || '';
     return div.innerHTML;
   }
 
@@ -97,9 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return parseDate(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  /* Duration progress: how far through the season are we today? */
   function progressPercent(startIso, endIso) {
-    const today  = parseDate(TODAY_ISO).getTime();
+    const today  = parseDate(todayISO).getTime();
     const start  = parseDate(startIso).getTime();
     const end    = parseDate(endIso).getTime();
     if (today <= start) return 0;
@@ -110,26 +65,34 @@ document.addEventListener('DOMContentLoaded', () => {
   function durationLabel(startIso, endIso) {
     const start = parseDate(startIso);
     const end   = parseDate(endIso);
-    const today = parseDate(TODAY_ISO);
+    const today = parseDate(todayISO);
     const totalDays = Math.round((end - start) / 86400000) + 1;
 
     if (today < start) {
       const daysUntil = Math.round((start - today) / 86400000);
       return `Starts in ${daysUntil} day${daysUntil === 1 ? '' : 's'}`;
     }
-    if (today > end) {
-      return 'Completed';
-    }
+    if (today > end) return 'Completed';
     const daysPassed = Math.round((today - start) / 86400000) + 1;
     return `Day ${daysPassed} of ${totalDays}`;
   }
 
 
-  /* ------------------------------------------
-     1. RENDER — Schedule card grid
-  ------------------------------------------ */
+  /* --- Live data --- */
+  client.models.SpecialSchedule.observeQuery().subscribe({
+    next: ({ items }) => {
+      schedules = items;
+      renderGrid();
+    },
+    error: (err) => {
+      console.error('Failed to load schedules:', err);
+      grid.innerHTML = '';
+      schedulesEmpty.classList.remove('hidden');
+    },
+  });
+
+
   function renderGrid() {
-    // Sort: ongoing first, then by start date ascending
     const sorted = schedules.slice().sort((a, b) => {
       if (a.status === 'Ongoing' && b.status !== 'Ongoing') return -1;
       if (b.status === 'Ongoing' && a.status !== 'Ongoing') return 1;
@@ -146,17 +109,16 @@ document.addEventListener('DOMContentLoaded', () => {
     schedulesEmpty.classList.add('hidden');
 
     grid.innerHTML = sorted.map((s) => {
-      const realIndex  = schedules.indexOf(s);
-      const typeClass   = typeClassMap[s.type] || 'special';
-      const progress     = progressPercent(s.startDate, s.endDate);
-      const durLabel      = durationLabel(s.startDate, s.endDate);
+      const typeClass = typeClassMap[s.type] || 'special';
+      const progress   = progressPercent(s.startDate, s.endDate);
+      const durLabel    = durationLabel(s.startDate, s.endDate);
 
       return `
         <div class="schedule-card ${typeClass}">
           <div class="schedule-card-body">
             <div class="schedule-card-top">
               <p class="schedule-name">${escapeHtml(s.name)}</p>
-              <span class="status-tag ${s.status.toLowerCase()}">${escapeHtml(s.status)}</span>
+              <span class="status-tag ${(s.status || '').toLowerCase()}">${escapeHtml(s.status)}</span>
             </div>
             <div>
               <span class="type-tag ${typeClass}">${escapeHtml(s.type)}</span>
@@ -175,8 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <div class="schedule-actions">
-              <button type="button" class="sched-edit" data-index="${realIndex}">Edit</button>
-              <button type="button" class="sched-delete" data-index="${realIndex}">Delete</button>
+              <button type="button" class="sched-edit" data-id="${s.id}">Edit</button>
+              <button type="button" class="sched-delete" data-id="${s.id}">Delete</button>
             </div>
           </div>
         </div>
@@ -188,23 +150,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const editBtn   = e.target.closest('.sched-edit');
     const deleteBtn  = e.target.closest('.sched-delete');
 
-    if (editBtn) {
-      const idx = parseInt(editBtn.dataset.index, 10);
-      openEditModal(idx);
-    }
-
-    if (deleteBtn) {
-      const idx = parseInt(deleteBtn.dataset.index, 10);
-      openDeleteModal(idx);
-    }
+    if (editBtn) openEditModal(editBtn.dataset.id);
+    if (deleteBtn) openDeleteModal(deleteBtn.dataset.id);
   });
 
-  renderGrid();
 
-
-  /* ------------------------------------------
-     2. ADD / EDIT SCHEDULE MODAL
-  ------------------------------------------ */
+  /* --- Add/Edit Schedule Modal --- */
   const modal       = document.getElementById('schedule-modal');
   const modalTitle   = document.getElementById('schedule-modal-title');
   const submitBtn     = document.getElementById('sched-submit');
@@ -215,10 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const endInput         = document.getElementById('sched-end');
   const noteInput         = document.getElementById('sched-note');
 
-  let editTargetIndex = null;
+  let editTargetId = null;
 
   document.getElementById('btn-add-schedule').addEventListener('click', () => {
-    editTargetIndex = null;
+    editTargetId = null;
     modalTitle.textContent = 'Add Special Schedule';
     submitBtn.textContent = 'Save Schedule';
     nameInput.value = '';
@@ -231,9 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
     openModal(modal);
   });
 
-  function openEditModal(idx) {
-    editTargetIndex = idx;
-    const s = schedules[idx];
+  function openEditModal(id) {
+    const s = schedules.find(x => x.id === id);
+    if (!s) return;
+    editTargetId = id;
     modalTitle.textContent = 'Edit Special Schedule';
     submitBtn.textContent = 'Save Changes';
     nameInput.value = s.name;
@@ -250,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', () => clearFieldError(input));
   });
 
-  submitBtn.addEventListener('click', () => {
+  submitBtn.addEventListener('click', async () => {
     const name   = nameInput.value.trim();
     const type    = typeSelect.value;
     const status   = statusSelect.value;
@@ -275,94 +227,84 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (editTargetIndex !== null) {
-      schedules[editTargetIndex] = { name, type, status, startDate: start, endDate: end, note };
-      showToast(`"${name}" updated.`);
-    } else {
-      schedules.push({ name, type, status, startDate: start, endDate: end, note });
-      showToast(`"${name}" added.`);
+    try {
+      if (editTargetId !== null) {
+        const result = await client.models.SpecialSchedule.update({
+          id: editTargetId, name, type, status, startDate: start, endDate: end, note,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`"${name}" updated.`);
+      } else {
+        const result = await client.models.SpecialSchedule.create({
+          name, type, status, startDate: start, endDate: end, note,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`"${name}" added.`);
+      }
+      closeModal(modal);
+    } catch (err) {
+      console.error('Failed to save schedule:', err);
+      showToast(err.message || "Couldn't save the schedule.", true);
     }
-
-    renderGrid();
-    closeModal(modal);
   });
 
 
-  /* ------------------------------------------
-     2b. DELETE CONFIRMATION MODAL
-     Deleting a schedule used to happen instantly
-     on click with no way back — now it routes
-     through a confirmation step first.
-  ------------------------------------------ */
+  /* --- Delete Confirmation Modal --- */
   const deleteModal      = document.getElementById('delete-modal');
   const deleteTargetName  = document.getElementById('delete-target-name');
-  let deleteTargetIndex = null;
+  let deleteTargetId = null;
 
-  function openDeleteModal(idx) {
-    deleteTargetIndex = idx;
-    deleteTargetName.textContent = schedules[idx].name;
+  function openDeleteModal(id) {
+    const s = schedules.find(x => x.id === id);
+    if (!s) return;
+    deleteTargetId = id;
+    deleteTargetName.textContent = s.name;
     openModal(deleteModal);
   }
 
-  document.getElementById('delete-confirm-submit').addEventListener('click', () => {
-    if (deleteTargetIndex === null) return;
-    const name = schedules[deleteTargetIndex].name;
-    schedules.splice(deleteTargetIndex, 1);
-    renderGrid();
-    closeModal(deleteModal);
-    showToast(`"${name}" removed.`);
-    deleteTargetIndex = null;
-  });
+  document.getElementById('delete-confirm-submit').addEventListener('click', async () => {
+    if (deleteTargetId === null) return;
+    const s = schedules.find(x => x.id === deleteTargetId);
 
-
-  /* ------------------------------------------
-     3. MODAL HELPERS
-  ------------------------------------------ */
-  document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      closeModal(modal);
+    try {
+      const result = await client.models.SpecialSchedule.delete({ id: deleteTargetId });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(deleteModal);
-    });
-  });
-
-  [modal, deleteModal].forEach(m => {
-    m.addEventListener('click', (e) => {
-      if (e.target === m) closeModal(m);
-    });
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeModal(modal);
-      closeModal(deleteModal);
+      showToast(`"${s ? s.name : 'Schedule'}" removed.`);
+      deleteTargetId = null;
+    } catch (err) {
+      console.error('Failed to delete schedule:', err);
+      showToast(err.message || "Couldn't delete the schedule.", true);
     }
   });
 
-  function openModal(m) {
-    m.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
 
-  function closeModal(m) {
-    if (m.classList.contains('hidden')) return;
-    m.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
+  /* --- Modal helpers --- */
+  document.querySelectorAll('[data-close-modal]').forEach(btn => {
+    btn.addEventListener('click', () => { closeModal(modal); closeModal(deleteModal); });
+  });
+
+  [modal, deleteModal].forEach(m => {
+    m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeModal(modal); closeModal(deleteModal); }
+  });
+
+  function openModal(m) { m.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+  function closeModal(m) { if (m.classList.contains('hidden')) return; m.classList.add('hidden'); document.body.style.overflow = ''; }
 
 
-  /* ------------------------------------------
-     4. TOAST NOTIFICATIONS
-  ------------------------------------------ */
   const toast = document.getElementById('toast');
   let toastTimer = null;
-
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.querySelector('.toast-message').textContent = message;
+    const msgEl = toast.querySelector('.toast-message');
+    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));
-
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.classList.add('hidden'), 200);
