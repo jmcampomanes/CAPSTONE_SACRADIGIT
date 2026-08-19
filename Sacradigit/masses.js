@@ -191,9 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('schedule-submit').addEventListener('click', async () => {
     const date    = document.getElementById('schedule-date').value;
     const time24  = document.getElementById('schedule-time').value;
-    const typeSelect = document.getElementById('schedule-type');
-    const type    = typeSelect.value;
-    const typeLabel = typeSelect.selectedOptions[0]?.text || type;
+    const type    = document.getElementById('schedule-type').value;
     const note     = document.getElementById('schedule-note').value.trim();
     const isSpecial = document.getElementById('schedule-special').checked;
 
@@ -209,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         date,
         time: time12,
         type,
-        title: isSpecial ? (note || typeLabel) : typeLabel,
+        title: isSpecial ? (note || type) : type,
         note: note || undefined,
         isSpecial,
       });
@@ -292,3 +290,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
+  
