@@ -131,7 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sorted = myDonations.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    tbody.innerHTML = sorted.map(d => `
+    tbody.innerHTML = sorted.map(d => {
+      const realIndex = myDonations.indexOf(d);
+      return `
       <tr>
         <td class="font-medium text-gray-900">${escapeHtml(d.fund)}</td>
         <td class="donation-amount">${formatPeso(d.amount)}</td>
@@ -139,8 +141,65 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="payment-pill">${escapeHtml(d.method)}</span>
         </td>
         <td class="text-gray-400">${formatShortDate(d.date)}</td>
+        <td>
+          <button type="button" class="btn-download-receipt" data-index="${realIndex}">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+            Receipt
+          </button>
+        </td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
+  }
+
+  // Delegate "Download Receipt" row action
+  document.getElementById('history-tbody').addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-download-receipt');
+    if (!btn) return;
+    downloadReceipt(parseInt(btn.dataset.index, 10));
+  });
+
+  /* ------------------------------------------
+     4b. DOWNLOAD RECEIPT (client-side .txt)
+  ------------------------------------------ */
+  function referenceNumberFor(d, idx) {
+    return `SD-${d.date.replace(/-/g, '')}-${String(idx).padStart(3, '0')}`;
+  }
+
+  function downloadReceipt(idx) {
+    const d = myDonations[idx];
+    if (!d) return;
+
+    const refNumber = referenceNumberFor(d, idx);
+    const donorName = d.anonymous ? 'Anonymous Donor' : 'Maria P. Santos';
+
+    const lines = [
+      'SacraDigit Parish Portal',
+      'Official Donation Receipt',
+      '----------------------------------------',
+      `Reference No.: ${refNumber}`,
+      `Date: ${formatShortDate(d.date)}`,
+      `Donor: ${donorName}`,
+      `Fund / Purpose: ${d.fund}`,
+      `Amount: ${formatPeso(d.amount)}`,
+      `Payment Method: ${d.method}`,
+      '----------------------------------------',
+      'Thank you for your generous offering.',
+      'This receipt is generated electronically and does not require a signature.',
+      '',
+    ];
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt-${refNumber}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    window.showToast(`Receipt downloaded for ${formatPeso(d.amount)} to ${d.fund}.`);
   }
 
   renderFundGrid();

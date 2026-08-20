@@ -86,6 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const emptyState     = document.getElementById('requests-empty');
   const detailModal    = document.getElementById('detail-modal');
 
+  const modalCancelBtn       = document.getElementById('modal-cancel-request');
+  const cancelRequestModal    = document.getElementById('cancel-request-modal');
+  const cancelRequestTypeEl    = document.getElementById('cancel-request-type');
+  const cancelRequestConfirm     = document.getElementById('cancel-request-confirm');
+
+  let currentDetailIndex = null;
+
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
@@ -207,6 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const r = requests[idx];
     const isRejected = r.status === 'Rejected';
 
+    currentDetailIndex = idx;
+    modalCancelBtn.classList.toggle('hidden', r.status !== 'Pending');
+
     document.getElementById('modal-title').textContent    = r.type;
     document.getElementById('modal-date').textContent     = `Submitted ${formatShortDate(r.submitted)}`;
 
@@ -278,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function closeDetail() {
     detailModal.classList.add('hidden');
+    cancelRequestModal.classList.add('hidden');
     document.body.style.overflow = '';
   }
 
@@ -285,12 +296,40 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', closeDetail);
   });
 
-  detailModal.addEventListener('click', (e) => {
-    if (e.target === detailModal) closeDetail();
+  [detailModal, cancelRequestModal].forEach(m => {
+    m.addEventListener('click', (e) => {
+      if (e.target === m) closeDetail();
+    });
   });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeDetail();
+  });
+
+
+  /* ------------------------------------------
+     5. CANCEL REQUEST (Pending requests only)
+  ------------------------------------------ */
+  modalCancelBtn.addEventListener('click', () => {
+    if (currentDetailIndex === null) return;
+    const r = requests[currentDetailIndex];
+    if (!r) return;
+    cancelRequestTypeEl.textContent = r.type;
+    cancelRequestModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  });
+
+  cancelRequestConfirm.addEventListener('click', () => {
+    if (currentDetailIndex === null) return;
+    const removed = requests[currentDetailIndex];
+    if (!removed) return;
+    requests.splice(currentDetailIndex, 1);
+    currentDetailIndex = null;
+
+    renderStats();
+    renderList();
+    closeDetail();
+    window.showToast(`${removed.type} request cancelled.`);
   });
 
 });

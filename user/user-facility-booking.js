@@ -81,6 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
     Cancelled: 'badge-gray',
   };
 
+  // Statuses a parishioner is still allowed to cancel themselves
+  const cancelableStatuses = ['Pending', 'Approved'];
+
   /* ------------------------------------------
      2. RENDER — facility cards
   ------------------------------------------ */
@@ -138,16 +141,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sorted = myBookings.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    tbody.innerHTML = sorted.map(b => `
+    tbody.innerHTML = sorted.map(b => {
+      const realIndex = myBookings.indexOf(b);
+      return `
       <tr>
         <td class="font-medium text-gray-900">${escapeHtml(b.facility)}</td>
         <td>${formatShortDate(b.date)}</td>
         <td>${escapeHtml(b.time)}</td>
         <td class="text-gray-500">${escapeHtml(b.purpose)}</td>
         <td><span class="badge ${badgeClass[b.status] || 'badge-gray'}">${escapeHtml(b.status)}</span></td>
+        <td>
+          <div class="booking-row-actions">
+            <button type="button" class="btn-view-booking" data-index="${realIndex}">View</button>
+            ${cancelableStatuses.includes(b.status) ? `<button type="button" class="btn-cancel-booking" data-index="${realIndex}">Cancel</button>` : ''}
+          </div>
+        </td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
   }
+
+  // Delegate View / Cancel row actions
+  document.getElementById('bookings-tbody').addEventListener('click', (e) => {
+    const viewBtn = e.target.closest('.btn-view-booking');
+    if (viewBtn) {
+      openDetailModal(parseInt(viewBtn.dataset.index, 10));
+      return;
+    }
+    const cancelBtn = e.target.closest('.btn-cancel-booking');
+    if (cancelBtn) {
+      openCancelModal(parseInt(cancelBtn.dataset.index, 10));
+    }
+  });
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -170,7 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBookings();
 
   /* ------------------------------------------
-     4. BOOKING MODAL
+     4. BOOKING MODAL + BOOKING DETAIL MODAL +
+        CANCEL BOOKING CONFIRMATION MODAL
   ------------------------------------------ */
   const modal          = document.getElementById('booking-modal');
   const facilitySelect  = document.getElementById('book-facility');
@@ -179,6 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const purposeInput       = document.getElementById('book-purpose');
   const attendeesInput      = document.getElementById('book-attendees');
   const notesInput           = document.getElementById('book-notes');
+
+  const bookingDetailModal = document.getElementById('booking-detail-modal');
+  const cancelModal          = document.getElementById('cancel-modal');
+  let cancelTargetIndex = null;
 
   // Populate facility dropdown
   facilitySelect.innerHTML =
@@ -206,15 +236,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function closeModal() {
     modal.classList.add('hidden');
+    bookingDetailModal.classList.add('hidden');
+    cancelModal.classList.add('hidden');
     document.body.style.overflow = '';
+    cancelTargetIndex = null;
+  }
+
+  function openDetailModal(idx) {
+    const b = myBookings[idx];
+    if (!b) return;
+
+    const statusBadge = document.getElementById('detail-status-badge');
+    statusBadge.textContent = b.status;
+    statusBadge.className = `badge ${badgeClass[b.status] || 'badge-gray'}`;
+
+    document.getElementById('detail-grid').innerHTML = `
+      <div>
+        <p class="modal-detail-item-label">Facility</p>
+        <p class="modal-detail-item-value">${escapeHtml(b.facility)}</p>
+      </div>
+      <div>
+        <p class="modal-detail-item-label">Date</p>
+        <p class="modal-detail-item-value">${formatShortDate(b.date)}</p>
+      </div>
+      <div>
+        <p class="modal-detail-item-label">Time</p>
+        <p class="modal-detail-item-value">${escapeHtml(b.time)}</p>
+      </div>
+      <div>
+        <p class="modal-detail-item-label">Purpose</p>
+        <p class="modal-detail-item-value">${escapeHtml(b.purpose)}</p>
+      </div>
+    `;
+
+    bookingDetailModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function openCancelModal(idx) {
+    const b = myBookings[idx];
+    if (!b) return;
+    cancelTargetIndex = idx;
+    document.getElementById('cancel-target-name').textContent = `${b.facility} — ${formatShortDate(b.date)}, ${b.time}`;
+    cancelModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
   }
 
   document.getElementById('btn-book').addEventListener('click', () => openModal());
   document.getElementById('btn-empty-book')?.addEventListener('click', () => openModal());
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeModal));
-  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  [modal, bookingDetailModal, cancelModal].forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) closeModal(); });
+  });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  document.getElementById('cancel-confirm-submit').addEventListener('click', () => {
+    if (cancelTargetIndex === null) return;
+    const b = myBookings[cancelTargetIndex];
+    if (!b) return;
+    b.status = 'Cancelled';
+    renderBookings();
+    closeModal();
+    window.showToast(`Booking for ${b.facility} on ${formatShortDate(b.date)} has been cancelled.`);
+  });
 
   /* Submit */
   document.getElementById('booking-submit').addEventListener('click', () => {

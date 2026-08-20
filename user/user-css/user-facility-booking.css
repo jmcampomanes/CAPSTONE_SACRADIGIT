@@ -129,3 +129,91 @@
 .badge-green { background-color: #ecfdf3; color: #15803d; }
 .badge-gray  { background-color: #f3f4f6; color: #6b7280; }
 .badge-red   { background-color: #fef2f2; color: #b91c1c; }
+
+/* ---------- Bookings table row actions ---------- */
+.booking-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-view-booking,
+.btn-cancel-booking {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-view-booking {
+  color: #6c6fb0;
+}
+
+.btn-view-booking:hover {
+  background-color: rgba(139, 143, 199, 0.1);
+  border-color: #8b8fc7;
+  color: #1e2a4a;
+}
+
+.btn-cancel-booking {
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.btn-cancel-booking:hover {
+  background-color: #fef2f2;
+  border-color: #b91c1c;
+}
+
+/* ---------- Destructive confirm button ---------- */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #b91c1c;
+  color: #ffffff;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background-color: #991616;
+}
+
+/* ---------- Booking detail modal grid ---------- */
+.modal-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.25rem;
+  background-color: #f7f8fa;
+  border-radius: 0.625rem;
+  padding: 0.875rem 1rem;
+}
+
+.modal-detail-item-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  margin-bottom: 0.15rem;
+}
+
+.modal-detail-item-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+}
