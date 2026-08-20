@@ -24,6 +24,8 @@
     };
   </script>
 
+  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/user-user-mass-schedule-Czckznk5.js"></script>
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-DgBa3hMn.js">
   <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/user-user-mass-schedule-BYfdAAsF.css">
   <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/user-shell-CrCGhYfV.css">
 </head>
@@ -33,7 +35,6 @@
 
     <!-- ========== SIDEBAR ========== -->
     <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
-
       <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
         <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
           <span class="text-white font-bold text-xs">SD</span>
@@ -43,7 +44,6 @@
           <p class="text-gray-400 text-xs">Parish Portal</p>
         </div>
       </div>
-
       <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="User navigation">
         <p class="sidebar-label">Main</p>
         <ul class="space-y-0.5 mb-5">
@@ -68,6 +68,9 @@
           <li><a href="user-my-requests.html" class="sidebar-link">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
             My Requests</a></li>
+          <li><a href="user-request-service.html" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            Request a Service</a></li>
           <li><a href="user-mass-intentions.html" class="sidebar-link">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
             Mass Intentions</a></li>
@@ -82,7 +85,6 @@
             Donations</a></li>
         </ul>
       </nav>
-
       <div class="px-3 py-4 border-t border-gray-100">
         <button id="user-menu-btn" class="w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left">
           <div class="w-9 h-9 rounded-full bg-lavender flex items-center justify-center shrink-0">
@@ -116,77 +118,80 @@
         <!-- Page heading -->
         <div>
           <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Mass Schedule</h2>
-          <p class="text-gray-500 text-sm mt-1">View mass times for any date and set a personal reminder.</p>
+          <p class="text-gray-500 text-sm mt-1">View upcoming masses and the parish's regular weekly schedule.</p>
         </div>
 
         <!-- Liturgical season banner -->
-        <div class="season-banner" id="season-banner">
+        <div class="season-banner">
           <div class="season-banner-left">
-            <div class="season-dot" id="season-dot"></div>
+            <span id="season-dot" class="season-dot"></span>
             <div>
-              <p class="season-name" id="season-name">Ordinary Time</p>
-              <p class="season-week" id="season-week">Week 12 of 34</p>
+              <p id="season-name" class="season-name"></p>
+              <p id="season-week" class="season-week"></p>
             </div>
           </div>
           <div class="season-progress-wrap">
             <div class="season-progress-track">
-              <div class="season-progress-fill" id="season-progress-fill" style="width: 0%"></div>
+              <div id="season-progress-fill" class="season-progress-fill"></div>
             </div>
-            <p class="season-progress-label" id="season-progress-label"></p>
+            <p id="season-progress-label" class="season-progress-label"></p>
           </div>
         </div>
 
         <!-- Date picker -->
-        <div class="flex items-center gap-3">
-          <label for="date-picker" class="text-sm font-semibold text-gray-600 whitespace-nowrap">Select Date</label>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <label for="date-picker" class="sr-only">Select date</label>
           <input type="date" id="date-picker" class="date-input" />
           <button id="btn-today" type="button" class="btn-today">Today</button>
         </div>
 
-        <!-- Date's Schedule panel -->
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Masses on <span id="schedule-date-label" class="text-lavender normal-case font-semibold"></span></h2>
-            <p id="mass-count" class="text-xs text-gray-400 font-medium"></p>
+        <!-- Date's Schedule + Upcoming Special Masses -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Date's Schedule</h2>
+              <p id="schedule-date-label" class="text-xs text-gray-400 font-medium"></p>
+            </div>
+            <ul id="date-schedule-list" class="divide-y divide-gray-100">
+              <!-- Rows injected by user-mass-schedule.js -->
+            </ul>
+            <div id="date-schedule-empty" class="empty-state hidden">
+              <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <p class="text-sm font-medium text-gray-600">No masses scheduled on this date</p>
+            </div>
           </div>
 
-          <!-- Mass list -->
-          <ul id="mass-list" class="divide-y divide-gray-100"></ul>
-
-          <!-- Empty state -->
-          <div id="mass-empty" class="empty-state hidden">
-            <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p class="text-sm font-medium text-gray-600">No masses scheduled on this date</p>
-            <p class="text-xs text-gray-400 mt-1">Try selecting a different date.</p>
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Upcoming Special Masses</h2>
+            </div>
+            <ul id="special-masses-list" class="divide-y divide-gray-100">
+              <!-- Rows injected by user-mass-schedule.js -->
+            </ul>
           </div>
         </div>
 
-        <!-- Regular Weekly Schedule (always visible reference) -->
+        <!-- Regular Weekly Mass Schedule -->
         <div class="panel">
           <div class="panel-header">
-            <h2 class="panel-title">Regular Weekly Schedule</h2>
-            <p class="text-xs text-gray-400 font-medium">Applies every week unless overridden</p>
+            <h2 class="panel-title">Regular Weekly Mass Schedule</h2>
+            <p class="text-xs text-gray-400 font-medium">Applies every week unless announced otherwise</p>
           </div>
           <div class="overflow-x-auto">
-            <table class="user-table">
+            <table class="user-table weekly-table">
               <thead>
                 <tr>
                   <th>Day</th>
-                  <th>Times</th>
+                  <th>Time(s)</th>
                   <th>Mass Type</th>
                 </tr>
               </thead>
-              <tbody id="weekly-tbody"></tbody>
+              <tbody id="weekly-tbody">
+                <!-- Rows injected by user-mass-schedule.js -->
+              </tbody>
             </table>
           </div>
-        </div>
-
-        <!-- Upcoming special masses -->
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Upcoming Special Masses</h2>
-          </div>
-          <ul id="special-list" class="divide-y divide-gray-100"></ul>
         </div>
 
       </main>
@@ -194,8 +199,6 @@
   </div>
 
   <div id="toast" class="toast hidden"></div>
-
   <script src="user-shell.js"></script>
-  <script src="user-mass-schedule.js"></script>
 </body>
 </html>
