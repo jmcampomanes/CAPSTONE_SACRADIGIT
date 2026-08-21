@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   client.models.ParishRecord.observeQuery().subscribe({
     next: ({ items }) => {
       records = items;
+      renderStats();
       renderRecords();
     },
     error: (err) => {
@@ -44,6 +45,55 @@ document.addEventListener('DOMContentLoaded', () => {
       tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Couldn't load records.</td></tr>`;
     },
   });
+
+  /* ------------------------------------------
+     STAT COUNTERS
+  ------------------------------------------ */
+  function renderStats() {
+    const digitized = records.filter(r => r.status === 'digitized').length;
+    const pending    = records.filter(r => r.status === 'processing' || r.status === 'queued').length;
+
+    document.getElementById('stat-total').textContent      = records.length.toLocaleString();
+    document.getElementById('stat-digitized').textContent  = digitized.toLocaleString();
+    document.getElementById('stat-pending').textContent    = pending.toLocaleString();
+    document.getElementById('stat-digitized-sub').textContent =
+      records.length ? `${Math.round((digitized / records.length) * 100)}% of total archive` : 'of total archive';
+  }
+
+  /* ------------------------------------------
+     STAT CARDS AS QUICK FILTERS
+     Total clears the status quick-filter (and search/type/date, so the
+     count on screen always matches the card you clicked); Digitized /
+     Pending jump straight to those rows.
+  ------------------------------------------ */
+  let statusQuickFilter = ''; // '', 'digitized', or 'pending'
+
+  const statCardsByStatus = [
+    { card: document.getElementById('stat-total').closest('.stat-card'),     status: '' },
+    { card: document.getElementById('stat-digitized').closest('.stat-card'), status: 'digitized' },
+    { card: document.getElementById('stat-pending').closest('.stat-card'),   status: 'pending' },
+  ];
+
+  statCardsByStatus.forEach(({ card, status }) => {
+    card.classList.add('stat-card-clickable');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    const activate = () => {
+      statusQuickFilter = status;
+      updateActiveStatCard();
+      renderRecords();
+    };
+    card.addEventListener('click', activate);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
+  });
+
+  function updateActiveStatCard() {
+    statCardsByStatus.forEach(({ card, status }) => {
+      card.classList.toggle('stat-card-active', statusQuickFilter === status);
+    });
+  }
 
   function renderRecords() {
     const query   = searchInput.value.trim().toLowerCase();
@@ -66,7 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
         matchesDate = diffDays <= days;
       }
 
-      return matchesQuery && matchesType && matchesDate;
+      const matchesStatus = !statusQuickFilter ||
+        (statusQuickFilter === 'pending'
+          ? (r.status === 'processing' || r.status === 'queued')
+          : r.status === statusQuickFilter);
+
+      return matchesQuery && matchesType && matchesDate && matchesStatus;
     });
 
     tbody.innerHTML = '';
@@ -107,33 +162,56 @@ document.addEventListener('DOMContentLoaded', () => {
   tbody.addEventListener('click', (e) => {
     const btn = e.target.closest('.row-action');
     if (!btn) return;
-    const r = records.find(x => x.id === btn.dataset.id);
-    showToast(`Opening record for ${r ? r.fullName : 'record'}…`);
-    // TODO: route to a record detail view once it exists.
+    openViewModal(btn.dataset.id);
   });
 
 
   /* --- Modals --- */
   const uploadModal    = document.getElementById('upload-modal');
   const newRecordModal = document.getElementById('new-record-modal');
+  const viewRecordModal = document.getElementById('view-record-modal');
+  const viewRecordBody   = document.getElementById('view-record-body');
 
   document.getElementById('btn-upload').addEventListener('click', () => openModal(uploadModal));
   document.getElementById('btn-new-record').addEventListener('click', () => openModal(newRecordModal));
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { closeModal(uploadModal); closeModal(newRecordModal); });
+    btn.addEventListener('click', () => { closeModal(uploadModal); closeModal(newRecordModal); closeModal(viewRecordModal); });
   });
 
-  [uploadModal, newRecordModal].forEach(modal => {
+  [uploadModal, newRecordModal, viewRecordModal].forEach(modal => {
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeModal(uploadModal); closeModal(newRecordModal); }
+    if (e.key === 'Escape') { closeModal(uploadModal); closeModal(newRecordModal); closeModal(viewRecordModal); }
   });
 
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
+
+  function openViewModal(id) {
+    const r = records.find(x => x.id === id);
+    if (!r) return;
+
+    viewRecordBody.innerHTML = `
+      <div class="so-detail-grid">
+        <div><p class="so-detail-label">Full Name</p><p class="so-detail-value">${escapeHtml(r.fullName)}</p></div>
+        <div><p class="so-detail-label">Record Type</p><p class="so-detail-value">${escapeHtml(r.type)}</p></div>
+        <div><p class="so-detail-label">Status</p><p class="so-detail-value">${statusLabel[r.status] || r.status}</p></div>
+        <div><p class="so-detail-label">Date of Event</p><p class="so-detail-value">${formatDate(r.dateOfEvent)}</p></div>
+        <div><p class="so-detail-label">Officiant</p><p class="so-detail-value">${escapeHtml(r.officiant) || '—'}</p></div>
+        <div><p class="so-detail-label">Added By</p><p class="so-detail-value">${escapeHtml(r.addedByName) || '—'}</p></div>
+        <div><p class="so-detail-label">Date Added</p><p class="so-detail-value">${formatDate(r.createdAt)}</p></div>
+      </div>
+      ${r.fileURL ? `<div class="mt-3"><a href="${r.fileURL}" target="_blank" rel="noopener" class="certificate-chip">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4"/></svg>
+          View scanned file
+        </a></div>` : ''}
+    `;
+
+    openModal(viewRecordModal);
+  }
 
 
   /* --- Upload modal (file picker only creates a record; actual file

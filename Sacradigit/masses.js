@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
       allMasses = items;
       renderDateSchedule();
       renderSpecialMasses();
+      renderStats();
     },
     error: (err) => {
       console.error('Failed to load masses:', err);
@@ -138,6 +139,37 @@ document.addEventListener('DOMContentLoaded', () => {
       </li>
     `).join('');
   }
+
+
+  /* --- Stat cards (this week's totals) --- */
+  const statMassesWeekEl  = document.getElementById('stat-masses-week');
+  const statSpecialWeekEl = document.getElementById('stat-special-week');
+
+  function renderStats() {
+    const weekStart = new Date(todayISO + 'T00:00:00');
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const weekEndISO = weekEnd.toISOString().slice(0, 10);
+
+    const thisWeek = allMasses.filter(m => m.date >= todayISO && m.date < weekEndISO);
+
+    statMassesWeekEl.textContent = thisWeek.length;
+    statSpecialWeekEl.textContent = thisWeek.filter(m => m.isSpecial === true).length;
+  }
+
+  const statSpecialCard = statSpecialWeekEl.closest('.stat-card');
+  statSpecialCard.classList.add('stat-card-clickable');
+  statSpecialCard.setAttribute('role', 'button');
+  statSpecialCard.setAttribute('tabindex', '0');
+  statSpecialCard.addEventListener('click', () => {
+    window.location.href = 'special-schedules.html';
+  });
+  statSpecialCard.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.location.href = 'special-schedules.html';
+    }
+  });
 
 
   /* --- Regular Weekly Mass Schedule (static reference) --- */
@@ -290,4 +322,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
-  

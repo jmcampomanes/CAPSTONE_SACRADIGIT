@@ -1,30 +1,26 @@
 /* ============================================
-   SacraDigit Admin — Record Requests Scripts
+   SacraDigit Admin — Record Requests Scripts (AWS Amplify)
+   Backed by the CertificateRequest model
+   (requesterName, certificateType, purpose, status,
+   linkedRecordId, createdAt). Status flow:
+   pending -> approved -> released, or -> rejected.
    ============================================ */
+
+import { client } from '../amplify-init.js';
+import { uploadData } from 'aws-amplify/storage';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ------------------------------------------
-     0. SAMPLE DATA
-     In production this would come from
-     Firestore. dateRequested uses ISO format.
-  ------------------------------------------ */
-  let requests = [
-    { requester: 'Santos, Maria T.',    type: 'Baptismal',    dateRequested: '2026-06-18', purpose: 'School enrollment',       status: 'Pending',  certificateFile: null },
-    { requester: 'Cruz, Jose R.',        type: 'Confirmation', dateRequested: '2026-06-18', purpose: 'Sponsor requirement',     status: 'Pending',  certificateFile: null },
-    { requester: 'Reyes, Ana L.',        type: 'Marriage',     dateRequested: '2026-06-17', purpose: 'Marriage application',    status: 'Pending',  certificateFile: null },
-    { requester: 'Garcia, Pedro M.',     type: 'Death',        dateRequested: '2026-06-17', purpose: 'Estate settlement',       status: 'Pending',  certificateFile: null },
-    { requester: 'Villanueva, Rosa S.',  type: 'Marriage',     dateRequested: '2026-06-12', purpose: 'Visa application',        status: 'Approved', certificateFile: 'villanueva-marriage-cert.pdf' },
-    { requester: 'Bautista, Carlo M.',   type: 'Confirmation', dateRequested: '2026-06-08', purpose: 'Employment requirement',  status: 'Approved', certificateFile: 'bautista-confirmation-cert.pdf' },
-    { requester: 'Ramos, Teresa A.',     type: 'Death',        dateRequested: '2026-06-02', purpose: 'Insurance claim',         status: 'Approved', certificateFile: 'ramos-death-cert.pdf' },
-    { requester: 'Fernandez, Luis G.',   type: 'Baptismal',    dateRequested: '2026-05-28', purpose: 'Confirmation sponsor',    status: 'Rejected', reason: 'Incomplete supporting documents' },
-    { requester: 'Mendoza, Carmen P.',   type: 'Marriage',     dateRequested: '2026-05-20', purpose: 'Annulment proceedings',   status: 'Rejected', reason: 'Name mismatch with civil registry' },
-  ];
+  let requests = []; // kept in sync via observeQuery, each has .id
 
   const badgeClass = {
-    'Pending':  'badge-amber',
-    'Approved': 'badge-green',
-    'Rejected': 'badge-red',
+    pending:  'badge-amber',
+    approved: 'badge-green',
+    released: 'badge-blue',
+    rejected: 'badge-red',
+  };
+  const statusLabel = {
+    pending: 'Pending', approved: 'Approved', released: 'Released', rejected: 'Rejected',
   };
 
   /* ------------------------------------------
@@ -53,21 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const uploadRequestSelect    = document.getElementById('upload-request');
 
   const rejectTargetName  = document.getElementById('reject-target-name');
-  const rejectReasonInput   = document.getElementById('reject-reason');
 
   const viewName            = document.getElementById('view-name');
   const viewStatusBadge      = document.getElementById('view-status-badge');
   const viewType                = document.getElementById('view-type');
   const viewDate                  = document.getElementById('view-date');
   const viewPurpose                 = document.getElementById('view-purpose');
-  const viewCertificateWrap           = document.getElementById('view-certificate-wrap');
-  const viewCertificateName             = document.getElementById('view-certificate-name');
-  const viewReasonWrap                    = document.getElementById('view-reason-wrap');
-  const viewReason                          = document.getElementById('view-reason');
+  const viewLinkedWrap                = document.getElementById('view-linked-wrap');
 
   const toast = document.getElementById('toast');
 
-  let rejectTargetIndex = null;
+  let rejectTargetId = null;
   let toastTimer = null;
 
   /* ------------------------------------------
@@ -75,30 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = str;
+    div.textContent = str || '';
     return div.innerHTML;
   }
 
   function formatDate(iso) {
+    if (!iso) return '—';
     const d = new Date(iso);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
-  function setFieldError(input, message) {
-    input.classList.add('has-error');
-    let msg = input.parentElement.querySelector('.form-error-msg');
-    if (!msg) {
-      msg = document.createElement('p');
-      msg.className = 'form-error-msg';
-      input.insertAdjacentElement('afterend', msg);
-    }
-    msg.textContent = message;
-  }
-
-  function clearFieldError(input) {
-    input.classList.remove('has-error');
-    const msg = input.parentElement.querySelector('.form-error-msg');
-    if (msg) msg.remove();
   }
 
   function openModal(modal) {
@@ -118,7 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.querySelector('.toast-message').textContent = message;
+    const msgEl = toast.querySelector('.toast-message');
+    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));
@@ -130,17 +107,36 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------
-     3. STAT COUNTERS
+     3. LIVE DATA
+  ------------------------------------------ */
+  client.models.CertificateRequest.observeQuery().subscribe({
+    next: ({ items }) => {
+      requests = items;
+      renderStats();
+      renderRequests();
+    },
+    error: (err) => {
+      console.error('Failed to load requests:', err);
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Couldn't load requests.</td></tr>`;
+    },
+  });
+
+  /* ------------------------------------------
+     4. STAT COUNTERS
+     "Approved" counts requests that are approved
+     but not yet released — released ones still
+     count toward Total, and show their own status
+     badge in the table, just not a dedicated card.
   ------------------------------------------ */
   function renderStats() {
     document.getElementById('stat-total').textContent    = requests.length;
-    document.getElementById('stat-pending').textContent  = requests.filter(r => r.status === 'Pending').length;
-    document.getElementById('stat-approved').textContent = requests.filter(r => r.status === 'Approved').length;
-    document.getElementById('stat-rejected').textContent = requests.filter(r => r.status === 'Rejected').length;
+    document.getElementById('stat-pending').textContent  = requests.filter(r => r.status === 'pending').length;
+    document.getElementById('stat-approved').textContent = requests.filter(r => r.status === 'approved').length;
+    document.getElementById('stat-rejected').textContent = requests.filter(r => r.status === 'rejected').length;
   }
 
   /* ------------------------------------------
-     3b. STAT CARDS AS QUICK FILTERS
+     4b. STAT CARDS AS QUICK FILTERS
      Total clears the status filter (and search
      query, so the count on screen always matches
      the card you clicked); Pending / Approved /
@@ -148,9 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   const statCardsByStatus = [
     { card: document.getElementById('stat-total').closest('.stat-card'),    status: '' },
-    { card: document.getElementById('stat-pending').closest('.stat-card'),  status: 'Pending' },
-    { card: document.getElementById('stat-approved').closest('.stat-card'), status: 'Approved' },
-    { card: document.getElementById('stat-rejected').closest('.stat-card'), status: 'Rejected' },
+    { card: document.getElementById('stat-pending').closest('.stat-card'),  status: 'pending' },
+    { card: document.getElementById('stat-approved').closest('.stat-card'), status: 'approved' },
+    { card: document.getElementById('stat-rejected').closest('.stat-card'), status: 'rejected' },
   ];
 
   statCardsByStatus.forEach(({ card, status }) => {
@@ -175,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------
-     4. RENDER TABLE based on current filters
+     5. RENDER TABLE based on current filters
   ------------------------------------------ */
   function renderRequests() {
     const query      = searchInput.value.trim().toLowerCase();
@@ -184,10 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateActiveStatCard();
 
-    const filtered = requests.filter(r => {
-      const matchesQuery  = !query || r.requester.toLowerCase().includes(query) || r.type.toLowerCase().includes(query);
+    const sorted = requests.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const filtered = sorted.filter(r => {
+      const matchesQuery  = !query || (r.requesterName || '').toLowerCase().includes(query) || (r.certificateType || '').toLowerCase().includes(query);
       const matchesStatus = !statusVal || r.status === statusVal;
-      const matchesType   = !typeVal || r.type === typeVal;
+      const matchesType   = !typeVal || r.certificateType === typeVal;
       return matchesQuery && matchesStatus && matchesType;
     });
 
@@ -198,26 +195,31 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       emptyState.classList.add('hidden');
       filtered.forEach((r) => {
-        const realIndex = requests.indexOf(r);
         const tr = document.createElement('tr');
 
         let actionsHtml = '';
-        if (r.status === 'Pending') {
+        if (r.status === 'pending') {
           actionsHtml = `
             <div class="row-actions">
-              <button type="button" class="row-approve" data-index="${realIndex}">Approve</button>
-              <button type="button" class="row-reject" data-index="${realIndex}">Reject</button>
+              <button type="button" class="row-approve" data-id="${r.id}">Approve</button>
+              <button type="button" class="row-reject" data-id="${r.id}">Reject</button>
+            </div>`;
+        } else if (r.status === 'approved') {
+          actionsHtml = `
+            <div class="row-actions">
+              <button type="button" class="row-approve" data-id="${r.id}" data-release="1">Release</button>
+              <button type="button" class="row-view" data-id="${r.id}">View ›</button>
             </div>`;
         } else {
-          actionsHtml = `<div class="row-actions"><button type="button" class="row-view" data-index="${realIndex}">View ›</button></div>`;
+          actionsHtml = `<div class="row-actions"><button type="button" class="row-view" data-id="${r.id}">View ›</button></div>`;
         }
 
         tr.innerHTML = `
-          <td class="font-medium text-gray-900">${escapeHtml(r.requester)}</td>
-          <td>${escapeHtml(r.type)}</td>
-          <td>${formatDate(r.dateRequested)}</td>
-          <td class="purpose-cell" title="${escapeHtml(r.purpose)}">${escapeHtml(r.purpose)}</td>
-          <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}">${escapeHtml(r.status)}</span></td>
+          <td class="font-medium text-gray-900">${escapeHtml(r.requesterName)}</td>
+          <td>${escapeHtml(r.certificateType)}</td>
+          <td>${formatDate(r.createdAt)}</td>
+          <td class="purpose-cell" title="${escapeHtml(r.purpose)}">${escapeHtml(r.purpose) || '—'}</td>
+          <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span></td>
           <td class="text-right">${actionsHtml}</td>
         `;
         tbody.appendChild(tr);
@@ -229,44 +231,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function refreshUploadDropdown() {
-    const pending = requests
-      .map((r, idx) => ({ ...r, idx }))
-      .filter(r => r.status === 'Pending');
-
-    uploadRequestSelect.innerHTML = '<option value="">Select a pending request</option>' +
-      pending.map(r => `<option value="${r.idx}">${escapeHtml(r.requester)} — ${escapeHtml(r.type)}</option>`).join('');
+    const approved = requests.filter(r => r.status === 'approved');
+    uploadRequestSelect.innerHTML = '<option value="">Select an approved request</option>' +
+      approved.map(r => `<option value="${r.id}">${escapeHtml(r.requesterName)} — ${escapeHtml(r.certificateType)}</option>`).join('');
   }
 
   /* ------------------------------------------
-     5. ROW ACTIONS (delegated — table is
+     6. ROW ACTIONS (delegated — table is
         re-rendered on every filter/update)
   ------------------------------------------ */
-  tbody.addEventListener('click', (e) => {
+  tbody.addEventListener('click', async (e) => {
     const approveBtn = e.target.closest('.row-approve');
     const rejectBtn  = e.target.closest('.row-reject');
     const viewBtn    = e.target.closest('.row-view');
 
     if (approveBtn) {
-      const idx = parseInt(approveBtn.dataset.index, 10);
-      requests[idx].status = 'Approved';
-      renderStats();
-      renderRequests();
-      showToast(`Request for ${requests[idx].requester} approved.`);
+      const id = approveBtn.dataset.id;
+      const r = requests.find(x => x.id === id);
+      const nextStatus = approveBtn.dataset.release ? 'released' : 'approved';
+      try {
+        const result = await client.models.CertificateRequest.update({ id, status: nextStatus });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`Request for ${r ? r.requesterName : 'requester'} marked ${statusLabel[nextStatus].toLowerCase()}.`);
+      } catch (err) {
+        console.error('Failed to update request:', err);
+        showToast(err.message || "Couldn't update the request.", true);
+      }
     }
 
-    if (rejectBtn) {
-      const idx = parseInt(rejectBtn.dataset.index, 10);
-      openRejectModal(idx);
-    }
-
-    if (viewBtn) {
-      const idx = parseInt(viewBtn.dataset.index, 10);
-      openViewModal(idx);
-    }
+    if (rejectBtn) openRejectModal(rejectBtn.dataset.id);
+    if (viewBtn) openViewModal(viewBtn.dataset.id);
   });
 
   /* ------------------------------------------
-     6. FILTER WIRING
+     7. FILTER WIRING
   ------------------------------------------ */
   searchInput.addEventListener('input', renderRequests);
   statusFilter.addEventListener('change', renderRequests);
@@ -280,12 +278,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ------------------------------------------
-     7. MODAL OPEN BUTTONS
+     8. MODAL OPEN BUTTONS
   ------------------------------------------ */
   document.getElementById('btn-upload').addEventListener('click', () => {
     fileInput.value = '';
     uploadFilename.classList.add('hidden');
     uploadRequestSelect.value = '';
+    refreshUploadDropdown();
     openModal(uploadModal);
   });
 
@@ -300,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ------------------------------------------
-     8. MODAL CLOSE WIRING
+     9. MODAL CLOSE WIRING
   ------------------------------------------ */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', closeAllModals);
@@ -316,9 +315,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') closeAllModals();
   });
 
+  function setFieldError(input, message) {
+    input.classList.add('has-error');
+    let msg = input.parentElement.querySelector('.form-error-msg');
+    if (!msg) {
+      msg = document.createElement('p');
+      msg.className = 'form-error-msg';
+      input.insertAdjacentElement('afterend', msg);
+    }
+    msg.textContent = message;
+  }
+
+  function clearFieldError(input) {
+    input.classList.remove('has-error');
+    const msg = input.parentElement.querySelector('.form-error-msg');
+    if (msg) msg.remove();
+  }
+
   /* ------------------------------------------
-     9. UPLOAD MODAL — link a signed certificate
-        to a pending request, marks it Approved
+     10. UPLOAD MODAL — attach a signed certificate
+         (real S3 upload) to an approved request,
+         marks it Released
   ------------------------------------------ */
   fileInput.addEventListener('change', () => {
     if (fileInput.files.length > 0) {
@@ -348,35 +365,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.getElementById('upload-submit').addEventListener('click', () => {
-    const linkedIdx = uploadRequestSelect.value;
+  document.getElementById('upload-submit').addEventListener('click', async () => {
+    const linkedId = uploadRequestSelect.value;
 
     if (!fileInput.files.length) {
       showToast('Please select a certificate file to upload.', true);
       return;
     }
-    if (linkedIdx === '') {
+    if (!linkedId) {
       showToast('Please select which request this certificate belongs to.', true);
       return;
     }
 
-    const idx = parseInt(linkedIdx, 10);
-    requests[idx].status = 'Approved';
-    requests[idx].certificateFile = fileInput.files[0].name;
+    const r = requests.find(x => x.id === linkedId);
+    const submitBtn = document.getElementById('upload-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading…';
 
-    renderStats();
-    renderRequests();
-    closeModal(uploadModal);
-    showToast(`Certificate uploaded — ${requests[idx].requester}'s request marked Approved.`);
+    try {
+      const file = fileInput.files[0];
+      const path = `certificateUploads/${Date.now()}_${file.name}`;
+      await uploadData({ path, data: file }).result;
 
-    // Reset form
-    fileInput.value = '';
-    uploadFilename.classList.add('hidden');
-    uploadRequestSelect.value = '';
+      const result = await client.models.CertificateRequest.update({ id: linkedId, status: 'released' });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      closeModal(uploadModal);
+      showToast(`Certificate uploaded — ${r ? r.requesterName : 'request'}'s request marked Released.`);
+
+      fileInput.value = '';
+      uploadFilename.classList.add('hidden');
+      uploadRequestSelect.value = '';
+    } catch (err) {
+      console.error('Failed to release request:', err);
+      showToast(err.message || "Couldn't upload the certificate.", true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Mark as Released';
+    }
   });
 
   /* ------------------------------------------
-     10. NEW REQUEST MODAL — manual entry
+     11. NEW REQUEST MODAL — manual entry
          (walk-in / phone request)
   ------------------------------------------ */
   ['new-requester', 'new-type', 'new-date'].forEach(id => {
@@ -385,14 +415,13 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('change', () => clearFieldError(el));
   });
 
-  document.getElementById('new-request-submit').addEventListener('click', () => {
+  document.getElementById('new-request-submit').addEventListener('click', async () => {
     const requesterInput = document.getElementById('new-requester');
     const typeInput       = document.getElementById('new-type');
     const dateInput        = document.getElementById('new-date');
 
     const requester = requesterInput.value.trim();
     const type       = typeInput.value;
-    const date       = dateInput.value;
     const purpose    = document.getElementById('new-purpose').value.trim();
 
     [requesterInput, typeInput, dateInput].forEach(clearFieldError);
@@ -400,108 +429,83 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasError = false;
     if (!requester) { setFieldError(requesterInput, 'Requester name is required.'); hasError = true; }
     if (!type)       { setFieldError(typeInput, 'Please select a certificate type.'); hasError = true; }
-    if (!date)         { setFieldError(dateInput, 'Date requested is required.'); hasError = true; }
 
     if (hasError) {
       showToast('Please fix the highlighted fields.', true);
       return;
     }
 
-    requests.unshift({
-      requester,
-      type,
-      dateRequested: date,
-      purpose: purpose || 'Not specified',
-      status: 'Pending',
-      certificateFile: null,
-    });
+    try {
+      const result = await client.models.CertificateRequest.create({
+        requesterName: requester,
+        certificateType: type,
+        purpose: purpose || undefined,
+        status: 'pending',
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
-    renderStats();
-    renderRequests();
-    closeModal(newRequestModal);
-    showToast(`Request logged for ${requester}.`);
+      closeModal(newRequestModal);
+      showToast(`Request logged for ${requester}.`);
 
-    // Reset form
-    ['new-requester', 'new-purpose', 'new-notes'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-    document.getElementById('new-type').value = '';
-    document.getElementById('new-date').value = '';
+      ['new-requester', 'new-purpose', 'new-notes'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('new-type').value = '';
+      document.getElementById('new-date').value = '';
+    } catch (err) {
+      console.error('Failed to log request:', err);
+      showToast(err.message || "Couldn't log the request.", true);
+    }
   });
 
   /* ------------------------------------------
-     11. REJECT MODAL — capture a reason, then
-         mark the request Rejected
+     12. REJECT CONFIRM MODAL
+         (the schema has no rejection-reason
+         field, so this is a plain confirm step —
+         not a form)
   ------------------------------------------ */
-  function openRejectModal(idx) {
-    rejectTargetIndex = idx;
-    rejectTargetName.textContent = requests[idx].requester;
-    rejectReasonInput.value = '';
-    clearFieldError(rejectReasonInput);
+  function openRejectModal(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+    rejectTargetId = id;
+    rejectTargetName.textContent = r.requesterName;
     openModal(rejectModal);
   }
 
-  rejectReasonInput.addEventListener('input', () => clearFieldError(rejectReasonInput));
+  document.getElementById('reject-submit').addEventListener('click', async () => {
+    if (rejectTargetId === null) return;
+    const r = requests.find(x => x.id === rejectTargetId);
 
-  document.getElementById('reject-submit').addEventListener('click', () => {
-    if (rejectTargetIndex === null) return;
-
-    const reason = rejectReasonInput.value.trim();
-    if (!reason) {
-      setFieldError(rejectReasonInput, 'Please provide a reason for rejection.');
-      showToast('Please fix the highlighted fields.', true);
-      return;
+    try {
+      const result = await client.models.CertificateRequest.update({ id: rejectTargetId, status: 'rejected' });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeModal(rejectModal);
+      showToast(`Request for ${r ? r.requesterName : 'requester'} rejected.`);
+      rejectTargetId = null;
+    } catch (err) {
+      console.error('Failed to reject request:', err);
+      showToast(err.message || "Couldn't reject the request.", true);
     }
-
-    requests[rejectTargetIndex].status = 'Rejected';
-    requests[rejectTargetIndex].reason = reason;
-
-    renderStats();
-    renderRequests();
-    closeModal(rejectModal);
-    showToast(`Request for ${requests[rejectTargetIndex].requester} rejected.`);
-
-    rejectTargetIndex = null;
   });
 
   /* ------------------------------------------
-     12. VIEW DETAILS MODAL — read-only summary
-         for Approved / Rejected requests
+     13. VIEW DETAILS MODAL — read-only summary
   ------------------------------------------ */
-  function openViewModal(idx) {
-    const r = requests[idx];
+  function openViewModal(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
 
-    viewName.textContent = r.requester;
-    viewType.textContent = r.type;
-    viewDate.textContent = formatDate(r.dateRequested);
-    viewPurpose.textContent = r.purpose;
+    viewName.textContent = r.requesterName;
+    viewType.textContent = r.certificateType;
+    viewDate.textContent = formatDate(r.createdAt);
+    viewPurpose.textContent = r.purpose || '—';
 
-    viewStatusBadge.textContent = r.status;
+    viewStatusBadge.textContent = statusLabel[r.status] || r.status;
     viewStatusBadge.className = `badge ${badgeClass[r.status] || 'badge-gray'}`;
 
-    if (r.status === 'Approved' && r.certificateFile) {
-      viewCertificateName.textContent = r.certificateFile;
-      viewCertificateWrap.classList.remove('hidden');
-    } else {
-      viewCertificateWrap.classList.add('hidden');
-    }
-
-    if (r.status === 'Rejected' && r.reason) {
-      viewReason.textContent = r.reason;
-      viewReasonWrap.classList.remove('hidden');
-    } else {
-      viewReasonWrap.classList.add('hidden');
-    }
+    viewLinkedWrap.classList.toggle('hidden', !r.linkedRecordId);
 
     openModal(viewModal);
   }
-
-  /* ------------------------------------------
-     13. INITIAL RENDER
-         (runs last, after every element and
-         handler above is safely wired up)
-  ------------------------------------------ */
-  renderStats();
-  renderRequests();
 
 });

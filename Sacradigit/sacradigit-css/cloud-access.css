@@ -124,6 +124,100 @@
   color: #4b5563;
 }
 
+.folder-row-clickable {
+  cursor: pointer;
+}
+
+.folder-row-clickable:focus-visible {
+  outline: 2px solid #8b8fc7;
+  outline-offset: -2px;
+  border-radius: 0.5rem;
+}
+
+/* ---------- Folder Files modal ---------- */
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.file-list li + li {
+  border-top: 1px solid #f1f2f5;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.875rem;
+  padding: 0.75rem 0.25rem;
+}
+
+.file-row-info {
+  min-width: 0;
+}
+
+.file-row-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.file-row-meta {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  margin-top: 0.15rem;
+}
+
+.file-row-delete {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #b91c1c;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.file-row-delete:hover {
+  color: #8f1414;
+}
+
+.file-row-empty {
+  padding: 1.25rem 0.25rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: #9ca3af;
+}
+
+/* ---------- Danger button (delete confirmation modal) ---------- */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #b91c1c;
+  color: #ffffff;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background-color: #991616;
+}
+
 /* ---------- Access log table ---------- */
 .access-log-table th,
 .access-log-table td {

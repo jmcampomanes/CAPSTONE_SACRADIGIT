@@ -300,6 +300,45 @@
     </div>
   </div>
 
+  <!-- ========== FOLDER FILES MODAL ========== -->
+  <div id="folder-files-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="folder-files-title">Folder Files</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <ul id="folder-files-list" class="file-list">
+          <!-- Rows injected by cloud-access.js -->
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DELETE FILE CONFIRMATION MODAL ========== -->
+  <div id="file-delete-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete File</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-gray-600">Delete <span id="file-delete-target-name" class="font-semibold text-gray-900"></span>? This removes the file record from Cloud Access. This can't be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="file-delete-confirm-submit" class="btn-danger">Delete File</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 

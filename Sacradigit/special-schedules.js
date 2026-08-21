@@ -79,6 +79,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* --- Live data --- */
+  if (!client.models.SpecialSchedule) {
+    console.error('SpecialSchedule model is missing from the deployed backend schema (amplify_outputs.json). Special Schedules cannot load, save, or delete until this model is added to the backend.');
+
+    schedulesCount.textContent = '';
+    grid.innerHTML = '';
+    schedulesEmpty.innerHTML = `
+      <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <p class="text-sm font-medium text-gray-600">Special Schedules isn't connected to a database table yet</p>
+      <p class="text-xs text-gray-400 mt-1">The SpecialSchedule model is missing from the backend schema — check with the developer before this feature can be used.</p>
+    `;
+    schedulesEmpty.classList.remove('hidden');
+
+    const addBtn = document.getElementById('btn-add-schedule');
+    if (addBtn) {
+      addBtn.disabled = true;
+      addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      addBtn.title = "Special Schedules isn't connected to a database table yet.";
+    }
+
+    return;
+  }
+
   client.models.SpecialSchedule.observeQuery().subscribe({
     next: ({ items }) => {
       schedules = items;

@@ -252,3 +252,13 @@
   font-weight: 600;
   color: #111827;
 }
+
+/* ---------- Panel highlight (jump-to from a stat card) ---------- */
+.panel-flash {
+  animation: panel-flash-pulse 1.1s ease;
+}
+
+@keyframes panel-flash-pulse {
+  0%   { box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.55); }
+  100% { box-shadow: 0 0 0 3px rgba(139, 143, 199, 0); }
+}

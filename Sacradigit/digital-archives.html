@@ -212,7 +212,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
               </div>
             </div>
-            <p class="stat-value">1,284</p>
+            <p class="stat-value" id="stat-total">0</p>
             <p class="stat-sub">across all record types</p>
           </div>
 
@@ -223,8 +223,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>
               </div>
             </div>
-            <p class="stat-value">1,196</p>
-            <p class="stat-sub">93% of total archive</p>
+            <p class="stat-value" id="stat-digitized">0</p>
+            <p class="stat-sub" id="stat-digitized-sub">of total archive</p>
           </div>
 
           <div class="stat-card">
@@ -234,8 +234,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
             </div>
-            <p class="stat-value">88</p>
-            <p class="stat-sub">awaiting digitization</p>
+            <p class="stat-value" id="stat-pending">0</p>
+            <p class="stat-sub">processing + queued</p>
           </div>
 
           <div class="stat-card">
@@ -401,6 +401,24 @@
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
         <button type="button" id="new-record-submit" class="btn-lavender">Save Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== VIEW RECORD MODAL ========== -->
+  <div id="view-record-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Details</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="view-record-body">
+        <!-- Injected by digital-archives.js -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>
   </div>

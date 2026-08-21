@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     error: (err) => {
       console.error('Failed to load donations:', err);
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 text-sm py-8">Couldn't load donations.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Couldn't load donations.</td></tr>`;
     },
   });
 
@@ -122,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><span class="payment-tag ${methodClass(d.method)}">${escapeHtml(d.method)}</span></td>
         <td class="text-gray-500">${escapeHtml(d.purpose)}</td>
         <td class="text-gray-400">${formatShortDate(d.date)}</td>
+        <td class="text-right"><button type="button" class="row-action" data-id="${d.id}">View ›</button></td>
       </tr>
     `).join('');
 
@@ -245,6 +246,35 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-view-graph').addEventListener('click', () => {
     renderDonationChart();
     openModal(graphModal);
+  });
+
+
+  /* --- Donation detail modal --- */
+  const donationDetailModal = document.getElementById('donation-detail-modal');
+  const donationDetailBody  = document.getElementById('donation-detail-body');
+
+  function openDonationDetailModal(id) {
+    const d = donations.find(x => x.id === id);
+    if (!d) return;
+
+    donationDetailBody.innerHTML = `
+      <div class="so-detail-grid">
+        <div><p class="so-detail-label">Donor</p><p class="so-detail-value">${escapeHtml(d.donor)}</p></div>
+        <div><p class="so-detail-label">Amount</p><p class="so-detail-value">${formatPeso(d.amount)}</p></div>
+        <div><p class="so-detail-label">Payment Method</p><p class="so-detail-value">${escapeHtml(d.method)}</p></div>
+        <div><p class="so-detail-label">Fund / Purpose</p><p class="so-detail-value">${escapeHtml(d.purpose)}</p></div>
+        <div><p class="so-detail-label">Date</p><p class="so-detail-value">${formatShortDate(d.date)}</p></div>
+        <div><p class="so-detail-label">Recorded</p><p class="so-detail-value">${d.createdAt ? formatShortDate(d.createdAt) : '—'}</p></div>
+      </div>
+    `;
+
+    openModal(donationDetailModal);
+  }
+
+  tbody.addEventListener('click', (e) => {
+    const btn = e.target.closest('.row-action');
+    if (!btn) return;
+    openDonationDetailModal(btn.dataset.id);
   });
 
 

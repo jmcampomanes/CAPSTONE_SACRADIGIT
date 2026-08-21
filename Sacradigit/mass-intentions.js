@@ -96,7 +96,43 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* ------------------------------------------
+     STAT CARDS AS QUICK FILTERS
+     Only "Pending Mass Assignment" maps to a
+     single status value, so it's the only stat
+     card wired as a clickable quick filter —
+     "Total Intentions This Week" and "Total
+     Offerings" don't map to one status and stay
+     plain, non-interactive stat cards.
+  ------------------------------------------ */
+  const statCardsByStatus = [
+    { card: document.getElementById('stat-pending').closest('.stat-card'), status: 'pending' },
+  ];
+
+  statCardsByStatus.forEach(({ card, status }) => {
+    card.classList.add('stat-card-clickable');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    const activate = () => {
+      searchInput.value = '';
+      statusFilter.value = status;
+      renderTable();
+    };
+    card.addEventListener('click', activate);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
+  });
+
+  function updateActiveStatCard() {
+    statCardsByStatus.forEach(({ card, status }) => {
+      card.classList.toggle('stat-card-active', statusFilter.value === status);
+    });
+  }
+
+
   function renderTable() {
+    updateActiveStatCard();
     const sorted = intentions.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const filtered = sorted.filter(matchesFilters);
 

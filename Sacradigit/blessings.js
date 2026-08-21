@@ -90,6 +90,44 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* ------------------------------------------
+     STAT CARDS AS QUICK NAVIGATION
+     "Scheduled This Week" and "Pending Requests"
+     jump to and briefly highlight their matching
+     panel below. "Avg. Per Week" and "Slots Open"
+     are static placeholders with no backing panel,
+     so they stay non-interactive.
+  ------------------------------------------ */
+  const statCardsToPanels = [
+    { card: document.getElementById('stat-scheduled').closest('.stat-card'), panelId: 'upcoming-panel' },
+    { card: document.getElementById('stat-pending').closest('.stat-card'),   panelId: 'requests-panel' },
+  ];
+
+  statCardsToPanels.forEach(({ card, panelId }) => {
+    card.classList.add('stat-card-clickable');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.addEventListener('click', () => goToPanel(panelId));
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        goToPanel(panelId);
+      }
+    });
+  });
+
+  function goToPanel(panelId) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    panel.classList.remove('panel-flash');
+    // eslint-disable-next-line no-unused-expressions
+    void panel.offsetWidth; // restart the animation if it's already running
+    panel.classList.add('panel-flash');
+    setTimeout(() => panel.classList.remove('panel-flash'), 1200);
+  }
+
+
   function renderUpcoming() {
     const sorted = upcoming.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
     const filtered = sorted.filter(matchesFilters);

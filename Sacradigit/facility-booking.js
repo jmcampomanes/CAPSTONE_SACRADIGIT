@@ -108,9 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="row-actions">
             <button type="button" class="row-approve" data-id="${b.id}">Approve</button>
             <button type="button" class="row-reject" data-id="${b.id}">Cancel</button>
+            <button type="button" class="row-view" data-id="${b.id}">View</button>
           </div>`;
       } else {
-        actionsHtml = `<div class="row-actions"><button type="button" class="row-reject" data-id="${b.id}">Cancel</button></div>`;
+        actionsHtml = `
+          <div class="row-actions">
+            <button type="button" class="row-reject" data-id="${b.id}">Cancel</button>
+            <button type="button" class="row-view" data-id="${b.id}">View</button>
+          </div>`;
       }
 
       return `
@@ -128,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   tbody.addEventListener('click', async (e) => {
     const approveBtn = e.target.closest('.row-approve');
     const cancelBtn  = e.target.closest('.row-reject');
+    const viewBtn    = e.target.closest('.row-view');
 
     if (approveBtn) {
       const b = bookings.find(x => x.id === approveBtn.dataset.id);
@@ -142,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (cancelBtn) openCancelModal(cancelBtn.dataset.id);
+    if (viewBtn) openDetailsModal(viewBtn.dataset.id);
   });
 
 
@@ -172,6 +179,30 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(err.message || "Couldn't cancel booking.", true);
     }
   });
+
+
+  /* --- Booking details modal --- */
+  const detailsModal        = document.getElementById('details-modal');
+  const detailsFacility     = document.getElementById('details-facility');
+  const detailsStatusBadge  = document.getElementById('details-status-badge');
+  const detailsDate         = document.getElementById('details-date');
+  const detailsTime         = document.getElementById('details-time');
+  const detailsPurpose      = document.getElementById('details-purpose');
+
+  function openDetailsModal(id) {
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+
+    detailsFacility.textContent = b.facilityName;
+    detailsDate.textContent = formatShortDate(b.date);
+    detailsTime.textContent = b.startTime;
+    detailsPurpose.textContent = b.purpose || '—';
+
+    detailsStatusBadge.textContent = statusLabel[b.status] || b.status;
+    detailsStatusBadge.className = `badge ${badgeClass[b.status] || 'badge-gray'}`;
+
+    openModal(detailsModal);
+  }
 
 
   /* --- Calendar view --- */
@@ -307,11 +338,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { closeModal(bookingModal); closeModal(cancelModal); });
+    btn.addEventListener('click', () => { closeModal(bookingModal); closeModal(cancelModal); closeModal(detailsModal); });
   });
 
-  [bookingModal, cancelModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(bookingModal); closeModal(cancelModal); } });
+  [bookingModal, cancelModal, detailsModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(bookingModal); closeModal(cancelModal); closeModal(detailsModal); } });
 
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }

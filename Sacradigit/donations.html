@@ -281,6 +281,7 @@
                   <th>Payment Method</th>
                   <th>Fund / Purpose</th>
                   <th>Date</th>
+                  <th class="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody id="donations-tbody">
@@ -313,6 +314,24 @@
       <div class="modal-body">
         <p class="text-sm text-gray-500 mb-3">Daily totals for the last 7 days.</p>
         <div id="donation-chart"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DONATION DETAIL MODAL ========== -->
+  <div id="donation-detail-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Donation Details</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="donation-detail-body"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Close</button>

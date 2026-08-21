@@ -266,6 +266,25 @@
     </div>
   </div>
 
+  <!-- ========== UNPUBLISH CONFIRMATION MODAL ========== -->
+  <div id="unpublish-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Unpublish Announcement</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-gray-600">Unpublish <span id="unpublish-target-title" class="font-semibold text-gray-900"></span>? Parishioners will no longer be able to see this announcement.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="unpublish-confirm-submit" class="btn-danger">Unpublish</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 

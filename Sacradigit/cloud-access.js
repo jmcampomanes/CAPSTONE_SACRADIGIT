@@ -66,6 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --- Storage Folders (live from CloudFile model) --- */
+  let currentFiles = [];
+
   function renderFolders(files) {
     const list = document.getElementById('folders-list');
     let totalBytes = 0;
@@ -76,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
       totalBytes += bytes;
       return `
         <li>
-          <div class="folder-row">
+          <div class="folder-row folder-row-clickable" data-folder-key="${escapeHtml(f.key)}" role="button" tabindex="0">
             <div class="folder-icon">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7a2 2 0 012-2h3.586a1 1 0 01.707.293l1.414 1.414a1 1 0 00.707.293H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
             </div>
@@ -94,7 +96,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   client.models.CloudFile.observeQuery().subscribe({
-    next: ({ items }) => renderFolders(items),
+    next: ({ items }) => {
+      currentFiles = items;
+      renderFolders(items);
+      if (activeFolderKey && !folderFilesModal.classList.contains('hidden')) {
+        renderFolderFilesList(activeFolderKey);
+      }
+    },
     error: (err) => console.error('Failed to load files:', err),
   });
 
@@ -144,9 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
   uploadFolderSelect.innerHTML = folders.map(f => `<option value="${escapeHtml(f.key)}">${escapeHtml(f.name)}</option>`).join('');
 
   document.getElementById('btn-upload').addEventListener('click', () => openModal(uploadModal));
-  document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(uploadModal)));
-  uploadModal.addEventListener('click', (e) => { if (e.target === uploadModal) closeModal(uploadModal); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(uploadModal); });
 
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
@@ -202,6 +207,101 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Upload File';
+    }
+  });
+
+  /* --- Folder Files Modal --- */
+  const folderFilesModal = document.getElementById('folder-files-modal');
+  const folderFilesTitle = document.getElementById('folder-files-title');
+  const folderFilesList  = document.getElementById('folder-files-list');
+  let activeFolderKey = null;
+
+  function renderFolderFilesList(key) {
+    const folder = folders.find(f => f.key === key);
+    folderFilesTitle.textContent = folder ? folder.name : 'Folder Files';
+
+    const forFolder = currentFiles
+      .filter(x => x.folder === key)
+      .slice()
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    folderFilesList.innerHTML = forFolder.length === 0
+      ? `<li class="file-row-empty">No files in this folder yet.</li>`
+      : forFolder.map(f => `
+          <li class="file-row">
+            <div class="file-row-info">
+              <p class="file-row-name">${escapeHtml(f.name)}</p>
+              <p class="file-row-meta">${formatBytes(f.bytes)} · ${f.createdAt ? new Date(f.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}</p>
+            </div>
+            <button type="button" class="file-row-delete" data-file-id="${escapeHtml(f.id)}">Delete</button>
+          </li>`).join('');
+  }
+
+  function openFolderFilesModal(key) {
+    activeFolderKey = key;
+    renderFolderFilesList(key);
+    openModal(folderFilesModal);
+  }
+
+  document.getElementById('folders-list').addEventListener('click', (e) => {
+    const row = e.target.closest('[data-folder-key]');
+    if (!row) return;
+    openFolderFilesModal(row.dataset.folderKey);
+  });
+
+  folderFilesList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.file-row-delete');
+    if (!btn) return;
+    openFileDeleteModal(btn.dataset.fileId);
+  });
+
+  /* --- Delete File Confirmation Modal --- */
+  const fileDeleteModal      = document.getElementById('file-delete-modal');
+  const fileDeleteTargetName = document.getElementById('file-delete-target-name');
+  let fileDeleteTargetId = null;
+
+  function openFileDeleteModal(id) {
+    const f = currentFiles.find(x => x.id === id);
+    if (!f) return;
+    fileDeleteTargetId = id;
+    fileDeleteTargetName.textContent = f.name;
+    openModal(fileDeleteModal);
+  }
+
+  document.getElementById('file-delete-confirm-submit').addEventListener('click', async () => {
+    if (fileDeleteTargetId === null) return;
+    const f = currentFiles.find(x => x.id === fileDeleteTargetId);
+
+    try {
+      const result = await client.models.CloudFile.delete({ id: fileDeleteTargetId });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeModal(fileDeleteModal);
+      showToast(`"${f ? f.name : 'File'}" deleted.`);
+      fileDeleteTargetId = null;
+    } catch (err) {
+      console.error('Failed to delete file:', err);
+      showToast(err.message || "Couldn't delete the file.", true);
+    }
+  });
+
+  /* --- Modal helpers: close button / backdrop / Escape (all modals) --- */
+  document.querySelectorAll('[data-close-modal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closeModal(uploadModal);
+      closeModal(folderFilesModal);
+      closeModal(fileDeleteModal);
+    });
+  });
+
+  [uploadModal, folderFilesModal, fileDeleteModal].forEach(m => {
+    m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeModal(uploadModal);
+      closeModal(folderFilesModal);
+      closeModal(fileDeleteModal);
     }
   });
 

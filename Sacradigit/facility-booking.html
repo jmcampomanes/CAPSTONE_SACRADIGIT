@@ -355,6 +355,45 @@
     </div>
   </div>
 
+  <!-- ========== BOOKING DETAILS MODAL ========== -->
+  <div id="details-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Booking Details</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="so-detail-grid">
+          <div>
+            <p class="so-detail-label">Facility</p>
+            <p class="so-detail-value" id="details-facility"></p>
+          </div>
+          <div>
+            <p class="so-detail-label">Status</p>
+            <p class="so-detail-value"><span id="details-status-badge" class="badge"></span></p>
+          </div>
+          <div>
+            <p class="so-detail-label">Date</p>
+            <p class="so-detail-value" id="details-date"></p>
+          </div>
+          <div>
+            <p class="so-detail-label">Time</p>
+            <p class="so-detail-value" id="details-time"></p>
+          </div>
+          <div class="col-span-2" style="grid-column: 1 / -1;">
+            <p class="so-detail-label">Purpose</p>
+            <p class="so-detail-value" id="details-purpose"></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 

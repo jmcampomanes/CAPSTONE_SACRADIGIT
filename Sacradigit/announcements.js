@@ -107,17 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (editBtn) openEditModal(editBtn.dataset.id);
 
-    if (unpublishBtn) {
-      const a = announcements.find(x => x.id === unpublishBtn.dataset.id);
-      try {
-        const result = await client.models.Announcement.update({ id: unpublishBtn.dataset.id, published: false });
-        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(`"${a ? a.title : 'Announcement'}" unpublished.`);
-      } catch (err) {
-        console.error(err);
-        showToast(err.message || "Couldn't unpublish.", true);
-      }
-    }
+    if (unpublishBtn) openUnpublishModal(unpublishBtn.dataset.id);
 
     if (republishBtn) {
       const a = announcements.find(x => x.id === republishBtn.dataset.id);
@@ -303,18 +293,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     3. MODAL HELPERS (open/close/escape)
+     3. UNPUBLISH CONFIRMATION MODAL
   ------------------------------------------ */
-  document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => closeModal(modal));
+  const unpublishModal      = document.getElementById('unpublish-modal');
+  const unpublishTargetTitle = document.getElementById('unpublish-target-title');
+  let unpublishTargetId = null;
+
+  function openUnpublishModal(id) {
+    const a = announcements.find(x => x.id === id);
+    if (!a) return;
+    unpublishTargetId = id;
+    unpublishTargetTitle.textContent = a.title;
+    openModal(unpublishModal);
+  }
+
+  document.getElementById('unpublish-confirm-submit').addEventListener('click', async () => {
+    if (unpublishTargetId === null) return;
+    const a = announcements.find(x => x.id === unpublishTargetId);
+
+    try {
+      const result = await client.models.Announcement.update({ id: unpublishTargetId, published: false });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeModal(unpublishModal);
+      showToast(`"${a ? a.title : 'Announcement'}" unpublished.`);
+      unpublishTargetId = null;
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Couldn't unpublish.", true);
+    }
   });
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal(modal);
+
+  /* ------------------------------------------
+     4. MODAL HELPERS (open/close/escape)
+  ------------------------------------------ */
+  document.querySelectorAll('[data-close-modal]').forEach(btn => {
+    btn.addEventListener('click', () => { closeModal(modal); closeModal(unpublishModal); });
+  });
+
+  [modal, unpublishModal].forEach(m => {
+    m.addEventListener('click', (e) => {
+      if (e.target === m) closeModal(m);
+    });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal(modal);
+    if (e.key === 'Escape') { closeModal(modal); closeModal(unpublishModal); }
   });
 
   function openModal(m) {
@@ -330,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     4. TOAST NOTIFICATIONS
+     5. TOAST NOTIFICATIONS
   ------------------------------------------ */
   const toast = document.getElementById('toast');
   let toastTimer = null;
