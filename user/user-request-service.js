@@ -1,12 +1,11 @@
 /* ============================================
    SacraDigit — User Request a Service Scripts (AWS Amplify)
    Runs after user-shell.js.
-   Backed by the same Blessing model the admin
-   Blessings page uses. Status mapping:
-   pending -> Pending, scheduled -> Approved,
-   completed -> Completed, declined -> Rejected.
-   "My Requests" filters client-side by
-   requesterName === hardcoded demo name.
+   Browsing + submitting only — the tracking log now
+   lives on user-requested-services.html/.js. Backed
+   by the Blessing model. Status mapping: pending ->
+   Pending, scheduled -> Approved, completed ->
+   Completed, declined -> Rejected.
    ============================================ */
 
 import { client } from '../amplify-init.js';
@@ -75,56 +74,21 @@ document.addEventListener('DOMContentLoaded', () => {
       ] },
   ];
 
-  const serviceByName = name => serviceTypes.find(s => s.name === name);
-
-  const badgeClass  = { pending: 'badge-amber', scheduled: 'badge-green', declined: 'badge-red', completed: 'badge-blue' };
-  const statusLabel = { pending: 'Pending', scheduled: 'Approved', declined: 'Rejected', completed: 'Completed' };
-
-  let myRequests = [];
-
-  const requestsList  = document.getElementById('requests-list');
-  const requestsEmpty  = document.getElementById('requests-empty');
-  const requestsCount   = document.getElementById('requests-count');
-
   const requestModal = document.getElementById('request-modal');
-  const svcStepType    = document.getElementById('svc-step-type');
-  const svcTypeGrid      = document.getElementById('svc-type-grid');
-  const svcStepForm         = document.getElementById('svc-step-form');
   const svcDynamicFields      = document.getElementById('svc-dynamic-fields');
   const svcDateInput             = document.getElementById('svc-date');
   const svcContactInput             = document.getElementById('svc-contact');
   const svcNotesInput                  = document.getElementById('svc-notes');
   const svcSubmitBtn                     = document.getElementById('svc-submit');
   const requestModalTitle                   = document.getElementById('request-modal-title');
-
-  const detailModal    = document.getElementById('detail-modal');
-  const modalStatusBadge  = document.getElementById('modal-status-badge');
-  const modalSubmittedDate = document.getElementById('modal-submitted-date');
-  const modalDetails          = document.getElementById('modal-details');
-  const modalScheduleWrap        = document.getElementById('modal-schedule-wrap');
-  const modalScheduleValue          = document.getElementById('modal-schedule-value');
-  const modalRejectionWrap             = document.getElementById('modal-rejection-wrap');
-  const modalRejection                    = document.getElementById('modal-rejection');
-  const modalNotesWrap                       = document.getElementById('modal-notes-wrap');
-  const modalNotes                              = document.getElementById('modal-notes');
-
-  const modalCancelBtn    = document.getElementById('modal-cancel-request');
-  const cancelRequestModal = document.getElementById('cancel-request-modal');
-  const cancelRequestTypeEl = document.getElementById('cancel-request-type');
-  const cancelRequestConfirm = document.getElementById('cancel-request-confirm');
+  const svcTypeGrid      = document.getElementById('svc-type-grid');
 
   let selectedTypeId = null;
-  let currentDetailId = null;
 
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str || '';
     return div.innerHTML;
-  }
-  function fmtDate(input) {
-    if (!input) return '—';
-    const d = new Date(input);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
   function setFieldError(input, message) {
     input.classList.add('has-error');
@@ -139,79 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
-  function getDetails(r) {
-    if (!r.details) return {};
-    try { return JSON.parse(r.details); } catch { return {}; }
-  }
 
-  client.models.Blessing.observeQuery({ filter: { requesterName: { eq: REQUESTER_NAME } } }).subscribe({
-    next: ({ items }) => { myRequests = items; renderStats(); renderList(); },
-    error: (err) => {
-      console.error('Failed to load requests:', err);
-      requestsList.innerHTML = `<p class="text-center text-red-500 text-sm py-8">Couldn't load requests.</p>`;
-    },
-  });
-
-  function renderStats() {
-    document.getElementById('stat-total').textContent     = myRequests.length;
-    document.getElementById('stat-pending').textContent   = myRequests.filter(r => r.status === 'pending').length;
-    document.getElementById('stat-approved').textContent  = myRequests.filter(r => r.status === 'scheduled').length;
-    document.getElementById('stat-completed').textContent = myRequests.filter(r => r.status === 'completed').length;
-  }
-
-  function renderList() {
-    requestsCount.textContent = `${myRequests.length} request${myRequests.length === 1 ? '' : 's'}`;
-
-    if (myRequests.length === 0) {
-      requestsList.innerHTML = '';
-      requestsEmpty.classList.remove('hidden');
-      return;
-    }
-    requestsEmpty.classList.add('hidden');
-
-    const sorted = myRequests.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    requestsList.innerHTML = sorted.map((r) => {
-      const svc = serviceByName(r.type) || { name: r.type, iconBg: '#eee', iconColor: '#888', icon: '' };
-      const scheduleChip = r.date ? `<span class="svc-row-schedule">${fmtDate(r.date)}${r.time ? ` at ${r.time}` : ''}</span>` : '';
-
-      return `<div class="svc-row">
-        <div class="svc-row-icon" style="background-color:${svc.iconBg};color:${svc.iconColor};">${svc.icon}</div>
-        <div class="svc-row-body">
-          <p class="svc-row-title">${escapeHtml(svc.name)}</p>
-          <p class="svc-row-meta">Preferred ${fmtDate(r.preferredDate)} · Submitted ${fmtDate(r.createdAt)}</p>
-          <div>${scheduleChip}</div>
-        </div>
-        <div class="svc-row-actions">
-          <span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span>
-          <button type="button" class="btn-view-details" data-id="${r.id}">View ›</button>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  requestsList.addEventListener('click', (e) => {
-    const btn = e.target.closest('.btn-view-details');
-    if (btn) openDetailModal(btn.dataset.id);
-  });
-
-  function resetRequestModal() {
-    selectedTypeId = null;
-    svcStepType.classList.remove('hidden');
-    svcStepForm.classList.add('hidden');
-    svcSubmitBtn.classList.add('hidden');
-    requestModalTitle.textContent = 'Request a Service';
-    svcDateInput.value = '';
-    svcContactInput.value = '';
-    svcNotesInput.value = '';
-    [svcDateInput, svcContactInput].forEach(clearFieldError);
-    document.querySelectorAll('.svc-type-card').forEach(c => c.classList.remove('selected'));
-  }
-
-  function openRequestModal() { resetRequestModal(); openModal(requestModal); }
-  document.getElementById('btn-request-service').addEventListener('click', openRequestModal);
-  document.getElementById('btn-empty-request').addEventListener('click', openRequestModal);
-
+  /* --- Services We Offer — on-page catalog --- */
   svcTypeGrid.innerHTML = serviceTypes.map(s => `
     <button type="button" class="svc-type-card" data-id="${s.id}">
       <div class="svc-icon" style="background-color:${s.iconBg};color:${s.iconColor};">${s.icon}</div>
@@ -221,16 +114,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   svcTypeGrid.addEventListener('click', (e) => {
     const card = e.target.closest('.svc-type-card');
-    if (card) selectServiceType(card.dataset.id);
+    if (card) openRequestModal(card.dataset.id);
   });
 
-  function selectServiceType(id) {
+  function openRequestModal(id) {
     const svc = serviceTypes.find(s => s.id === id);
     if (!svc) return;
     selectedTypeId = id;
 
-    document.querySelectorAll('.svc-type-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
     requestModalTitle.textContent = `Request — ${svc.name}`;
+    svcDateInput.value = '';
+    svcContactInput.value = '';
+    svcNotesInput.value = '';
+    [svcDateInput, svcContactInput].forEach(clearFieldError);
 
     svcDynamicFields.innerHTML = svc.fields.map(f => `
       <div class="${f.span2 ? 'sm:col-span-2' : ''}">
@@ -238,19 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <input type="text" id="${f.id}" class="form-input" placeholder="${f.placeholder || ''}" />
       </div>`).join('');
 
-    svcStepType.classList.add('hidden');
-    svcStepForm.classList.remove('hidden');
-    svcSubmitBtn.classList.remove('hidden');
+    openModal(requestModal);
   }
-
-  document.getElementById('btn-change-svc-type').addEventListener('click', () => {
-    selectedTypeId = null;
-    svcStepType.classList.remove('hidden');
-    svcStepForm.classList.add('hidden');
-    svcSubmitBtn.classList.add('hidden');
-    requestModalTitle.textContent = 'Request a Service';
-    document.querySelectorAll('.svc-type-card').forEach(c => c.classList.remove('selected'));
-  });
 
   [svcDateInput, svcContactInput].forEach(input => {
     input.addEventListener('input', () => clearFieldError(input));
@@ -282,6 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (val) details[f.label] = val;
     });
 
+    svcSubmitBtn.disabled = true;
+
     try {
       const result = await client.models.Blessing.create({
         requesterName: REQUESTER_NAME,
@@ -295,78 +182,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal(requestModal);
-      window.showToast(`Your ${svc.name} request has been submitted for review.`);
+      window.showToast(`Your ${svc.name} request has been submitted — track it under "Requested Services."`);
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);
+    } finally {
+      svcSubmitBtn.disabled = false;
     }
   });
-
-  function openDetailModal(id) {
-    const r = myRequests.find(x => x.id === id);
-    if (!r) return;
-    const svc = serviceByName(r.type) || { name: r.type };
-    const details = getDetails(r);
-
-    currentDetailId = id;
-    modalCancelBtn.classList.toggle('hidden', r.status !== 'pending');
-
-    document.getElementById('detail-modal-title').textContent = `${svc.name} Request`;
-    modalStatusBadge.textContent = statusLabel[r.status] || r.status;
-    modalStatusBadge.className = `badge ${badgeClass[r.status] || 'badge-gray'}`;
-    modalSubmittedDate.textContent = `Submitted ${fmtDate(r.createdAt)}`;
-
-    modalDetails.innerHTML = Object.entries(details).map(([label, value]) => `
-      <div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('') + `
-      <div><p class="modal-detail-item-label">Preferred Date</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate)}</p></div>
-      <div><p class="modal-detail-item-label">Contact</p><p class="modal-detail-item-value">${escapeHtml(r.contact)}</p></div>`;
-
-    if (r.date) {
-      modalScheduleValue.textContent = `${fmtDate(r.date)}${r.time ? ` at ${r.time}` : ''}`;
-      modalScheduleWrap.classList.remove('hidden');
-    } else modalScheduleWrap.classList.add('hidden');
-
-    if (r.status === 'declined' && r.declineReason) {
-      modalRejection.textContent = r.declineReason;
-      modalRejectionWrap.classList.remove('hidden');
-    } else modalRejectionWrap.classList.add('hidden');
-
-    if (r.status !== 'declined' && r.notes) {
-      modalNotes.textContent = r.notes;
-      modalNotesWrap.classList.remove('hidden');
-    } else modalNotesWrap.classList.add('hidden');
-
-    openModal(detailModal);
-  }
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { closeModal(requestModal); closeModal(detailModal); closeModal(cancelRequestModal); });
+    btn.addEventListener('click', () => closeModal(requestModal));
   });
-  [requestModal, detailModal, cancelRequestModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(requestModal); closeModal(detailModal); closeModal(cancelRequestModal); } });
-
-  modalCancelBtn.addEventListener('click', () => {
-    if (!currentDetailId) return;
-    const r = myRequests.find(x => x.id === currentDetailId);
-    if (!r) return;
-    cancelRequestTypeEl.textContent = serviceByName(r.type)?.name || r.type;
-    openModal(cancelRequestModal);
-  });
-
-  cancelRequestConfirm.addEventListener('click', async () => {
-    if (!currentDetailId) return;
-    const removed = myRequests.find(x => x.id === currentDetailId);
-    try {
-      const result = await client.models.Blessing.delete({ id: currentDetailId });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-      currentDetailId = null;
-      closeModal(detailModal);
-      closeModal(cancelRequestModal);
-      window.showToast(`${removed ? serviceByName(removed.type)?.name || removed.type : 'Request'} cancelled.`);
-    } catch (err) {
-      console.error('Failed to cancel request:', err);
-      window.showToast(err.message || "Couldn't cancel the request.", true);
-    }
-  });
+  requestModal.addEventListener('click', (e) => { if (e.target === requestModal) closeModal(requestModal); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(requestModal); });
 
 });
