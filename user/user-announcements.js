@@ -1,9 +1,18 @@
 /* ============================================
    SacraDigit — User Announcements Scripts (AWS Amplify)
    Runs after user-shell.js.
+
+   Announcement media (images/videos) lives in a private
+   Storage bucket — the record only holds a bare S3 path,
+   which has to be exchanged for a temporary signed URL
+   via getUrl() before it can be used as an <img>/<video>
+   src. Resolution happens at render time and is cached
+   briefly, mirroring the same fix applied to the admin
+   Announcements page.
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { getUrl } from 'aws-amplify/storage';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -21,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const detailBody    = document.getElementById('detail-body');
   const detailAudience = document.getElementById('detail-audience');
   const detailDate      = document.getElementById('detail-date');
+  const detailMediaGrid  = document.getElementById('detail-media-grid');
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -39,6 +49,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return audience === 'All Parishioners' ? 'all' : 'ministry';
   }
 
+  /* Resolve a stored S3 path into a real, fetchable URL,
+     cached for ~55 minutes (signed URLs here are issued
+     for 1 hour) so re-renders don't re-sign the same
+     path repeatedly. */
+  const mediaUrlCache = new Map(); // path -> { url, expiresAt }
+
+  async function resolveMediaUrl(path) {
+    if (!path) return '';
+    if (/^(https?:|data:|blob:)/.test(path)) return path;
+
+    const cached = mediaUrlCache.get(path);
+    if (cached && cached.expiresAt > Date.now()) return cached.url;
+
+    try {
+      const { url } = await getUrl({ path, options: { expiresIn: 3600 } });
+      const resolved = url.toString();
+      mediaUrlCache.set(path, { url: resolved, expiresAt: Date.now() + 55 * 60 * 1000 });
+      return resolved;
+    } catch (err) {
+      console.error(`Failed to resolve media URL for "${path}":`, err);
+      return '';
+    }
+  }
+
   client.models.Announcement.observeQuery({ filter: { published: { eq: true } } }).subscribe({
     next: ({ items }) => {
       announcements = items;
@@ -50,7 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  function renderGrid() {
+  let renderToken = 0;
+
+  async function renderGrid() {
+    const myToken = ++renderToken;
+
     const query   = searchInput.value.trim().toLowerCase();
     const audience = audienceFilter.value;
 
@@ -71,8 +109,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     annEmpty.classList.add('hidden');
 
-    grid.innerHTML = filtered.map((a) => `
-      <div class="ann-card" data-id="${a.id}" role="button" tabindex="0" aria-label="Read announcement: ${escapeHtml(a.title)}">
+    // Only the first media item of each card is shown as a thumbnail,
+    // so that's the only one worth resolving here.
+    const firstMediaUrls = await Promise.all(filtered.map(async (a) => {
+      const media = a.media ? JSON.parse(a.media) : [];
+      const first = media[0];
+      return first ? resolveMediaUrl(first.url) : '';
+    }));
+
+    // A newer render started while these URLs were resolving (e.g. the
+    // user kept typing in the search box) — discard this stale pass.
+    if (myToken !== renderToken) return;
+
+    grid.innerHTML = filtered.map((a, i) => {
+      const media = a.media ? JSON.parse(a.media) : [];
+      const firstMedia = media[0];
+      const firstMediaUrl = firstMediaUrls[i];
+      let mediaHtml = '';
+      if (firstMedia && firstMediaUrl) {
+        const thumb = firstMedia.type === 'video'
+          ? `<video class="ann-card-image" src="${firstMediaUrl}" muted></video><span class="ann-card-video-badge"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
+          : `<img class="ann-card-image" src="${firstMediaUrl}" alt="${escapeHtml(a.title)}" />`;
+        mediaHtml = `
+          <div class="ann-card-image-wrap">
+            ${thumb}
+            ${media.length > 1 ? `<span class="ann-card-media-count">+${media.length - 1} more</span>` : ''}
+          </div>`;
+      }
+
+      return `
+      <div class="ann-card audience-${audienceClass(a.audience)}" data-id="${a.id}" role="button" tabindex="0" aria-label="Read announcement: ${escapeHtml(a.title)}">
+        ${mediaHtml}
         <p class="ann-card-title">${escapeHtml(a.title)}</p>
         <p class="ann-card-excerpt">${escapeHtml(a.body)}</p>
         <div class="ann-card-footer">
@@ -80,7 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="ann-audience-tag ${audienceClass(a.audience)}">${escapeHtml(a.audience)}</span>
           <button type="button" class="ann-read-more" data-id="${a.id}">Read more ›</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   grid.addEventListener('click', (e) => {
@@ -104,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderGrid();
   });
 
-  function openDetail(id) {
+  async function openDetail(id) {
     const a = announcements.find(x => x.id === id);
     if (!a) return;
     detailTitle.textContent    = a.title;
@@ -112,8 +180,32 @@ document.addEventListener('DOMContentLoaded', () => {
     detailDate.textContent     = formatDate(a.createdAt);
     detailAudience.textContent = a.audience;
     detailAudience.className   = `ann-audience-tag ${audienceClass(a.audience)}`;
+
+    detailMediaGrid.innerHTML = '';
+    detailMediaGrid.classList.add('hidden');
     detailModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+
+    const media = a.media ? JSON.parse(a.media) : [];
+    if (media.length === 0) return;
+
+    // Resolve every attachment for the full gallery (not just the
+    // first, unlike the card thumbnail) — this is the modal the
+    // parishioner is actually viewing the announcement's media in.
+    const resolvedItems = await Promise.all(media.map(async (m) => ({ ...m, resolvedUrl: await resolveMediaUrl(m.url) })));
+
+    // The parishioner may have closed the modal (or opened a
+    // different announcement) while these were resolving.
+    if (detailModal.classList.contains('hidden') || detailTitle.textContent !== a.title) return;
+
+    const items = resolvedItems.filter(m => m.resolvedUrl);
+    if (items.length === 0) return;
+
+    detailMediaGrid.innerHTML = items.map(m => m.type === 'video'
+      ? `<div class="ann-detail-media-item"><video src="${m.resolvedUrl}" controls></video></div>`
+      : `<div class="ann-detail-media-item"><img src="${m.resolvedUrl}" alt="${escapeHtml(a.title)}" /></div>`
+    ).join('');
+    detailMediaGrid.classList.remove('hidden');
   }
 
   function closeDetail() {

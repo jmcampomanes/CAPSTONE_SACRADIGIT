@@ -126,6 +126,179 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedTypeId = null;
   let intentionNames = [];
 
+  /* ------------------------------------------
+     Preferred Mass Date — custom calendar
+     A native <input type="date"> can't restrict which
+     days are pickable, so this renders a small calendar
+     where only Saturdays, Sundays, and today-or-later
+     are actual, clickable buttons — every other day is
+     rendered disabled, not just flagged after the fact.
+  ------------------------------------------ */
+  const dateTrigger  = document.getElementById('mi-date-trigger');
+  const dateDisplay    = document.getElementById('mi-date-display');
+  const datePanel        = document.getElementById('mi-date-panel');
+  const dateGrid            = document.getElementById('mi-date-grid');
+  const dateMonthLabel        = document.getElementById('mi-date-month-label');
+  const datePrevBtn              = document.getElementById('mi-date-prev');
+  const dateNextBtn                = document.getElementById('mi-date-next');
+  const dateClearBtn                 = document.getElementById('mi-date-clear');
+
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  let calYear, calMonth; // calMonth is 0-11
+  let selectedWeekend = null; // { sat: 'YYYY-MM-DD', sun: 'YYYY-MM-DD' } or null
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function isoFromDate(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+
+  function startOfToday() {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function isSelectableDay(y, m, d) {
+    const date = new Date(y, m, d);
+    date.setHours(0, 0, 0, 0);
+    const dow = date.getDay();
+    return (dow === 0 || dow === 6) && date >= startOfToday();
+  }
+
+  /* Mass runs Saturday evening through Sunday, so picking either day
+     of a weekend selects the pair — Sat 22 → "Aug 22–23". */
+  function weekendPairFor(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    const dow = d.getDay();
+    if (dow === 6) {
+      const sun = new Date(d);
+      sun.setDate(sun.getDate() + 1);
+      return { sat: iso, sun: isoFromDate(sun) };
+    }
+    const sat = new Date(d);
+    sat.setDate(sat.getDate() - 1);
+    return { sat: isoFromDate(sat), sun: iso };
+  }
+
+  function formatWeekendRangeLabel(satIso, sunIso) {
+    const sat = new Date(satIso + 'T00:00:00');
+    const sun = new Date(sunIso + 'T00:00:00');
+    const satMonth = sat.toLocaleDateString('en-US', { month: 'short' });
+    const sunMonth = sun.toLocaleDateString('en-US', { month: 'short' });
+
+    if (sat.getFullYear() === sun.getFullYear()) {
+      if (satMonth === sunMonth) return `${satMonth} ${sat.getDate()}–${sun.getDate()}, ${sat.getFullYear()}`;
+      return `${satMonth} ${sat.getDate()} – ${sunMonth} ${sun.getDate()}, ${sat.getFullYear()}`;
+    }
+    return `${satMonth} ${sat.getDate()}, ${sat.getFullYear()} – ${sunMonth} ${sun.getDate()}, ${sun.getFullYear()}`;
+  }
+
+  function renderCalendar() {
+    dateMonthLabel.textContent = `${MONTH_NAMES[calMonth]} ${calYear}`;
+
+    const firstWeekday = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const today = startOfToday();
+
+    let html = '';
+    for (let i = 0; i < firstWeekday; i++) html += `<span class="mi-cal-blank"></span>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = `${calYear}-${pad2(calMonth + 1)}-${pad2(d)}`;
+      const selectable = isSelectableDay(calYear, calMonth, d);
+      const isSelected = !!selectedWeekend && (iso === selectedWeekend.sat || iso === selectedWeekend.sun);
+      const thisDate = new Date(calYear, calMonth, d);
+      thisDate.setHours(0, 0, 0, 0);
+      const isToday = thisDate.getTime() === today.getTime();
+
+      const classes = ['mi-cal-day'];
+      if (!selectable) classes.push('mi-cal-day-disabled');
+      if (isSelected) classes.push('mi-cal-day-selected');
+      if (isToday && !isSelected) classes.push('mi-cal-day-today');
+
+      html += `<button type="button" class="${classes.join(' ')}" data-date="${iso}"${selectable ? '' : ' disabled tabindex="-1"'}>${d}</button>`;
+    }
+
+    dateGrid.innerHTML = html;
+
+    const now = new Date();
+    datePrevBtn.disabled = (calYear === now.getFullYear() && calMonth === now.getMonth());
+  }
+
+  function updateDateDisplay() {
+    if (!selectedWeekend) {
+      dateDisplay.textContent = 'Select a date';
+      dateDisplay.classList.add('mi-date-placeholder');
+    } else {
+      dateDisplay.textContent = formatWeekendRangeLabel(selectedWeekend.sat, selectedWeekend.sun);
+      dateDisplay.classList.remove('mi-date-placeholder');
+    }
+  }
+
+  function openDatePanel() {
+    const base = selectedWeekend ? new Date(selectedWeekend.sat + 'T00:00:00') : new Date();
+    calYear = base.getFullYear();
+    calMonth = base.getMonth();
+    renderCalendar();
+    datePanel.classList.remove('hidden');
+    dateTrigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeDatePanel() {
+    datePanel.classList.add('hidden');
+    dateTrigger.setAttribute('aria-expanded', 'false');
+  }
+
+  dateTrigger.addEventListener('click', () => {
+    if (datePanel.classList.contains('hidden')) openDatePanel();
+    else closeDatePanel();
+  });
+
+  dateGrid.addEventListener('click', e => {
+    const btn = e.target.closest('.mi-cal-day');
+    if (!btn || btn.disabled) return;
+    selectedWeekend = weekendPairFor(btn.dataset.date);
+    // The Saturday of the pair is what's actually stored as the
+    // preferred mass date — the Sunday is implied by the parish's
+    // own Sat-evening-through-Sunday mass convention.
+    dateInput.value = selectedWeekend.sat;
+    updateDateDisplay();
+    closeDatePanel();
+  });
+
+  datePrevBtn.addEventListener('click', () => {
+    calMonth -= 1;
+    if (calMonth < 0) { calMonth = 11; calYear -= 1; }
+    renderCalendar();
+  });
+
+  dateNextBtn.addEventListener('click', () => {
+    calMonth += 1;
+    if (calMonth > 11) { calMonth = 0; calYear += 1; }
+    renderCalendar();
+  });
+
+  dateClearBtn.addEventListener('click', () => {
+    selectedWeekend = null;
+    dateInput.value = '';
+    updateDateDisplay();
+    closeDatePanel();
+  });
+
+  document.addEventListener('click', e => {
+    if (!datePanel.classList.contains('hidden') && !e.target.closest('.mi-datepicker')) closeDatePanel();
+  });
+
+  document.addEventListener('keydown', e => {
+    // Registered before the modal-wide Escape handler below, so this
+    // runs first — stopImmediatePropagation keeps a single Escape
+    // press from closing the calendar AND the whole modal at once.
+    if (e.key === 'Escape' && !datePanel.classList.contains('hidden')) {
+      closeDatePanel();
+      e.stopImmediatePropagation();
+    }
+  });
+
   function renderNameChips() {
     nameChipsBox.innerHTML = intentionNames.map((n, i) => `
       <span class="name-chip" data-index="${i}">${escapeHtml(n)}<button type="button" class="name-chip-remove" data-index="${i}" aria-label="Remove ${escapeHtml(n)}">×</button></span>`).join('');
@@ -173,9 +346,13 @@ document.addEventListener('DOMContentLoaded', () => {
     nameInput.value = '';
     renderNameChips();
     dateInput.value = '';
+    selectedWeekend = null;
+    updateDateDisplay();
+    closeDatePanel();
     offeringInput.value = '';
     showModal(modal);
   }
+
   function closeModal() { hideModal(modal); }
 
   document.getElementById('btn-submit-intention').addEventListener('click', openModal);
@@ -207,7 +384,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window.showToast('Please enter an offering amount.', true);
       return;
     }
-
     const cfg = typeConfig(selectedTypeId);
 
     try {
@@ -228,6 +404,325 @@ document.addEventListener('DOMContentLoaded', () => {
       window.showToast(err.message || "Couldn't submit the intention.", true);
     }
   });
+
+  /* ------------------------------------------
+     VIEW TABS (My Intentions / Community Intentions)
+  ------------------------------------------ */
+  const miTabs   = document.querySelectorAll('.mi-tab');
+  const miPanels = document.querySelectorAll('.mi-panel');
+
+  miTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      miTabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+      miPanels.forEach(p => p.classList.remove('active'));
+
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+    });
+  });
+
+
+  /* ------------------------------------------
+     COMMUNITY INTENTIONS (Reader's Sheet)
+     A read-aloud, parish-wide view of every mass's
+     intentions — mirrors the admin Reader's Sheet.
+     Unlike "My Intentions" above, this pulls every
+     donor's records (not just DONOR_NAME), since a
+     mass intentions sheet is public church-bulletin
+     content by nature.
+  ------------------------------------------ */
+  let allIntentions = [];
+
+  client.models.MassIntention.observeQuery().subscribe({
+    next: ({ items }) => {
+      allIntentions = items;
+      renderSheetOptions();
+    },
+    error: (err) => {
+      console.error('Failed to load community intentions:', err);
+    },
+  });
+
+  function formatShortDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function timeToMinutes(time12) {
+    if (!time12) return 0;
+    const [time, meridiem] = time12.split(' ');
+    let [h, m] = time.split(':').map(Number);
+    if (meridiem === 'PM' && h !== 12) h += 12;
+    if (meridiem === 'AM' && h === 12) h = 0;
+    return h * 60 + (m || 0);
+  }
+
+  /* e.g. "FOR JULY 25, 2026, 6:00 PM MASS" */
+  function formatSheetRangeLabel(massDate, massTime) {
+    const d = new Date(massDate + 'T00:00:00');
+    const dateLabel = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+    return massTime ? `FOR ${dateLabel}, ${massTime.toUpperCase()} MASS` : `FOR ${dateLabel} MASS`;
+  }
+
+  const sheetMassSelect = document.getElementById('sheet-mass-select');
+  const sheetEmpty        = document.getElementById('sheet-empty');
+  const sheetBody           = document.getElementById('sheet-body');
+  const sheetMassRange        = document.getElementById('sheet-mass-range');
+
+  const GROUP_TYPE_MAP = {
+    'Thanksgiving': 'thanksgiving',
+    'Birthday Blessing': 'thanksgiving',
+    'Special Intention': 'special',
+    'Healing': 'special',
+    'For the Soul of...': 'souls',
+  };
+
+  const sheetListEls = {
+    thanksgiving: document.getElementById('sheet-list-thanksgiving'),
+    special: document.getElementById('sheet-list-special'),
+    souls: document.getElementById('sheet-list-souls'),
+  };
+
+  let currentSheetKey = '';
+
+  /* ------------------------------------------
+     Category filter (All / one category at a time)
+  ------------------------------------------ */
+  const sheetCatBtns   = document.querySelectorAll('.sheet-cat-btn');
+  const sheetGroupEls    = document.querySelectorAll('.sheet-group');
+  const sheetBoilerplateEl = document.querySelector('.sheet-boilerplate');
+  const sheetClosingEl       = document.querySelector('.sheet-closing');
+
+  let activeCategory = 'all';
+
+  function applyCategoryFilter() {
+    sheetGroupEls.forEach(g => {
+      const show = activeCategory === 'all' || g.dataset.cat === activeCategory;
+      g.classList.toggle('sheet-group-filtered-out', !show);
+    });
+    // The standing intentions aren't part of any one category, so
+    // they only make sense in the full "All" view.
+    const showStanding = activeCategory === 'all';
+    sheetBoilerplateEl?.classList.toggle('sheet-group-filtered-out', !showStanding);
+    sheetClosingEl?.classList.toggle('sheet-group-filtered-out', !showStanding);
+
+    refreshFindMatches();
+  }
+
+  sheetCatBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.cat;
+      sheetCatBtns.forEach(b => b.classList.toggle('active', b === btn));
+      applyCategoryFilter();
+    });
+  });
+
+  /* ------------------------------------------
+     Find a name (Ctrl+F-style, scoped to the sheet)
+  ------------------------------------------ */
+  const findInput   = document.getElementById('sheet-find-input');
+  const findCount     = document.getElementById('sheet-find-count');
+  const findPrevBtn     = document.getElementById('sheet-find-prev');
+  const findNextBtn       = document.getElementById('sheet-find-next');
+  const findClearBtn        = document.getElementById('sheet-find-clear');
+
+  let findQuery = '';
+  let findMatches = [];
+  let findActiveIndex = -1;
+
+  function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  /* Wraps matches of findQuery inside already-escaped HTML text.
+     The query is escaped the same way the source text was, so the
+     regex only ever matches against literal (already-safe) markup. */
+  function highlightText(escapedText, query) {
+    const escapedQuery = escapeHtml(query.trim());
+    if (!escapedQuery) return escapedText;
+    const re = new RegExp(escapeRegExp(escapedQuery), 'gi');
+    return escapedText.replace(re, (m) => `<mark class="sheet-highlight">${m}</mark>`);
+  }
+
+  function refreshFindMatches() {
+    // Only search within whatever category is currently visible —
+    // matches hidden by the category filter shouldn't count or be
+    // jumped to.
+    const scopeEls = activeCategory === 'all'
+      ? [sheetListEls.thanksgiving, sheetListEls.special, sheetListEls.souls]
+      : [sheetListEls[activeCategory]];
+    findMatches = scopeEls.flatMap(el => [...el.querySelectorAll('mark.sheet-highlight')]);
+    findActiveIndex = findMatches.length ? 0 : -1;
+    updateFindUI();
+    if (findActiveIndex >= 0) focusMatch(findActiveIndex);
+  }
+
+  function updateFindUI() {
+    const hasQuery = findQuery.trim().length > 0;
+    findClearBtn.classList.toggle('hidden', !hasQuery);
+
+    if (!hasQuery) {
+      findCount.classList.add('hidden');
+      findPrevBtn.disabled = true;
+      findNextBtn.disabled = true;
+      return;
+    }
+
+    findCount.classList.remove('hidden');
+    findCount.textContent = findMatches.length ? `${findActiveIndex + 1} of ${findMatches.length}` : 'No matches';
+    findPrevBtn.disabled = findMatches.length === 0;
+    findNextBtn.disabled = findMatches.length === 0;
+  }
+
+  function focusMatch(index) {
+    findMatches.forEach(m => m.classList.remove('sheet-highlight-active'));
+    const el = findMatches[index];
+    if (!el) return;
+    el.classList.add('sheet-highlight-active');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  findInput.addEventListener('input', () => {
+    findQuery = findInput.value;
+    renderSheet();
+  });
+
+  findInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (e.shiftKey) findPrevBtn.click(); else findNextBtn.click();
+  });
+
+  findNextBtn.addEventListener('click', () => {
+    if (!findMatches.length) return;
+    findActiveIndex = (findActiveIndex + 1) % findMatches.length;
+    updateFindUI();
+    focusMatch(findActiveIndex);
+  });
+
+  findPrevBtn.addEventListener('click', () => {
+    if (!findMatches.length) return;
+    findActiveIndex = (findActiveIndex - 1 + findMatches.length) % findMatches.length;
+    updateFindUI();
+    focusMatch(findActiveIndex);
+  });
+
+  findClearBtn.addEventListener('click', () => {
+    findInput.value = '';
+    findQuery = '';
+    renderSheet();
+    findInput.focus();
+  });
+
+  function sheetKey(it) { return `${it.massDate}||${it.massTime || ''}`; }
+
+  function getSheetOptions() {
+    const map = new Map();
+    allIntentions.forEach(it => {
+      if (!it.massDate) return;
+      const key = sheetKey(it);
+      if (!map.has(key)) map.set(key, { massDate: it.massDate, massTime: it.massTime || '', count: 0 });
+      map.get(key).count += 1;
+    });
+    return Array.from(map.entries())
+      .map(([key, v]) => ({ key, ...v }))
+      .sort((a, b) => {
+        if (a.massDate !== b.massDate) return a.massDate < b.massDate ? -1 : 1;
+        return timeToMinutes(a.massTime) - timeToMinutes(b.massTime);
+      });
+  }
+
+  function renderSheetOptions() {
+    const options = getSheetOptions();
+    const hasCurrent = options.some(o => o.key === currentSheetKey);
+
+    sheetMassSelect.innerHTML = `<option value="">Choose a mass date &amp; time…</option>` +
+      options.map(o => `
+        <option value="${o.key}" ${o.key === currentSheetKey ? 'selected' : ''}>
+          ${formatShortDate(o.massDate)}${o.massTime ? ' · ' + escapeHtml(o.massTime) : ''}, ${new Date(o.massDate + 'T00:00:00').getFullYear()} (${o.count} intention${o.count === 1 ? '' : 's'})
+        </option>
+      `).join('');
+
+    if (!hasCurrent) currentSheetKey = '';
+    renderSheet();
+  }
+
+  function renderSheet() {
+    if (!currentSheetKey) {
+      sheetBody.classList.add('hidden');
+      sheetEmpty.classList.remove('hidden');
+      findMatches = [];
+      findActiveIndex = -1;
+      updateFindUI();
+      return;
+    }
+
+    const matching = allIntentions.filter(it => it.massDate && sheetKey(it) === currentSheetKey);
+
+    if (matching.length === 0) {
+      sheetBody.classList.add('hidden');
+      sheetEmpty.classList.remove('hidden');
+      findMatches = [];
+      findActiveIndex = -1;
+      updateFindUI();
+      return;
+    }
+
+    sheetEmpty.classList.add('hidden');
+    sheetBody.classList.remove('hidden');
+
+    const first = matching[0];
+    sheetMassRange.textContent = formatSheetRangeLabel(first.massDate, first.massTime);
+
+    const grouped = { thanksgiving: [], special: [], souls: [] };
+    matching.forEach(it => {
+      const bucket = GROUP_TYPE_MAP[it.type] || 'special';
+      grouped[bucket].push(it);
+    });
+
+    Object.entries(grouped).forEach(([bucket, items]) => {
+      const listEl = sheetListEls[bucket];
+      const emptyNote = listEl.parentElement.querySelector('.sheet-group-empty');
+
+      if (items.length === 0) {
+        listEl.innerHTML = '';
+        emptyNote.classList.remove('hidden');
+        return;
+      }
+      emptyNote.classList.add('hidden');
+
+      listEl.innerHTML = items.map(it => {
+        const names = getNames(it);
+        const namesText = names.length ? names.join(' / ') : it.donor;
+        const tag = (it.startTime && it.endTime)
+          ? ` <span class="sheet-entry-tag">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</span>`
+          : '';
+        return `${highlightText(escapeHtml(namesText), findQuery)}${tag}`;
+      }).join(' / ');
+    });
+
+    applyCategoryFilter();
+  }
+
+  sheetMassSelect.addEventListener('change', () => {
+    currentSheetKey = sheetMassSelect.value;
+    findInput.value = '';
+    findQuery = '';
+    renderSheet();
+  });
+
+  document.getElementById('btn-print-sheet').addEventListener('click', () => {
+    if (!currentSheetKey) {
+      window.showToast("Select a mass to print its intentions.", true);
+      return;
+    }
+    const printDateEl = document.getElementById('sheet-print-date-value');
+    if (printDateEl) {
+      printDateEl.textContent = `Printed ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    }
+    window.print();
+  });
+
 
   /* --- Details Modal --- */
   const detailsModal = document.getElementById('details-modal');

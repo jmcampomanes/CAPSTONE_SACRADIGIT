@@ -287,6 +287,171 @@
   line-height: 1.3;
 }
 
+/* ---------- Preferred Mass Date (custom calendar) ---------- */
+.mi-datepicker {
+  position: relative;
+}
+
+.mi-date-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  background-color: #ffffff;
+}
+
+.mi-date-display {
+  color: #111827;
+  font-weight: 500;
+}
+
+.mi-date-placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.mi-date-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.mi-date-panel {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  z-index: 20;
+  width: 17.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+  padding: 0.875rem;
+}
+
+.mi-date-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.625rem;
+}
+
+.mi-date-month-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #1e2a4a;
+}
+
+.mi-date-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.4rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.mi-date-nav-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.mi-date-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.mi-date-weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.mi-date-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.15rem;
+}
+
+.mi-cal-blank { visibility: hidden; }
+
+.mi-cal-day {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0.4rem;
+  background: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mi-cal-day:hover:not(:disabled) {
+  background-color: rgba(139, 143, 199, 0.14);
+}
+
+.mi-cal-day-today {
+  box-shadow: inset 0 0 0 1.5px #8b8fc7;
+}
+
+.mi-cal-day-selected {
+  background-color: #1e2a4a;
+  color: #ffffff;
+}
+
+.mi-cal-day-selected:hover {
+  background-color: #1e2a4a;
+}
+
+.mi-cal-day-disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mi-date-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid #f1f2f5;
+}
+
+.mi-date-clear-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.mi-date-clear-btn:hover { color: #1e2a4a; }
+
+.mi-date-note {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  text-align: right;
+}
+
 /* ---------- Offering peso prefix ---------- */
 .offering-input-wrap {
   position: relative;
@@ -412,4 +577,398 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+/* ---------- View tabs (My Intentions / Community Intentions) ---------- */
+.mi-tabs {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mi-tab {
+  padding: 0.65rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+
+.mi-tab:hover { color: #1e2a4a; }
+
+.mi-tab.active {
+  color: #1e2a4a;
+  border-bottom-color: #c9a84c;
+}
+
+.mi-panel { display: none; }
+.mi-panel.active { display: block; }
+
+/* ---------- Community Intentions: mass picker toolbar ---------- */
+.sheet-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.sheet-picker-wrap {
+  min-width: 18rem;
+}
+
+.sheet-mass-select {
+  max-width: 26rem;
+}
+
+.sheet-picker-note {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  max-width: 22rem;
+  line-height: 1.5;
+  margin-bottom: 0.15rem;
+  flex-basis: 100%;
+}
+
+/* ---------- Reader's Sheet panel ---------- */
+.sheet-panel {
+  padding: 2rem 2.25rem;
+  min-height: 16rem;
+}
+
+/* ---------- Parish letterhead ---------- */
+.sheet-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.sheet-parish-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 1.375rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: #1e2a4a;
+}
+
+.sheet-parish-address {
+  font-size: 0.75rem;
+  color: #4b5563;
+  margin-top: 0.15rem;
+}
+
+.sheet-doc-title {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #b91c1c;
+  margin-top: 0.75rem;
+}
+
+.sheet-mass-range {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #b91c1c;
+  margin-top: 0.15rem;
+}
+
+/* ---------- Find a name ---------- */
+.sheet-find-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f7f8fa;
+  border: 1px solid #eef0f4;
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.625rem;
+  flex: 1 1 260px;
+  min-width: 220px;
+}
+
+.sheet-find-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.sheet-find-icon {
+  position: absolute;
+  left: 0.1rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.sheet-find-input {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0.2rem 1.5rem 0.2rem 1.4rem;
+  font-size: 0.8125rem;
+  color: #111827;
+  outline: none;
+}
+
+.sheet-find-input::placeholder { color: #9ca3af; }
+
+.sheet-find-clear {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: none;
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sheet-find-clear:hover { background: #d1d5db; }
+
+.sheet-find-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sheet-find-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.4rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #4b5563;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sheet-find-nav-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.sheet-find-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sheet-highlight {
+  background-color: rgba(201, 168, 76, 0.4);
+  border-radius: 0.2rem;
+  padding: 0 0.05rem;
+}
+
+.sheet-highlight-active {
+  background-color: #c9a84c;
+  color: #1e2a4a;
+  box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.5);
+}
+
+/* ---------- Category filter (All / one at a time) ---------- */
+.sheet-category-filter {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sheet-cat-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4b5563;
+  background-color: #f7f8fa;
+  border: 1px solid #eef0f4;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.sheet-cat-btn:hover {
+  border-color: #d8dbe3;
+  color: #1e2a4a;
+}
+
+.sheet-cat-btn.active {
+  background-color: #1e2a4a;
+  border-color: #1e2a4a;
+  color: #ffffff;
+}
+
+/* ---------- Category groups ---------- */
+.sheet-group {
+  margin-bottom: 1.25rem;
+}
+
+.sheet-group-filtered-out {
+  display: none;
+}
+
+.sheet-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.sheet-group-title {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #b91c1c;
+  margin-bottom: 0.4rem;
+}
+
+.sheet-group-empty {
+  font-size: 0.8125rem;
+  color: #b0b4bd;
+  font-style: italic;
+  padding-left: 1.25rem;
+}
+
+.sheet-flow {
+  font-size: 0.8125rem;
+  color: #1f2937;
+  line-height: 1.85;
+  padding-left: 1.25rem;
+}
+
+.sheet-flow:empty { display: none; }
+
+.sheet-entry-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #b45309;
+  background-color: rgba(180, 83, 9, 0.1);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* ---------- Standing intentions (fixed boilerplate) ---------- */
+.sheet-boilerplate {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0.5rem 0 1.5rem 1.25rem;
+}
+
+.sheet-closing {
+  margin-top: 1.75rem;
+}
+
+.sheet-closing-line {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #111827;
+  display: flex;
+  gap: 1rem;
+}
+
+.sheet-closing-mark {
+  flex-shrink: 0;
+  width: 1.5rem;
+}
+
+/* ---------- Print-only stamp (hidden on screen) ---------- */
+.sheet-print-stamp {
+  display: none;
+}
+
+/* ---------- Print styles: isolate the Community Intentions sheet ---------- */
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #sheet-print-area,
+  #sheet-print-area * {
+    visibility: visible;
+  }
+
+  /* The printed sheet is always the full official document —
+     the on-screen category filter is a browsing convenience only. */
+  .sheet-group-filtered-out {
+    display: block !important;
+  }
+
+  #sheet-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .sheet-print-stamp {
+    display: block !important;
+    text-align: right;
+    font-size: 0.65rem;
+    color: #9ca3af !important;
+    margin-top: 1.25rem;
+  }
+
+  .sheet-parish-name,
+  .sheet-doc-title,
+  .sheet-mass-range,
+  .sheet-group-title,
+  .sheet-boilerplate,
+  .sheet-closing-line {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sheet-entry-tag {
+    background: none !important;
+    border: 1px solid #9ca3af;
+    color: #111827 !important;
+  }
+
+  .sheet-highlight,
+  .sheet-highlight-active {
+    background: none !important;
+    color: inherit !important;
+    box-shadow: none !important;
+  }
+
+  .sheet-group {
+    break-inside: avoid-page;
+  }
 }

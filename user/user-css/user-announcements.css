@@ -192,22 +192,79 @@
 
 /* ---------- Announcement card ---------- */
 .ann-card {
-  background: #ffffff;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
   border: 1px solid #eef0f4;
-  border-radius: 0.875rem;
+  border-radius: 1rem;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.15s ease;
 }
 
+.ann-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #c9a84c;
+}
+
+.ann-card.audience-ministry::before {
+  background: #8b8fc7;
+}
+
 .ann-card:hover {
   border-color: #c7c9e8;
-  box-shadow: 0 10px 24px rgba(30, 42, 74, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(30, 42, 74, 0.12);
+  transform: translateY(-3px);
+}
+
+/* ---------- Card media thumbnail ---------- */
+.ann-card-image-wrap {
+  position: relative;
+  margin: -0.125rem -0.125rem 0.125rem -0.125rem;
+}
+
+.ann-card-image {
+  width: 100%;
+  height: 9rem;
+  object-fit: cover;
+  border-radius: 0.625rem;
+  display: block;
+  background-color: #f3f4f6;
+}
+
+.ann-card-media-count {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.ann-card-video-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
 }
 
 .ann-card-title {
@@ -282,4 +339,27 @@
 /* ---------- Detail modal ---------- */
 .ann-detail-card {
   max-width: 560px;
+}
+
+.ann-detail-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.625rem;
+  margin-top: 1rem;
+}
+
+.ann-detail-media-item {
+  border-radius: 0.625rem;
+  overflow: hidden;
+  border: 1px solid #eef0f4;
+  background-color: #111827;
+}
+
+.ann-detail-media-item img,
+.ann-detail-media-item video {
+  width: 100%;
+  height: 100%;
+  max-height: 14rem;
+  object-fit: cover;
+  display: block;
 }

@@ -38,6 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
+  function timeToMinutes(time12) {
+    if (!time12) return 0;
+    const [time, meridiem] = time12.split(' ');
+    let [h, m] = time.split(':').map(Number);
+    if (meridiem === 'PM' && h !== 12) h += 12;
+    if (meridiem === 'AM' && h === 12) h = 0;
+    return h * 60 + (m || 0);
+  }
+
   function formatPeso(amount) {
     return '₱' + (amount || 0).toLocaleString('en-US');
   }
@@ -69,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
       intentions = items;
       renderStats();
       renderTable();
+      renderSheetOptions();
     },
     error: (err) => {
       console.error('Failed to load intentions:', err);
@@ -431,6 +441,292 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* ------------------------------------------
+     VIEW TABS (Intentions Log / Reader's Sheet)
+  ------------------------------------------ */
+  const miTabs   = document.querySelectorAll('.mi-tab');
+  const miPanels = document.querySelectorAll('.mi-panel');
+
+  miTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      miTabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+      miPanels.forEach(p => p.classList.remove('active'));
+
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+    });
+  });
+
+
+  /* ------------------------------------------
+     READER'S SHEET
+     A read-aloud version of the Mass Intentions
+     Log, grouped into the 3 categories a lector
+     traditionally reads from — replaces the old
+     manual Excel sheet-per-mass workflow.
+  ------------------------------------------ */
+  const sheetMassSelect = document.getElementById('sheet-mass-select');
+  const sheetEmpty        = document.getElementById('sheet-empty');
+  const sheetBody           = document.getElementById('sheet-body');
+  const sheetMassRange        = document.getElementById('sheet-mass-range');
+
+  const GROUP_TYPE_MAP = {
+    'Thanksgiving': 'thanksgiving',
+    'Birthday Blessing': 'thanksgiving',
+    'Special Intention': 'special',
+    'Healing': 'special',
+    'For the Soul of...': 'souls',
+  };
+
+  const sheetListEls = {
+    thanksgiving: document.getElementById('sheet-list-thanksgiving'),
+    special: document.getElementById('sheet-list-special'),
+    souls: document.getElementById('sheet-list-souls'),
+  };
+
+  let currentSheetKey = '';
+
+  /* ------------------------------------------
+     Category filter (All / one category at a time)
+  ------------------------------------------ */
+  const sheetCatBtns   = document.querySelectorAll('.sheet-cat-btn');
+  const sheetGroupEls    = document.querySelectorAll('.sheet-group');
+  const sheetBoilerplateEl = document.querySelector('.sheet-boilerplate');
+  const sheetClosingEl       = document.querySelector('.sheet-closing');
+
+  let activeCategory = 'all';
+
+  function applyCategoryFilter() {
+    sheetGroupEls.forEach(g => {
+      const show = activeCategory === 'all' || g.dataset.cat === activeCategory;
+      g.classList.toggle('sheet-group-filtered-out', !show);
+    });
+    // The standing intentions aren't part of any one category, so
+    // they only make sense in the full "All" view.
+    const showStanding = activeCategory === 'all';
+    sheetBoilerplateEl?.classList.toggle('sheet-group-filtered-out', !showStanding);
+    sheetClosingEl?.classList.toggle('sheet-group-filtered-out', !showStanding);
+
+    refreshFindMatches();
+  }
+
+  sheetCatBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.cat;
+      sheetCatBtns.forEach(b => b.classList.toggle('active', b === btn));
+      applyCategoryFilter();
+    });
+  });
+
+  /* ------------------------------------------
+     Find a name (Ctrl+F-style, scoped to the sheet)
+  ------------------------------------------ */
+  const findInput   = document.getElementById('sheet-find-input');
+  const findCount     = document.getElementById('sheet-find-count');
+  const findPrevBtn     = document.getElementById('sheet-find-prev');
+  const findNextBtn       = document.getElementById('sheet-find-next');
+  const findClearBtn        = document.getElementById('sheet-find-clear');
+
+  let findQuery = '';
+  let findMatches = [];
+  let findActiveIndex = -1;
+
+  function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  /* Wraps matches of findQuery inside already-escaped HTML text.
+     The query is escaped the same way the source text was, so the
+     regex only ever matches against literal (already-safe) markup. */
+  function highlightText(escapedText, query) {
+    const escapedQuery = escapeHtml(query.trim());
+    if (!escapedQuery) return escapedText;
+    const re = new RegExp(escapeRegExp(escapedQuery), 'gi');
+    return escapedText.replace(re, (m) => `<mark class="sheet-highlight">${m}</mark>`);
+  }
+
+  function refreshFindMatches() {
+    // Only search within whatever category is currently visible —
+    // matches hidden by the category filter shouldn't count or be
+    // jumped to.
+    const scopeEls = activeCategory === 'all'
+      ? [sheetListEls.thanksgiving, sheetListEls.special, sheetListEls.souls]
+      : [sheetListEls[activeCategory]];
+    findMatches = scopeEls.flatMap(el => [...el.querySelectorAll('mark.sheet-highlight')]);
+    findActiveIndex = findMatches.length ? 0 : -1;
+    updateFindUI();
+    if (findActiveIndex >= 0) focusMatch(findActiveIndex);
+  }
+
+  function updateFindUI() {
+    const hasQuery = findQuery.trim().length > 0;
+    findClearBtn.classList.toggle('hidden', !hasQuery);
+
+    if (!hasQuery) {
+      findCount.classList.add('hidden');
+      findPrevBtn.disabled = true;
+      findNextBtn.disabled = true;
+      return;
+    }
+
+    findCount.classList.remove('hidden');
+    findCount.textContent = findMatches.length ? `${findActiveIndex + 1} of ${findMatches.length}` : 'No matches';
+    findPrevBtn.disabled = findMatches.length === 0;
+    findNextBtn.disabled = findMatches.length === 0;
+  }
+
+  function focusMatch(index) {
+    findMatches.forEach(m => m.classList.remove('sheet-highlight-active'));
+    const el = findMatches[index];
+    if (!el) return;
+    el.classList.add('sheet-highlight-active');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  findInput.addEventListener('input', () => {
+    findQuery = findInput.value;
+    renderSheet();
+  });
+
+  findInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (e.shiftKey) findPrevBtn.click(); else findNextBtn.click();
+  });
+
+  findNextBtn.addEventListener('click', () => {
+    if (!findMatches.length) return;
+    findActiveIndex = (findActiveIndex + 1) % findMatches.length;
+    updateFindUI();
+    focusMatch(findActiveIndex);
+  });
+
+  findPrevBtn.addEventListener('click', () => {
+    if (!findMatches.length) return;
+    findActiveIndex = (findActiveIndex - 1 + findMatches.length) % findMatches.length;
+    updateFindUI();
+    focusMatch(findActiveIndex);
+  });
+
+  findClearBtn.addEventListener('click', () => {
+    findInput.value = '';
+    findQuery = '';
+    renderSheet();
+    findInput.focus();
+  });
+
+  function sheetKey(it) { return `${it.massDate}||${it.massTime || ''}`; }
+
+  /* Every distinct (massDate, massTime) pair among intentions that
+     have actually been assigned a mass date — that's what makes a
+     "mass" selectable here, since this repo has no dedicated join
+     between MassIntention and the Mass model. */
+  function getSheetOptions() {
+    const map = new Map();
+    intentions.forEach(it => {
+      if (!it.massDate) return;
+      const key = sheetKey(it);
+      if (!map.has(key)) map.set(key, { massDate: it.massDate, massTime: it.massTime || '', count: 0 });
+      map.get(key).count += 1;
+    });
+    return Array.from(map.entries())
+      .map(([key, v]) => ({ key, ...v }))
+      .sort((a, b) => {
+        if (a.massDate !== b.massDate) return a.massDate < b.massDate ? -1 : 1;
+        return timeToMinutes(a.massTime) - timeToMinutes(b.massTime);
+      });
+  }
+
+  function renderSheetOptions() {
+    const options = getSheetOptions();
+    const hasCurrent = options.some(o => o.key === currentSheetKey);
+
+    sheetMassSelect.innerHTML = `<option value="">Choose a mass date &amp; time…</option>` +
+      options.map(o => `
+        <option value="${o.key}" ${o.key === currentSheetKey ? 'selected' : ''}>
+          ${formatShortDate(o.massDate)}${o.massTime ? ' · ' + escapeHtml(o.massTime) : ''}, ${new Date(o.massDate + 'T00:00:00').getFullYear()} (${o.count} intention${o.count === 1 ? '' : 's'})
+        </option>
+      `).join('');
+
+    if (!hasCurrent) currentSheetKey = '';
+    renderSheet();
+  }
+
+  function renderSheet() {
+    if (!currentSheetKey) {
+      sheetBody.classList.add('hidden');
+      sheetEmpty.classList.remove('hidden');
+      findMatches = [];
+      findActiveIndex = -1;
+      updateFindUI();
+      return;
+    }
+
+    const matching = intentions.filter(it => it.massDate && sheetKey(it) === currentSheetKey);
+
+    if (matching.length === 0) {
+      sheetBody.classList.add('hidden');
+      sheetEmpty.classList.remove('hidden');
+      findMatches = [];
+      findActiveIndex = -1;
+      updateFindUI();
+      return;
+    }
+
+    sheetEmpty.classList.add('hidden');
+    sheetBody.classList.remove('hidden');
+
+    const first = matching[0];
+    sheetMassRange.textContent = formatSheetRangeLabel(first.massDate, first.massTime);
+
+    const grouped = { thanksgiving: [], special: [], souls: [] };
+    matching.forEach(it => {
+      const bucket = GROUP_TYPE_MAP[it.type] || 'special';
+      grouped[bucket].push(it);
+    });
+
+    Object.entries(grouped).forEach(([bucket, items]) => {
+      const listEl = sheetListEls[bucket];
+      const emptyNote = listEl.parentElement.querySelector('.sheet-group-empty');
+
+      if (items.length === 0) {
+        listEl.innerHTML = '';
+        emptyNote.classList.remove('hidden');
+        return;
+      }
+      emptyNote.classList.add('hidden');
+
+      // One continuous, "/"-separated flowing paragraph per category —
+      // matching the parish's own printed sheet format — rather than a
+      // table row per donor. A recurring intention's start/end window
+      // is folded in as a small inline tag right after its names.
+      listEl.innerHTML = items.map(it => {
+        const names = getNames(it);
+        const namesText = names.length ? names.join(' / ') : it.donor;
+        const tag = (it.startTime && it.endTime)
+          ? ` <span class="sheet-entry-tag">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</span>`
+          : '';
+        return `${highlightText(escapeHtml(namesText), findQuery)}${tag}`;
+      }).join(' / ');
+    });
+
+    applyCategoryFilter();
+  }
+
+  /* e.g. "FOR JULY 25, 2026, 6:00 PM MASS" */
+  function formatSheetRangeLabel(massDate, massTime) {
+    const d = new Date(massDate + 'T00:00:00');
+    const dateLabel = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+    return massTime ? `FOR ${dateLabel}, ${massTime.toUpperCase()} MASS` : `FOR ${dateLabel} MASS`;
+  }
+
+  sheetMassSelect.addEventListener('change', () => {
+    currentSheetKey = sheetMassSelect.value;
+    findInput.value = '';
+    findQuery = '';
+    renderSheet();
+  });
+
+
   /* --- Modal helpers --- */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => { const overlay = btn.closest('.modal-overlay'); if (overlay) closeModal(overlay); });
@@ -450,8 +746,19 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-print').addEventListener('click', () => {
     const printDateEl = document.getElementById('print-date-value');
     if (printDateEl) {
-      const d = new Date();
-      printDateEl.textContent = `Printed ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+      printDateEl.textContent = `Printed ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    }
+    window.print();
+  });
+
+  document.getElementById('btn-print-sheet').addEventListener('click', () => {
+    if (!currentSheetKey) {
+      showToast("Select a mass to print its reader's sheet.", true);
+      return;
+    }
+    const printDateEl = document.getElementById('sheet-print-date-value');
+    if (printDateEl) {
+      printDateEl.textContent = `Printed ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
     }
     window.print();
   });

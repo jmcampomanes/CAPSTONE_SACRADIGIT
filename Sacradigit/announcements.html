@@ -185,22 +185,23 @@
       <!-- Page content -->
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
-        <!-- Page heading + actions -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div>
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Announcements</h2>
-            <p class="text-gray-500 text-sm mt-1">Publish and manage parish-wide announcements.</p>
+        <!-- Hero + actions -->
+        <div class="ann-hero">
+          <div class="ann-hero-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
           </div>
-          <div class="flex items-center gap-2.5 shrink-0">
-            <button id="btn-new-announcement" type="button" class="btn-lavender">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              New Announcement
-            </button>
+          <div class="flex-1">
+            <h2 class="ann-hero-title">Announcements</h2>
+            <p class="ann-hero-sub">Publish and manage parish-wide announcements.</p>
           </div>
+          <button id="btn-new-announcement" type="button" class="btn-lavender ann-hero-cta shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Announcement
+          </button>
         </div>
 
         <!-- Published Announcements -->
-        <div class="panel">
+        <div class="panel ann-panel">
           <div class="panel-header">
             <h2 class="panel-title">Published Announcements</h2>
             <p id="announcements-count" class="text-xs text-gray-400 font-medium"></p>
@@ -281,6 +282,25 @@
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
         <button type="button" id="unpublish-confirm-submit" class="btn-danger">Unpublish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DELETE CONFIRMATION MODAL ========== -->
+  <div id="delete-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete Announcement</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-gray-600">Permanently delete <span id="delete-target-title" class="font-semibold text-gray-900"></span>? This cannot be undone — the post will be removed for both admins and parishioners.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="delete-confirm-submit" class="btn-danger">Delete Permanently</button>
       </div>
     </div>
   </div>
