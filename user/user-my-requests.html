@@ -116,13 +116,16 @@
 
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
-        <!-- Page heading + CTA -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div>
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">My Requests</h2>
-            <p class="text-gray-500 text-sm mt-1">Track the status of your certificate requests.</p>
+        <!-- Hero + CTA -->
+        <div class="req-hero req-hero-with-cta">
+          <div class="req-hero-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
           </div>
-          <a href="user-request-certificate.html" class="btn-lavender shrink-0">
+          <div class="flex-1">
+            <h2 class="req-hero-title">My Requests</h2>
+            <p class="req-hero-sub">Track the status of your certificate requests.</p>
+          </div>
+          <a href="user-request-certificate.html" class="btn-lavender req-hero-cta shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             New Request
           </a>

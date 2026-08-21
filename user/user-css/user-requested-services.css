@@ -1,0 +1,271 @@
+/* ============================================
+   SacraDigit — User Requested Services Styles
+   (Tracking log for sacraments, blessings &
+   special masses requested via user-request-service.html)
+   Extends user-shell.css
+   ============================================ */
+
+/* ---------- Hero banner ---------- */
+.req-hero {
+  background: linear-gradient(135deg, #1e2a4a 0%, #2a3a5c 55%, #3d3f7a 100%);
+  border-radius: 1.25rem;
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(30, 42, 74, 0.22);
+}
+
+.req-hero::before {
+  content: '';
+  position: absolute;
+  top: -45%;
+  right: -8%;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.28), transparent 70%);
+  pointer-events: none;
+}
+
+.req-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -60%;
+  left: 8%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 143, 199, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.req-hero-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #c9a84c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-sub {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.68);
+  margin-top: 0.25rem;
+  max-width: 34rem;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-with-cta { flex-wrap: wrap; }
+
+.req-hero-cta {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.req-hero-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+}
+
+@media (max-width: 640px) {
+  .req-hero { padding: 1.375rem 1.25rem; }
+  .req-hero-with-cta { align-items: flex-start; }
+  .req-hero-cta { width: 100%; justify-content: center; }
+}
+
+/* ---------- Stat cards ---------- */
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 1.125rem 1.25rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.stat-card:hover { box-shadow: 0 4px 14px rgba(30, 42, 74, 0.06); }
+
+.stat-label { font-size: 0.75rem; font-weight: 600; color: #6b7280; }
+
+.stat-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: rgba(139, 143, 199, 0.18);
+  color: #6c6fb0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-icon-green { background-color: #ecfdf3; color: #15803d; }
+.stat-icon-amber { background-color: #fffbeb; color: #b45309; }
+.stat-icon-blue  { background-color: #eef2ff; color: #4338ca; }
+
+.stat-value { font-size: 1.75rem; font-weight: 700; color: #111827; line-height: 1.1; }
+.stat-sub   { font-size: 0.75rem; color: #9ca3af; margin-top: 0.2rem; }
+
+/* ---------- Request list row ---------- */
+.svc-row {
+  background: #ffffff;
+  border: 1px solid #eef0f4;
+  border-radius: 0.875rem;
+  padding: 1.125rem 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.svc-row:hover { border-color: #d8dbe3; box-shadow: 0 3px 10px rgba(30, 42, 74, 0.06); }
+
+.svc-row-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.svc-row-body { flex: 1; min-width: 0; }
+.svc-row-title { font-size: 0.9375rem; font-weight: 700; color: #111827; }
+.svc-row-meta { font-size: 0.75rem; color: #9ca3af; margin-top: 0.2rem; }
+
+.svc-row-schedule {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5b5fa8;
+  background-color: rgba(139, 143, 199, 0.12);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  display: inline-block;
+  margin-top: 0.4rem;
+}
+
+.svc-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.btn-view-details {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6c6fb0;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-view-details:hover {
+  background-color: rgba(139, 143, 199, 0.1);
+  border-color: #8b8fc7;
+  color: #1e2a4a;
+}
+
+/* ---------- Detail modal ---------- */
+.modal-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.25rem;
+  background-color: #f7f8fa;
+  border-radius: 0.625rem;
+  padding: 0.875rem 1rem;
+}
+
+.modal-detail-item-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  margin-bottom: 0.15rem;
+}
+
+.modal-detail-item-value { font-size: 0.8125rem; font-weight: 600; color: #111827; }
+
+/* Confirmed schedule box */
+.schedule-box {
+  background-color: rgba(21, 128, 61, 0.06);
+  border: 1px solid rgba(21, 128, 61, 0.25);
+  border-radius: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+}
+
+.schedule-box-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background-color: rgba(21, 128, 61, 0.15);
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Rejection note */
+.req-rejection-note {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.875rem;
+}
+
+/* ---------- Destructive confirm button ---------- */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #b91c1c;
+  color: #ffffff;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background-color: #991616;
+}

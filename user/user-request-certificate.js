@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let selectedType = null;
 
+  const menuView        = document.getElementById('menu-view');
+  const formView         = document.getElementById('form-view');
   const certTypeGrid   = document.getElementById('cert-type-grid');
   const requestFormWrap = document.getElementById('request-form-wrap');
   const formTypeLabel   = document.getElementById('form-type-label');
@@ -62,6 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="cert-icon" style="background-color:${c.iconBg};color:${c.iconColor};">${c.icon}</div>
       <p class="cert-type-name">${c.name}</p>
       <p class="cert-type-desc">${c.desc}</p>
+      <span class="cert-type-cta">Start request
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </span>
     </button>`).join('');
 
   certTypeGrid.addEventListener('click', (e) => {
@@ -84,17 +89,28 @@ document.addEventListener('DOMContentLoaded', () => {
           : `<input type="text" id="${f.id}" class="form-input" placeholder="${f.placeholder || ''}" />`}
       </div>`).join('');
 
+    menuView.classList.add('hidden');
+    formView.classList.remove('hidden');
     requestFormWrap.classList.remove('hidden');
     successBanner.classList.add('hidden');
-    requestFormWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  document.getElementById('btn-change-type').addEventListener('click', () => {
+  function goToMenu() {
     selectedType = null;
-    requestFormWrap.classList.add('hidden');
+    formView.classList.add('hidden');
+    menuView.classList.remove('hidden');
     successBanner.classList.add('hidden');
+    requestFormWrap.classList.remove('hidden');
     document.querySelectorAll('.cert-type-card').forEach(c => c.classList.remove('selected'));
-    certTypeGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('#request-form-wrap input, #request-form-wrap textarea').forEach(el => el.value = '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.getElementById('btn-back-to-menu').addEventListener('click', goToMenu);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !formView.classList.contains('hidden')) goToMenu();
   });
 
   document.getElementById('btn-submit-request').addEventListener('click', async () => {
@@ -144,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
       requestFormWrap.classList.add('hidden');
       successBanner.classList.remove('hidden');
       successDesc.textContent = `Your request for a ${selectedType.name} has been submitted. You'll be notified when it's ready for pick-up (typically 3–5 working days).`;
-      successBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       window.showToast(`${selectedType.name} request submitted successfully.`);
       document.querySelectorAll('.cert-type-card').forEach(c => c.classList.remove('selected'));
@@ -157,12 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.getElementById('btn-new-request').addEventListener('click', () => {
-    successBanner.classList.add('hidden');
-    requestFormWrap.classList.add('hidden');
-    document.querySelectorAll('.cert-type-card').forEach(c => c.classList.remove('selected'));
-    document.querySelectorAll('#request-form-wrap input, #request-form-wrap textarea').forEach(el => el.value = '');
-    certTypeGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  document.getElementById('btn-new-request').addEventListener('click', goToMenu);
 
 });

@@ -3,12 +3,104 @@
    Extends user-shell.css
    ============================================ */
 
+/* ---------- Hero banner ---------- */
+.req-hero {
+  background: linear-gradient(135deg, #1e2a4a 0%, #2a3a5c 55%, #3d3f7a 100%);
+  border-radius: 1.25rem;
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(30, 42, 74, 0.22);
+}
+
+.req-hero::before {
+  content: '';
+  position: absolute;
+  top: -45%;
+  right: -8%;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.28), transparent 70%);
+  pointer-events: none;
+}
+
+.req-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -60%;
+  left: 8%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 143, 199, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.req-hero-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #c9a84c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-sub {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.68);
+  margin-top: 0.25rem;
+  max-width: 34rem;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-with-cta { flex-wrap: wrap; }
+
+.req-hero-cta {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.req-hero-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+}
+
+@media (max-width: 640px) {
+  .req-hero { padding: 1.375rem 1.25rem; }
+  .req-hero-with-cta { align-items: flex-start; }
+  .req-hero-cta { width: 100%; justify-content: center; }
+}
+
 /* ---------- Info banner ---------- */
 .info-banner {
   display: flex;
   gap: 0.875rem;
   background-color: rgba(201, 168, 76, 0.08);
   border: 1px solid rgba(201, 168, 76, 0.3);
+  border-left: 3px solid #8b8fc7;
   border-radius: 0.875rem;
   padding: 1rem 1.25rem;
 }
@@ -48,6 +140,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.mi-stat-card:hover {
+  box-shadow: 0 10px 24px rgba(30, 42, 74, 0.1);
+  transform: translateY(-2px);
 }
 
 .stat-label {
@@ -75,6 +174,13 @@
   gap: 0.875rem;
   padding: 1rem 1.25rem;
   font-size: 0.8125rem;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.intention-row:hover {
+  box-shadow: 0 10px 24px rgba(30, 42, 74, 0.1);
+  transform: translateY(-2px);
 }
 
 .intention-icon {
@@ -86,6 +192,7 @@
   justify-content: center;
   flex-shrink: 0;
   margin-top: 0.1rem;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.07);
 }
 
 .intention-info { flex: 1; min-width: 0; }

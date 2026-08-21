@@ -12,6 +12,33 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(30, 42, 74, 0.22);
+}
+
+.greeting-banner::before {
+  content: '';
+  position: absolute;
+  top: -45%;
+  right: -8%;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.28), transparent 70%);
+  pointer-events: none;
+}
+
+.greeting-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -60%;
+  left: 8%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 143, 199, 0.22), transparent 70%);
+  pointer-events: none;
 }
 
 .greeting-label {
@@ -43,6 +70,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- Quick action cards ---------- */
@@ -60,11 +90,12 @@
   border: none;
   text-align: left;
   width: 100%;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .quick-action-card:hover {
-  box-shadow: 0 4px 14px rgba(30, 42, 74, 0.08);
+  box-shadow: 0 10px 24px rgba(30, 42, 74, 0.1);
   transform: translateY(-2px);
 }
 
@@ -75,6 +106,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.07);
 }
 
 .quick-action-label {
@@ -168,11 +200,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  transition: box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .user-ann-card:hover {
-  box-shadow: 0 3px 10px rgba(30, 42, 74, 0.06);
+  box-shadow: 0 10px 24px rgba(30, 42, 74, 0.1);
+  transform: translateY(-2px);
 }
 
 .user-ann-title {

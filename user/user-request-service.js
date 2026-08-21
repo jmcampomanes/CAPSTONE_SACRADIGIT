@@ -74,13 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
       ] },
   ];
 
-  const requestModal = document.getElementById('request-modal');
+  const menuView      = document.getElementById('menu-view');
+  const formView       = document.getElementById('form-view');
   const svcDynamicFields      = document.getElementById('svc-dynamic-fields');
   const svcDateInput             = document.getElementById('svc-date');
   const svcContactInput             = document.getElementById('svc-contact');
   const svcNotesInput                  = document.getElementById('svc-notes');
   const svcSubmitBtn                     = document.getElementById('svc-submit');
-  const requestModalTitle                   = document.getElementById('request-modal-title');
+  const formViewTitle                   = document.getElementById('form-view-title');
   const svcTypeGrid      = document.getElementById('svc-type-grid');
 
   let selectedTypeId = null;
@@ -101,28 +102,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const msg = input.parentElement.querySelector('.form-error-msg');
     if (msg) msg.remove();
   }
-  function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
-  function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
-
   /* --- Services We Offer — on-page catalog --- */
   svcTypeGrid.innerHTML = serviceTypes.map(s => `
     <button type="button" class="svc-type-card" data-id="${s.id}">
       <div class="svc-icon" style="background-color:${s.iconBg};color:${s.iconColor};">${s.icon}</div>
       <p class="svc-type-name">${escapeHtml(s.name)}</p>
       <p class="svc-type-desc">${escapeHtml(s.desc)}</p>
+      <span class="svc-type-cta">Start request
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </span>
     </button>`).join('');
 
   svcTypeGrid.addEventListener('click', (e) => {
     const card = e.target.closest('.svc-type-card');
-    if (card) openRequestModal(card.dataset.id);
+    if (card) selectService(card.dataset.id);
   });
 
-  function openRequestModal(id) {
+  function selectService(id) {
     const svc = serviceTypes.find(s => s.id === id);
     if (!svc) return;
     selectedTypeId = id;
 
-    requestModalTitle.textContent = `Request — ${svc.name}`;
+    formViewTitle.textContent = `Request — ${svc.name}`;
     svcDateInput.value = '';
     svcContactInput.value = '';
     svcNotesInput.value = '';
@@ -134,8 +135,23 @@ document.addEventListener('DOMContentLoaded', () => {
         <input type="text" id="${f.id}" class="form-input" placeholder="${f.placeholder || ''}" />
       </div>`).join('');
 
-    openModal(requestModal);
+    menuView.classList.add('hidden');
+    formView.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  function goToMenu() {
+    selectedTypeId = null;
+    formView.classList.add('hidden');
+    menuView.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.getElementById('btn-back-to-menu').addEventListener('click', goToMenu);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !formView.classList.contains('hidden')) goToMenu();
+  });
 
   [svcDateInput, svcContactInput].forEach(input => {
     input.addEventListener('input', () => clearFieldError(input));
@@ -181,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
-      closeModal(requestModal);
+      goToMenu();
       window.showToast(`Your ${svc.name} request has been submitted — track it under "Requested Services."`);
     } catch (err) {
       console.error('Failed to submit request:', err);
@@ -190,11 +206,5 @@ document.addEventListener('DOMContentLoaded', () => {
       svcSubmitBtn.disabled = false;
     }
   });
-
-  document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => closeModal(requestModal));
-  });
-  requestModal.addEventListener('click', (e) => { if (e.target === requestModal) closeModal(requestModal); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(requestModal); });
 
 });

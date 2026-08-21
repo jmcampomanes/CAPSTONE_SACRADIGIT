@@ -116,76 +116,94 @@
 
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
-        <!-- Page heading -->
-        <div>
-          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Request a Certificate</h2>
-          <p class="text-gray-500 text-sm mt-1">Submit a request for a sacramental certificate from the parish records office.</p>
-        </div>
-
-        <!-- Certificate type selector -->
-        <div>
-          <h3 class="section-heading">Choose Certificate Type</h3>
-          <div class="cert-type-grid" id="cert-type-grid">
-            <!-- Cards injected by JS -->
-          </div>
-        </div>
-
-        <!-- Request form (shown after type is selected) -->
-        <div id="request-form-wrap" class="hidden">
-          <div class="panel">
-            <div class="panel-header">
-              <h2 class="panel-title">Request Details — <span id="form-type-label" class="text-lavender normal-case font-semibold"></span></h2>
-              <button type="button" id="btn-change-type" class="panel-link">Change type</button>
-            </div>
-            <div class="p-6 space-y-4">
-
-              <!-- Dynamic fields injected per type -->
-              <div id="dynamic-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-
-              <!-- Common fields for all types -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="sm:col-span-2">
-                  <label class="form-label" for="field-purpose">Purpose of Request</label>
-                  <input type="text" id="field-purpose" class="form-input" placeholder="e.g. School enrollment, employment, travel" />
-                </div>
-                <div class="sm:col-span-2">
-                  <label class="form-label" for="field-notes">Additional Notes (optional)</label>
-                  <textarea id="field-notes" class="form-input" rows="2" placeholder="Any other information the parish office should know…"></textarea>
-                </div>
-              </div>
-
-              <!-- Info note -->
-              <div class="req-info-note">
-                <svg class="w-4 h-4 shrink-0 mt-0.5 text-lavender" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <p class="text-xs text-gray-600 leading-relaxed">Certificates are typically processed within <strong>3–5 working days</strong>. You will be notified via this portal when your request is ready for pick-up. A valid ID may be required upon release.</p>
-              </div>
-
-              <!-- Submit -->
-              <div class="flex justify-end pt-2">
-                <button type="button" id="btn-submit-request" class="btn-lavender">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  Submit Request
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Success banner (shown after submission) -->
-        <div id="success-banner" class="hidden">
-          <div class="success-wrap">
-            <div class="success-icon">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <!-- ===== MENU VIEW: type selection ===== -->
+        <div id="menu-view">
+          <!-- Hero -->
+          <div class="req-hero">
+            <div class="req-hero-icon">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             </div>
             <div>
-              <p class="success-title">Request Submitted!</p>
-              <p class="success-sub" id="success-desc"></p>
-            </div>
-            <div class="flex gap-2 mt-4 sm:mt-0 sm:ml-auto">
-              <a href="user-my-requests.html" class="btn-lavender text-sm">View My Requests</a>
-              <button type="button" id="btn-new-request" class="btn-secondary text-sm">New Request</button>
+              <h2 class="req-hero-title">Request a Certificate</h2>
+              <p class="req-hero-sub">Submit a request for a sacramental certificate from the parish records office.</p>
             </div>
           </div>
+
+          <!-- Certificate type selector -->
+          <div class="mt-6">
+            <h3 class="section-heading">Choose a Certificate Type</h3>
+            <div class="cert-type-grid" id="cert-type-grid">
+              <!-- Cards injected by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== FORM VIEW: shown after a type is selected ===== -->
+        <div id="form-view" class="hidden">
+
+          <!-- Back button -->
+          <button type="button" id="btn-back-to-menu" class="back-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back to Certificate Types
+          </button>
+
+          <!-- Request form -->
+          <div id="request-form-wrap">
+            <div class="panel req-form-panel">
+              <div class="panel-header req-form-panel-header">
+                <h2 class="panel-title req-form-panel-title">Request Details — <span id="form-type-label" class="text-lavender normal-case font-semibold"></span></h2>
+              </div>
+              <div class="p-6 space-y-4">
+
+                <!-- Dynamic fields injected per type -->
+                <div id="dynamic-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+
+                <!-- Common fields for all types -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="sm:col-span-2">
+                    <label class="form-label" for="field-purpose">Purpose of Request</label>
+                    <input type="text" id="field-purpose" class="form-input" placeholder="e.g. School enrollment, employment, travel" />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="form-label" for="field-notes">Additional Notes (optional)</label>
+                    <textarea id="field-notes" class="form-input" rows="2" placeholder="Any other information the parish office should know…"></textarea>
+                  </div>
+                </div>
+
+                <!-- Info note -->
+                <div class="req-info-note">
+                  <svg class="w-4 h-4 shrink-0 mt-0.5 text-lavender" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <p class="text-xs text-gray-600 leading-relaxed">Certificates are typically processed within <strong>3–5 working days</strong>. You will be notified via this portal when your request is ready for pick-up. A valid ID may be required upon release.</p>
+                </div>
+
+                <!-- Submit -->
+                <div class="flex justify-end pt-2">
+                  <button type="button" id="btn-submit-request" class="btn-lavender req-submit-btn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Submit Request
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Success banner (shown after submission) -->
+          <div id="success-banner" class="hidden mt-5">
+            <div class="success-wrap">
+              <div class="success-icon">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div>
+                <p class="success-title">Request Submitted!</p>
+                <p class="success-sub" id="success-desc"></p>
+              </div>
+              <div class="flex gap-2 mt-4 sm:mt-0 sm:ml-auto">
+                <a href="user-my-requests.html" class="btn-lavender text-sm">View My Requests</a>
+                <button type="button" id="btn-new-request" class="btn-secondary text-sm">New Request</button>
+              </div>
+            </div>
+          </div>
+
         </div>
 
       </main>
