@@ -291,18 +291,15 @@
               <!-- Cells injected by facility-booking.js -->
             </div>
           </div>
-          <div id="calendar-day-detail" class="calendar-day-detail hidden">
-            <!-- Selected day's bookings injected here -->
-          </div>
         </div>
 
       </main>
     </div>
   </div>
 
-  <!-- ========== NEW BOOKING MODAL ========== -->
+  <!-- ========== NEW BOOKING MODAL (3-step wizard) ========== -->
   <div id="booking-modal" class="modal-overlay hidden">
-    <div class="modal-card">
+    <div class="modal-card booking-modal-card">
       <div class="modal-header">
         <h3 class="modal-title">New Facility Booking</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
@@ -310,28 +307,86 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="booking-facility">Facility</label>
-            <select id="booking-facility" class="form-input"></select>
+
+        <div class="booking-steps">
+          <div class="booking-step-item" data-step-indicator="1">
+            <span class="booking-step-num">1</span>
+            <span class="booking-step-label">Facility &amp; Date</span>
           </div>
-          <div class="col-span-2">
-            <label class="form-label" for="booking-purpose">Booked By / Purpose</label>
-            <input type="text" id="booking-purpose" class="form-input" placeholder="e.g. Reyes Family — Wedding Reception" />
+          <div class="booking-step-connector"></div>
+          <div class="booking-step-item" data-step-indicator="2">
+            <span class="booking-step-num">2</span>
+            <span class="booking-step-label">Details</span>
           </div>
-          <div>
-            <label class="form-label" for="booking-date">Date</label>
-            <input type="date" id="booking-date" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label" for="booking-time">Time</label>
-            <input type="time" id="booking-time" class="form-input" />
+          <div class="booking-step-connector"></div>
+          <div class="booking-step-item" data-step-indicator="3">
+            <span class="booking-step-num">3</span>
+            <span class="booking-step-label">Confirm</span>
           </div>
         </div>
+
+        <!-- Step 1: Facility + Date -->
+        <div class="booking-step" data-step="1">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2" id="q-facility">
+              <label class="form-label" for="booking-facility">Facility</label>
+              <select id="booking-facility" class="form-input"></select>
+            </div>
+            <div class="col-span-2" id="q-date">
+              <p class="form-label">Date</p>
+              <div class="bkcal" id="bkcal-wrap">
+                <div class="bkcal-nav">
+                  <button type="button" id="bkcal-prev" class="calendar-nav-btn" aria-label="Previous month">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  </button>
+                  <span id="bkcal-month-label" class="calendar-month-label"></span>
+                  <button type="button" id="bkcal-next" class="calendar-nav-btn" aria-label="Next month">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+                <div class="bkcal-weekdays">
+                  <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                </div>
+                <div id="bkcal-grid" class="bkcal-grid"></div>
+                <div class="bkcal-legend">
+                  <span class="bkcal-legend-item"><span class="bkcal-dot available"></span>Available</span>
+                  <span class="bkcal-legend-item"><span class="bkcal-dot full"></span>Fully Booked</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Duration + Start Time + Purpose -->
+        <div class="booking-step hidden" data-step="2">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2" id="q-duration">
+              <label class="form-label" for="booking-duration">Duration</label>
+              <select id="booking-duration" class="form-input"></select>
+              <p class="bkcal-hint">Minimum 1 hour, maximum 5 hours. Bookings run between 8:00 AM and 7:00 PM.</p>
+            </div>
+            <div class="col-span-2" id="q-time">
+              <p class="form-label">Start Time</p>
+              <p id="bktime-hint" class="bkcal-hint">Select a facility and date to see available times.</p>
+              <div id="bktime-slots" class="bktime-slots"></div>
+            </div>
+            <div class="col-span-2" id="q-purpose">
+              <label class="form-label" for="booking-purpose">Booked By / Purpose</label>
+              <input type="text" id="booking-purpose" class="form-input" placeholder="e.g. Reyes Family — Wedding Reception" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Confirmation -->
+        <div class="booking-step hidden" data-step="3">
+          <p class="bkcal-hint" style="margin-bottom: 0.75rem;">Please review before saving.</p>
+          <div id="booking-confirm-grid" class="so-detail-grid"></div>
+        </div>
+
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="booking-submit" class="btn-lavender">Save Booking</button>
+        <button type="button" id="booking-back" class="btn-secondary">Cancel</button>
+        <button type="button" id="booking-next" class="btn-lavender">Next</button>
       </div>
     </div>
   </div>
@@ -394,11 +449,35 @@
     </div>
   </div>
 
+  <!-- ========== DAY PLAN MODAL (calendar view) ========== -->
+  <div id="day-plan-modal" class="modal-overlay hidden">
+    <div class="modal-card day-plan-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="day-plan-title">Day Plan</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="day-plan-list" class="day-plan-list">
+          <!-- Full day's bookings injected by facility-booking.js -->
+        </div>
+        <div id="day-plan-empty" class="empty-state hidden">
+          <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <p class="text-sm font-medium text-gray-600">No bookings on this date.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
   <!-- Scripts -->
-  <script type="module" src="dashboard.js"></script>
+  <script src="dashboard.js"></script>
   <script type="module" src="facility-booking.js"></script>
 </body>
 </html>

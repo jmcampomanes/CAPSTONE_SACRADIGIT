@@ -173,63 +173,111 @@
 
   <!-- ========== BOOKING MODAL ========== -->
   <div id="booking-modal" class="modal-overlay hidden">
-    <div class="modal-card">
+    <div class="modal-card booking-modal-card">
       <div class="modal-header">
         <h3 class="modal-title">Book a Facility</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <div class="modal-body space-y-4">
+      <div class="modal-body">
 
-        <!-- Facility select -->
-        <div>
-          <label class="form-label" for="book-facility">Facility <span class="text-red-500">*</span></label>
-          <select id="book-facility" class="form-input">
-            <option value="">Choose a facility…</option>
-          </select>
-        </div>
-
-        <!-- Date + Time -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="form-label" for="book-date">Date <span class="text-red-500">*</span></label>
-            <input type="date" id="book-date" class="form-input" />
+        <div class="booking-steps">
+          <div class="booking-step-item" data-step-indicator="1">
+            <span class="booking-step-num">1</span>
+            <span class="booking-step-label">Facility &amp; Date</span>
           </div>
-          <div>
-            <label class="form-label" for="book-time">Start Time <span class="text-red-500">*</span></label>
-            <input type="time" id="book-time" class="form-input" />
+          <div class="booking-step-connector"></div>
+          <div class="booking-step-item" data-step-indicator="2">
+            <span class="booking-step-num">2</span>
+            <span class="booking-step-label">Details</span>
+          </div>
+          <div class="booking-step-connector"></div>
+          <div class="booking-step-item" data-step-indicator="3">
+            <span class="booking-step-num">3</span>
+            <span class="booking-step-label">Confirm</span>
           </div>
         </div>
 
-        <!-- Purpose -->
-        <div>
-          <label class="form-label" for="book-purpose">Purpose / Event Name <span class="text-red-500">*</span></label>
-          <input type="text" id="book-purpose" class="form-input" placeholder="e.g. Family Reunion, Bible Study" />
+        <!-- Step 1: Facility + Date -->
+        <div class="booking-step space-y-4" data-step="1">
+          <div id="q-facility">
+            <label class="form-label" for="book-facility">Facility <span class="text-red-500">*</span></label>
+            <select id="book-facility" class="form-input">
+              <option value="">Choose a facility…</option>
+            </select>
+          </div>
+
+          <div id="q-date">
+            <p class="form-label">Date <span class="text-red-500">*</span></p>
+            <div class="bkcal" id="bkcal-wrap">
+              <div class="bkcal-nav">
+                <button type="button" id="bkcal-prev" class="calendar-nav-btn" aria-label="Previous month">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <span id="bkcal-month-label" class="calendar-month-label"></span>
+                <button type="button" id="bkcal-next" class="calendar-nav-btn" aria-label="Next month">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <div class="bkcal-weekdays">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div id="bkcal-grid" class="bkcal-grid"></div>
+              <div class="bkcal-legend">
+                <span class="bkcal-legend-item"><span class="bkcal-dot available"></span>Available</span>
+                <span class="bkcal-legend-item"><span class="bkcal-dot full"></span>Fully Booked</span>
+              </div>
+            </div>
+            <p class="bkcal-hint">Please book at least 3 days in advance.</p>
+          </div>
         </div>
 
-        <!-- Expected attendees -->
-        <div>
-          <label class="form-label" for="book-attendees">Expected Attendees</label>
-          <input type="number" id="book-attendees" class="form-input" placeholder="e.g. 40" min="1" />
+        <!-- Step 2: Duration + Start Time + Purpose + Attendees + Notes -->
+        <div class="booking-step hidden space-y-4" data-step="2">
+          <div id="q-duration">
+            <label class="form-label" for="booking-duration">Duration <span class="text-red-500">*</span></label>
+            <select id="booking-duration" class="form-input"></select>
+            <p class="bkcal-hint">Minimum 1 hour, maximum 5 hours. Bookings run between 8:00 AM and 7:00 PM.</p>
+          </div>
+
+          <div id="q-time">
+            <p class="form-label">Start Time <span class="text-red-500">*</span></p>
+            <p id="bktime-hint" class="bkcal-hint">Select a facility and date to see available times.</p>
+            <div id="bktime-slots" class="bktime-slots"></div>
+          </div>
+
+          <div id="q-purpose">
+            <label class="form-label" for="book-purpose">Purpose / Event Name <span class="text-red-500">*</span></label>
+            <input type="text" id="book-purpose" class="form-input" placeholder="e.g. Family Reunion, Bible Study" />
+          </div>
+
+          <div id="q-attendees">
+            <label class="form-label" for="book-attendees">Expected Attendees</label>
+            <input type="number" id="book-attendees" class="form-input" placeholder="e.g. 40" min="1" />
+          </div>
+
+          <div id="q-notes">
+            <label class="form-label" for="book-notes">Additional Notes (optional)</label>
+            <textarea id="book-notes" class="form-input" rows="2" placeholder="Setup requirements, special requests…"></textarea>
+          </div>
         </div>
 
-        <!-- Note -->
-        <div>
-          <label class="form-label" for="book-notes">Additional Notes (optional)</label>
-          <textarea id="book-notes" class="form-input" rows="2" placeholder="Setup requirements, special requests…"></textarea>
-        </div>
+        <!-- Step 3: Confirmation -->
+        <div class="booking-step hidden" data-step="3">
+          <p class="bkcal-hint" style="margin-bottom: 0.75rem;">Please review before submitting.</p>
+          <div id="booking-confirm-grid" class="modal-detail-grid"></div>
 
-        <!-- Booking policy note -->
-        <div class="booking-policy-note">
-          <svg class="w-4 h-4 text-lavender shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <p class="text-xs text-gray-600 leading-relaxed">Booking requests are subject to parish approval. You will be notified once your request is reviewed. Please book at least <strong>3 days in advance</strong>.</p>
+          <div class="booking-policy-note">
+            <svg class="w-4 h-4 text-lavender shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p class="text-xs text-gray-600 leading-relaxed">Booking requests are subject to parish approval. You will be notified once your request is reviewed.</p>
+          </div>
         </div>
 
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="booking-submit" class="btn-lavender">Submit Booking</button>
+        <button type="button" id="booking-back" class="btn-secondary">Cancel</button>
+        <button type="button" id="booking-next" class="btn-lavender">Next</button>
       </div>
     </div>
   </div>
