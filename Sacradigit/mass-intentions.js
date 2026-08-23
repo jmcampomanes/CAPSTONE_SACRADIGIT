@@ -18,13 +18,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const tbody          = document.getElementById('intentions-tbody');
   const intentionsEmpty  = document.getElementById('intentions-empty');
   const logCount         = document.getElementById('log-count');
+  const paginationBar      = document.getElementById('intentions-pagination');
 
   const searchInput = document.getElementById('search-input');
   const typeFilter    = document.getElementById('type-filter');
   const statusFilter   = document.getElementById('status-filter');
 
+  const PAGE_SIZE = 8;
+  let currentPage = 1;
+
   const badgeClass = { pending: 'badge-amber', scheduled: 'badge-green', completed: 'badge-blue' };
   const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', completed: 'Completed' };
+
+  /* Which of the 3 Reader's Sheet categories each intention type
+     belongs to. Shared by the Add/Edit type picker (which uses it
+     to keep multi-type selections within one category) and the
+     Reader's Sheet grouping logic further down. */
+  const GROUP_TYPE_MAP = {
+    'Thanksgiving': 'thanksgiving',
+    'Birthday Blessing': 'thanksgiving',
+    'Special Intention': 'special',
+    'Healing': 'special',
+    'For the Soul of...': 'souls',
+  };
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -126,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const activate = () => {
       searchInput.value = '';
       statusFilter.value = status;
+      currentPage = 1;
       renderTable();
     };
     card.addEventListener('click', activate);
@@ -141,50 +158,95 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  function intentionRowHtml(it) {
+    const massDateLabel = it.massDate
+      ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}`
+      : '—';
+
+    const names = getNames(it);
+    const actionHtml = `
+      <div class="row-actions">
+        <button type="button" class="row-edit" data-id="${it.id}">Edit</button>
+        <button type="button" class="row-view" data-id="${it.id}">View</button>
+        <button type="button" class="row-remove" data-id="${it.id}">Remove</button>
+      </div>
+    `;
+
+    return `
+      <tr>
+        <td class="font-medium text-gray-900">${escapeHtml(it.donor)}</td>
+        <td>
+          ${escapeHtml(it.type)}
+          ${names.length ? `<div class="text-xs text-gray-400 mt-0.5">${escapeHtml(names.join(', '))}</div>` : ''}
+          ${it.startTime && it.endTime ? `<div class="intention-timeline">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</div>` : ''}
+        </td>
+        <td>${massDateLabel}</td>
+        <td class="offering-amount">${formatPeso(it.offering)}</td>
+        <td><span class="badge ${badgeClass[it.status] || 'badge-gray'}">${statusLabel[it.status] || it.status}</span></td>
+        <td class="text-right no-print">${actionHtml}</td>
+      </tr>
+    `;
+  }
+
+  function getFilteredIntentions() {
+    const sorted = intentions.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return sorted.filter(matchesFilters);
+  }
+
   function renderTable() {
     updateActiveStatCard();
-    const sorted = intentions.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    const filtered = sorted.filter(matchesFilters);
+    const filtered = getFilteredIntentions();
 
     logCount.textContent = `${filtered.length} intention${filtered.length === 1 ? '' : 's'}`;
 
     if (filtered.length === 0) {
       tbody.innerHTML = '';
       intentionsEmpty.classList.remove('hidden');
+      paginationBar.innerHTML = '';
       return;
     }
     intentionsEmpty.classList.add('hidden');
 
-    tbody.innerHTML = filtered.map((it) => {
-      const massDateLabel = it.massDate
-        ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}`
-        : '—';
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
 
-      const names = getNames(it);
-      const actionHtml = `
-        <div class="row-actions">
-          <button type="button" class="row-edit" data-id="${it.id}">Edit</button>
-          <button type="button" class="row-view" data-id="${it.id}">View</button>
-          <button type="button" class="row-remove" data-id="${it.id}">Remove</button>
-        </div>
-      `;
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
 
-      return `
-        <tr>
-          <td class="font-medium text-gray-900">${escapeHtml(it.donor)}</td>
-          <td>
-            ${escapeHtml(it.type)}
-            ${names.length ? `<div class="text-xs text-gray-400 mt-0.5">${escapeHtml(names.join(', '))}</div>` : ''}
-            ${it.startTime && it.endTime ? `<div class="intention-timeline">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</div>` : ''}
-          </td>
-          <td>${massDateLabel}</td>
-          <td class="offering-amount">${formatPeso(it.offering)}</td>
-          <td><span class="badge ${badgeClass[it.status] || 'badge-gray'}">${statusLabel[it.status] || it.status}</span></td>
-          <td class="text-right no-print">${actionHtml}</td>
-        </tr>
-      `;
-    }).join('');
+    tbody.innerHTML = pageItems.map(intentionRowHtml).join('');
+
+    renderPagination(filtered.length, totalPages, startIdx, pageItems.length);
   }
+
+  function renderPagination(totalItems, totalPages, startIdx, pageCount) {
+    if (totalPages <= 1) {
+      paginationBar.innerHTML = `<span class="pagination-info">Showing ${totalItems} of ${totalItems}</span>`;
+      return;
+    }
+    const rangeStart = startIdx + 1;
+    const rangeEnd = startIdx + pageCount;
+    let pageBtns = '';
+    for (let p = 1; p <= totalPages; p++) {
+      pageBtns += `<button type="button" class="pagination-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+    }
+    paginationBar.innerHTML = `
+      <span class="pagination-info">Showing ${rangeStart}–${rangeEnd} of ${totalItems}</span>
+      <div class="pagination-controls">
+        <button type="button" class="pagination-btn" id="page-prev" ${currentPage === 1 ? 'disabled' : ''}>‹</button>
+        ${pageBtns}
+        <button type="button" class="pagination-btn" id="page-next" ${currentPage === totalPages ? 'disabled' : ''}>›</button>
+      </div>`;
+  }
+
+  paginationBar.addEventListener('click', (e) => {
+    const prevBtn = e.target.closest('#page-prev');
+    const nextBtn = e.target.closest('#page-next');
+    const pageBtn  = e.target.closest('.pagination-btn[data-page]');
+    if (prevBtn && currentPage > 1) currentPage--;
+    if (nextBtn) currentPage++;
+    if (pageBtn) currentPage = parseInt(pageBtn.dataset.page, 10);
+    if (prevBtn || nextBtn || pageBtn) renderTable();
+  });
 
   tbody.addEventListener('click', (e) => {
     const editBtn   = e.target.closest('.row-edit');
@@ -196,14 +258,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (removeBtn)  openRemoveModal(removeBtn.dataset.id);
   });
 
-  searchInput.addEventListener('input', renderTable);
-  typeFilter.addEventListener('change', renderTable);
-  statusFilter.addEventListener('change', renderTable);
+  [searchInput, typeFilter, statusFilter].forEach(el => {
+    const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(evt, () => { currentPage = 1; renderTable(); });
+  });
 
   document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
     searchInput.value = '';
     typeFilter.value = '';
     statusFilter.value = '';
+    currentPage = 1;
     renderTable();
   });
 
@@ -221,6 +285,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const addModalTitle = document.getElementById('add-modal-title');
   const addSubmitBtn   = document.getElementById('add-submit');
+
+  /* ------------------------------------------
+     INTENTION TYPE PICKER — chip toggles. Any
+     number of types can be picked, from any
+     category — no cross-category restriction.
+  ------------------------------------------ */
+  const typeGroupEl = document.getElementById('add-type-group');
+  const typeOptionBtns = document.querySelectorAll('.type-option');
+
+  let addSelectedTypes = [];
+
+  function renderTypeOptions() {
+    typeOptionBtns.forEach(btn => {
+      const isSelected = addSelectedTypes.includes(btn.dataset.type);
+      btn.classList.toggle('selected', isSelected);
+      btn.setAttribute('aria-pressed', String(isSelected));
+    });
+  }
+
+  typeGroupEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.type-option');
+    if (!btn) return;
+    const type = btn.dataset.type;
+    const idx = addSelectedTypes.indexOf(type);
+    if (idx === -1) addSelectedTypes.push(type); else addSelectedTypes.splice(idx, 1);
+    renderTypeOptions();
+  });
 
   function renderAddNameChips() {
     addNameChipsBox.innerHTML = addIntentionNames.map((n, i) => `
@@ -263,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function resetAddForm() {
     document.getElementById('add-donor').value = '';
-    document.getElementById('add-type').value = '';
     document.getElementById('add-start-time').value = '';
     document.getElementById('add-end-time').value = '';
     document.getElementById('add-offering').value = '';
@@ -272,6 +362,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-mass-time').value = '';
     addIntentionNames = [];
     renderAddNameChips();
+    addSelectedTypes = [];
+    renderTypeOptions();
   }
 
   document.getElementById('btn-add-intention').addEventListener('click', () => {
@@ -291,7 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
     addSubmitBtn.textContent = 'Save Changes';
 
     document.getElementById('add-donor').value = it.donor;
-    document.getElementById('add-type').value = it.type;
+    addSelectedTypes = it.type ? [it.type] : [];
+    renderTypeOptions();
     document.getElementById('add-start-time').value = it.startTime ? to24hInput(it.startTime) : '';
     document.getElementById('add-end-time').value = it.endTime ? to24hInput(it.endTime) : '';
     document.getElementById('add-offering').value = it.offering;
@@ -317,7 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addNameInput.value.trim()) addIntentionName();
 
     const donor       = document.getElementById('add-donor').value.trim();
-    const type          = document.getElementById('add-type').value;
     const startTime24    = document.getElementById('add-start-time').value;
     const endTime24        = document.getElementById('add-end-time').value;
     const offering          = parseInt(document.getElementById('add-offering').value, 10);
@@ -325,8 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const massDate              = document.getElementById('add-mass-date').value;
     const massTime24              = document.getElementById('add-mass-time').value;
 
-    if (!donor || !type || addIntentionNames.length === 0 || !offering) {
-      showToast('Please fill in donor name, intention type, at least one name, and offering amount.', true);
+    if (!donor || addSelectedTypes.length === 0 || addIntentionNames.length === 0 || !offering) {
+      showToast('Please fill in donor name, at least one intention type, at least one name, and offering amount.', true);
       return;
     }
 
@@ -335,26 +427,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const endTime     = endTime24 ? formatTime12(endTime24) : undefined;
     const massTime      = massTime24 ? formatTime12(massTime24) : undefined;
 
+    /* The schema stores one type per record, so each selected type
+       becomes its own MassIntention row — all sharing the same
+       donor, names, mass, and timeline. The offering is a single
+       payment covering the whole submission, so only the first row
+       carries it; the rest are logged at 0 so "Total Offerings"
+       isn't double-counted across what's really one donation. */
     try {
       if (editTargetId === null) {
-        const result = await client.models.MassIntention.create({
-          donor, type, names, startTime, endTime,
-          massDate: massDate || undefined,
-          massTime: massDate ? massTime : undefined,
-          offering, status,
-        });
-        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(`Intention logged for ${donor}.`);
+        for (let i = 0; i < addSelectedTypes.length; i++) {
+          const result = await client.models.MassIntention.create({
+            donor, type: addSelectedTypes[i], names, startTime, endTime,
+            massDate: massDate || undefined,
+            massTime: massDate ? massTime : undefined,
+            offering: i === 0 ? offering : 0,
+            status,
+          });
+          if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        }
+        showToast(addSelectedTypes.length > 1
+          ? `${addSelectedTypes.length} intentions logged for ${donor}.`
+          : `Intention logged for ${donor}.`);
       } else {
+        const [firstType, ...extraTypes] = addSelectedTypes;
         const result = await client.models.MassIntention.update({
           id: editTargetId,
-          donor, type, names, startTime, endTime,
+          donor, type: firstType, names, startTime, endTime,
           massDate: massDate || undefined,
           massTime: massDate ? massTime : undefined,
           offering, status,
         });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(`Changes saved for ${donor}.`);
+
+        for (const type of extraTypes) {
+          const extraResult = await client.models.MassIntention.create({
+            donor, type, names, startTime, endTime,
+            massDate: massDate || undefined,
+            massTime: massDate ? massTime : undefined,
+            offering: 0,
+            status,
+          });
+          if (extraResult.errors) throw new Error(extraResult.errors.map(e => e.message).join('; '));
+        }
+
+        showToast(extraTypes.length > 0
+          ? `Changes saved for ${donor} — ${extraTypes.length} new intention${extraTypes.length === 1 ? '' : 's'} added.`
+          : `Changes saved for ${donor}.`);
         editTargetId = null;
       }
 
@@ -470,14 +588,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const sheetEmpty        = document.getElementById('sheet-empty');
   const sheetBody           = document.getElementById('sheet-body');
   const sheetMassRange        = document.getElementById('sheet-mass-range');
-
-  const GROUP_TYPE_MAP = {
-    'Thanksgiving': 'thanksgiving',
-    'Birthday Blessing': 'thanksgiving',
-    'Special Intention': 'special',
-    'Healing': 'special',
-    'For the Soul of...': 'souls',
-  };
 
   const sheetListEls = {
     thanksgiving: document.getElementById('sheet-list-thanksgiving'),
@@ -742,14 +852,24 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
 
 
-  /* --- Print --- */
+  /* --- Print ---
+     The table only renders the current page's rows, so printing
+     straight from the DOM would silently drop everything else.
+     Swap in every filtered row just for the print, then restore
+     the paginated view once the print dialog closes. */
   document.getElementById('btn-print').addEventListener('click', () => {
     const printDateEl = document.getElementById('print-date-value');
     if (printDateEl) {
       printDateEl.textContent = `Printed ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
     }
+
+    const filtered = getFilteredIntentions();
+    if (filtered.length > 0) tbody.innerHTML = filtered.map(intentionRowHtml).join('');
+
     window.print();
   });
+
+  window.addEventListener('afterprint', renderTable);
 
   document.getElementById('btn-print-sheet').addEventListener('click', () => {
     if (!currentSheetKey) {

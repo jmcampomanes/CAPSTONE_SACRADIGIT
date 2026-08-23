@@ -213,6 +213,47 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow = '';
   }
 
+  /* ------------------------------------------
+     PHOTO LIGHTBOX — click a photo in the detail
+     modal's media grid to view it full-size.
+     Sits on top of the detail modal (which stays
+     open behind it). Videos are left alone since
+     they already have native playback controls.
+  ------------------------------------------ */
+  const photoLightbox   = document.getElementById('photo-lightbox');
+  const lightboxImg       = document.getElementById('lightbox-img');
+  const lightboxCloseBtn    = document.getElementById('lightbox-close');
+
+  function openLightbox(src, alt) {
+    lightboxImg.src = src;
+    lightboxImg.alt = alt || '';
+    photoLightbox.classList.remove('hidden');
+  }
+
+  function closeLightbox() {
+    if (photoLightbox.classList.contains('hidden')) return;
+    photoLightbox.classList.add('hidden');
+    lightboxImg.src = '';
+  }
+
+  detailMediaGrid.addEventListener('click', (e) => {
+    const img = e.target.closest('.ann-detail-media-item img');
+    if (img) openLightbox(img.src, img.alt);
+  });
+
+  lightboxCloseBtn.addEventListener('click', closeLightbox);
+  photoLightbox.addEventListener('click', (e) => { if (e.target === photoLightbox) closeLightbox(); });
+
+  // Registered before the detail modal's own Escape listener below,
+  // so closing the lightbox with Escape doesn't also close the
+  // detail modal behind it in the same keypress.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !photoLightbox.classList.contains('hidden')) {
+      closeLightbox();
+      e.stopImmediatePropagation();
+    }
+  });
+
   document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeDetail));
   detailModal.addEventListener('click', (e) => { if (e.target === detailModal) closeDetail(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });

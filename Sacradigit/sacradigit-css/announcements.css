@@ -119,6 +119,7 @@
   gap: 0.625rem;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   transition: border-color 0.15s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
@@ -195,6 +196,7 @@
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -345,6 +347,10 @@
   background-color: #111827;
 }
 
+.ann-media-item img {
+  cursor: zoom-in;
+}
+
 .ann-media-item img,
 .ann-media-item video {
   width: 100%;
@@ -399,9 +405,14 @@
 .announcement-image {
   width: 100%;
   height: 9rem;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: #f3f4f6;
   border-radius: 0.625rem;
   display: block;
+}
+
+img.announcement-image {
+  cursor: zoom-in;
 }
 
 .announcement-media-count {
@@ -428,4 +439,105 @@
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.55);
   color: #ffffff;
+}
+
+/* ---------- Announcement detail modal (full post preview) ---------- */
+.ann-detail-card {
+  max-width: 560px;
+}
+
+.ann-detail-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.ann-detail-status-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ann-detail-body {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.ann-detail-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.625rem;
+  margin-top: 1rem;
+}
+
+.ann-detail-media-item {
+  border-radius: 0.625rem;
+  overflow: hidden;
+  border: 1px solid #eef0f4;
+  background-color: #111827;
+}
+
+.ann-detail-media-item img {
+  cursor: zoom-in;
+}
+
+.ann-detail-media-item img,
+.ann-detail-media-item video {
+  width: 100%;
+  height: 100%;
+  max-height: 20rem;
+  object-fit: contain;
+  display: block;
+}
+
+/* ---------- Photo lightbox (full-size view) ---------- */
+.photo-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background-color: rgba(15, 23, 42, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: modalIn 0.15s ease;
+}
+
+.photo-lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.photo-lightbox-close {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.photo-lightbox-close:hover {
+  background-color: rgba(255, 255, 255, 0.22);
 }

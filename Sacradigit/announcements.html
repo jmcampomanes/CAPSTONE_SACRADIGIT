@@ -305,6 +305,39 @@
     </div>
   </div>
 
+  <!-- ========== ANNOUNCEMENT DETAIL MODAL ========== -->
+  <div id="detail-modal" class="modal-overlay hidden">
+    <div class="modal-card ann-detail-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="detail-title"></h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="ann-detail-meta">
+          <span class="announcement-date">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span id="detail-date"></span>
+          </span>
+          <span class="audience-tag" id="detail-audience"></span>
+          <span class="ann-detail-status-badge hidden" id="detail-status"></span>
+        </div>
+        <p class="ann-detail-body" id="detail-body"></p>
+        <div id="detail-media-grid" class="ann-detail-media-grid hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo lightbox — click a photo (list thumbnail or a media
+       item in the New/Edit composer) to view it full-size -->
+  <div id="photo-lightbox" class="photo-lightbox hidden">
+    <button type="button" id="lightbox-close" class="photo-lightbox-close" aria-label="Close photo">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <img id="lightbox-img" class="photo-lightbox-img" src="" alt="" />
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 

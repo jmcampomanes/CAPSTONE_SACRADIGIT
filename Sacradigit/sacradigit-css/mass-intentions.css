@@ -34,6 +34,113 @@
   background-color: #eef2ff;
   color: #4338ca;
 }
+
+/* ---------- Pagination (Intentions Log) ---------- */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid #eef0f4;
+}
+
+.pagination-info {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.875rem;
+  height: 1.875rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-btn.active {
+  background-color: #8b8fc7;
+  border-color: #8b8fc7;
+  color: #ffffff;
+}
+
+/* ---------- Intention type picker (Add/Edit modal) ---------- */
+.type-select-hint {
+  font-size: 0.71875rem;
+  color: #9ca3af;
+  margin: 0.15rem 0 0.625rem 0;
+  line-height: 1.4;
+}
+
+.type-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.type-category-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 0.375rem;
+}
+
+.type-option-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.type-option {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.type-option:hover:not(:disabled) {
+  border-color: #8b8fc7;
+  color: #1e2a4a;
+}
+
+.type-option.selected {
+  background-color: #1e2a4a;
+  border-color: #1e2a4a;
+  color: #ffffff;
+}
 /* ---------- Name chip input (Add Mass Intention modal) ---------- */
 .name-chip-input-row {
   display: flex;

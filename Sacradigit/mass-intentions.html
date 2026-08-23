@@ -308,6 +308,9 @@
                 <p class="text-sm font-medium text-gray-600">No intentions logged yet</p>
               </div>
             </div>
+            <div id="intentions-pagination" class="pagination-bar no-print">
+              <!-- Injected by mass-intentions.js -->
+            </div>
           </div>
 
         </div>
@@ -424,15 +427,30 @@
             <input type="text" id="add-donor" class="form-input" placeholder="e.g. Santos Family" />
           </div>
           <div class="col-span-2">
-            <label class="form-label" for="add-type">Intention Type</label>
-            <select id="add-type" class="form-input">
-              <option value="">Select type</option>
-              <option value="For the Soul of...">For the Soul of...</option>
-              <option value="Thanksgiving">Thanksgiving</option>
-              <option value="Healing">Healing</option>
-              <option value="Birthday Blessing">Birthday Blessing</option>
-              <option value="Special Intention">Special Intention</option>
-            </select>
+            <label class="form-label">Intention Type(s) <span class="text-red-500">*</span></label>
+            <p class="type-select-hint">You can pick more than one type — from any category.</p>
+            <div class="type-select-group" id="add-type-group">
+              <div class="type-category">
+                <p class="type-category-label">Thanksgiving &amp; Birthdays</p>
+                <div class="type-option-row">
+                  <button type="button" class="type-option" data-type="Thanksgiving" data-bucket="thanksgiving" aria-pressed="false">Thanksgiving</button>
+                  <button type="button" class="type-option" data-type="Birthday Blessing" data-bucket="thanksgiving" aria-pressed="false">Birthday Blessing</button>
+                </div>
+              </div>
+              <div class="type-category">
+                <p class="type-category-label">Special Intentions</p>
+                <div class="type-option-row">
+                  <button type="button" class="type-option" data-type="Healing" data-bucket="special" aria-pressed="false">Healing</button>
+                  <button type="button" class="type-option" data-type="Special Intention" data-bucket="special" aria-pressed="false">Special Intention</button>
+                </div>
+              </div>
+              <div class="type-category">
+                <p class="type-category-label">Souls</p>
+                <div class="type-option-row">
+                  <button type="button" class="type-option" data-type="For the Soul of..." data-bucket="souls" aria-pressed="false">For the Soul of...</button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="col-span-2">
             <label class="form-label" for="add-name-input">

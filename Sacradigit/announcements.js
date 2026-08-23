@@ -69,6 +69,45 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* ------------------------------------------
+     PHOTO LIGHTBOX — click a photo (list card
+     thumbnail or a media item in the New/Edit
+     composer) to view it full-size. Videos are
+     left alone; only <img> tags are wired.
+  ------------------------------------------ */
+  const photoLightbox   = document.getElementById('photo-lightbox');
+  const lightboxImg       = document.getElementById('lightbox-img');
+  const lightboxCloseBtn    = document.getElementById('lightbox-close');
+
+  function openLightbox(src, alt) {
+    if (!src) return;
+    lightboxImg.src = src;
+    lightboxImg.alt = alt || '';
+    photoLightbox.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    if (photoLightbox.classList.contains('hidden')) return;
+    photoLightbox.classList.add('hidden');
+    lightboxImg.src = '';
+    document.body.style.overflow = '';
+  }
+
+  lightboxCloseBtn.addEventListener('click', closeLightbox);
+  photoLightbox.addEventListener('click', (e) => { if (e.target === photoLightbox) closeLightbox(); });
+
+  // Registered before the other modals' Escape listener below, so
+  // closing the lightbox with Escape doesn't also close whatever
+  // modal (if any) sits behind it in the same keypress.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !photoLightbox.classList.contains('hidden')) {
+      closeLightbox();
+      e.stopImmediatePropagation();
+    }
+  });
+
+
   /* --- Live data --- */
   client.models.Announcement.observeQuery().subscribe({
     next: ({ items }) => {
@@ -140,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <div class="announcement-card ${a.published ? '' : 'unpublished'} audience-${audienceClass(a.audience)}">
+        <div class="announcement-card ${a.published ? '' : 'unpublished'} audience-${audienceClass(a.audience)}" data-id="${a.id}" role="button" tabindex="0" aria-label="View announcement: ${escapeHtml(a.title)}">
           ${a.published ? '' : '<span class="ann-status-ribbon">Unpublished</span>'}
           ${mediaHtml}
           <div class="announcement-top">
@@ -170,16 +209,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   grid.addEventListener('click', async (e) => {
+    const photoImg = e.target.closest('.announcement-image');
+    if (photoImg && photoImg.tagName === 'IMG') {
+      openLightbox(photoImg.src, photoImg.alt);
+      return;
+    }
+
     const editBtn       = e.target.closest('.ann-edit');
     const unpublishBtn   = e.target.closest('.ann-unpublish');
     const republishBtn   = e.target.closest('.ann-republish');
     const deleteBtn      = e.target.closest('.ann-delete');
 
-    if (editBtn) openEditModal(editBtn.dataset.id);
+    if (editBtn) { openEditModal(editBtn.dataset.id); return; }
 
-    if (unpublishBtn) openUnpublishModal(unpublishBtn.dataset.id);
+    if (unpublishBtn) { openUnpublishModal(unpublishBtn.dataset.id); return; }
 
-    if (deleteBtn) openDeleteModal(deleteBtn.dataset.id);
+    if (deleteBtn) { openDeleteModal(deleteBtn.dataset.id); return; }
 
     if (republishBtn) {
       const a = announcements.find(x => x.id === republishBtn.dataset.id);
@@ -191,7 +236,79 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error(err);
         showToast(err.message || "Couldn't republish.", true);
       }
+      return;
     }
+
+    // Click landed somewhere on the card itself (not a button or the
+    // thumbnail) — open the full post detail view.
+    const card = e.target.closest('.announcement-card');
+    if (card) openDetailModal(card.dataset.id);
+  });
+
+  grid.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.announcement-card');
+    if (card && e.target === card) {
+      e.preventDefault();
+      openDetailModal(card.dataset.id);
+    }
+  });
+
+
+  /* ------------------------------------------
+     1b. ANNOUNCEMENT DETAIL MODAL
+     Full post preview — title, complete body,
+     audience, date, status, and every attached
+     photo/video (not just the card's thumbnail).
+  ------------------------------------------ */
+  const detailModal      = document.getElementById('detail-modal');
+  const detailTitle        = document.getElementById('detail-title');
+  const detailBody          = document.getElementById('detail-body');
+  const detailDate            = document.getElementById('detail-date');
+  const detailAudience          = document.getElementById('detail-audience');
+  const detailStatus              = document.getElementById('detail-status');
+  const detailMediaGrid              = document.getElementById('detail-media-grid');
+
+  async function openDetailModal(id) {
+    const a = announcements.find(x => x.id === id);
+    if (!a) return;
+
+    detailTitle.textContent    = a.title;
+    detailBody.textContent     = a.body;
+    detailDate.textContent     = formatShortDate(a.createdAt);
+    detailAudience.textContent = a.audience;
+    detailAudience.className   = `audience-tag ${audienceClass(a.audience)}`;
+    detailStatus.textContent   = a.published ? '' : 'Unpublished';
+    detailStatus.className     = `ann-detail-status-badge ${a.published ? 'hidden' : ''}`;
+
+    detailMediaGrid.innerHTML = '';
+    detailMediaGrid.classList.add('hidden');
+    openModal(detailModal);
+
+    const media = a.media ? JSON.parse(a.media) : [];
+    if (media.length === 0) return;
+
+    // Resolve every attachment for the full gallery here (the card
+    // thumbnail only ever resolves the first one).
+    const resolvedItems = await Promise.all(media.map(async (m) => ({ ...m, resolvedUrl: await resolveMediaUrl(m.url) })));
+
+    // The admin may have closed the modal (or opened a different
+    // announcement) while these were resolving.
+    if (detailModal.classList.contains('hidden') || detailTitle.textContent !== a.title) return;
+
+    const items = resolvedItems.filter(m => m.resolvedUrl);
+    if (items.length === 0) return;
+
+    detailMediaGrid.innerHTML = items.map(m => m.type === 'video'
+      ? `<div class="ann-detail-media-item"><video src="${m.resolvedUrl}" controls></video></div>`
+      : `<div class="ann-detail-media-item"><img src="${m.resolvedUrl}" alt="${escapeHtml(a.title)}" /></div>`
+    ).join('');
+    detailMediaGrid.classList.remove('hidden');
+  }
+
+  detailMediaGrid.addEventListener('click', (e) => {
+    const img = e.target.closest('.ann-detail-media-item img');
+    if (img) openLightbox(img.src, img.alt);
   });
 
 
@@ -274,9 +391,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   mediaGrid.addEventListener('click', (e) => {
     const btn = e.target.closest('.ann-media-remove');
-    if (!btn) return;
-    currentMedia.splice(parseInt(btn.dataset.index, 10), 1);
-    renderMediaGrid();
+    if (btn) {
+      currentMedia.splice(parseInt(btn.dataset.index, 10), 1);
+      renderMediaGrid();
+      return;
+    }
+    const img = e.target.closest('.ann-media-item img');
+    if (img) openLightbox(img.src, img.alt);
   });
 
   document.getElementById('btn-new-announcement').addEventListener('click', () => {
@@ -448,17 +569,17 @@ document.addEventListener('DOMContentLoaded', () => {
      4. MODAL HELPERS (open/close/escape)
   ------------------------------------------ */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { closeModal(modal); closeModal(unpublishModal); closeModal(deleteModal); });
+    btn.addEventListener('click', () => { closeModal(modal); closeModal(unpublishModal); closeModal(deleteModal); closeModal(detailModal); });
   });
 
-  [modal, unpublishModal, deleteModal].forEach(m => {
+  [modal, unpublishModal, deleteModal, detailModal].forEach(m => {
     m.addEventListener('click', (e) => {
       if (e.target === m) closeModal(m);
     });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeModal(modal); closeModal(unpublishModal); closeModal(deleteModal); }
+    if (e.key === 'Escape') { closeModal(modal); closeModal(unpublishModal); closeModal(deleteModal); closeModal(detailModal); }
   });
 
   function openModal(m) {
