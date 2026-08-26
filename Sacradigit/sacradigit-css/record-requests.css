@@ -5,6 +5,28 @@
    (both loaded first)
    ============================================ */
 
+/* ---------- Generate Certificate row action + modal ---------- */
+.row-cert {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #9c7d2e;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.row-cert:hover {
+  color: #7a5f1f;
+}
+
+.cert-modal-card {
+  max-width: 620px;
+}
+
 /* ---------- Stat icon variant (rejected) ---------- */
 .stat-icon-red {
   background-color: #fef2f2;

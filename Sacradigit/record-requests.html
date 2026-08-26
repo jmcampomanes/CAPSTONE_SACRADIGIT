@@ -415,6 +415,82 @@
     </div>
   </div>
 
+  <!-- ========== GENERATE BAPTISMAL CERTIFICATE MODAL ========== -->
+  <div id="generate-cert-modal" class="modal-overlay hidden">
+    <div class="modal-card cert-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Generate Baptismal Certificate</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-xs text-gray-500 mb-3 leading-relaxed">
+          The parish record only tracks the requester, purpose, and status — fill in the rest from the
+          baptismal register below. This produces a print-ready Certificate of Baptism on the next screen.
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="cert-child-name">Full Name of Baptized Person</label>
+            <input type="text" id="cert-child-name" class="form-input" placeholder="e.g. Maria Paz Santos" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-father-name">Father's Name</label>
+            <input type="text" id="cert-father-name" class="form-input" placeholder="e.g. Jose Santos" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-mother-name">Mother's Maiden Name</label>
+            <input type="text" id="cert-mother-name" class="form-input" placeholder="e.g. Remedios Reyes" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="cert-birthplace">Place of Birth</label>
+            <input type="text" id="cert-birthplace" class="form-input" placeholder="e.g. Quezon City" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-birth-date">Date of Birth</label>
+            <input type="date" id="cert-birth-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-baptism-date">Date of Baptism</label>
+            <input type="date" id="cert-baptism-date" class="form-input" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="cert-priest">Officiating Priest</label>
+            <input type="text" id="cert-priest" class="form-input" value="Fredrick Edward C. Simon" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-sponsor-1">Sponsor 1</label>
+            <input type="text" id="cert-sponsor-1" class="form-input" placeholder="e.g. Elena Cruz" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-sponsor-2">Sponsor 2</label>
+            <input type="text" id="cert-sponsor-2" class="form-input" placeholder="e.g. Ramon Torres" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-book-no">Bk. No.</label>
+            <input type="text" id="cert-book-no" class="form-input" placeholder="e.g. 12" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-page">Page</label>
+            <input type="text" id="cert-page" class="form-input" placeholder="e.g. 45" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-line">Line</label>
+            <input type="text" id="cert-line" class="form-input" placeholder="e.g. 8" />
+          </div>
+          <div>
+            <label class="form-label" for="cert-dated">Dated</label>
+            <input type="date" id="cert-dated" class="form-input" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="cert-generate-submit" class="btn-lavender">Generate &amp; Preview</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== VIEW REQUEST DETAILS MODAL ========== -->
   <div id="view-modal" class="modal-overlay hidden">
     <div class="modal-card">

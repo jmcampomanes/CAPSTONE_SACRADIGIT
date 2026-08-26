@@ -7,6 +7,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { getUrl } from 'aws-amplify/storage';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const detailModal  = document.getElementById('detail-modal');
 
   const modalCancelBtn    = document.getElementById('modal-cancel-request');
+  const modalViewCertBtn  = document.getElementById('modal-view-cert');
   const cancelRequestModal = document.getElementById('cancel-request-modal');
   const cancelRequestTypeEl = document.getElementById('cancel-request-type');
   const cancelRequestConfirm = document.getElementById('cancel-request-confirm');
@@ -50,6 +52,41 @@ document.addEventListener('DOMContentLoaded', () => {
   function getDetails(r) {
     if (!r.details) return {};
     try { return JSON.parse(r.details); } catch { return {}; }
+  }
+  function hasOfficialCopy(r) {
+    return r.status === 'released' && !!r.linkedRecordId;
+  }
+
+  const certUrlCache = new Map();
+  async function openOfficialCertificate(requestId, triggerBtn) {
+    const r = requests.find(x => x.id === requestId);
+    if (!r || !r.linkedRecordId) return;
+
+    const originalLabel = triggerBtn ? triggerBtn.textContent : '';
+    if (triggerBtn) { triggerBtn.disabled = true; triggerBtn.textContent = 'Opening…'; }
+
+    try {
+      const cached = certUrlCache.get(r.linkedRecordId);
+      let url;
+      if (cached && cached.expiresAt > Date.now()) {
+        url = cached.url;
+      } else {
+        const recordResult = await client.models.ParishRecord.get({ id: r.linkedRecordId });
+        if (recordResult.errors) throw new Error(recordResult.errors.map(e => e.message).join('; '));
+        const record = recordResult.data;
+        if (!record || !record.fileURL) throw new Error('No certificate file found for this record.');
+
+        const { url: resolvedUrl } = await getUrl({ path: record.fileURL, options: { expiresIn: 3600 } });
+        url = resolvedUrl.toString();
+        certUrlCache.set(r.linkedRecordId, { url, expiresAt: Date.now() + 55 * 60 * 1000 });
+      }
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error('Failed to open the official certificate:', err);
+      window.showToast(err.message || "Couldn't open the certificate.", true);
+    } finally {
+      if (triggerBtn) { triggerBtn.disabled = false; triggerBtn.textContent = originalLabel || 'View Certificate'; }
+    }
   }
 
   client.models.CertificateRequest.observeQuery().subscribe({
@@ -112,14 +149,20 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="req-progress-wrap"><div class="req-progress-steps">${stepDotsHtml}</div></div>
         </div>
-        <div class="req-card-actions"><button type="button" class="btn-view-details" data-id="${r.id}">Details</button></div>`;
+        <div class="req-card-actions">
+          ${hasOfficialCopy(r) ? `<button type="button" class="btn-view-cert" data-id="${r.id}">View Certificate</button>` : ''}
+          <button type="button" class="btn-view-details" data-id="${r.id}">Details</button>
+        </div>`;
       list.appendChild(card);
     });
   }
 
   list.addEventListener('click', (e) => {
-    const btn = e.target.closest('.btn-view-details');
-    if (btn) openDetail(btn.dataset.id);
+    const detailsBtn = e.target.closest('.btn-view-details');
+    if (detailsBtn) openDetail(detailsBtn.dataset.id);
+
+    const certBtn = e.target.closest('.btn-view-cert');
+    if (certBtn) openOfficialCertificate(certBtn.dataset.id, certBtn);
   });
 
   document.querySelectorAll('.status-tab').forEach(tab => {
@@ -140,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentDetailId = id;
     modalCancelBtn.classList.toggle('hidden', r.status !== 'pending');
+    modalViewCertBtn.classList.toggle('hidden', !hasOfficialCopy(r));
 
     document.getElementById('modal-title').textContent = r.certificateType;
     document.getElementById('modal-date').textContent  = `Submitted ${formatShortDate(r.createdAt)}`;
@@ -192,6 +236,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeDetail));
   [detailModal, cancelRequestModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeDetail(); }));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+
+  modalViewCertBtn.addEventListener('click', () => {
+    if (!currentDetailId) return;
+    openOfficialCertificate(currentDetailId, modalViewCertBtn);
+  });
 
   modalCancelBtn.addEventListener('click', () => {
     if (!currentDetailId) return;

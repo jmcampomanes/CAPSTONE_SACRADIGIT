@@ -16,11 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
     { id: 'baptismal', name: 'Baptismal Certificate', desc: 'Proof of baptism recorded at the parish.',
       iconBg: 'rgba(139,143,199,0.16)', iconColor: '#5b5fa8',
       icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3C8 3 5 6 5 9c0 4 7 12 7 12s7-8 7-12c0-3-3-6-7-6z"/></svg>`,
+      // These mirror exactly what appears on the printed Certificate of
+      // Baptism (see baptismal-certificate-print.html) — Bk./Page/Line,
+      // the officiating priest, and the issue date are filled in by the
+      // parish office from the register, not asked of the requester here.
       fields: [
         { id: 'baptized-name', label: 'Full Name of Baptized Person', placeholder: 'e.g. Maria Paz Santos', required: true },
-        { id: 'baptism-date', label: 'Approximate Date of Baptism', type: 'date', required: false },
-        { id: 'father-name', label: "Father's Name", placeholder: 'e.g. Jose Santos', required: false },
+        { id: 'birth-date', label: 'Date of Birth', type: 'date', required: false },
+        { id: 'birthplace', label: 'Place of Birth', placeholder: 'e.g. Quezon City', required: false },
+        { id: 'baptism-date', label: 'Date of Baptism', type: 'date', required: false },
+        { id: 'father-name', label: "Father's Full Name", placeholder: 'e.g. Jose Santos', required: false },
         { id: 'mother-name', label: "Mother's Maiden Name", placeholder: 'e.g. Remedios Reyes', required: false },
+        { id: 'sponsor-1', label: 'Principal Sponsor (Godparent) 1', placeholder: 'e.g. Elena Cruz', required: false },
+        { id: 'sponsor-2', label: 'Principal Sponsor (Godparent) 2', placeholder: 'e.g. Ramon Torres', required: false },
       ] },
     { id: 'confirmation', name: 'Confirmation Certificate', desc: 'Proof of confirmation sacrament.',
       iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',

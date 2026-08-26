@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const newRequestModal   = document.getElementById('new-request-modal');
   const rejectModal        = document.getElementById('reject-modal');
   const viewModal            = document.getElementById('view-modal');
+  const generateCertModal      = document.getElementById('generate-cert-modal');
 
   const dropzone         = document.getElementById('upload-dropzone');
   const fileInput          = document.getElementById('upload-file-input');
@@ -89,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeAllModals() {
-    [uploadModal, newRequestModal, rejectModal, viewModal].forEach(closeModal);
+    [uploadModal, newRequestModal, rejectModal, viewModal, generateCertModal].forEach(closeModal);
   }
 
   function showToast(message, isError = false) {
@@ -197,21 +198,27 @@ document.addEventListener('DOMContentLoaded', () => {
       filtered.forEach((r) => {
         const tr = document.createElement('tr');
 
+        const certBtn = r.certificateType === 'Baptismal Certificate'
+          ? `<button type="button" class="row-cert" data-id="${r.id}">Generate Certificate</button>`
+          : '';
+
         let actionsHtml = '';
         if (r.status === 'pending') {
           actionsHtml = `
             <div class="row-actions">
+              ${certBtn}
               <button type="button" class="row-approve" data-id="${r.id}">Approve</button>
               <button type="button" class="row-reject" data-id="${r.id}">Reject</button>
             </div>`;
         } else if (r.status === 'approved') {
           actionsHtml = `
             <div class="row-actions">
+              ${certBtn}
               <button type="button" class="row-approve" data-id="${r.id}" data-release="1">Release</button>
               <button type="button" class="row-view" data-id="${r.id}">View ›</button>
             </div>`;
         } else {
-          actionsHtml = `<div class="row-actions"><button type="button" class="row-view" data-id="${r.id}">View ›</button></div>`;
+          actionsHtml = `<div class="row-actions">${certBtn}<button type="button" class="row-view" data-id="${r.id}">View ›</button></div>`;
         }
 
         tr.innerHTML = `
@@ -244,6 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const approveBtn = e.target.closest('.row-approve');
     const rejectBtn  = e.target.closest('.row-reject');
     const viewBtn    = e.target.closest('.row-view');
+    const certBtn    = e.target.closest('.row-cert');
+
+    if (certBtn) openGenerateCertModal(certBtn.dataset.id);
 
     if (approveBtn) {
       const id = approveBtn.dataset.id;
@@ -305,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', closeAllModals);
   });
 
-  [uploadModal, newRequestModal, rejectModal, viewModal].forEach(modal => {
+  [uploadModal, newRequestModal, rejectModal, viewModal, generateCertModal].forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeModal(modal);
     });
@@ -507,5 +517,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
     openModal(viewModal);
   }
+
+  /* ------------------------------------------
+     14. GENERATE BAPTISMAL CERTIFICATE MODAL
+         The CertificateRequest model only tracks
+         requester/purpose/status, so the rest of
+         the certificate's content (parents, sponsors,
+         Bk/Page/Line, etc.) is entered here each time
+         rather than stored — there's no backend field
+         for it. Submitting stashes the filled-in data
+         in sessionStorage and opens the print-ready
+         certificate in a new tab.
+  ------------------------------------------ */
+  const CERT_STORAGE_KEY = 'sacradigit_baptismal_cert_draft';
+  const certFieldIds = [
+    'cert-child-name', 'cert-father-name', 'cert-mother-name', 'cert-birthplace',
+    'cert-birth-date', 'cert-baptism-date', 'cert-priest',
+    'cert-sponsor-1', 'cert-sponsor-2', 'cert-book-no', 'cert-page', 'cert-line', 'cert-dated',
+  ];
+
+  let generateCertTargetId = null;
+
+  // Maps the fields collected on the parishioner's request form
+  // (user-request-certificate.js, Baptismal Certificate) to this
+  // modal's matching print-output field — so whatever the requester
+  // already told us doesn't have to be retyped here. Bk./Page/Line,
+  // the officiating priest, and the issue date aren't collected from
+  // the requester, since those come from the parish register.
+  const requestDetailsToCertField = {
+    'baptized-name': 'cert-child-name',
+    'birth-date':    'cert-birth-date',
+    'birthplace':    'cert-birthplace',
+    'baptism-date':  'cert-baptism-date',
+    'father-name':   'cert-father-name',
+    'mother-name':   'cert-mother-name',
+    'sponsor-1':     'cert-sponsor-1',
+    'sponsor-2':     'cert-sponsor-2',
+  };
+
+  function openGenerateCertModal(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+
+    generateCertTargetId = id;
+    certFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+
+    let details = {};
+    if (r.details) {
+      try { details = JSON.parse(r.details); } catch { details = {}; }
+    }
+    Object.entries(requestDetailsToCertField).forEach(([detailKey, certFieldId]) => {
+      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
+    });
+
+    document.getElementById('cert-child-name').value = document.getElementById('cert-child-name').value || r.requesterName || '';
+    document.getElementById('cert-priest').value = 'Fredrick Edward C. Simon';
+    document.getElementById('cert-dated').value = new Date().toISOString().slice(0, 10);
+
+    openModal(generateCertModal);
+  }
+
+  document.getElementById('cert-generate-submit').addEventListener('click', () => {
+    const childNameInput = document.getElementById('cert-child-name');
+    if (!childNameInput.value.trim()) {
+      showToast('Please enter the full name of the baptized person.', true);
+      childNameInput.focus();
+      return;
+    }
+
+    const data = { requestId: generateCertTargetId };
+    certFieldIds.forEach(fid => {
+      data[fid] = document.getElementById(fid).value.trim();
+    });
+
+    try {
+      sessionStorage.setItem(CERT_STORAGE_KEY, JSON.stringify(data));
+    } catch (err) {
+      console.error('Failed to stash certificate draft:', err);
+      showToast("Couldn't prepare the certificate preview.", true);
+      return;
+    }
+
+    window.open('baptismal-certificate-print.html', '_blank');
+    closeModal(generateCertModal);
+  });
 
 });

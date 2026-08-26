@@ -333,6 +333,31 @@
   color: #1e2a4a;
 }
 
+.btn-view-cert {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background-color: #b5943e;
+  border: 1px solid #b5943e;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-view-cert:hover {
+  background-color: #9c7d2e;
+  border-color: #9c7d2e;
+}
+
+.btn-view-cert:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ---------- Detail modal ---------- */
 .modal-detail-grid {
   display: grid;
