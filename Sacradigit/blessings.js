@@ -76,6 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
       renderUpcoming();
       renderRequests();
       renderCompleted();
+      if (showingCalendar) renderCalendar();
+      // Keep an open Day Plan modal in sync with live updates (e.g.
+      // another admin approving/declining a request while it's on screen).
+      if (selectedDateIso && !dayPlanModal.classList.contains('hidden')) openDayPlanModal(selectedDateIso);
     },
     error: (err) => {
       console.error('Failed to load blessings:', err);
@@ -250,6 +254,154 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* ------------------------------------------
+     CALENDAR VIEW
+     Shows scheduled + completed blessings on
+     their confirmed date, plus pending requests
+     on their preferred date (styled differently
+     so it's clear that date isn't confirmed yet).
+     Declined records are never shown, matching
+     the list panels above.
+  ------------------------------------------ */
+  let calendarDate = new Date(todayISO + 'T00:00:00');
+  let selectedDateIso = null;
+
+  const calMonthLabel = document.getElementById('cal-month-label');
+  const calGrid          = document.getElementById('calendar-grid');
+
+  const dayPlanModal = document.getElementById('day-plan-modal');
+  const dayPlanTitle   = document.getElementById('day-plan-title');
+  const dayPlanList      = document.getElementById('day-plan-list');
+  const dayPlanEmpty       = document.getElementById('day-plan-empty');
+
+  const calBadgeClass = { scheduled: 'badge-lavender', pending: 'badge-amber', completed: 'badge-green' };
+  const calStatusLabel = { scheduled: 'Scheduled', pending: 'Pending', completed: 'Completed' };
+
+  function isoFromParts(y, m, d) {
+    const mm = String(m + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    return `${y}-${mm}-${dd}`;
+  }
+
+  // Merge the three lists into one, each item carrying the date it
+  // should appear under on the calendar (confirmed `date` for
+  // scheduled/completed, `preferredDate` for pending requests).
+  function calendarItems() {
+    return [
+      ...upcoming.map(b => ({ id: b.id, requesterName: b.requesterName, type: b.type, location: b.location, time: b.time, status: 'scheduled', calDate: b.date })),
+      ...requests.map(r => ({ id: r.id, requesterName: r.requesterName, type: r.type, location: r.location, time: r.time, status: 'pending', calDate: r.preferredDate })),
+      ...completed.map(c => ({ id: c.id, requesterName: c.requesterName, type: c.type, location: c.location, time: c.time, status: 'completed', calDate: c.date })),
+    ].filter(item => item.calDate);
+  }
+
+  function renderCalendar() {
+    const year  = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    calMonthLabel.textContent = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const firstDay = new Date(year, month, 1);
+    const startWeekday = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const items = calendarItems();
+
+    let cellsHtml = '';
+    for (let i = 0; i < startWeekday; i++) cellsHtml += `<div class="calendar-cell empty"></div>`;
+
+    // Shown directly on the cell, no hover/click needed — up to
+    // MAX_VISIBLE entries per day, with a "+N more" hint when there
+    // isn't room. Clicking anywhere on the cell still opens the full
+    // Day Plan modal for every blessing that day.
+    const MAX_VISIBLE = 2;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = isoFromParts(year, month, day);
+      const dayItems = items.filter(item => item.calDate === iso).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      const isToday = iso === todayISO;
+      const isSelected = iso === selectedDateIso;
+
+      const visible = dayItems.slice(0, MAX_VISIBLE);
+      const remaining = dayItems.length - visible.length;
+
+      const itemsHtml = visible.map(item => `
+        <div class="calendar-cell-booking ${item.status}">
+          <span class="calendar-cell-booking-time">${escapeHtml(item.time || '—')}</span>
+          <span class="calendar-cell-booking-facility">${escapeHtml(item.requesterName)}</span>
+        </div>
+      `).join('') + (remaining > 0 ? `<div class="calendar-cell-more">+${remaining} more</div>` : '');
+
+      cellsHtml += `
+        <div class="calendar-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-date="${iso}">
+          <span class="calendar-date-num">${day}</span>
+          <div class="calendar-cell-bookings">${itemsHtml}</div>
+        </div>
+      `;
+    }
+
+    calGrid.innerHTML = cellsHtml;
+    calGrid.querySelectorAll('.calendar-cell:not(.empty)').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const iso = cell.dataset.date;
+        selectedDateIso = iso;
+        renderCalendar();
+        openDayPlanModal(iso);
+      });
+    });
+  }
+
+  /* Full "Day Plan" preview — every blessing on the selected date,
+     laid out as a timeline so the admin can see the whole day at a
+     glance instead of just one entry at a time. */
+  function openDayPlanModal(iso) {
+    const dayItems = calendarItems().filter(item => item.calDate === iso).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    const label = new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    dayPlanTitle.textContent = label;
+
+    if (dayItems.length === 0) {
+      dayPlanList.innerHTML = '';
+      dayPlanList.classList.add('hidden');
+      dayPlanEmpty.classList.remove('hidden');
+    } else {
+      dayPlanList.innerHTML = dayItems.map(item => `
+        <div class="day-plan-item">
+          <span class="day-plan-item-time">${escapeHtml(item.time || '—')}</span>
+          <div class="day-plan-item-body">
+            <p class="day-plan-item-facility">${escapeHtml(item.requesterName)}</p>
+            <p class="day-plan-item-purpose">${escapeHtml(item.type)}${item.location ? ` · ${escapeHtml(item.location)}` : ''}</p>
+          </div>
+          <span class="badge ${calBadgeClass[item.status] || 'badge-gray'}">${calStatusLabel[item.status] || item.status}</span>
+        </div>
+      `).join('');
+      dayPlanList.classList.remove('hidden');
+      dayPlanEmpty.classList.add('hidden');
+    }
+
+    openModal(dayPlanModal);
+  }
+
+  document.getElementById('cal-prev').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); });
+  document.getElementById('cal-next').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); });
+
+
+  /* --- View toggle: list panels vs. calendar --- */
+  const listViewPanel      = document.getElementById('list-view-panel');
+  const calendarViewPanel  = document.getElementById('calendar-view-panel');
+  const calendarToggleBtn  = document.getElementById('btn-calendar-view');
+  const calendarToggleLabel = document.getElementById('calendar-toggle-label');
+
+  let showingCalendar = false;
+
+  calendarToggleBtn.addEventListener('click', () => {
+    showingCalendar = !showingCalendar;
+    calendarToggleBtn.setAttribute('aria-pressed', String(showingCalendar));
+    calendarToggleLabel.textContent = showingCalendar ? 'List View' : 'Calendar View';
+    listViewPanel.classList.toggle('hidden', showingCalendar);
+    calendarViewPanel.classList.toggle('hidden', !showingCalendar);
+    if (showingCalendar) renderCalendar();
+  });
+
+
   searchInput.addEventListener('input', () => { renderUpcoming(); renderRequests(); renderCompleted(); });
   typeFilter.addEventListener('change', () => { renderUpcoming(); renderRequests(); renderCompleted(); });
 
@@ -371,15 +523,16 @@ document.addEventListener('DOMContentLoaded', () => {
       closeModal(scheduleModal);
       closeModal(declineModal);
       closeModal(detailsModal);
+      closeModal(dayPlanModal);
     });
   });
 
-  [scheduleModal, declineModal, detailsModal].forEach(modal => {
+  [scheduleModal, declineModal, detailsModal, dayPlanModal].forEach(modal => {
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeModal(scheduleModal); closeModal(declineModal); closeModal(detailsModal); }
+    if (e.key === 'Escape') { closeModal(scheduleModal); closeModal(declineModal); closeModal(detailsModal); closeModal(dayPlanModal); }
   });
 
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
