@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seed Mock Masses &amp; Schedules – SacraDigit Admin</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { DEFAULT: '#1e2a4a', dark: '#16213a', light: '#2a3a5c' },
+            gold: '#c9a84c', lavender: '#8b8fc7', 'lavender-light': '#a8acda',
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" href="sacradigit-css/dashboard.css" />
+
+  <style>
+    body { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 3rem 1.5rem; }
+    .seed-wrap { width: 100%; max-width: 42rem; }
+    .seed-log {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      padding: 0.875rem 1rem;
+      border-radius: 0.625rem;
+      max-height: 18rem;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .seed-log .err { color: #fca5a5; }
+    .seed-log .warn { color: #fcd34d; }
+    .seed-status {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #4b5563;
+    }
+    .seed-warning {
+      font-size: 0.75rem;
+      color: #9c7d2e;
+      background-color: rgba(201, 168, 76, 0.14);
+      border: 1px solid rgba(201, 168, 76, 0.35);
+      border-radius: 0.5rem;
+      padding: 0.625rem 0.75rem;
+    }
+  </style>
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="seed-wrap space-y-5">
+
+    <div>
+      <a href="masses.html" class="text-xs font-semibold text-lavender hover:text-navy transition-colors">‹ Back to Masses</a>
+      <h1 class="text-2xl font-bold text-gray-900 mt-2">Seed Mock Masses &amp; Special Schedules</h1>
+      <p class="text-gray-500 text-sm mt-1">
+        Dev-only utility. Creates a few weeks of realistic Mass records (weekday, Saturday anticipated,
+        Sunday, plus a handful of special/baptism masses) spread across today and the next month and a
+        half, and — where the backend supports it — a few Special Schedules with overlapping date ranges,
+        so the Calendar View on both pages has something real to show. Every seeded record is tagged so
+        it can be cleanly removed afterward.
+      </p>
+    </div>
+
+    <div id="schedules-warning" class="seed-warning hidden">
+      <strong>Heads up:</strong> the <code>SpecialSchedule</code> model isn't deployed to this backend yet
+      (same limitation the Special Schedules page already flags), so this tool will seed Masses only and
+      skip Special Schedules until that model is added.
+    </div>
+
+    <div class="panel p-5 space-y-4">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button id="btn-seed" type="button" class="btn-lavender">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Seed Mock Data
+        </button>
+        <button id="btn-clear" type="button" class="btn-secondary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          Clear Mock Data
+        </button>
+        <span id="seed-status" class="seed-status"></span>
+      </div>
+
+      <div id="seed-log" class="seed-log hidden"></div>
+    </div>
+
+    <div class="panel p-5 text-xs text-gray-500 leading-relaxed space-y-1.5">
+      <p><strong class="text-gray-700">Masses:</strong> weekday Daily Masses (6/7 AM), a Saturday Anticipated Mass, four Sunday Masses, plus a First Friday devotion, two Baptism Masses, and a few named feast-day masses — spread from about a week ago through six weeks from today so you can page the calendar across three different months.</p>
+      <p><strong class="text-gray-700">Special Schedules (when connected):</strong> an ongoing Liturgical Season spanning the whole window, plus a Novena, a Feast Day Series, and a Special Event with overlapping date ranges, so you can see the "marker on every day in range" calendar behavior and multiple schedules active on the same day.</p>
+      <p><strong class="text-gray-700">Cleanup:</strong> "Clear Mock Data" deletes exactly the records this tool created (tracked in this browser), not anything you've entered yourself.</p>
+    </div>
+
+  </div>
+
+  <script type="module" src="seed-mock-masses-schedules.js"></script>
+</body>
+</html>
