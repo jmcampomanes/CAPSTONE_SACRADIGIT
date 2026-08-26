@@ -291,25 +291,33 @@
       </div>
       <div class="modal-body space-y-4">
 
-        <!-- Intention type -->
+        <!-- Intention category -->
         <div>
-          <label class="form-label">Intention Type</label>
+          <label class="form-label">Select Intention Category</label>
           <div class="intention-type-grid" id="intention-type-grid">
             <!-- Injected by JS -->
           </div>
         </div>
 
-        <!-- Name(s) — dynamic chip input -->
+        <!-- Name — added one at a time, tagged with whichever category is
+             currently selected above, so a single submission can mix
+             categories (e.g. one name for Healing, another for a Birthday
+             Blessing). -->
         <div>
           <label class="form-label" for="mi-name-input">
-            Name(s) <span class="text-red-500">*</span><span id="mi-name-count" class="name-count-label hidden">0</span>
+            Name<span id="mi-name-label-suffix"></span> <span class="text-red-500">*</span>
           </label>
           <div class="name-chip-input-row">
-            <input type="text" id="mi-name-input" class="form-input" placeholder="Type a name, then press Enter or Add" />
+            <input type="text" id="mi-name-input" class="form-input" placeholder="Type a name, then press Add" />
             <button type="button" id="mi-add-name" class="btn-secondary shrink-0">Add</button>
           </div>
-          <div id="mi-name-chips" class="name-chip-list"></div>
-          <p class="text-xs text-gray-400 mt-1">Add one or more names — each will appear as its own entry.</p>
+          <p class="text-xs text-gray-400 mt-1">Each name is tagged with the category currently selected above.</p>
+        </div>
+
+        <!-- Added intentions -->
+        <div id="mi-added-section" class="hidden">
+          <p class="form-label" id="mi-added-heading">Added Intentions (0)</p>
+          <div id="mi-added-list" class="mi-added-list"></div>
         </div>
 
         <!-- Preferred mass date -->
@@ -346,12 +354,12 @@
 
         <!-- Offering amount -->
         <div>
-          <label class="form-label" for="mi-offering">Offering Amount (₱) <span class="text-red-500">*</span></label>
+          <label class="form-label" for="mi-offering">Offering Amount (₱300 / intention) <span class="text-red-500">*</span></label>
           <div class="offering-input-wrap">
             <span class="offering-peso">₱</span>
             <input type="number" id="mi-offering" class="form-input offering-input" placeholder="300" min="0" step="50" />
           </div>
-          <p class="text-xs text-gray-400 mt-1">Customary offering is ₱300. Any amount is gratefully accepted.</p>
+          <p class="text-xs text-gray-400 mt-1">Calculated automatically as you add intentions — feel free to adjust the total.</p>
         </div>
 
       </div>

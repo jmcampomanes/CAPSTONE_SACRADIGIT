@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const DONOR_NAME = 'Maria P. Santos';
 
   const intentionTypes = [
-    { id: 'soul', label: 'For the Soul of…', iconBg: 'rgba(107,114,128,0.12)', iconColor: '#6b7280',
+    { id: 'soul', label: 'For the Soul of...', iconBg: 'rgba(107,114,128,0.12)', iconColor: '#6b7280',
       icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 6a6 6 0 100 12A6 6 0 0012 6z"/></svg>` },
     { id: 'thanksgiving', label: 'Thanksgiving', iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
       icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>` },
@@ -118,13 +118,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const typeGrid   = document.getElementById('intention-type-grid');
   const nameInput    = document.getElementById('mi-name-input');
   const addNameBtn    = document.getElementById('mi-add-name');
-  const nameChipsBox   = document.getElementById('mi-name-chips');
-  const nameCountLabel  = document.getElementById('mi-name-count');
   const dateInput    = document.getElementById('mi-date');
   const offeringInput = document.getElementById('mi-offering');
 
+  const OFFERING_PER_INTENTION = 300;
+
   let selectedTypeId = null;
-  let intentionNames = [];
+  let addedIntentions = []; // [{ name, typeId }] — each name keeps whichever
+                             // category was selected on the pill grid at
+                             // the moment it was added, so one submission
+                             // can mix categories. Newest is index 0.
+  let offeringManuallyEdited = false;
+  let editingIndex = null; // index currently in inline-edit mode, or null
 
   /* ------------------------------------------
      Preferred Mass Date — custom calendar
@@ -299,31 +304,126 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function renderNameChips() {
-    nameChipsBox.innerHTML = intentionNames.map((n, i) => `
-      <span class="name-chip" data-index="${i}">${escapeHtml(n)}<button type="button" class="name-chip-remove" data-index="${i}" aria-label="Remove ${escapeHtml(n)}">×</button></span>`).join('');
-    if (intentionNames.length > 0) { nameCountLabel.textContent = intentionNames.length; nameCountLabel.classList.remove('hidden'); }
-    else nameCountLabel.classList.add('hidden');
+  const addedSection  = document.getElementById('mi-added-section');
+  const addedList       = document.getElementById('mi-added-list');
+  const addedHeading       = document.getElementById('mi-added-heading');
+  const nameLabelSuffix       = document.getElementById('mi-name-label-suffix');
+
+  function updateNameLabelSuffix() {
+    nameLabelSuffix.textContent = ` (for ${typeConfig(selectedTypeId).label})`;
+  }
+
+  function updateOfferingDefault() {
+    if (offeringManuallyEdited) return;
+    const total = addedIntentions.length * OFFERING_PER_INTENTION;
+    offeringInput.value = total > 0 ? total : '';
+  }
+
+  function renderAddedList() {
+    addedHeading.textContent = `Added Intentions (${addedIntentions.length})`;
+    addedSection.classList.toggle('hidden', addedIntentions.length === 0);
+    addedList.innerHTML = addedIntentions.map((item, i) => {
+      if (i === editingIndex) {
+        return `
+          <div class="mi-added-item mi-added-item-editing" data-index="${i}">
+            <div class="mi-added-item-edit-fields">
+              <input type="text" class="form-input mi-added-edit-name" data-index="${i}" value="${escapeHtml(item.name)}" />
+              <select class="form-input mi-added-edit-type" data-index="${i}">
+                ${intentionTypes.map(t => `<option value="${t.id}" ${t.id === item.typeId ? 'selected' : ''}>${escapeHtml(t.label)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="mi-added-item-edit-actions">
+              <button type="button" class="mi-added-item-save" data-index="${i}" aria-label="Save changes">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
+              </button>
+              <button type="button" class="mi-added-item-cancel" data-index="${i}" aria-label="Cancel editing">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>`;
+      }
+      const cfg = typeConfig(item.typeId);
+      return `
+        <div class="mi-added-item" data-index="${i}">
+          <div class="mi-added-item-body">
+            <p class="mi-added-item-name">${escapeHtml(item.name)}</p>
+            <p class="mi-added-item-type" style="color:${cfg.iconColor};">${escapeHtml(cfg.label)}</p>
+          </div>
+          <div class="mi-added-item-actions">
+            <button type="button" class="mi-added-item-edit" data-index="${i}" aria-label="Edit ${escapeHtml(item.name)}">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button type="button" class="mi-added-item-remove" data-index="${i}" aria-label="Remove ${escapeHtml(item.name)}">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+    updateOfferingDefault();
+
+    if (editingIndex !== null) {
+      const nameField = addedList.querySelector(`.mi-added-edit-name[data-index="${editingIndex}"]`);
+      if (nameField) { nameField.focus(); nameField.select(); }
+    }
+  }
+
+  function saveEdit(index) {
+    const nameField = addedList.querySelector(`.mi-added-edit-name[data-index="${index}"]`);
+    const typeField = addedList.querySelector(`.mi-added-edit-type[data-index="${index}"]`);
+    if (!nameField || !typeField) return;
+    const val = nameField.value.trim();
+    if (!val) { nameField.classList.add('border-red-400'); return; }
+    addedIntentions[index] = { name: val, typeId: typeField.value };
+    editingIndex = null;
+    renderAddedList();
   }
 
   function addName() {
     const val = nameInput.value.trim();
     if (!val) return;
-    intentionNames.push(val);
+    // Newest addition goes to the top of the list, so what was just
+    // added is immediately visible without scrolling.
+    addedIntentions.unshift({ name: val, typeId: selectedTypeId });
+    if (editingIndex !== null) editingIndex += 1;
     nameInput.value = '';
     nameInput.classList.remove('border-red-400');
-    renderNameChips();
+    renderAddedList();
     nameInput.focus();
   }
 
   addNameBtn.addEventListener('click', addName);
   nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addName(); } });
-  nameChipsBox.addEventListener('click', e => {
-    const btn = e.target.closest('.name-chip-remove');
-    if (!btn) return;
-    intentionNames.splice(parseInt(btn.dataset.index, 10), 1);
-    renderNameChips();
+
+  addedList.addEventListener('click', e => {
+    const editBtn = e.target.closest('.mi-added-item-edit');
+    if (editBtn) { editingIndex = parseInt(editBtn.dataset.index, 10); renderAddedList(); return; }
+
+    const saveBtn = e.target.closest('.mi-added-item-save');
+    if (saveBtn) { saveEdit(parseInt(saveBtn.dataset.index, 10)); return; }
+
+    const cancelBtn = e.target.closest('.mi-added-item-cancel');
+    if (cancelBtn) { editingIndex = null; renderAddedList(); return; }
+
+    const removeBtn = e.target.closest('.mi-added-item-remove');
+    if (removeBtn) {
+      const idx = parseInt(removeBtn.dataset.index, 10);
+      addedIntentions.splice(idx, 1);
+      if (editingIndex !== null) {
+        if (editingIndex === idx) editingIndex = null;
+        else if (idx < editingIndex) editingIndex -= 1;
+      }
+      renderAddedList();
+    }
   });
+
+  addedList.addEventListener('keydown', e => {
+    if (!e.target.classList.contains('mi-added-edit-name')) return;
+    const index = parseInt(e.target.dataset.index, 10);
+    if (e.key === 'Enter') { e.preventDefault(); saveEdit(index); }
+    if (e.key === 'Escape') { e.preventDefault(); editingIndex = null; renderAddedList(); }
+  });
+
+  offeringInput.addEventListener('input', () => { offeringManuallyEdited = true; });
 
   typeGrid.innerHTML = intentionTypes.map(t => `
     <button type="button" class="intention-type-btn" data-type-id="${t.id}">
@@ -337,19 +437,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.intention-type-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedTypeId = btn.dataset.typeId;
+    updateNameLabelSuffix();
   });
 
   function openModal() {
-    selectedTypeId = null;
-    intentionNames = [];
-    document.querySelectorAll('.intention-type-btn').forEach(b => b.classList.remove('selected'));
+    // Default to the first category so a name can always be added right
+    // away — the pill grid always shows one option selected, matching
+    // the "Name (for X)" label always having something to name.
+    selectedTypeId = intentionTypes[0].id;
+    addedIntentions = [];
+    editingIndex = null;
+    offeringManuallyEdited = false;
+    document.querySelectorAll('.intention-type-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
+    updateNameLabelSuffix();
     nameInput.value = '';
-    renderNameChips();
+    renderAddedList();
     dateInput.value = '';
     selectedWeekend = null;
     updateDateDisplay();
     closeDatePanel();
-    offeringInput.value = '';
     showModal(modal);
   }
 
@@ -367,41 +473,57 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(hideModal); });
 
-  document.getElementById('mi-submit').addEventListener('click', async () => {
-    if (nameInput.value.trim()) addName();
-    const offering = parseInt(offeringInput.value, 10);
+  const submitBtn = document.getElementById('mi-submit');
 
-    if (!selectedTypeId) { window.showToast('Please select an intention type.', true); return; }
-    if (intentionNames.length === 0) {
+  submitBtn.addEventListener('click', async () => {
+    if (nameInput.value.trim()) addName();
+
+    if (addedIntentions.length === 0) {
       nameInput.classList.add('border-red-400');
       nameInput.addEventListener('input', () => nameInput.classList.remove('border-red-400'), { once: true });
       window.showToast('Please add at least one name.', true);
       return;
     }
+    const offering = parseInt(offeringInput.value, 10);
     if (!offering || offering <= 0) {
       offeringInput.classList.add('border-red-400');
       offeringInput.addEventListener('input', () => offeringInput.classList.remove('border-red-400'), { once: true });
       window.showToast('Please enter an offering amount.', true);
       return;
     }
-    const cfg = typeConfig(selectedTypeId);
 
+    // The schema stores one type per record, but a submission here can
+    // mix categories across names — so each added intention becomes its
+    // own record. The total offering is split evenly across them (any
+    // remainder from uneven division goes to the last one) so the sum
+    // across records still matches exactly what the parishioner entered.
+    const count = addedIntentions.length;
+    const base = Math.floor(offering / count);
+    const remainder = offering - base * count;
+
+    submitBtn.disabled = true;
     try {
-      const result = await client.models.MassIntention.create({
-        donor: DONOR_NAME,
-        type: cfg.label,
-        names: JSON.stringify(intentionNames),
-        massDate: dateInput.value || undefined,
-        offering,
-        status: 'pending',
-      });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      const results = await Promise.all(addedIntentions.map((item, i) => {
+        const cfg = typeConfig(item.typeId);
+        return client.models.MassIntention.create({
+          donor: DONOR_NAME,
+          type: cfg.label,
+          names: JSON.stringify([item.name]),
+          massDate: dateInput.value || undefined,
+          offering: base + (i === count - 1 ? remainder : 0),
+          status: 'pending',
+        });
+      }));
+      const failed = results.find(r => r.errors);
+      if (failed) throw new Error(failed.errors.map(e => e.message).join('; '));
 
       closeModal();
-      window.showToast(`Mass intention submitted — ${cfg.label} for ${intentionNames.length} name${intentionNames.length === 1 ? '' : 's'}.`);
+      window.showToast(`Mass intention submitted — ${count} intention${count === 1 ? '' : 's'} for ${formatPeso(offering)}.`);
     } catch (err) {
       console.error('Failed to submit intention:', err);
       window.showToast(err.message || "Couldn't submit the intention.", true);
+    } finally {
+      submitBtn.disabled = false;
     }
   });
 

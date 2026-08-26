@@ -427,48 +427,24 @@
             <input type="text" id="add-donor" class="form-input" placeholder="e.g. Santos Family" />
           </div>
           <div class="col-span-2">
-            <label class="form-label">Intention Type(s) <span class="text-red-500">*</span></label>
-            <p class="type-select-hint">You can pick more than one type — from any category.</p>
-            <div class="type-select-group" id="add-type-group">
-              <div class="type-category">
-                <p class="type-category-label">Thanksgiving &amp; Birthdays</p>
-                <div class="type-option-row">
-                  <button type="button" class="type-option" data-type="Thanksgiving" data-bucket="thanksgiving" aria-pressed="false">Thanksgiving</button>
-                  <button type="button" class="type-option" data-type="Birthday Blessing" data-bucket="thanksgiving" aria-pressed="false">Birthday Blessing</button>
-                </div>
-              </div>
-              <div class="type-category">
-                <p class="type-category-label">Special Intentions</p>
-                <div class="type-option-row">
-                  <button type="button" class="type-option" data-type="Healing" data-bucket="special" aria-pressed="false">Healing</button>
-                  <button type="button" class="type-option" data-type="Special Intention" data-bucket="special" aria-pressed="false">Special Intention</button>
-                </div>
-              </div>
-              <div class="type-category">
-                <p class="type-category-label">Souls</p>
-                <div class="type-option-row">
-                  <button type="button" class="type-option" data-type="For the Soul of..." data-bucket="souls" aria-pressed="false">For the Soul of...</button>
-                </div>
-              </div>
+            <label class="form-label">Select Intention Category</label>
+            <div class="intention-type-grid" id="add-type-grid">
+              <!-- Injected by JS -->
             </div>
           </div>
           <div class="col-span-2">
             <label class="form-label" for="add-name-input">
-              Name(s) <span class="text-red-500">*</span><span id="add-name-count" class="name-count-label hidden">0</span>
+              Name<span id="add-name-label-suffix"></span> <span class="text-red-500">*</span>
             </label>
             <div class="name-chip-input-row">
-              <input type="text" id="add-name-input" class="form-input" placeholder="Type a name, then press Enter or Add" />
+              <input type="text" id="add-name-input" class="form-input" placeholder="Type a name, then press Add" />
               <button type="button" id="add-add-name" class="btn-secondary shrink-0">Add</button>
             </div>
-            <div id="add-name-chips" class="name-chip-list"></div>
+            <p class="text-xs text-gray-400 mt-1">Each name is tagged with the category currently selected above.</p>
           </div>
-          <div>
-            <label class="form-label" for="add-start-time">Start Time</label>
-            <input type="time" id="add-start-time" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label" for="add-end-time">End Time</label>
-            <input type="time" id="add-end-time" class="form-input" />
+          <div class="col-span-2 hidden" id="add-added-section">
+            <p class="form-label" id="add-added-heading">Added Intentions (0)</p>
+            <div id="add-name-chips" class="mi-added-list"></div>
           </div>
           <div>
             <label class="form-label" for="add-offering">Offering (₱)</label>
@@ -482,9 +458,35 @@
               <option value="completed">Completed</option>
             </select>
           </div>
-          <div>
-            <label class="form-label" for="add-mass-date">Mass Date Assigned</label>
-            <input type="date" id="add-mass-date" class="form-input" />
+          <div class="col-span-2">
+            <label class="form-label" for="add-mass-date-trigger">Mass Date Assigned</label>
+            <div class="mi-datepicker">
+              <button type="button" id="add-mass-date-trigger" class="form-input mi-date-trigger" aria-haspopup="dialog" aria-expanded="false">
+                <span id="add-mass-date-display" class="mi-date-display mi-date-placeholder">Select a date</span>
+                <svg class="w-4 h-4 mi-date-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </button>
+              <input type="hidden" id="add-mass-date" value="" />
+
+              <div id="add-mass-date-panel" class="mi-date-panel hidden" role="dialog" aria-label="Choose the mass date">
+                <div class="mi-date-panel-header">
+                  <button type="button" id="add-mass-date-prev" class="mi-date-nav-btn" aria-label="Previous month">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
+                  </button>
+                  <span id="add-mass-date-month-label" class="mi-date-month-label"></span>
+                  <button type="button" id="add-mass-date-next" class="mi-date-nav-btn" aria-label="Next month">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+                <div class="mi-date-weekday-row">
+                  <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                </div>
+                <div id="add-mass-date-grid" class="mi-date-grid"></div>
+                <div class="mi-date-panel-footer">
+                  <button type="button" id="add-mass-date-clear" class="mi-date-clear-btn">Clear</button>
+                  <p class="mi-date-note">Only Saturdays and Sundays are selectable</p>
+                </div>
+              </div>
+            </div>
           </div>
           <div>
             <label class="form-label" for="add-mass-time">Mass Time Assigned</label>

@@ -278,61 +278,137 @@ document.addEventListener('DOMContentLoaded', () => {
   const addNameInput  = document.getElementById('add-name-input');
   const addAddNameBtn  = document.getElementById('add-add-name');
   const addNameChipsBox = document.getElementById('add-name-chips');
-  const addNameCountLabel = document.getElementById('add-name-count');
+  const addAddedSection = document.getElementById('add-added-section');
+  const addAddedHeading = document.getElementById('add-added-heading');
+  const addNameLabelSuffix = document.getElementById('add-name-label-suffix');
+  const addTypeGrid = document.getElementById('add-type-grid');
 
-  let addIntentionNames = [];
   let editTargetId = null; // null = Add mode, otherwise id of intention being edited
+  let addNameEditingIndex = null; // index currently in inline-edit mode, or null
 
   const addModalTitle = document.getElementById('add-modal-title');
   const addSubmitBtn   = document.getElementById('add-submit');
 
   /* ------------------------------------------
-     INTENTION TYPE PICKER — chip toggles. Any
-     number of types can be picked, from any
-     category — no cross-category restriction.
+     INTENTION CATEGORY PICKER — same shape as the
+     parishioner-facing Submit Intention modal: a
+     single-select pill grid. Whichever pill is
+     highlighted is the category tagged onto the next
+     name added below, so one submission can still mix
+     categories across names (matches how the user side
+     works, rather than one type applying to the whole
+     batch of names).
   ------------------------------------------ */
-  const typeGroupEl = document.getElementById('add-type-group');
-  const typeOptionBtns = document.querySelectorAll('.type-option');
+  const intentionTypes = [
+    { id: 'soul', label: 'For the Soul of...', iconBg: 'rgba(107,114,128,0.12)', iconColor: '#6b7280',
+      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 6a6 6 0 100 12A6 6 0 0012 6z"/></svg>` },
+    { id: 'thanksgiving', label: 'Thanksgiving', iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
+      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>` },
+    { id: 'healing', label: 'Healing', iconBg: 'rgba(21,128,61,0.1)', iconColor: '#15803d',
+      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>` },
+    { id: 'birthday', label: 'Birthday Blessing', iconBg: 'rgba(139,143,199,0.16)', iconColor: '#5b5fa8',
+      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0A1.994 1.994 0 003 15.546M8.5 6.5V6a3.5 3.5 0 117 0v.5M4 15h16v5H4z"/></svg>` },
+    { id: 'special', label: 'Special Intention', iconBg: 'rgba(239,68,68,0.1)', iconColor: '#dc2626',
+      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>` },
+  ];
 
-  let addSelectedTypes = [];
+  function typeConfig(id) { return intentionTypes.find(t => t.id === id) || intentionTypes[4]; }
+  function typeIdFromLabel(label) { return (intentionTypes.find(t => t.label === label) || intentionTypes[4]).id; }
 
-  function renderTypeOptions() {
-    typeOptionBtns.forEach(btn => {
-      const isSelected = addSelectedTypes.includes(btn.dataset.type);
-      btn.classList.toggle('selected', isSelected);
-      btn.setAttribute('aria-pressed', String(isSelected));
-    });
+  let selectedTypeId = intentionTypes[0].id;
+  let addedIntentions = []; // [{ name, typeId }]
+
+  addTypeGrid.innerHTML = intentionTypes.map(t => `
+    <button type="button" class="intention-type-btn" data-type-id="${t.id}">
+      <div class="intention-type-btn-icon" style="background-color:${t.iconBg};color:${t.iconColor};">${t.icon}</div>
+      <span class="intention-type-btn-label">${t.label}</span>
+    </button>`).join('');
+
+  function updateAddNameLabelSuffix() {
+    addNameLabelSuffix.textContent = ` (for ${typeConfig(selectedTypeId).label})`;
   }
 
-  typeGroupEl.addEventListener('click', (e) => {
-    const btn = e.target.closest('.type-option');
+  function selectTypeButton(typeId) {
+    addTypeGrid.querySelectorAll('.intention-type-btn').forEach(b => b.classList.toggle('selected', b.dataset.typeId === typeId));
+  }
+
+  addTypeGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.intention-type-btn');
     if (!btn) return;
-    const type = btn.dataset.type;
-    const idx = addSelectedTypes.indexOf(type);
-    if (idx === -1) addSelectedTypes.push(type); else addSelectedTypes.splice(idx, 1);
-    renderTypeOptions();
+    selectTypeButton(btn.dataset.typeId);
+    selectedTypeId = btn.dataset.typeId;
+    updateAddNameLabelSuffix();
   });
 
+  // Box rows (not pill chips) so each name has room for its own category
+  // tag plus an inline edit affordance; the list itself scrolls past a
+  // handful of entries (.mi-added-list, see mass-intentions.css) instead
+  // of growing the modal, and a newly added name renders at the top.
   function renderAddNameChips() {
-    addNameChipsBox.innerHTML = addIntentionNames.map((n, i) => `
-      <span class="name-chip" data-index="${i}">
-        ${escapeHtml(n)}
-        <button type="button" class="name-chip-remove" data-index="${i}" aria-label="Remove ${escapeHtml(n)}">×</button>
-      </span>
-    `).join('');
+    addAddedHeading.textContent = `Added Intentions (${addedIntentions.length})`;
+    addAddedSection.classList.toggle('hidden', addedIntentions.length === 0);
 
-    if (addIntentionNames.length > 0) {
-      addNameCountLabel.textContent = addIntentionNames.length;
-      addNameCountLabel.classList.remove('hidden');
-    } else {
-      addNameCountLabel.classList.add('hidden');
+    addNameChipsBox.innerHTML = addedIntentions.map((item, i) => {
+      if (i === addNameEditingIndex) {
+        return `
+          <div class="mi-added-item mi-added-item-editing" data-index="${i}">
+            <div class="mi-added-item-edit-fields">
+              <input type="text" class="form-input add-name-edit-input" data-index="${i}" value="${escapeHtml(item.name)}" />
+              <select class="form-input add-name-edit-type" data-index="${i}">
+                ${intentionTypes.map(t => `<option value="${t.id}" ${t.id === item.typeId ? 'selected' : ''}>${escapeHtml(t.label)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="mi-added-item-edit-actions">
+              <button type="button" class="mi-added-item-save" data-index="${i}" aria-label="Save changes">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
+              </button>
+              <button type="button" class="mi-added-item-cancel" data-index="${i}" aria-label="Cancel editing">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>`;
+      }
+      const cfg = typeConfig(item.typeId);
+      return `
+        <div class="mi-added-item" data-index="${i}">
+          <div class="mi-added-item-body">
+            <p class="mi-added-item-name">${escapeHtml(item.name)}</p>
+            <p class="mi-added-item-type" style="color:${cfg.iconColor};">${escapeHtml(cfg.label)}</p>
+          </div>
+          <div class="mi-added-item-actions">
+            <button type="button" class="mi-added-item-edit" data-index="${i}" aria-label="Edit ${escapeHtml(item.name)}">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button type="button" class="mi-added-item-remove" data-index="${i}" aria-label="Remove ${escapeHtml(item.name)}">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+
+    if (addNameEditingIndex !== null) {
+      const field = addNameChipsBox.querySelector(`.add-name-edit-input[data-index="${addNameEditingIndex}"]`);
+      if (field) { field.focus(); field.select(); }
     }
+  }
+
+  function saveAddNameEdit(index) {
+    const nameField = addNameChipsBox.querySelector(`.add-name-edit-input[data-index="${index}"]`);
+    const typeField = addNameChipsBox.querySelector(`.add-name-edit-type[data-index="${index}"]`);
+    if (!nameField || !typeField) return;
+    const val = nameField.value.trim();
+    if (!val) { nameField.classList.add('border-red-400'); return; }
+    addedIntentions[index] = { name: val, typeId: typeField.value };
+    addNameEditingIndex = null;
+    renderAddNameChips();
   }
 
   function addIntentionName() {
     const val = addNameInput.value.trim();
     if (!val) return;
-    addIntentionNames.push(val);
+    // Newest addition goes to the top, so it's visible right away.
+    addedIntentions.unshift({ name: val, typeId: selectedTypeId });
+    if (addNameEditingIndex !== null) addNameEditingIndex += 1;
     addNameInput.value = '';
     addNameInput.classList.remove('border-red-400');
     renderAddNameChips();
@@ -346,24 +422,46 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   addNameChipsBox.addEventListener('click', (e) => {
-    const btn = e.target.closest('.name-chip-remove');
-    if (!btn) return;
-    addIntentionNames.splice(parseInt(btn.dataset.index, 10), 1);
-    renderAddNameChips();
+    const editBtn = e.target.closest('.mi-added-item-edit');
+    if (editBtn) { addNameEditingIndex = parseInt(editBtn.dataset.index, 10); renderAddNameChips(); return; }
+
+    const saveBtn = e.target.closest('.mi-added-item-save');
+    if (saveBtn) { saveAddNameEdit(parseInt(saveBtn.dataset.index, 10)); return; }
+
+    const cancelBtn = e.target.closest('.mi-added-item-cancel');
+    if (cancelBtn) { addNameEditingIndex = null; renderAddNameChips(); return; }
+
+    const removeBtn = e.target.closest('.mi-added-item-remove');
+    if (removeBtn) {
+      const idx = parseInt(removeBtn.dataset.index, 10);
+      addedIntentions.splice(idx, 1);
+      if (addNameEditingIndex !== null) {
+        if (addNameEditingIndex === idx) addNameEditingIndex = null;
+        else if (idx < addNameEditingIndex) addNameEditingIndex -= 1;
+      }
+      renderAddNameChips();
+    }
+  });
+
+  addNameChipsBox.addEventListener('keydown', (e) => {
+    if (!e.target.classList.contains('add-name-edit-input')) return;
+    const index = parseInt(e.target.dataset.index, 10);
+    if (e.key === 'Enter') { e.preventDefault(); saveAddNameEdit(index); }
+    if (e.key === 'Escape') { e.preventDefault(); addNameEditingIndex = null; renderAddNameChips(); }
   });
 
   function resetAddForm() {
     document.getElementById('add-donor').value = '';
-    document.getElementById('add-start-time').value = '';
-    document.getElementById('add-end-time').value = '';
     document.getElementById('add-offering').value = '';
     document.getElementById('add-status').value = 'pending';
-    document.getElementById('add-mass-date').value = '';
+    resetMassDatePicker(null);
     document.getElementById('add-mass-time').value = '';
-    addIntentionNames = [];
+    addedIntentions = [];
+    addNameEditingIndex = null;
+    selectedTypeId = intentionTypes[0].id;
+    selectTypeButton(selectedTypeId);
+    updateAddNameLabelSuffix();
     renderAddNameChips();
-    addSelectedTypes = [];
-    renderTypeOptions();
   }
 
   document.getElementById('btn-add-intention').addEventListener('click', () => {
@@ -383,20 +481,175 @@ document.addEventListener('DOMContentLoaded', () => {
     addSubmitBtn.textContent = 'Save Changes';
 
     document.getElementById('add-donor').value = it.donor;
-    addSelectedTypes = it.type ? [it.type] : [];
-    renderTypeOptions();
-    document.getElementById('add-start-time').value = it.startTime ? to24hInput(it.startTime) : '';
-    document.getElementById('add-end-time').value = it.endTime ? to24hInput(it.endTime) : '';
     document.getElementById('add-offering').value = it.offering;
     document.getElementById('add-status').value = it.status;
-    document.getElementById('add-mass-date').value = it.massDate || '';
+    resetMassDatePicker(it.massDate || null);
     document.getElementById('add-mass-time').value = it.massTime ? to24hInput(it.massTime) : '';
 
-    addIntentionNames = getNames(it);
+    // Existing names all shared this record's single type — load them
+    // into the same editable, per-name-category list used for adding,
+    // so admin can re-tag any of them individually while editing.
+    const typeId = typeIdFromLabel(it.type);
+    const names = getNames(it);
+    addedIntentions = names.length ? names.map(n => ({ name: n, typeId })) : [];
+    addNameEditingIndex = null;
+    selectedTypeId = typeId;
+    selectTypeButton(typeId);
+    updateAddNameLabelSuffix();
     renderAddNameChips();
 
     openModal(addModal);
   }
+
+  /* ------------------------------------------
+     Mass Date Assigned — custom calendar
+     Same weekend-only restriction as the parishioner-facing
+     Preferred Mass Date picker (only Saturdays, Sundays, and
+     today-or-later are selectable). Unlike that picker, this one
+     assigns an exact mass instance rather than a preference, so it
+     stores and displays the single day clicked instead of pairing
+     Saturday+Sunday into one weekend selection.
+  ------------------------------------------ */
+  const massDateTrigger    = document.getElementById('add-mass-date-trigger');
+  const massDateDisplay      = document.getElementById('add-mass-date-display');
+  const massDateHiddenInput    = document.getElementById('add-mass-date');
+  const massDatePanel            = document.getElementById('add-mass-date-panel');
+  const massDateGrid                = document.getElementById('add-mass-date-grid');
+  const massDateMonthLabel            = document.getElementById('add-mass-date-month-label');
+  const massDatePrevBtn                  = document.getElementById('add-mass-date-prev');
+  const massDateNextBtn                      = document.getElementById('add-mass-date-next');
+  const massDateClearBtn                        = document.getElementById('add-mass-date-clear');
+
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  let massDateCalYear, massDateCalMonth; // massDateCalMonth is 0-11
+  let selectedMassDateIso = null;
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function startOfToday() {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function isSelectableMassDay(y, m, d) {
+    const date = new Date(y, m, d);
+    date.setHours(0, 0, 0, 0);
+    const dow = date.getDay();
+    return (dow === 0 || dow === 6) && date >= startOfToday();
+  }
+
+  function renderMassDateCalendar() {
+    massDateMonthLabel.textContent = `${MONTH_NAMES[massDateCalMonth]} ${massDateCalYear}`;
+
+    const firstWeekday = new Date(massDateCalYear, massDateCalMonth, 1).getDay();
+    const daysInMonth = new Date(massDateCalYear, massDateCalMonth + 1, 0).getDate();
+    const today = startOfToday();
+
+    let html = '';
+    for (let i = 0; i < firstWeekday; i++) html += `<span class="mi-cal-blank"></span>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = `${massDateCalYear}-${pad2(massDateCalMonth + 1)}-${pad2(d)}`;
+      const selectable = isSelectableMassDay(massDateCalYear, massDateCalMonth, d);
+      const isSelected = iso === selectedMassDateIso;
+      const thisDate = new Date(massDateCalYear, massDateCalMonth, d);
+      thisDate.setHours(0, 0, 0, 0);
+      const isToday = thisDate.getTime() === today.getTime();
+
+      const classes = ['mi-cal-day'];
+      if (!selectable) classes.push('mi-cal-day-disabled');
+      if (isSelected) classes.push('mi-cal-day-selected');
+      if (isToday && !isSelected) classes.push('mi-cal-day-today');
+
+      html += `<button type="button" class="${classes.join(' ')}" data-date="${iso}"${selectable ? '' : ' disabled tabindex="-1"'}>${d}</button>`;
+    }
+
+    massDateGrid.innerHTML = html;
+
+    const now = new Date();
+    massDatePrevBtn.disabled = (massDateCalYear === now.getFullYear() && massDateCalMonth === now.getMonth());
+  }
+
+  function updateMassDateDisplay() {
+    if (!selectedMassDateIso) {
+      massDateDisplay.textContent = 'Select a date';
+      massDateDisplay.classList.add('mi-date-placeholder');
+    } else {
+      const d = new Date(selectedMassDateIso + 'T00:00:00');
+      massDateDisplay.textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      massDateDisplay.classList.remove('mi-date-placeholder');
+    }
+  }
+
+  function openMassDatePanel() {
+    const base = selectedMassDateIso ? new Date(selectedMassDateIso + 'T00:00:00') : new Date();
+    massDateCalYear = base.getFullYear();
+    massDateCalMonth = base.getMonth();
+    renderMassDateCalendar();
+    massDatePanel.classList.remove('hidden');
+    massDateTrigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMassDatePanel() {
+    massDatePanel.classList.add('hidden');
+    massDateTrigger.setAttribute('aria-expanded', 'false');
+  }
+
+  function resetMassDatePicker(iso) {
+    selectedMassDateIso = iso || null;
+    massDateHiddenInput.value = selectedMassDateIso || '';
+    updateMassDateDisplay();
+    closeMassDatePanel();
+  }
+
+  massDateTrigger.addEventListener('click', () => {
+    if (massDatePanel.classList.contains('hidden')) openMassDatePanel();
+    else closeMassDatePanel();
+  });
+
+  massDateGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mi-cal-day');
+    if (!btn || btn.disabled) return;
+    selectedMassDateIso = btn.dataset.date;
+    massDateHiddenInput.value = selectedMassDateIso;
+    updateMassDateDisplay();
+    closeMassDatePanel();
+  });
+
+  massDatePrevBtn.addEventListener('click', () => {
+    massDateCalMonth -= 1;
+    if (massDateCalMonth < 0) { massDateCalMonth = 11; massDateCalYear -= 1; }
+    renderMassDateCalendar();
+  });
+
+  massDateNextBtn.addEventListener('click', () => {
+    massDateCalMonth += 1;
+    if (massDateCalMonth > 11) { massDateCalMonth = 0; massDateCalYear += 1; }
+    renderMassDateCalendar();
+  });
+
+  massDateClearBtn.addEventListener('click', () => {
+    selectedMassDateIso = null;
+    massDateHiddenInput.value = '';
+    updateMassDateDisplay();
+    closeMassDatePanel();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!massDatePanel.classList.contains('hidden') && !e.target.closest('.mi-datepicker')) closeMassDatePanel();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    // Registered before the modal-wide Escape handler further down, so
+    // this runs first — stopImmediatePropagation keeps a single Escape
+    // press from closing the calendar AND the whole modal at once.
+    if (e.key === 'Escape' && !massDatePanel.classList.contains('hidden')) {
+      closeMassDatePanel();
+      e.stopImmediatePropagation();
+    }
+  });
 
   function to24hInput(time12) {
     const [time, meridiem] = time12.split(' ');
@@ -410,68 +663,76 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addNameInput.value.trim()) addIntentionName();
 
     const donor       = document.getElementById('add-donor').value.trim();
-    const startTime24    = document.getElementById('add-start-time').value;
-    const endTime24        = document.getElementById('add-end-time').value;
     const offering          = parseInt(document.getElementById('add-offering').value, 10);
     const status              = document.getElementById('add-status').value.toLowerCase();
     const massDate              = document.getElementById('add-mass-date').value;
     const massTime24              = document.getElementById('add-mass-time').value;
 
-    if (!donor || addSelectedTypes.length === 0 || addIntentionNames.length === 0 || !offering) {
-      showToast('Please fill in donor name, at least one intention type, at least one name, and offering amount.', true);
+    if (!donor || addedIntentions.length === 0 || !offering) {
+      showToast('Please fill in donor name, at least one name (with category), and offering amount.', true);
       return;
     }
 
-    const names = JSON.stringify(addIntentionNames);
-    const startTime = startTime24 ? formatTime12(startTime24) : undefined;
-    const endTime     = endTime24 ? formatTime12(endTime24) : undefined;
-    const massTime      = massTime24 ? formatTime12(massTime24) : undefined;
+    const massTime = massTime24 ? formatTime12(massTime24) : undefined;
 
-    /* The schema stores one type per record, so each selected type
-       becomes its own MassIntention row — all sharing the same
-       donor, names, mass, and timeline. The offering is a single
-       payment covering the whole submission, so only the first row
-       carries it; the rest are logged at 0 so "Total Offerings"
-       isn't double-counted across what's really one donation. */
+    /* The schema stores one type (and effectively one name) per record,
+       but the Added Intentions list here can mix names and categories —
+       so each entry becomes its own MassIntention row, all sharing the
+       same donor, timeline, mass assignment, and status. The offering
+       is split evenly across them (remainder on the last) so the total
+       still matches exactly what was entered, without double-counting —
+       same approach as the parishioner-facing Submit Intention modal. */
+    const count = addedIntentions.length;
+    const base = Math.floor(offering / count);
+    const remainder = offering - base * count;
+
+    addSubmitBtn.disabled = true;
     try {
       if (editTargetId === null) {
-        for (let i = 0; i < addSelectedTypes.length; i++) {
-          const result = await client.models.MassIntention.create({
-            donor, type: addSelectedTypes[i], names, startTime, endTime,
+        const results = await Promise.all(addedIntentions.map((item, i) => {
+          const cfg = typeConfig(item.typeId);
+          return client.models.MassIntention.create({
+            donor, type: cfg.label, names: JSON.stringify([item.name]),
             massDate: massDate || undefined,
             massTime: massDate ? massTime : undefined,
-            offering: i === 0 ? offering : 0,
+            offering: base + (i === count - 1 ? remainder : 0),
             status,
           });
-          if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        }
-        showToast(addSelectedTypes.length > 1
-          ? `${addSelectedTypes.length} intentions logged for ${donor}.`
+        }));
+        const failed = results.find(r => r.errors);
+        if (failed) throw new Error(failed.errors.map(e => e.message).join('; '));
+
+        showToast(count > 1
+          ? `${count} intentions logged for ${donor}.`
           : `Intention logged for ${donor}.`);
       } else {
-        const [firstType, ...extraTypes] = addSelectedTypes;
-        const result = await client.models.MassIntention.update({
+        const [first, ...rest] = addedIntentions;
+        const firstCfg = typeConfig(first.typeId);
+        const updateResult = await client.models.MassIntention.update({
           id: editTargetId,
-          donor, type: firstType, names, startTime, endTime,
+          donor, type: firstCfg.label, names: JSON.stringify([first.name]),
           massDate: massDate || undefined,
           massTime: massDate ? massTime : undefined,
-          offering, status,
+          offering: base + (rest.length === 0 ? remainder : 0),
+          status,
         });
-        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        if (updateResult.errors) throw new Error(updateResult.errors.map(e => e.message).join('; '));
 
-        for (const type of extraTypes) {
-          const extraResult = await client.models.MassIntention.create({
-            donor, type, names, startTime, endTime,
+        const createResults = await Promise.all(rest.map((item, i) => {
+          const cfg = typeConfig(item.typeId);
+          return client.models.MassIntention.create({
+            donor, type: cfg.label, names: JSON.stringify([item.name]),
             massDate: massDate || undefined,
             massTime: massDate ? massTime : undefined,
-            offering: 0,
+            offering: base + (i === rest.length - 1 ? remainder : 0),
             status,
           });
-          if (extraResult.errors) throw new Error(extraResult.errors.map(e => e.message).join('; '));
-        }
+        }));
+        const failed = createResults.find(r => r.errors);
+        if (failed) throw new Error(failed.errors.map(e => e.message).join('; '));
 
-        showToast(extraTypes.length > 0
-          ? `Changes saved for ${donor} — ${extraTypes.length} new intention${extraTypes.length === 1 ? '' : 's'} added.`
+        showToast(rest.length > 0
+          ? `Changes saved for ${donor} — ${rest.length} new intention${rest.length === 1 ? '' : 's'} added.`
           : `Changes saved for ${donor}.`);
         editTargetId = null;
       }
@@ -481,6 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Failed to save intention:', err);
       showToast(err.message || "Couldn't save the intention.", true);
+    } finally {
+      addSubmitBtn.disabled = false;
     }
   });
 

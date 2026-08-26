@@ -532,6 +532,116 @@
   vertical-align: middle;
 }
 
+/* ---------- Added Intentions list (Submit Intention modal) ---------- */
+.mi-added-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.mi-added-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  background-color: #f9fafb;
+}
+
+.mi-added-item-body { min-width: 0; }
+
+.mi-added-item-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.mi-added-item-type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8b8fc7;
+  line-height: 1.3;
+  margin-top: 0.1rem;
+}
+
+.mi-added-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.mi-added-item-edit,
+.mi-added-item-remove,
+.mi-added-item-save,
+.mi-added-item-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.4rem;
+  border: none;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mi-added-item-edit:hover {
+  background-color: #eef0f4;
+  color: #4a4e8a;
+}
+
+.mi-added-item-remove:hover {
+  background-color: #eef0f4;
+  color: #374151;
+}
+
+/* ---------- Added Intentions: inline edit mode ---------- */
+.mi-added-item-editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  background-color: #ffffff;
+  border-color: #8b8fc7;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.14);
+}
+
+.mi-added-item-edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mi-added-item-edit-fields .form-input {
+  padding: 0.45rem 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.mi-added-item-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.mi-added-item-save:hover {
+  background-color: rgba(21, 128, 61, 0.12);
+  color: #15803d;
+}
+
+.mi-added-item-cancel:hover {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
 /* ---------- "See Details" row action (My Intentions list) ---------- */
 .intention-details-btn {
   font-size: 0.6875rem;
