@@ -1,0 +1,360 @@
+/* ============================================
+   SacraDigit Admin — Death Certificate Print View
+   Pairs with death-certificate-print.html + .js
+   No physical template was supplied for this cert type,
+   so it's designed to match the existing Baptismal/
+   Confirmation parish-certificate family (same blue-ink
+   cursive look, fonts, and layout conventions).
+   ============================================ */
+
+:root {
+  --ink: #38348f;
+  --ink-soft: #4b4796;
+  --paper: #fffefb;
+}
+
+* { box-sizing: border-box; }
+
+/* This page doesn't load Tailwind, so the .hidden toggles used by
+   death-certificate-print.js need their own rule. */
+.hidden {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: 'EB Garamond', Georgia, serif;
+  background-color: #e8e9ef;
+  color: #1f2430;
+}
+
+/* ---------- Screen-only toolbar ---------- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  background-color: #1e2a4a;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.toolbar-back {
+  color: #c9ccef;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.toolbar-back:hover {
+  color: #ffffff;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.official-copy-status {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 16rem;
+  text-align: right;
+  line-height: 1.35;
+}
+
+.toolbar-btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  background-color: transparent;
+  color: #ffffff;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.toolbar-btn-save:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.toolbar-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toolbar-btn-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #c9a84c;
+  color: #1e2a4a;
+  transition: background-color 0.15s ease;
+}
+
+.toolbar-btn-print:hover {
+  background-color: #b5943e;
+}
+
+.toolbar-btn-print:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- No-data notice ---------- */
+.no-data-notice {
+  max-width: 32rem;
+  margin: 4rem auto;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  color: #4b5563;
+  padding: 0 1.5rem;
+}
+
+.no-data-notice p {
+  margin: 0.4rem 0;
+}
+
+.no-data-sub {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+}
+
+/* ---------- Certificate page ---------- */
+.certificate-page {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.certificate-page.hidden {
+  display: none;
+}
+
+.certificate-border {
+  width: 100%;
+  max-width: 780px;
+  background-color: var(--paper);
+  border: 3px double var(--ink);
+  padding: 2.75rem 3rem 3.25rem;
+  box-shadow: 0 10px 40px rgba(30, 42, 74, 0.18);
+  color: var(--ink);
+}
+
+/* ---------- Header: logo + parish name ---------- */
+.cert-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.cert-logo {
+  width: 3.4rem;
+  height: 4.4rem;
+  flex-shrink: 0;
+  color: var(--ink);
+}
+
+.cert-logo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.cert-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.cert-parish-name {
+  font-family: 'Yellowtail', cursive;
+  font-size: 2.5rem;
+  line-height: 1;
+  margin: 0;
+  color: var(--ink);
+}
+
+.cert-parish-address {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 0.9375rem;
+  color: #4b4796;
+  margin: 0.2rem 0 0;
+}
+
+/* ---------- Title + certify line ---------- */
+.cert-title {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 2.75rem;
+  text-align: center;
+  margin: 0.75rem 0 0.25rem;
+  color: var(--ink);
+  text-shadow: 1px 1px 0 rgba(56, 52, 143, 0.18);
+  font-weight: normal;
+}
+
+.cert-certify {
+  font-family: 'Yellowtail', cursive;
+  font-size: 1.75rem;
+  text-align: center;
+  margin: 0 0 1.25rem;
+  color: var(--ink);
+}
+
+/* ---------- Fill-in-the-blank body ---------- */
+.cert-body {
+  margin: 0 0.5rem;
+}
+
+.cert-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0.55rem 0;
+}
+
+.cert-label {
+  font-family: 'Yellowtail', cursive;
+  font-size: 1.375rem;
+  color: var(--ink);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cert-blank {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 1px solid var(--ink);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  text-align: center;
+  padding-bottom: 0.15rem;
+  color: #1f2430;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cert-line-split .cert-blank {
+  flex: 1;
+}
+
+.cert-blank-short {
+  flex: 0 0 4.5rem !important;
+}
+
+.cert-blank-tiny {
+  flex: 0 0 3.25rem !important;
+}
+
+.cert-was-baptized {
+  font-family: 'Yellowtail', cursive;
+  font-size: 1.75rem;
+  text-align: center;
+  margin: 0.35rem 0 0.6rem;
+  color: var(--ink);
+}
+
+.cert-rite {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.1875rem;
+  text-align: center;
+  line-height: 1.4;
+  margin: 1.1rem 0 1.1rem;
+  color: var(--ink);
+}
+
+.cert-register-note {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 0.9375rem;
+  text-align: left;
+  margin: 0.65rem 0 0.35rem;
+  color: #4b4796;
+}
+
+.cert-line-register {
+  gap: 0.5rem;
+}
+
+.cert-line-register .cert-label {
+  font-size: 1.1875rem;
+}
+
+/* ---------- Signature block ---------- */
+.cert-signature-block {
+  margin-top: 2.75rem;
+  margin-left: auto;
+  width: 20rem;
+  text-align: center;
+}
+
+.cert-signature-line {
+  height: 2.5rem;
+}
+
+.cert-signature-name {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+  border-top: 1px solid var(--ink);
+  padding-top: 0.3rem;
+  margin: 0;
+  color: #1f2430;
+}
+
+.cert-signature-title {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0.15rem 0 0;
+  color: #1f2430;
+}
+
+/* ---------- Print ---------- */
+@media print {
+  .no-print { display: none !important; }
+
+  body {
+    background-color: #ffffff;
+  }
+
+  .certificate-page {
+    padding: 0;
+  }
+
+  .certificate-border {
+    max-width: none;
+    width: 100%;
+    box-shadow: none;
+    border-width: 2.5pt;
+  }
+
+  @page {
+    size: letter portrait;
+    margin: 0.5in;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificate of Marriage – SacraDigit</title>
+
+  <link rel="stylesheet" href="sacradigit-css/marriage-certificate-print.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <!-- ========== SCREEN-ONLY TOOLBAR ========== -->
+  <div class="toolbar no-print">
+    <a href="record-requests.html" class="toolbar-back">‹ Back to Record Requests</a>
+    <div class="toolbar-actions">
+      <span id="official-copy-status" class="official-copy-status hidden"></span>
+      <button type="button" id="btn-save-official" class="toolbar-btn-save hidden">Save as Official Copy</button>
+      <button type="button" id="btn-print" class="toolbar-btn-print">Print Certificate</button>
+    </div>
+  </div>
+
+  <div id="no-data-notice" class="no-data-notice no-print hidden">
+    <p>No certificate data found for this tab.</p>
+    <p class="no-data-sub">Open a Marriage Certificate request on the Record Requests page and click
+      "Generate Certificate" to fill in the details first.</p>
+  </div>
+
+  <!-- ========== CERTIFICATE (styled after the official Certificate of Marriage form) ========== -->
+  <div id="certificate" class="certificate-page">
+    <div class="certificate-border">
+
+      <div class="cert-form-topline">
+        <span>Diocese of Cubao</span>
+        <span>Quezon City, Philippines</span>
+      </div>
+
+      <h1 class="cert-form-title">Certificate of Marriage</h1>
+      <p class="cert-form-subtitle" id="out-parish-name">Our Lady of Fatima Parish</p>
+
+      <div class="cert-form-section">
+        <p class="cert-form-section-label">1. Name of Contracting Parties</p>
+        <div class="cert-form-two-col">
+          <div class="cert-form-col">
+            <p class="cert-form-col-heading">Husband</p>
+            <p class="cert-form-value-line" id="out-groom-name"></p>
+          </div>
+          <div class="cert-form-col">
+            <p class="cert-form-col-heading">Wife</p>
+            <p class="cert-form-value-line" id="out-bride-name"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cert-form-section">
+        <p class="cert-form-section-label">2. Name of Father</p>
+        <div class="cert-form-two-col">
+          <div class="cert-form-col"><p class="cert-form-value-line" id="out-groom-father"></p></div>
+          <div class="cert-form-col"><p class="cert-form-value-line" id="out-bride-father"></p></div>
+        </div>
+      </div>
+
+      <div class="cert-form-section">
+        <p class="cert-form-section-label">3. Maiden Name of Mother</p>
+        <div class="cert-form-two-col">
+          <div class="cert-form-col"><p class="cert-form-value-line" id="out-groom-mother"></p></div>
+          <div class="cert-form-col"><p class="cert-form-value-line" id="out-bride-mother"></p></div>
+        </div>
+      </div>
+
+      <div class="cert-form-section">
+        <p class="cert-form-section-label">4. Place of Marriage</p>
+        <p class="cert-form-value-line" id="out-marriage-place"></p>
+      </div>
+
+      <div class="cert-form-section">
+        <p class="cert-form-section-label">5. Date of Marriage</p>
+        <div class="cert-form-three-col">
+          <div>
+            <p class="cert-form-value-line" id="out-marriage-day"></p>
+            <p class="cert-form-sub-label">(Day)</p>
+          </div>
+          <div>
+            <p class="cert-form-value-line" id="out-marriage-month"></p>
+            <p class="cert-form-sub-label">(Month)</p>
+          </div>
+          <div>
+            <p class="cert-form-value-line" id="out-marriage-year"></p>
+            <p class="cert-form-sub-label">(Year)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cert-form-section cert-form-certify">
+        <p class="cert-form-section-label">Certification of the Contracting Parties</p>
+        <p class="cert-form-paragraph">
+          THIS IS TO CERTIFY that I, <span class="cert-form-inline-blank" id="out-groom-name-2"></span>,
+          and I, <span class="cert-form-inline-blank" id="out-bride-name-2"></span>, both of legal age,
+          of our own free will and accord, have been united in the Sacrament of Holy Matrimony according
+          to the Rite of the Roman Catholic Church, in the presence of the witnesses named below.
+        </p>
+      </div>
+
+      <div class="cert-form-section">
+        <p class="cert-form-section-label">Witnesses</p>
+        <div class="cert-form-two-col">
+          <div class="cert-form-col"><p class="cert-form-value-line" id="out-witness-1"></p></div>
+          <div class="cert-form-col"><p class="cert-form-value-line" id="out-witness-2"></p></div>
+        </div>
+      </div>
+
+      <div class="cert-form-section cert-form-officiant">
+        <p class="cert-form-section-label">Certification of the Solemnizing Officer</p>
+        <p class="cert-form-paragraph">
+          I certify that before me, on the date and place above-written, the above-named parties, with
+          their mutual consent, were lawfully joined together in marriage.
+        </p>
+        <p class="cert-form-value-line cert-form-signature-line" id="out-priest"></p>
+        <p class="cert-form-sub-label">(Signature Over Printed Name of Solemnizing Officer)</p>
+      </div>
+
+      <div class="cert-form-footer">
+        <p class="cert-form-register-line">
+          Bk. No. <span class="cert-form-footer-blank" id="out-book-no"></span>
+          Page <span class="cert-form-footer-blank" id="out-page"></span>
+          Line <span class="cert-form-footer-blank" id="out-line"></span>
+        </p>
+        <p class="cert-form-register-line">Dated <span id="out-dated"></span></p>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="marriage-certificate-print.js"></script>
+</body>
+</html>

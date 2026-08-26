@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificate of Death – SacraDigit</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Yellowtail&family=UnifrakturMaguntia&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="sacradigit-css/death-certificate-print.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <!-- ========== SCREEN-ONLY TOOLBAR ========== -->
+  <div class="toolbar no-print">
+    <a href="record-requests.html" class="toolbar-back">‹ Back to Record Requests</a>
+    <div class="toolbar-actions">
+      <span id="official-copy-status" class="official-copy-status hidden"></span>
+      <button type="button" id="btn-save-official" class="toolbar-btn-save hidden">Save as Official Copy</button>
+      <button type="button" id="btn-print" class="toolbar-btn-print">Print Certificate</button>
+    </div>
+  </div>
+
+  <div id="no-data-notice" class="no-data-notice no-print hidden">
+    <p>No certificate data found for this tab.</p>
+    <p class="no-data-sub">Open a Death Certificate request on the Record Requests page and click
+      "Generate Certificate" to fill in the details first.</p>
+  </div>
+
+  <!-- ========== CERTIFICATE ========== -->
+  <div id="certificate" class="certificate-page">
+    <div class="certificate-border">
+
+      <div class="cert-header">
+        <div class="cert-logo" aria-hidden="true">
+          <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+            <!-- Beaded rosary heart -->
+            <path d="M50,78 C50,78 12,52 12,26 C12,12 23,3 36,3 C42,3 47,7 50,13 C53,7 58,3 64,3 C77,3 88,12 88,26 C88,52 50,78 50,78 Z"
+                  fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 8.4" />
+            <!-- Beaded string down to the cross -->
+            <line x1="50" y1="78" x2="50" y2="112" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 8" />
+            <!-- Cross -->
+            <line x1="50" y1="108" x2="50" y2="128" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+            <line x1="42" y1="114" x2="58" y2="114" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+            <!-- Halo -->
+            <circle cx="50" cy="30" r="11" fill="none" stroke="currentColor" stroke-width="2" />
+            <!-- Marian silhouette: head + veiled shoulders -->
+            <circle cx="50" cy="34" r="7" fill="currentColor" />
+            <path d="M35,58 C35,44 42,37 50,37 C58,37 65,44 65,58 Z" fill="currentColor" />
+          </svg>
+        </div>
+        <div class="cert-heading">
+          <p class="cert-parish-name" id="out-parish-name">Our Lady of Fatima Parish</p>
+          <p class="cert-parish-address" id="out-parish-address">37 Cordillera St., Brgy. Don Manuel, Quezon City</p>
+        </div>
+      </div>
+
+      <h1 class="cert-title">Certificate of Death</h1>
+      <p class="cert-certify">This is to Certify</p>
+
+      <div class="cert-body">
+        <p class="cert-line">
+          <span class="cert-label">That</span>
+          <span class="cert-blank" id="out-deceased-name"></span>
+        </p>
+        <p class="cert-line">
+          <span class="cert-label">aged</span>
+          <span class="cert-blank cert-blank-short" id="out-age"></span>
+          <span class="cert-label">years</span>
+        </p>
+        <p class="cert-line">
+          <span class="cert-label">departed this life on</span>
+          <span class="cert-blank" id="out-death-date"></span>
+        </p>
+        <p class="cert-line">
+          <span class="cert-label">at</span>
+          <span class="cert-blank" id="out-place-of-death"></span>
+        </p>
+        <p class="cert-was-baptized">was given Christian Burial</p>
+        <p class="cert-line">
+          <span class="cert-label">on</span>
+          <span class="cert-blank" id="out-burial-date"></span>
+        </p>
+        <p class="cert-line">
+          <span class="cert-label">at</span>
+          <span class="cert-blank" id="out-burial-place"></span>
+        </p>
+
+        <p class="cert-rite">According to the Rite of the<br />Roman Catholic Church</p>
+
+        <p class="cert-line">
+          <span class="cert-label">by the Rev.</span>
+          <span class="cert-blank" id="out-priest"></span>
+        </p>
+        <p class="cert-register-note">as appears on the Death Register of this Church</p>
+        <p class="cert-line cert-line-register">
+          <span class="cert-label">Bk. No.</span>
+          <span class="cert-blank cert-blank-tiny" id="out-book-no"></span>
+          <span class="cert-label">Page</span>
+          <span class="cert-blank cert-blank-tiny" id="out-page"></span>
+          <span class="cert-label">Line</span>
+          <span class="cert-blank cert-blank-tiny" id="out-line"></span>
+        </p>
+        <p class="cert-line">
+          <span class="cert-label">Dated</span>
+          <span class="cert-blank" id="out-dated"></span>
+        </p>
+      </div>
+
+      <div class="cert-signature-block">
+        <div class="cert-signature-line"></div>
+        <p class="cert-signature-name">REV. FR. FREDRICK EDWARD C. SIMON</p>
+        <p class="cert-signature-title">Parish Priest</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="death-certificate-print.js"></script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+/* ============================================
+   SacraDigit Admin — Marriage Certificate Print View
+   Pairs with marriage-certificate-print.html + .js
+   Unlike the Baptismal/Confirmation/First-Communion certs
+   (cursive parish-slip look), this one mirrors the actual
+   photographed Certificate of Marriage template supplied —
+   a boxed, magenta-ruled civil-registry-style form, plain
+   serif type, no decorative script fonts. Streamlined to
+   the fields this app actually collects (see record-
+   requests.js section 17) rather than the full PSA form.
+   ============================================ */
+
+:root {
+  --line: #b5306f;
+  --ink: #1f2430;
+}
+
+* { box-sizing: border-box; }
+
+/* This page doesn't load Tailwind, so the .hidden toggles used by
+   marriage-certificate-print.js need their own rule. */
+.hidden {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  background-color: #e8e9ef;
+  color: var(--ink);
+}
+
+/* ---------- Screen-only toolbar ---------- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  background-color: #1e2a4a;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.toolbar-back {
+  color: #c9ccef;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.toolbar-back:hover {
+  color: #ffffff;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.official-copy-status {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 16rem;
+  text-align: right;
+  line-height: 1.35;
+}
+
+.toolbar-btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  background-color: transparent;
+  color: #ffffff;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.toolbar-btn-save:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.toolbar-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toolbar-btn-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #c9a84c;
+  color: #1e2a4a;
+  transition: background-color 0.15s ease;
+}
+
+.toolbar-btn-print:hover {
+  background-color: #b5943e;
+}
+
+.toolbar-btn-print:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- No-data notice ---------- */
+.no-data-notice {
+  max-width: 32rem;
+  margin: 4rem auto;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #4b5563;
+  padding: 0 1.5rem;
+}
+
+.no-data-notice p {
+  margin: 0.4rem 0;
+}
+
+.no-data-sub {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+}
+
+/* ---------- Certificate page ---------- */
+.certificate-page {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.certificate-page.hidden {
+  display: none;
+}
+
+.certificate-border {
+  width: 100%;
+  max-width: 780px;
+  background-color: #ffffff;
+  border: 2.5px solid var(--line);
+  padding: 2rem 2.25rem 2.5rem;
+  box-shadow: 0 10px 40px rgba(30, 42, 74, 0.16);
+}
+
+/* ---------- Header ---------- */
+.cert-form-topline {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--line);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cert-form-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.15rem;
+  color: var(--ink);
+}
+
+.cert-form-subtitle {
+  text-align: center;
+  font-size: 0.9375rem;
+  font-style: italic;
+  color: #4b4796;
+  margin: 0 0 1.25rem;
+}
+
+/* ---------- Boxed sections ---------- */
+.cert-form-section {
+  border: 1px solid var(--line);
+  border-top: none;
+  padding: 0.6rem 0.8rem;
+}
+
+.cert-form-section:first-of-type {
+  border-top: 1px solid var(--line);
+}
+
+.cert-form-section-label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--line);
+  margin: 0 0 0.4rem;
+}
+
+.cert-form-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.5rem;
+}
+
+.cert-form-three-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 1.5rem;
+  max-width: 24rem;
+}
+
+.cert-form-col-heading {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--line);
+  margin: 0 0 0.3rem;
+}
+
+.cert-form-value-line {
+  font-size: 1rem;
+  font-weight: 600;
+  min-height: 1.3em;
+  border-bottom: 1px solid #cbd0d8;
+  padding-bottom: 0.2rem;
+  margin: 0 0 0.35rem;
+}
+
+.cert-form-sub-label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-style: italic;
+  font-size: 0.6875rem;
+  color: #6b7280;
+  text-align: center;
+  margin: 0;
+}
+
+.cert-form-three-col .cert-form-value-line {
+  text-align: center;
+}
+
+/* ---------- Certification paragraphs ---------- */
+.cert-form-certify,
+.cert-form-officiant {
+  background-color: #fdf7fa;
+}
+
+.cert-form-paragraph {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-align: justify;
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+}
+
+.cert-form-inline-blank {
+  font-weight: 700;
+  border-bottom: 1px solid var(--ink);
+  padding: 0 0.2rem;
+}
+
+.cert-form-signature-line {
+  margin-top: 1.1rem;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.cert-form-officiant .cert-form-sub-label {
+  max-width: 22rem;
+}
+
+/* ---------- Footer: registry info ---------- */
+.cert-form-footer {
+  border: 1px solid var(--line);
+  border-top: none;
+  padding: 0.6rem 0.8rem;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8125rem;
+}
+
+.cert-form-register-line {
+  margin: 0.2rem 0;
+}
+
+.cert-form-footer-blank {
+  display: inline-block;
+  min-width: 2.5rem;
+  border-bottom: 1px solid var(--ink);
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0.4rem;
+}
+
+#out-dated {
+  font-weight: 700;
+  border-bottom: 1px solid var(--ink);
+  padding: 0 0.3rem;
+}
+
+/* ---------- Print ---------- */
+@media print {
+  .no-print { display: none !important; }
+
+  body {
+    background-color: #ffffff;
+  }
+
+  .certificate-page {
+    padding: 0;
+  }
+
+  .certificate-border {
+    max-width: none;
+    width: 100%;
+    box-shadow: none;
+  }
+
+  @page {
+    size: letter portrait;
+    margin: 0.5in;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

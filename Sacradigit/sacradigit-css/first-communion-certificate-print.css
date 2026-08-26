@@ -1,0 +1,356 @@
+/* ============================================
+   SacraDigit Admin — First Communion Certificate Print View
+   Pairs with first-communion-certificate-print.html + .js
+   Mirrors baptismal/confirmation-certificate-print.css —
+   standalone page, no dashboard.css dependency — but skinned
+   in a warmer wheat/gold palette to match the physical First
+   Communion certificate (wheat & grapes, not the blue-ink
+   Baptismal/Confirmation forms).
+   ============================================ */
+
+:root {
+  --ink: #7a5c1a;
+  --ink-soft: #8a6d1f;
+  --paper: #fffdf5;
+  --gold: #c9a84c;
+}
+
+* { box-sizing: border-box; }
+
+/* This page doesn't load Tailwind, so the .hidden toggles used by
+   first-communion-certificate-print.js need their own rule. */
+.hidden {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: 'EB Garamond', Georgia, serif;
+  background-color: #efece2;
+  color: #1f2430;
+}
+
+/* ---------- Screen-only toolbar ---------- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  background-color: #1e2a4a;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.toolbar-back {
+  color: #c9ccef;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.toolbar-back:hover {
+  color: #ffffff;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.official-copy-status {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 16rem;
+  text-align: right;
+  line-height: 1.35;
+}
+
+.toolbar-btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  background-color: transparent;
+  color: #ffffff;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.toolbar-btn-save:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.toolbar-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toolbar-btn-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #c9a84c;
+  color: #1e2a4a;
+  transition: background-color 0.15s ease;
+}
+
+.toolbar-btn-print:hover {
+  background-color: #b5943e;
+}
+
+.toolbar-btn-print:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- No-data notice ---------- */
+.no-data-notice {
+  max-width: 32rem;
+  margin: 4rem auto;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  color: #4b5563;
+  padding: 0 1.5rem;
+}
+
+.no-data-notice p {
+  margin: 0.4rem 0;
+}
+
+.no-data-sub {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+}
+
+/* ---------- Certificate page ---------- */
+.certificate-page {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.certificate-page.hidden {
+  display: none;
+}
+
+.certificate-border {
+  width: 100%;
+  max-width: 780px;
+  background-color: var(--paper);
+  background-image: linear-gradient(160deg, rgba(201, 168, 76, 0.08), transparent 45%);
+  border: 3px double var(--gold);
+  padding: 2.5rem 3rem 3rem;
+  box-shadow: 0 10px 40px rgba(122, 92, 26, 0.16);
+  color: var(--ink);
+}
+
+/* ---------- Title ---------- */
+.cert-title {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 2.25rem;
+  text-align: center;
+  margin: 0 0 1rem;
+  color: var(--ink);
+  text-shadow: 1px 1px 0 rgba(122, 92, 26, 0.15);
+  font-weight: normal;
+}
+
+/* ---------- Top row: "Today" date + medallion/tagline ---------- */
+.cert-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cert-today {
+  flex: 1;
+  min-width: 0;
+}
+
+.cert-today-label {
+  font-family: 'Yellowtail', cursive;
+  font-size: 1.5rem;
+  color: var(--ink);
+  margin: 0 0 0.15rem;
+}
+
+.cert-today-value {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 1rem;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 0.15rem;
+  display: inline-block;
+  min-width: 12rem;
+}
+
+.cert-medallion-wrap {
+  flex-shrink: 0;
+  text-align: center;
+  width: 9rem;
+}
+
+.cert-medallion {
+  width: 3.75rem;
+  height: 3.75rem;
+  margin: 0 auto 0.4rem;
+  color: var(--gold);
+}
+
+.cert-medallion svg {
+  width: 100%;
+  height: 100%;
+}
+
+.cert-tagline {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* ---------- Fill-in-the-blank body ---------- */
+.cert-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0.55rem 0;
+}
+
+.cert-label {
+  font-family: 'Yellowtail', cursive;
+  font-size: 1.25rem;
+  color: var(--ink);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cert-blank {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 1px solid var(--ink);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  text-align: center;
+  padding-bottom: 0.15rem;
+  color: #1f2430;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cert-blank-tiny {
+  flex: 0 0 3.25rem !important;
+}
+
+.cert-received {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 0.9375rem;
+  text-align: center;
+  margin: 0.9rem 0 0.15rem;
+  color: var(--ink-soft);
+}
+
+.cert-holy-communion {
+  font-family: 'Yellowtail', cursive;
+  font-size: 2.25rem;
+  text-align: center;
+  margin: 0 0 0.9rem;
+  color: var(--ink);
+}
+
+/* ---------- Signature row ---------- */
+.cert-signature-row {
+  display: flex;
+  gap: 2rem;
+  margin: 2.25rem 0 1.5rem;
+}
+
+.cert-signature-block {
+  flex: 1;
+  text-align: center;
+}
+
+.cert-signature-name {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+  min-height: 1.2em;
+  margin: 0 0 0.35rem;
+  color: #1f2430;
+}
+
+.cert-signature-line {
+  border-top: 1px solid var(--ink);
+  margin-bottom: 0.3rem;
+}
+
+.cert-signature-title {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1f2430;
+}
+
+/* ---------- Footer info block ---------- */
+.cert-footer-row {
+  border-top: 1px solid rgba(122, 92, 26, 0.25);
+  padding-top: 1rem;
+}
+
+.cert-line-register {
+  gap: 0.5rem;
+}
+
+/* ---------- Print ---------- */
+@media print {
+  .no-print { display: none !important; }
+
+  body {
+    background-color: #ffffff;
+  }
+
+  .certificate-page {
+    padding: 0;
+  }
+
+  .certificate-border {
+    max-width: none;
+    width: 100%;
+    box-shadow: none;
+    border-width: 2.5pt;
+  }
+
+  @page {
+    size: letter portrait;
+    margin: 0.5in;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

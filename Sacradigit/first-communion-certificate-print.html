@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>First Communion Certificate – SacraDigit</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Yellowtail&family=UnifrakturMaguntia&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="sacradigit-css/first-communion-certificate-print.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <!-- ========== SCREEN-ONLY TOOLBAR ========== -->
+  <div class="toolbar no-print">
+    <a href="record-requests.html" class="toolbar-back">‹ Back to Record Requests</a>
+    <div class="toolbar-actions">
+      <span id="official-copy-status" class="official-copy-status hidden"></span>
+      <button type="button" id="btn-save-official" class="toolbar-btn-save hidden">Save as Official Copy</button>
+      <button type="button" id="btn-print" class="toolbar-btn-print">Print Certificate</button>
+    </div>
+  </div>
+
+  <div id="no-data-notice" class="no-data-notice no-print hidden">
+    <p>No certificate data found for this tab.</p>
+    <p class="no-data-sub">Open a First Communion Certificate request on the Record Requests page and click
+      "Generate Certificate" to fill in the details first.</p>
+  </div>
+
+  <!-- ========== CERTIFICATE ========== -->
+  <div id="certificate" class="certificate-page">
+    <div class="certificate-border">
+
+      <h1 class="cert-title">First Communion Certificate</h1>
+
+      <div class="cert-top-row">
+        <div class="cert-today">
+          <p class="cert-today-label">Today</p>
+          <p class="cert-blank cert-today-value" id="out-communion-date"></p>
+        </div>
+        <div class="cert-medallion-wrap">
+          <div class="cert-medallion" aria-hidden="true">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="2.5" />
+              <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1" />
+              <text x="50" y="60" text-anchor="middle" font-family="'EB Garamond', Georgia, serif" font-weight="700" font-size="30" fill="currentColor">JHS</text>
+            </svg>
+          </div>
+          <p class="cert-tagline">Jesus, Bread of Life,<br />Come into my heart!</p>
+        </div>
+      </div>
+
+      <p class="cert-line">
+        <span class="cert-label">I,</span>
+        <span class="cert-blank" id="out-name"></span>
+      </p>
+      <p class="cert-received">received for the first time</p>
+      <p class="cert-holy-communion">Holy Communion</p>
+      <p class="cert-line">
+        <span class="cert-label">in the Church of</span>
+        <span class="cert-blank" id="out-parish-name">Our Lady of Fatima Parish</span>
+      </p>
+
+      <div class="cert-signature-row">
+        <div class="cert-signature-block">
+          <p class="cert-signature-name" id="out-catechist"></p>
+          <div class="cert-signature-line"></div>
+          <p class="cert-signature-title">Catechist</p>
+        </div>
+        <div class="cert-signature-block">
+          <p class="cert-signature-name" id="out-priest"></p>
+          <div class="cert-signature-line"></div>
+          <p class="cert-signature-title">Priest</p>
+        </div>
+      </div>
+
+      <div class="cert-footer-row">
+        <p class="cert-line cert-line-register">
+          <span class="cert-label">Book</span>
+          <span class="cert-blank cert-blank-tiny" id="out-book-no"></span>
+          <span class="cert-label">Page</span>
+          <span class="cert-blank cert-blank-tiny" id="out-page"></span>
+          <span class="cert-label">Line</span>
+          <span class="cert-blank cert-blank-tiny" id="out-line"></span>
+        </p>
+        <p class="cert-line">
+          <span class="cert-label">Purpose:</span>
+          <span class="cert-blank" id="out-purpose"></span>
+        </p>
+        <p class="cert-line">
+          <span class="cert-label">Issued:</span>
+          <span class="cert-blank" id="out-dated"></span>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="first-communion-certificate-print.js"></script>
+</body>
+</html>

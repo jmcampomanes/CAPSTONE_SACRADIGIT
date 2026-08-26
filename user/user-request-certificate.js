@@ -33,25 +33,70 @@ document.addEventListener('DOMContentLoaded', () => {
     { id: 'confirmation', name: 'Confirmation Certificate', desc: 'Proof of confirmation sacrament.',
       iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
       icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+      // These mirror exactly what appears on the printed Confirmation
+      // Certificate (see confirmation-certificate-print.html) — the
+      // confirming bishop and the certificate's issue date are filled
+      // in by the parish office from the register, not asked of the
+      // requester here.
       fields: [
-        { id: 'confirmed-name', label: 'Full Name of Confirmed Person', placeholder: 'e.g. Maria Paz Santos', required: true },
+        { id: 'confirmed-name', label: 'Full Name of Confirmand', placeholder: 'e.g. Maria Paz Santos', required: true },
+        { id: 'father-name', label: "Father's Name", placeholder: 'e.g. Jose Santos', required: false },
+        { id: 'mother-name', label: "Mother's Name", placeholder: 'e.g. Remedios Reyes', required: false },
+        { id: 'baptism-date', label: 'Date of Baptism', type: 'date', required: false },
+        { id: 'baptism-church', label: 'Church of Baptism', placeholder: 'e.g. Our Lady of Fatima Parish', required: false },
+        { id: 'confirmation-name', label: 'Confirmation Name (Saint Name)', placeholder: 'e.g. Teresa', required: false },
         { id: 'confirmation-date', label: 'Approximate Date of Confirmation', type: 'date', required: false },
         { id: 'sponsor-name', label: "Sponsor's Name", placeholder: 'e.g. Elena Cruz', required: false },
+      ] },
+    { id: 'first-communion', name: 'First Communion Certificate', desc: 'Proof of First Holy Communion.',
+      iconBg: 'rgba(180,140,60,0.16)', iconColor: '#8a6d1f',
+      icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 3h12l-1 8.5a5 5 0 01-10 0L6 3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 16.5V21m-3.5 0h7"/></svg>`,
+      // These mirror exactly what appears on the printed First Communion
+      // Certificate (see first-communion-certificate-print.html) — the
+      // catechist, officiating priest, Book/Page/Line, and the issue
+      // date are filled in by the parish office from the register, not
+      // asked of the requester here. Purpose is already collected below
+      // as a general field, so it isn't repeated per certificate type.
+      fields: [
+        { id: 'fc-name', label: 'Full Name of Communicant', placeholder: 'e.g. Keiana Brielle A. Ching', required: true },
+        { id: 'fc-communion-date', label: 'Approximate Date of First Communion', type: 'date', required: false },
       ] },
     { id: 'marriage', name: 'Marriage Certificate', desc: 'Parish record of a Catholic marriage.',
       iconBg: 'rgba(239,68,68,0.1)', iconColor: '#dc2626',
       icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`,
+      // These mirror exactly what appears on the printed Marriage
+      // Certificate (see marriage-certificate-print.html) — a streamlined
+      // parish-style certificate, not the full PSA civil-registrar form.
+      // The officiating priest, Bk./Page/Line, and the issue date are
+      // filled in by the parish office from the register, not asked of
+      // the requester here.
       fields: [
         { id: 'groom-name', label: "Groom's Full Name", placeholder: 'e.g. Juan Dela Cruz', required: true },
         { id: 'bride-name', label: "Bride's Full Name", placeholder: 'e.g. Ana Reyes', required: true },
+        { id: 'groom-father', label: "Groom's Father's Name", placeholder: 'e.g. Pedro Dela Cruz', required: false },
+        { id: 'groom-mother', label: "Groom's Mother's Name", placeholder: 'e.g. Corazon Santos', required: false },
+        { id: 'bride-father', label: "Bride's Father's Name", placeholder: 'e.g. Ramon Reyes', required: false },
+        { id: 'bride-mother', label: "Bride's Mother's Name", placeholder: 'e.g. Luz Bautista', required: false },
         { id: 'marriage-date', label: 'Date of Marriage', type: 'date', required: false },
+        { id: 'marriage-place', label: 'Place of Marriage', placeholder: 'e.g. Our Lady of Fatima Parish', required: false },
+        { id: 'witness-1', label: 'Witness 1', placeholder: 'e.g. Mark Villanueva', required: false },
+        { id: 'witness-2', label: 'Witness 2', placeholder: 'e.g. Carla Mendoza', required: false },
       ] },
     { id: 'death', name: 'Death Certificate', desc: 'Parish record of a Catholic burial or funeral mass.',
       iconBg: 'rgba(107,114,128,0.12)', iconColor: '#6b7280',
       icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
+      // These mirror exactly what appears on the printed Death
+      // Certificate (see death-certificate-print.html) — the
+      // officiating priest, Bk./Page/Line, and the issue date are
+      // filled in by the parish office from the register, not asked
+      // of the requester here.
       fields: [
         { id: 'deceased-name', label: 'Full Name of Deceased', placeholder: 'e.g. Pedro Garcia', required: true },
+        { id: 'age', label: 'Age at Time of Death', placeholder: 'e.g. 78', required: false },
         { id: 'death-date', label: 'Approximate Date of Death', type: 'date', required: false },
+        { id: 'place-of-death', label: 'Place of Death', placeholder: 'e.g. Quezon City', required: false },
+        { id: 'burial-date', label: 'Date of Burial', type: 'date', required: false },
+        { id: 'burial-place', label: 'Place of Burial', placeholder: 'e.g. Loyola Memorial Park', required: false },
         { id: 'requester-rel', label: 'Relationship to Deceased', placeholder: 'e.g. Son, Daughter, Spouse', required: true },
       ] },
   ];
@@ -90,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formTypeLabel.textContent = selectedType.name;
 
     dynamicFields.innerHTML = selectedType.fields.map(f => `
-      <div class="${['baptized-name','confirmed-name','groom-name'].includes(f.id) ? 'sm:col-span-2' : ''}">
+      <div class="${['baptized-name','confirmed-name','fc-name','groom-name','bride-name','deceased-name'].includes(f.id) ? 'sm:col-span-2' : ''}">
         <label class="form-label" for="${f.id}">${f.label}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
         ${f.type === 'date'
           ? `<input type="date" id="${f.id}" class="form-input" />`

@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     pending: 'Pending', approved: 'Approved', released: 'Released', rejected: 'Rejected',
   };
 
+  // Certificate types that have a print-ready template + "Generate Certificate" flow.
+  const GENERATABLE_CERT_TYPES = new Set(['Baptismal Certificate', 'Confirmation Certificate', 'First Communion Certificate', 'Marriage Certificate', 'Death Certificate']);
+
   /* ------------------------------------------
      1. DOM REFERENCES
      Resolved up front, before any function that
@@ -43,6 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const rejectModal        = document.getElementById('reject-modal');
   const viewModal            = document.getElementById('view-modal');
   const generateCertModal      = document.getElementById('generate-cert-modal');
+  const generateConfirmationCertModal = document.getElementById('generate-confirmation-cert-modal');
+  const generateFirstCommunionCertModal = document.getElementById('generate-first-communion-cert-modal');
+  const generateMarriageCertModal = document.getElementById('generate-marriage-cert-modal');
+  const generateDeathCertModal = document.getElementById('generate-death-cert-modal');
 
   const dropzone         = document.getElementById('upload-dropzone');
   const fileInput          = document.getElementById('upload-file-input');
@@ -90,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeAllModals() {
-    [uploadModal, newRequestModal, rejectModal, viewModal, generateCertModal].forEach(closeModal);
+    [uploadModal, newRequestModal, rejectModal, viewModal, generateCertModal, generateConfirmationCertModal, generateFirstCommunionCertModal, generateMarriageCertModal, generateDeathCertModal].forEach(closeModal);
   }
 
   function showToast(message, isError = false) {
@@ -198,8 +205,8 @@ document.addEventListener('DOMContentLoaded', () => {
       filtered.forEach((r) => {
         const tr = document.createElement('tr');
 
-        const certBtn = r.certificateType === 'Baptismal Certificate'
-          ? `<button type="button" class="row-cert" data-id="${r.id}">Generate Certificate</button>`
+        const certBtn = GENERATABLE_CERT_TYPES.has(r.certificateType)
+          ? `<button type="button" class="row-cert" data-id="${r.id}" data-cert-type="${escapeHtml(r.certificateType)}">Generate Certificate</button>`
           : '';
 
         let actionsHtml = '';
@@ -253,7 +260,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewBtn    = e.target.closest('.row-view');
     const certBtn    = e.target.closest('.row-cert');
 
-    if (certBtn) openGenerateCertModal(certBtn.dataset.id);
+    if (certBtn) {
+      if (certBtn.dataset.certType === 'Confirmation Certificate') openGenerateConfirmationCertModal(certBtn.dataset.id);
+      else if (certBtn.dataset.certType === 'First Communion Certificate') openGenerateFirstCommunionCertModal(certBtn.dataset.id);
+      else if (certBtn.dataset.certType === 'Marriage Certificate') openGenerateMarriageCertModal(certBtn.dataset.id);
+      else if (certBtn.dataset.certType === 'Death Certificate') openGenerateDeathCertModal(certBtn.dataset.id);
+      else openGenerateCertModal(certBtn.dataset.id);
+    }
 
     if (approveBtn) {
       const id = approveBtn.dataset.id;
@@ -315,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', closeAllModals);
   });
 
-  [uploadModal, newRequestModal, rejectModal, viewModal, generateCertModal].forEach(modal => {
+  [uploadModal, newRequestModal, rejectModal, viewModal, generateCertModal, generateConfirmationCertModal, generateFirstCommunionCertModal, generateMarriageCertModal, generateDeathCertModal].forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeModal(modal);
     });
@@ -600,6 +613,320 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.open('baptismal-certificate-print.html', '_blank');
     closeModal(generateCertModal);
+  });
+
+  /* ------------------------------------------
+     15. GENERATE CONFIRMATION CERTIFICATE MODAL
+         Same pattern as the Baptismal Certificate
+         flow above — the rest of the certificate's
+         content isn't stored on the model, so it's
+         entered here each time, pre-filled from
+         whatever the requester already submitted.
+  ------------------------------------------ */
+  const CONFIRMATION_CERT_STORAGE_KEY = 'sacradigit_confirmation_cert_draft';
+  const confirmationCertFieldIds = [
+    'confirm-cert-name', 'confirm-cert-father-name', 'confirm-cert-mother-name',
+    'confirm-cert-baptism-date', 'confirm-cert-baptism-church', 'confirm-cert-received-name',
+    'confirm-cert-date', 'confirm-cert-bishop', 'confirm-cert-sponsor', 'confirm-cert-dated',
+  ];
+
+  let generateConfirmationCertTargetId = null;
+
+  // Maps the fields collected on the parishioner's request form
+  // (user-request-certificate.js, Confirmation Certificate) to this
+  // modal's matching print-output field. The confirming bishop and
+  // the certificate's issue date aren't collected from the requester,
+  // since those come from the parish register.
+  const requestDetailsToConfirmationCertField = {
+    'confirmed-name':    'confirm-cert-name',
+    'father-name':       'confirm-cert-father-name',
+    'mother-name':       'confirm-cert-mother-name',
+    'baptism-date':      'confirm-cert-baptism-date',
+    'baptism-church':    'confirm-cert-baptism-church',
+    'confirmation-name': 'confirm-cert-received-name',
+    'confirmation-date': 'confirm-cert-date',
+    'sponsor-name':      'confirm-cert-sponsor',
+  };
+
+  function openGenerateConfirmationCertModal(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+
+    generateConfirmationCertTargetId = id;
+    confirmationCertFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+
+    let details = {};
+    if (r.details) {
+      try { details = JSON.parse(r.details); } catch { details = {}; }
+    }
+    Object.entries(requestDetailsToConfirmationCertField).forEach(([detailKey, certFieldId]) => {
+      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
+    });
+
+    document.getElementById('confirm-cert-name').value = document.getElementById('confirm-cert-name').value || r.requesterName || '';
+    document.getElementById('confirm-cert-bishop').value = document.getElementById('confirm-cert-bishop').value || 'Honesto F. Ongtioco';
+    document.getElementById('confirm-cert-dated').value = new Date().toISOString().slice(0, 10);
+
+    openModal(generateConfirmationCertModal);
+  }
+
+  document.getElementById('confirm-cert-generate-submit').addEventListener('click', () => {
+    const nameInput = document.getElementById('confirm-cert-name');
+    if (!nameInput.value.trim()) {
+      showToast('Please enter the full name of the confirmand.', true);
+      nameInput.focus();
+      return;
+    }
+
+    const data = { requestId: generateConfirmationCertTargetId };
+    confirmationCertFieldIds.forEach(fid => {
+      data[fid] = document.getElementById(fid).value.trim();
+    });
+
+    try {
+      sessionStorage.setItem(CONFIRMATION_CERT_STORAGE_KEY, JSON.stringify(data));
+    } catch (err) {
+      console.error('Failed to stash certificate draft:', err);
+      showToast("Couldn't prepare the certificate preview.", true);
+      return;
+    }
+
+    window.open('confirmation-certificate-print.html', '_blank');
+    closeModal(generateConfirmationCertModal);
+  });
+
+  /* ------------------------------------------
+     16. GENERATE FIRST COMMUNION CERTIFICATE MODAL
+         Same pattern as the two flows above. Catechist,
+         Officiating Priest, Book/Page/Line, and the issue
+         date come from the parish register, not the
+         requester — Purpose is pulled from the request's
+         own purpose field rather than asked twice.
+  ------------------------------------------ */
+  const FIRST_COMMUNION_CERT_STORAGE_KEY = 'sacradigit_first_communion_cert_draft';
+  const firstCommunionCertFieldIds = [
+    'fc-cert-name', 'fc-cert-communion-date', 'fc-cert-catechist', 'fc-cert-priest',
+    'fc-cert-book-no', 'fc-cert-page', 'fc-cert-line', 'fc-cert-purpose', 'fc-cert-dated',
+  ];
+
+  let generateFirstCommunionCertTargetId = null;
+
+  // Maps the fields collected on the parishioner's request form
+  // (user-request-certificate.js, First Communion Certificate) to
+  // this modal's matching print-output field.
+  const requestDetailsToFirstCommunionCertField = {
+    'fc-name':           'fc-cert-name',
+    'fc-communion-date': 'fc-cert-communion-date',
+  };
+
+  function openGenerateFirstCommunionCertModal(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+
+    generateFirstCommunionCertTargetId = id;
+    firstCommunionCertFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+
+    let details = {};
+    if (r.details) {
+      try { details = JSON.parse(r.details); } catch { details = {}; }
+    }
+    Object.entries(requestDetailsToFirstCommunionCertField).forEach(([detailKey, certFieldId]) => {
+      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
+    });
+
+    document.getElementById('fc-cert-name').value = document.getElementById('fc-cert-name').value || r.requesterName || '';
+    document.getElementById('fc-cert-priest').value = 'Fredrick Edward C. Simon';
+    document.getElementById('fc-cert-purpose').value = r.purpose || '';
+    document.getElementById('fc-cert-dated').value = new Date().toISOString().slice(0, 10);
+
+    openModal(generateFirstCommunionCertModal);
+  }
+
+  document.getElementById('fc-cert-generate-submit').addEventListener('click', () => {
+    const nameInput = document.getElementById('fc-cert-name');
+    if (!nameInput.value.trim()) {
+      showToast('Please enter the full name of the communicant.', true);
+      nameInput.focus();
+      return;
+    }
+
+    const data = { requestId: generateFirstCommunionCertTargetId };
+    firstCommunionCertFieldIds.forEach(fid => {
+      data[fid] = document.getElementById(fid).value.trim();
+    });
+
+    try {
+      sessionStorage.setItem(FIRST_COMMUNION_CERT_STORAGE_KEY, JSON.stringify(data));
+    } catch (err) {
+      console.error('Failed to stash certificate draft:', err);
+      showToast("Couldn't prepare the certificate preview.", true);
+      return;
+    }
+
+    window.open('first-communion-certificate-print.html', '_blank');
+    closeModal(generateFirstCommunionCertModal);
+  });
+
+  /* ------------------------------------------
+     17. GENERATE MARRIAGE CERTIFICATE MODAL
+         Same pattern as the flows above — a streamlined
+         parish-style certificate (not the full PSA civil
+         registrar form). Officiating priest, Bk./Page/Line,
+         and the issue date come from the parish register,
+         not the requester.
+  ------------------------------------------ */
+  const MARRIAGE_CERT_STORAGE_KEY = 'sacradigit_marriage_cert_draft';
+  const marriageCertFieldIds = [
+    'marriage-cert-groom-name', 'marriage-cert-bride-name',
+    'marriage-cert-groom-father', 'marriage-cert-groom-mother',
+    'marriage-cert-bride-father', 'marriage-cert-bride-mother',
+    'marriage-cert-marriage-date', 'marriage-cert-marriage-place',
+    'marriage-cert-witness-1', 'marriage-cert-witness-2', 'marriage-cert-priest',
+    'marriage-cert-book-no', 'marriage-cert-page', 'marriage-cert-line', 'marriage-cert-dated',
+  ];
+
+  let generateMarriageCertTargetId = null;
+
+  // Maps the fields collected on the parishioner's request form
+  // (user-request-certificate.js, Marriage Certificate) to this
+  // modal's matching print-output field.
+  const requestDetailsToMarriageCertField = {
+    'groom-name':     'marriage-cert-groom-name',
+    'bride-name':     'marriage-cert-bride-name',
+    'groom-father':   'marriage-cert-groom-father',
+    'groom-mother':   'marriage-cert-groom-mother',
+    'bride-father':   'marriage-cert-bride-father',
+    'bride-mother':   'marriage-cert-bride-mother',
+    'marriage-date':  'marriage-cert-marriage-date',
+    'marriage-place': 'marriage-cert-marriage-place',
+    'witness-1':      'marriage-cert-witness-1',
+    'witness-2':      'marriage-cert-witness-2',
+  };
+
+  function openGenerateMarriageCertModal(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+
+    generateMarriageCertTargetId = id;
+    marriageCertFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+
+    let details = {};
+    if (r.details) {
+      try { details = JSON.parse(r.details); } catch { details = {}; }
+    }
+    Object.entries(requestDetailsToMarriageCertField).forEach(([detailKey, certFieldId]) => {
+      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
+    });
+
+    document.getElementById('marriage-cert-priest').value = 'Fredrick Edward C. Simon';
+    document.getElementById('marriage-cert-dated').value = new Date().toISOString().slice(0, 10);
+
+    openModal(generateMarriageCertModal);
+  }
+
+  document.getElementById('marriage-cert-generate-submit').addEventListener('click', () => {
+    const groomInput = document.getElementById('marriage-cert-groom-name');
+    const brideInput = document.getElementById('marriage-cert-bride-name');
+    if (!groomInput.value.trim() || !brideInput.value.trim()) {
+      showToast("Please enter both the groom's and bride's full names.", true);
+      (groomInput.value.trim() ? brideInput : groomInput).focus();
+      return;
+    }
+
+    const data = { requestId: generateMarriageCertTargetId };
+    marriageCertFieldIds.forEach(fid => {
+      data[fid] = document.getElementById(fid).value.trim();
+    });
+
+    try {
+      sessionStorage.setItem(MARRIAGE_CERT_STORAGE_KEY, JSON.stringify(data));
+    } catch (err) {
+      console.error('Failed to stash certificate draft:', err);
+      showToast("Couldn't prepare the certificate preview.", true);
+      return;
+    }
+
+    window.open('marriage-certificate-print.html', '_blank');
+    closeModal(generateMarriageCertModal);
+  });
+
+  /* ------------------------------------------
+     SECTION 18 — Death Certificate generation
+     Same pattern as the flows above. No physical
+     template was supplied for this cert type, so the
+     print output (death-certificate-print.html) is
+     designed in the existing blue-ink cursive style
+     shared with the Baptismal/Confirmation certificates.
+     Officiating priest, Bk./Page/Line, and the issue
+     date come from the parish register, not the requester.
+  ------------------------------------------ */
+  const DEATH_CERT_STORAGE_KEY = 'sacradigit_death_cert_draft';
+  const deathCertFieldIds = [
+    'death-cert-name', 'death-cert-age', 'death-cert-death-date', 'death-cert-place-of-death',
+    'death-cert-burial-date', 'death-cert-burial-place', 'death-cert-priest',
+    'death-cert-book-no', 'death-cert-page', 'death-cert-line', 'death-cert-dated',
+  ];
+
+  let generateDeathCertTargetId = null;
+
+  // Maps the fields collected on the parishioner's request form
+  // (user-request-certificate.js, Death Certificate) to this
+  // modal's matching print-output field. "requester-rel" is
+  // intake-only (helps the office verify the request) and isn't
+  // printed on the certificate, so it's deliberately left out.
+  const requestDetailsToDeathCertField = {
+    'deceased-name':   'death-cert-name',
+    'age':             'death-cert-age',
+    'death-date':      'death-cert-death-date',
+    'place-of-death':  'death-cert-place-of-death',
+    'burial-date':     'death-cert-burial-date',
+    'burial-place':    'death-cert-burial-place',
+  };
+
+  function openGenerateDeathCertModal(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+
+    generateDeathCertTargetId = id;
+    deathCertFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+
+    let details = {};
+    if (r.details) {
+      try { details = JSON.parse(r.details); } catch { details = {}; }
+    }
+    Object.entries(requestDetailsToDeathCertField).forEach(([detailKey, certFieldId]) => {
+      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
+    });
+
+    document.getElementById('death-cert-priest').value = 'Fredrick Edward C. Simon';
+    document.getElementById('death-cert-dated').value = new Date().toISOString().slice(0, 10);
+
+    openModal(generateDeathCertModal);
+  }
+
+  document.getElementById('death-cert-generate-submit').addEventListener('click', () => {
+    const nameInput = document.getElementById('death-cert-name');
+    if (!nameInput.value.trim()) {
+      showToast('Please enter the full name of the deceased.', true);
+      nameInput.focus();
+      return;
+    }
+
+    const data = { requestId: generateDeathCertTargetId };
+    deathCertFieldIds.forEach(fid => {
+      data[fid] = document.getElementById(fid).value.trim();
+    });
+
+    try {
+      sessionStorage.setItem(DEATH_CERT_STORAGE_KEY, JSON.stringify(data));
+    } catch (err) {
+      console.error('Failed to stash certificate draft:', err);
+      showToast("Couldn't prepare the certificate preview.", true);
+      return;
+    }
+
+    window.open('death-certificate-print.html', '_blank');
+    closeModal(generateDeathCertModal);
   });
 
 });

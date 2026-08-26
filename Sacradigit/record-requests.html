@@ -273,6 +273,7 @@
               <option value="">Type Filter</option>
               <option value="Baptismal Certificate">Baptismal</option>
               <option value="Confirmation Certificate">Confirmation</option>
+              <option value="First Communion Certificate">First Communion</option>
               <option value="Marriage Certificate">Marriage</option>
               <option value="Death Certificate">Death</option>
             </select>
@@ -371,6 +372,7 @@
               <option value="">Select type</option>
               <option value="Baptismal Certificate">Baptismal</option>
               <option value="Confirmation Certificate">Confirmation</option>
+              <option value="First Communion Certificate">First Communion</option>
               <option value="Marriage Certificate">Marriage</option>
               <option value="Death Certificate">Death</option>
             </select>
@@ -487,6 +489,282 @@
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
         <button type="button" id="cert-generate-submit" class="btn-lavender">Generate &amp; Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GENERATE CONFIRMATION CERTIFICATE MODAL ========== -->
+  <div id="generate-confirmation-cert-modal" class="modal-overlay hidden">
+    <div class="modal-card cert-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Generate Confirmation Certificate</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-xs text-gray-500 mb-3 leading-relaxed">
+          The parish record only tracks the requester, purpose, and status — fill in the rest from the
+          confirmation register below. This produces a print-ready Confirmation Certificate on the next screen.
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="confirm-cert-name">Full Name of Confirmand</label>
+            <input type="text" id="confirm-cert-name" class="form-input" placeholder="e.g. Maria Paz Santos" />
+          </div>
+          <div>
+            <label class="form-label" for="confirm-cert-father-name">Father's Name</label>
+            <input type="text" id="confirm-cert-father-name" class="form-input" placeholder="e.g. Jose Santos" />
+          </div>
+          <div>
+            <label class="form-label" for="confirm-cert-mother-name">Mother's Name</label>
+            <input type="text" id="confirm-cert-mother-name" class="form-input" placeholder="e.g. Remedios Reyes" />
+          </div>
+          <div>
+            <label class="form-label" for="confirm-cert-baptism-date">Date of Baptism</label>
+            <input type="date" id="confirm-cert-baptism-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="confirm-cert-baptism-church">Church of Baptism</label>
+            <input type="text" id="confirm-cert-baptism-church" class="form-input" placeholder="e.g. Our Lady of Fatima Parish" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="confirm-cert-received-name">Confirmation Name Received</label>
+            <input type="text" id="confirm-cert-received-name" class="form-input" placeholder="e.g. Teresa" />
+          </div>
+          <div>
+            <label class="form-label" for="confirm-cert-date">Date of Confirmation</label>
+            <input type="date" id="confirm-cert-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="confirm-cert-bishop">Confirmed by (Most Rev.)</label>
+            <input type="text" id="confirm-cert-bishop" class="form-input" placeholder="e.g. Honesto F. Ongtioco" />
+          </div>
+          <div>
+            <label class="form-label" for="confirm-cert-sponsor">Sponsor</label>
+            <input type="text" id="confirm-cert-sponsor" class="form-input" placeholder="e.g. Elena Cruz" />
+          </div>
+          <div>
+            <label class="form-label" for="confirm-cert-dated">Dated</label>
+            <input type="date" id="confirm-cert-dated" class="form-input" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="confirm-cert-generate-submit" class="btn-lavender">Generate &amp; Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GENERATE FIRST COMMUNION CERTIFICATE MODAL ========== -->
+  <div id="generate-first-communion-cert-modal" class="modal-overlay hidden">
+    <div class="modal-card cert-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Generate First Communion Certificate</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-xs text-gray-500 mb-3 leading-relaxed">
+          The parish record only tracks the requester, purpose, and status — fill in the rest from the
+          First Communion register below. This produces a print-ready First Communion Certificate on the next screen.
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="fc-cert-name">Full Name of Communicant</label>
+            <input type="text" id="fc-cert-name" class="form-input" placeholder="e.g. Keiana Brielle A. Ching" />
+          </div>
+          <div>
+            <label class="form-label" for="fc-cert-communion-date">Date of First Communion</label>
+            <input type="date" id="fc-cert-communion-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="fc-cert-catechist">Catechist</label>
+            <input type="text" id="fc-cert-catechist" class="form-input" placeholder="e.g. OLFP - Catechist" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="fc-cert-priest">Officiating Priest</label>
+            <input type="text" id="fc-cert-priest" class="form-input" value="Fredrick Edward C. Simon" />
+          </div>
+          <div>
+            <label class="form-label" for="fc-cert-book-no">Book No.</label>
+            <input type="text" id="fc-cert-book-no" class="form-input" placeholder="e.g. 3" />
+          </div>
+          <div>
+            <label class="form-label" for="fc-cert-page">Page</label>
+            <input type="text" id="fc-cert-page" class="form-input" placeholder="e.g. 75" />
+          </div>
+          <div>
+            <label class="form-label" for="fc-cert-line">Line</label>
+            <input type="text" id="fc-cert-line" class="form-input" placeholder="e.g. 08" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="fc-cert-purpose">Purpose</label>
+            <input type="text" id="fc-cert-purpose" class="form-input" placeholder="e.g. Personal Copy" />
+          </div>
+          <div>
+            <label class="form-label" for="fc-cert-dated">Issued</label>
+            <input type="date" id="fc-cert-dated" class="form-input" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="fc-cert-generate-submit" class="btn-lavender">Generate &amp; Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GENERATE MARRIAGE CERTIFICATE MODAL ========== -->
+  <div id="generate-marriage-cert-modal" class="modal-overlay hidden">
+    <div class="modal-card cert-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Generate Marriage Certificate</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-xs text-gray-500 mb-3 leading-relaxed">
+          The parish record only tracks the requester, purpose, and status — fill in the rest from the
+          marriage register below. This is a parish-style certificate, not the full civil registrar form.
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="marriage-cert-groom-name">Groom's Full Name</label>
+            <input type="text" id="marriage-cert-groom-name" class="form-input" placeholder="e.g. Juan Dela Cruz" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="marriage-cert-bride-name">Bride's Full Name</label>
+            <input type="text" id="marriage-cert-bride-name" class="form-input" placeholder="e.g. Ana Reyes" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-groom-father">Groom's Father</label>
+            <input type="text" id="marriage-cert-groom-father" class="form-input" placeholder="e.g. Pedro Dela Cruz" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-groom-mother">Groom's Mother</label>
+            <input type="text" id="marriage-cert-groom-mother" class="form-input" placeholder="e.g. Corazon Santos" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-bride-father">Bride's Father</label>
+            <input type="text" id="marriage-cert-bride-father" class="form-input" placeholder="e.g. Ramon Reyes" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-bride-mother">Bride's Mother</label>
+            <input type="text" id="marriage-cert-bride-mother" class="form-input" placeholder="e.g. Luz Bautista" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-marriage-date">Date of Marriage</label>
+            <input type="date" id="marriage-cert-marriage-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-marriage-place">Place of Marriage</label>
+            <input type="text" id="marriage-cert-marriage-place" class="form-input" placeholder="e.g. Our Lady of Fatima Parish" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-witness-1">Witness 1</label>
+            <input type="text" id="marriage-cert-witness-1" class="form-input" placeholder="e.g. Mark Villanueva" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-witness-2">Witness 2</label>
+            <input type="text" id="marriage-cert-witness-2" class="form-input" placeholder="e.g. Carla Mendoza" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="marriage-cert-priest">Officiating Priest</label>
+            <input type="text" id="marriage-cert-priest" class="form-input" value="Fredrick Edward C. Simon" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-book-no">Bk. No.</label>
+            <input type="text" id="marriage-cert-book-no" class="form-input" placeholder="e.g. 5" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-page">Page</label>
+            <input type="text" id="marriage-cert-page" class="form-input" placeholder="e.g. 22" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-line">Line</label>
+            <input type="text" id="marriage-cert-line" class="form-input" placeholder="e.g. 4" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-dated">Dated</label>
+            <input type="date" id="marriage-cert-dated" class="form-input" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="marriage-cert-generate-submit" class="btn-lavender">Generate &amp; Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GENERATE DEATH CERTIFICATE MODAL ========== -->
+  <div id="generate-death-cert-modal" class="modal-overlay hidden">
+    <div class="modal-card cert-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Generate Death Certificate</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-xs text-gray-500 mb-3 leading-relaxed">
+          The parish record only tracks the requester, purpose, and status — fill in the rest from the
+          death register below. This produces a print-ready Certificate of Death on the next screen.
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="death-cert-name">Full Name of Deceased</label>
+            <input type="text" id="death-cert-name" class="form-input" placeholder="e.g. Pedro Garcia" />
+          </div>
+          <div>
+            <label class="form-label" for="death-cert-age">Age at Time of Death</label>
+            <input type="text" id="death-cert-age" class="form-input" placeholder="e.g. 78" />
+          </div>
+          <div>
+            <label class="form-label" for="death-cert-death-date">Date of Death</label>
+            <input type="date" id="death-cert-death-date" class="form-input" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="death-cert-place-of-death">Place of Death</label>
+            <input type="text" id="death-cert-place-of-death" class="form-input" placeholder="e.g. Quezon City" />
+          </div>
+          <div>
+            <label class="form-label" for="death-cert-burial-date">Date of Burial</label>
+            <input type="date" id="death-cert-burial-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="death-cert-burial-place">Place of Burial</label>
+            <input type="text" id="death-cert-burial-place" class="form-input" placeholder="e.g. Loyola Memorial Park" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="death-cert-priest">Officiating Priest</label>
+            <input type="text" id="death-cert-priest" class="form-input" value="Fredrick Edward C. Simon" />
+          </div>
+          <div>
+            <label class="form-label" for="death-cert-book-no">Bk. No.</label>
+            <input type="text" id="death-cert-book-no" class="form-input" placeholder="e.g. 7" />
+          </div>
+          <div>
+            <label class="form-label" for="death-cert-page">Page</label>
+            <input type="text" id="death-cert-page" class="form-input" placeholder="e.g. 13" />
+          </div>
+          <div>
+            <label class="form-label" for="death-cert-line">Line</label>
+            <input type="text" id="death-cert-line" class="form-input" placeholder="e.g. 6" />
+          </div>
+          <div>
+            <label class="form-label" for="death-cert-dated">Dated</label>
+            <input type="date" id="death-cert-dated" class="form-input" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="death-cert-generate-submit" class="btn-lavender">Generate &amp; Preview</button>
       </div>
     </div>
   </div>
