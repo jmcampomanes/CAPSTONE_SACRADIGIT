@@ -15,6 +15,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const schedulesEmpty  = document.getElementById('schedules-empty');
   const schedulesCount  = document.getElementById('schedules-count');
 
+  /* --- View toggle: list panels vs. calendar --- */
+  const listViewPanel      = document.getElementById('list-view-panel');
+  const calendarViewPanel  = document.getElementById('calendar-view-panel');
+  const calendarToggleBtn  = document.getElementById('btn-calendar-view');
+  const calendarToggleLabel = document.getElementById('calendar-toggle-label');
+
+  let showingCalendar = false;
+
+  calendarToggleBtn.addEventListener('click', () => {
+    showingCalendar = !showingCalendar;
+    calendarToggleBtn.setAttribute('aria-pressed', String(showingCalendar));
+    calendarToggleLabel.textContent = showingCalendar ? 'List View' : 'Calendar View';
+    listViewPanel.classList.toggle('hidden', showingCalendar);
+    calendarViewPanel.classList.toggle('hidden', !showingCalendar);
+    if (showingCalendar) renderCalendar();
+  });
+
   const typeClassMap = {
     'Liturgical Season': 'liturgical',
     'Novena':            'novena',
@@ -97,6 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
       addBtn.classList.add('opacity-50', 'cursor-not-allowed');
       addBtn.title = "Special Schedules isn't connected to a database table yet.";
     }
+    calendarToggleBtn.disabled = true;
+    calendarToggleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    calendarToggleBtn.title = "Special Schedules isn't connected to a database table yet.";
 
     return;
   }
@@ -105,6 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
     next: ({ items }) => {
       schedules = items;
       renderGrid();
+      if (showingCalendar) renderCalendar();
+      if (selectedDateIso && !dayPlanModal.classList.contains('hidden')) openDayPlanModal(selectedDateIso);
     },
     error: (err) => {
       console.error('Failed to load schedules:', err);
@@ -175,6 +197,120 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editBtn) openEditModal(editBtn.dataset.id);
     if (deleteBtn) openDeleteModal(deleteBtn.dataset.id);
   });
+
+
+  /* ------------------------------------------
+     CALENDAR VIEW
+     Each schedule spans a date range (start–end),
+     unlike the single-date events on other
+     calendars in the app — so instead of pinning
+     one item to one day, a schedule shows up on
+     every day within its range (per the chosen
+     display style), styled by its type just like
+     the card grid above.
+  ------------------------------------------ */
+  let calendarDate = new Date(todayISO + 'T00:00:00');
+  let selectedDateIso = null;
+
+  const calMonthLabel = document.getElementById('cal-month-label');
+  const calGrid          = document.getElementById('calendar-grid');
+
+  const dayPlanModal = document.getElementById('day-plan-modal');
+  const dayPlanTitle   = document.getElementById('day-plan-title');
+  const dayPlanList      = document.getElementById('day-plan-list');
+  const dayPlanEmpty       = document.getElementById('day-plan-empty');
+
+  function isoFromParts(y, m, d) {
+    const mm = String(m + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    return `${y}-${mm}-${dd}`;
+  }
+
+  // Date strings compare correctly lexicographically (YYYY-MM-DD), so
+  // this containment check doesn't need to parse into Date objects.
+  function schedulesActiveOn(iso) {
+    return schedules.filter(s => s.startDate <= iso && s.endDate >= iso);
+  }
+
+  function renderCalendar() {
+    const year  = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    calMonthLabel.textContent = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const firstDay = new Date(year, month, 1);
+    const startWeekday = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let cellsHtml = '';
+    for (let i = 0; i < startWeekday; i++) cellsHtml += `<div class="calendar-cell empty"></div>`;
+
+    const MAX_VISIBLE = 2;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = isoFromParts(year, month, day);
+      const dayItems = schedulesActiveOn(iso).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      const isToday = iso === todayISO;
+      const isSelected = iso === selectedDateIso;
+
+      const visible = dayItems.slice(0, MAX_VISIBLE);
+      const remaining = dayItems.length - visible.length;
+
+      const itemsHtml = visible.map(s => `
+        <div class="calendar-cell-booking ${typeClassMap[s.type] || 'special'}">
+          <span class="calendar-cell-booking-facility">${escapeHtml(s.name)}</span>
+        </div>
+      `).join('') + (remaining > 0 ? `<div class="calendar-cell-more">+${remaining} more</div>` : '');
+
+      cellsHtml += `
+        <div class="calendar-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-date="${iso}">
+          <span class="calendar-date-num">${day}</span>
+          <div class="calendar-cell-bookings">${itemsHtml}</div>
+        </div>
+      `;
+    }
+
+    calGrid.innerHTML = cellsHtml;
+    calGrid.querySelectorAll('.calendar-cell:not(.empty)').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const iso = cell.dataset.date;
+        selectedDateIso = iso;
+        renderCalendar();
+        openDayPlanModal(iso);
+      });
+    });
+  }
+
+  function openDayPlanModal(iso) {
+    const dayItems = schedulesActiveOn(iso).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const label = new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    dayPlanTitle.textContent = label;
+
+    if (dayItems.length === 0) {
+      dayPlanList.innerHTML = '';
+      dayPlanList.classList.add('hidden');
+      dayPlanEmpty.classList.remove('hidden');
+    } else {
+      dayPlanList.innerHTML = dayItems.map(s => `
+        <div class="day-plan-item">
+          <span class="day-plan-item-time">${durationLabel(s.startDate, s.endDate)}</span>
+          <div class="day-plan-item-body">
+            <p class="day-plan-item-facility">${escapeHtml(s.name)}</p>
+            <p class="day-plan-item-purpose">${escapeHtml(s.type)} · ${formatDisplayDate(s.startDate)} – ${formatDisplayDate(s.endDate)}</p>
+          </div>
+          <span class="status-tag ${(s.status || '').toLowerCase()}">${escapeHtml(s.status)}</span>
+        </div>
+      `).join('');
+      dayPlanList.classList.remove('hidden');
+      dayPlanEmpty.classList.add('hidden');
+    }
+
+    openModal(dayPlanModal);
+  }
+
+  document.getElementById('cal-prev').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); });
+  document.getElementById('cal-next').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); });
 
 
   /* --- Add/Edit Schedule Modal --- */
@@ -303,15 +439,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* --- Modal helpers --- */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { closeModal(modal); closeModal(deleteModal); });
+    btn.addEventListener('click', () => { closeModal(modal); closeModal(deleteModal); closeModal(dayPlanModal); });
   });
 
-  [modal, deleteModal].forEach(m => {
+  [modal, deleteModal, dayPlanModal].forEach(m => {
     m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeModal(modal); closeModal(deleteModal); }
+    if (e.key === 'Escape') { closeModal(modal); closeModal(deleteModal); closeModal(dayPlanModal); }
   });
 
   function openModal(m) { m.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }

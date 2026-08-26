@@ -192,6 +192,10 @@
             <p class="text-gray-500 text-sm mt-1">Schedule and manage regular and special masses.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btn-calendar-view" type="button" class="btn-gold" aria-pressed="false">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span id="calendar-toggle-label">Calendar View</span>
+            </button>
             <button id="btn-print" type="button" class="btn-gold">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-12 0v4h12v-4m-12 0h12"/></svg>
               Print Schedule
@@ -202,6 +206,9 @@
             </button>
           </div>
         </div>
+
+        <!-- List view (date picker + list panels + weekly table) -->
+        <div id="list-view-panel">
 
         <!-- Date picker -->
         <div>
@@ -308,6 +315,37 @@
           </div>
         </div>
 
+        </div>
+        <!-- /#list-view-panel -->
+
+        <!-- Calendar view -->
+        <div class="panel hidden" id="calendar-view-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Masses Calendar</h2>
+            <div class="calendar-nav">
+              <button type="button" id="cal-prev" class="calendar-nav-btn" aria-label="Previous month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span id="cal-month-label" class="calendar-month-label"></span>
+              <button type="button" id="cal-next" class="calendar-nav-btn" aria-label="Next month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="calendar-wrap">
+            <div class="calendar-weekdays">
+              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div id="calendar-grid" class="calendar-grid">
+              <!-- Cells injected by masses.js -->
+            </div>
+          </div>
+          <div class="calendar-legend">
+            <span class="calendar-legend-item"><span class="calendar-legend-dot regular"></span>Regular Mass</span>
+            <span class="calendar-legend-item"><span class="calendar-legend-dot special"></span>Special Mass</span>
+          </div>
+        </div>
+
       </main>
     </div>
   </div>
@@ -369,6 +407,30 @@
       </div>
       <div class="modal-body" id="mass-details-body">
         <!-- Injected by masses.js -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DAY PLAN MODAL (calendar view) ========== -->
+  <div id="day-plan-modal" class="modal-overlay hidden">
+    <div class="modal-card day-plan-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="day-plan-title">Day Plan</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="day-plan-list" class="day-plan-list">
+          <!-- Full day's masses injected by masses.js -->
+        </div>
+        <div id="day-plan-empty" class="empty-state hidden">
+          <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <p class="text-sm font-medium text-gray-600">No masses on this date</p>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Close</button>

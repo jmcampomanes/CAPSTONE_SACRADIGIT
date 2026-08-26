@@ -5,6 +5,279 @@
    (both loaded first)
    ============================================ */
 
+/* ---------- Toggle state for Calendar View button ---------- */
+#btn-calendar-view[aria-pressed="true"] {
+  background-color: #1e2a4a;
+  color: #ffffff;
+}
+
+#btn-calendar-view[aria-pressed="true"]:hover {
+  background-color: #16213a;
+}
+
+/* ---------- Calendar nav (in panel header) ---------- */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calendar-nav-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.calendar-nav-btn:hover {
+  background-color: #f3f4f6;
+  color: #1e2a4a;
+}
+
+.calendar-month-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+  min-width: 7.5rem;
+  text-align: center;
+}
+
+/* ---------- Calendar grid ---------- */
+.calendar-wrap {
+  padding: 1rem 1.25rem 0.5rem;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9ca3af;
+  text-align: center;
+  padding-bottom: 0.5rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  padding-bottom: 1rem;
+}
+
+.calendar-cell {
+  position: relative;
+  min-height: 4.75rem;
+  border: 1px solid #eef0f4;
+  border-radius: 0.5rem;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.2rem;
+  background-color: #fafbfc;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.calendar-cell:hover {
+  border-color: #c7c9e8;
+  background-color: #f9faff;
+}
+
+.calendar-cell.empty {
+  background: none;
+  border: none;
+  cursor: default;
+}
+
+.calendar-cell.today {
+  border-color: #c9a84c;
+  box-shadow: inset 0 0 0 1px #c9a84c;
+}
+
+.calendar-cell.selected {
+  border-color: #8b8fc7;
+  background-color: #f3f3ff;
+  box-shadow: inset 0 0 0 1px #8b8fc7;
+}
+
+.calendar-date-num {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+/* ---------- Inline day-cell schedules (visible without hover/click) ---------- */
+.calendar-cell-bookings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.calendar-cell-booking {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.625rem;
+  line-height: 1.2;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.3rem;
+  background-color: rgba(139, 143, 199, 0.16);
+  color: #5b5fa8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.calendar-cell-booking.novena {
+  background-color: rgba(201, 168, 76, 0.18);
+  color: #9c7d2e;
+}
+
+.calendar-cell-booking.feast {
+  background-color: rgba(108, 145, 194, 0.16);
+  color: #3b5e8e;
+}
+
+.calendar-cell-booking.special {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.calendar-cell-booking-time {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.calendar-cell-booking-facility {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.calendar-cell-more {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: #9ca3af;
+  padding-left: 0.3rem;
+}
+
+/* ---------- Calendar legend ---------- */
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  padding: 0 1.25rem 1.1rem;
+}
+
+.calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.calendar-legend-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.calendar-legend-dot.liturgical { background-color: #5b5fa8; }
+.calendar-legend-dot.novena     { background-color: #9c7d2e; }
+.calendar-legend-dot.feast      { background-color: #3b5e8e; }
+.calendar-legend-dot.special    { background-color: #6b7280; }
+
+/* ---------- Day Plan modal (full day preview from the calendar) ---------- */
+.day-plan-card {
+  max-width: 480px;
+}
+
+.day-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.day-plan-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #eef0f4;
+  border-left: 3px solid #8b8fc7;
+  border-radius: 0.6rem;
+  background-color: #fafbfc;
+}
+
+.day-plan-item-time {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e2a4a;
+  width: 6.25rem;
+  flex-shrink: 0;
+  padding-top: 0.125rem;
+  line-height: 1.35;
+}
+
+.day-plan-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.day-plan-item-facility {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.day-plan-item-purpose {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.125rem;
+}
+
+/* ---------- Responsive: smaller calendar cells on mobile ---------- */
+@media (max-width: 640px) {
+  .calendar-cell {
+    min-height: 3.5rem;
+    padding: 0.25rem;
+  }
+
+  .calendar-date-num {
+    font-size: 0.6875rem;
+  }
+
+  .calendar-cell-booking {
+    font-size: 0.5625rem;
+    padding: 0.075rem 0.25rem;
+  }
+
+  .calendar-cell-booking-facility {
+    display: none;
+  }
+}
+
 /* ---------- Card grid ---------- */
 .schedules-grid {
   display: grid;

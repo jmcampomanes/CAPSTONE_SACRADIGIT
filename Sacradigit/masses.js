@@ -66,6 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
       renderDateSchedule();
       renderSpecialMasses();
       renderStats();
+      if (showingCalendar) renderCalendar();
+      // Keep an open Day Plan modal in sync with live updates.
+      if (selectedDateIso && !dayPlanModal.classList.contains('hidden')) openDayPlanModal(selectedDateIso);
     },
     error: (err) => {
       console.error('Failed to load masses:', err);
@@ -193,6 +196,144 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   renderWeeklySchedule();
+
+
+  /* ------------------------------------------
+     CALENDAR VIEW
+     Every Mass record is pinned to its own
+     confirmed date/time — regular masses and
+     special masses (isSpecial) are styled
+     differently so admins can spot feast days
+     and novenas at a glance.
+  ------------------------------------------ */
+  let calendarDate = new Date(todayISO + 'T00:00:00');
+  let selectedDateIso = null;
+
+  const calMonthLabel = document.getElementById('cal-month-label');
+  const calGrid          = document.getElementById('calendar-grid');
+
+  const dayPlanModal = document.getElementById('day-plan-modal');
+  const dayPlanTitle   = document.getElementById('day-plan-title');
+  const dayPlanList      = document.getElementById('day-plan-list');
+  const dayPlanEmpty       = document.getElementById('day-plan-empty');
+
+  function isoFromParts(y, m, d) {
+    const mm = String(m + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    return `${y}-${mm}-${dd}`;
+  }
+
+  function calendarItems() {
+    return allMasses.map(m => ({
+      id: m.id,
+      title: m.title || m.type,
+      type: m.type,
+      time: m.time,
+      note: m.note,
+      isSpecial: !!m.isSpecial,
+      calDate: m.date,
+    })).filter(item => item.calDate);
+  }
+
+  function renderCalendar() {
+    const year  = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    calMonthLabel.textContent = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const firstDay = new Date(year, month, 1);
+    const startWeekday = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const items = calendarItems();
+
+    let cellsHtml = '';
+    for (let i = 0; i < startWeekday; i++) cellsHtml += `<div class="calendar-cell empty"></div>`;
+
+    const MAX_VISIBLE = 2;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = isoFromParts(year, month, day);
+      const dayItems = items.filter(item => item.calDate === iso).sort((a, b) => to24h(a.time) - to24h(b.time));
+      const isToday = iso === todayISO;
+      const isSelected = iso === selectedDateIso;
+
+      const visible = dayItems.slice(0, MAX_VISIBLE);
+      const remaining = dayItems.length - visible.length;
+
+      const itemsHtml = visible.map(item => `
+        <div class="calendar-cell-booking ${item.isSpecial ? 'special' : ''}">
+          <span class="calendar-cell-booking-time">${escapeHtml(item.time || '—')}</span>
+          <span class="calendar-cell-booking-facility">${escapeHtml(item.title)}</span>
+        </div>
+      `).join('') + (remaining > 0 ? `<div class="calendar-cell-more">+${remaining} more</div>` : '');
+
+      cellsHtml += `
+        <div class="calendar-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-date="${iso}">
+          <span class="calendar-date-num">${day}</span>
+          <div class="calendar-cell-bookings">${itemsHtml}</div>
+        </div>
+      `;
+    }
+
+    calGrid.innerHTML = cellsHtml;
+    calGrid.querySelectorAll('.calendar-cell:not(.empty)').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const iso = cell.dataset.date;
+        selectedDateIso = iso;
+        renderCalendar();
+        openDayPlanModal(iso);
+      });
+    });
+  }
+
+  function openDayPlanModal(iso) {
+    const dayItems = calendarItems().filter(item => item.calDate === iso).sort((a, b) => to24h(a.time) - to24h(b.time));
+    const label = new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    dayPlanTitle.textContent = label;
+
+    if (dayItems.length === 0) {
+      dayPlanList.innerHTML = '';
+      dayPlanList.classList.add('hidden');
+      dayPlanEmpty.classList.remove('hidden');
+    } else {
+      dayPlanList.innerHTML = dayItems.map(item => `
+        <div class="day-plan-item">
+          <span class="day-plan-item-time">${escapeHtml(item.time || '—')}</span>
+          <div class="day-plan-item-body">
+            <p class="day-plan-item-facility">${escapeHtml(item.title)}</p>
+            <p class="day-plan-item-purpose">${escapeHtml(item.type)}${item.note ? ` · ${escapeHtml(item.note)}` : ''}</p>
+          </div>
+          ${item.isSpecial ? '<span class="badge badge-amber">Special</span>' : ''}
+        </div>
+      `).join('');
+      dayPlanList.classList.remove('hidden');
+      dayPlanEmpty.classList.add('hidden');
+    }
+
+    openModal(dayPlanModal);
+  }
+
+  document.getElementById('cal-prev').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); });
+  document.getElementById('cal-next').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); });
+
+
+  /* --- View toggle: list panels vs. calendar --- */
+  const listViewPanel      = document.getElementById('list-view-panel');
+  const calendarViewPanel  = document.getElementById('calendar-view-panel');
+  const calendarToggleBtn  = document.getElementById('btn-calendar-view');
+  const calendarToggleLabel = document.getElementById('calendar-toggle-label');
+
+  let showingCalendar = false;
+
+  calendarToggleBtn.addEventListener('click', () => {
+    showingCalendar = !showingCalendar;
+    calendarToggleBtn.setAttribute('aria-pressed', String(showingCalendar));
+    calendarToggleLabel.textContent = showingCalendar ? 'List View' : 'Calendar View';
+    listViewPanel.classList.toggle('hidden', showingCalendar);
+    calendarViewPanel.classList.toggle('hidden', !showingCalendar);
+    if (showingCalendar) renderCalendar();
+  });
 
 
   /* --- Print --- */

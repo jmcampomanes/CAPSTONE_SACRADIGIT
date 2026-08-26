@@ -19,14 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const upcomingList   = document.getElementById('upcoming-list');
   const upcomingEmpty   = document.getElementById('upcoming-empty');
   const upcomingCount   = document.getElementById('upcoming-count');
+  const upcomingPagination = document.getElementById('upcoming-pagination');
   const requestsList    = document.getElementById('requests-list');
   const requestsEmpty    = document.getElementById('requests-empty');
   const requestsCount    = document.getElementById('requests-count');
+  const requestsPagination = document.getElementById('requests-pagination');
   const completedList    = document.getElementById('completed-list');
   const completedCount    = document.getElementById('completed-count');
+  const completedPagination = document.getElementById('completed-pagination');
 
   const searchInput = document.getElementById('search-input');
   const typeFilter    = document.getElementById('type-filter');
+
+  const PAGE_SIZE = 6;
+  let upcomingPage = 1;
+  let requestsPage = 1;
+  let completedPage = 1;
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -141,11 +149,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filtered.length === 0) {
       upcomingList.innerHTML = '';
       upcomingEmpty.classList.remove('hidden');
+      upcomingPagination.innerHTML = '';
       return;
     }
     upcomingEmpty.classList.add('hidden');
 
-    upcomingList.innerHTML = filtered.map(b => `
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (upcomingPage > totalPages) upcomingPage = totalPages;
+
+    const startIdx = (upcomingPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+
+    upcomingList.innerHTML = pageItems.map(b => `
       <li>
         <div class="blessing-row">
           <div class="blessing-icon">${blessingIconSvg()}</div>
@@ -162,6 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </li>
     `).join('');
+
+    renderPaginationBar(upcomingPagination, filtered.length, upcomingPage, totalPages, startIdx, pageItems.length);
   }
 
 
@@ -173,11 +190,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filtered.length === 0) {
       requestsList.innerHTML = '';
       requestsEmpty.classList.remove('hidden');
+      requestsPagination.innerHTML = '';
       return;
     }
     requestsEmpty.classList.add('hidden');
 
-    requestsList.innerHTML = filtered.map((r) => `
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (requestsPage > totalPages) requestsPage = totalPages;
+
+    const startIdx = (requestsPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+
+    requestsList.innerHTML = pageItems.map((r) => `
       <li>
         <div class="request-row">
           <div class="request-icon">
@@ -197,6 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </li>
     `).join('');
+
+    renderPaginationBar(requestsPagination, filtered.length, requestsPage, totalPages, startIdx, pageItems.length);
   }
 
   requestsList.addEventListener('click', (e) => {
@@ -234,7 +260,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     completedCount.textContent = `${filtered.length} completed`;
 
-    completedList.innerHTML = filtered.map(c => `
+    if (filtered.length === 0) {
+      completedList.innerHTML = '';
+      completedPagination.innerHTML = '';
+      return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (completedPage > totalPages) completedPage = totalPages;
+
+    const startIdx = (completedPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+
+    completedList.innerHTML = pageItems.map(c => `
       <li>
         <div class="completed-row">
           <div class="completed-icon">
@@ -251,7 +289,58 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </li>
     `).join('');
+
+    renderPaginationBar(completedPagination, filtered.length, completedPage, totalPages, startIdx, pageItems.length);
   }
+
+
+  /* Shared pagination-bar renderer for the three list panels above. */
+  function renderPaginationBar(barEl, totalItems, currentPage, totalPages, startIdx, pageCount) {
+    if (totalPages <= 1) {
+      barEl.innerHTML = `<span class="pagination-info">Showing ${totalItems} of ${totalItems}</span>`;
+      return;
+    }
+    const rangeStart = startIdx + 1;
+    const rangeEnd = startIdx + pageCount;
+    let pageBtns = '';
+    for (let p = 1; p <= totalPages; p++) {
+      pageBtns += `<button type="button" class="pagination-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+    }
+    barEl.innerHTML = `
+      <span class="pagination-info">Showing ${rangeStart}–${rangeEnd} of ${totalItems}</span>
+      <div class="pagination-controls">
+        <button type="button" class="pagination-btn" data-action="prev" ${currentPage === 1 ? 'disabled' : ''}>‹</button>
+        ${pageBtns}
+        <button type="button" class="pagination-btn" data-action="next" ${currentPage === totalPages ? 'disabled' : ''}>›</button>
+      </div>`;
+  }
+
+  upcomingPagination.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pagination-btn');
+    if (!btn) return;
+    if (btn.dataset.action === 'prev') { if (upcomingPage > 1) upcomingPage--; }
+    else if (btn.dataset.action === 'next') { upcomingPage++; }
+    else if (btn.dataset.page) { upcomingPage = parseInt(btn.dataset.page, 10); }
+    renderUpcoming();
+  });
+
+  requestsPagination.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pagination-btn');
+    if (!btn) return;
+    if (btn.dataset.action === 'prev') { if (requestsPage > 1) requestsPage--; }
+    else if (btn.dataset.action === 'next') { requestsPage++; }
+    else if (btn.dataset.page) { requestsPage = parseInt(btn.dataset.page, 10); }
+    renderRequests();
+  });
+
+  completedPagination.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pagination-btn');
+    if (!btn) return;
+    if (btn.dataset.action === 'prev') { if (completedPage > 1) completedPage--; }
+    else if (btn.dataset.action === 'next') { completedPage++; }
+    else if (btn.dataset.page) { completedPage = parseInt(btn.dataset.page, 10); }
+    renderCompleted();
+  });
 
 
   /* ------------------------------------------
@@ -402,12 +491,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  searchInput.addEventListener('input', () => { renderUpcoming(); renderRequests(); renderCompleted(); });
-  typeFilter.addEventListener('change', () => { renderUpcoming(); renderRequests(); renderCompleted(); });
+  searchInput.addEventListener('input', () => {
+    upcomingPage = 1; requestsPage = 1; completedPage = 1;
+    renderUpcoming(); renderRequests(); renderCompleted();
+  });
+  typeFilter.addEventListener('change', () => {
+    upcomingPage = 1; requestsPage = 1; completedPage = 1;
+    renderUpcoming(); renderRequests(); renderCompleted();
+  });
 
   document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
     searchInput.value = '';
     typeFilter.value = '';
+    upcomingPage = 1; requestsPage = 1; completedPage = 1;
     renderUpcoming(); renderRequests(); renderCompleted();
   });
 
