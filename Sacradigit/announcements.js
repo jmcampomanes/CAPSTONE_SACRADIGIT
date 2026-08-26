@@ -41,6 +41,52 @@ document.addEventListener('DOMContentLoaded', () => {
     return audience === 'All Parishioners' ? 'all' : 'ministry';
   }
 
+  /* Parse the `media` AWSJSON field. Older records stored a bare
+     array of {type,url,name} items; newer records store an object
+     carrying that same array under `.items` plus the optional
+     `eventDate` / `location` badges shown on the trendy post card.
+     Both shapes are normalized to one return value so every call
+     site can just read `.items` / `.eventDate` / `.location`. */
+  function parseMediaField(raw) {
+    if (!raw) return { items: [], eventDate: '', location: '' };
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { return { items: [], eventDate: '', location: '' }; }
+    if (Array.isArray(parsed)) return { items: parsed, eventDate: '', location: '' };
+    return {
+      items: Array.isArray(parsed.items) ? parsed.items : [],
+      eventDate: parsed.eventDate || '',
+      location: parsed.location || '',
+    };
+  }
+
+  function formatEventDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  const CALENDAR_ICON = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
+  const PIN_ICON      = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+  const MEGAPHONE_ICON = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>';
+  const CAMERA_ICON    = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-width="2"/></svg>';
+
+  function eventBarHtml(eventDate, location) {
+    if (!eventDate && !location) return '';
+    return `
+      <div class="social-post-eventbar">
+        ${eventDate ? `<span class="chip chip-date">${CALENDAR_ICON}${formatEventDate(eventDate)}</span>` : ''}
+        ${location ? `<span class="chip chip-location">${PIN_ICON}${escapeHtml(location)}</span>` : ''}
+      </div>`;
+  }
+
+  /* Split a body into paragraphs on blank lines (a single newline
+     within a paragraph becomes a <br>), so the detail view reads
+     like the multi-paragraph announcements admins actually write
+     instead of one unbroken block of text. */
+  function bodyParagraphsHtml(text) {
+    return (text || '').split(/\n{2,}/).map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+  }
+
   /* Resolve a stored S3 path into a real, fetchable URL.
      Caches each resolved URL for ~55 minutes (signed URLs
      here are issued for 1 hour) so re-renders (observeQuery
@@ -139,12 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     announcementsEmpty.classList.add('hidden');
 
-    // Only the first media item of each card is ever shown as a
-    // thumbnail, so that's the only one worth resolving here.
-    const firstMediaUrls = await Promise.all(announcements.map(async (a) => {
-      const media = a.media ? JSON.parse(a.media) : [];
-      const first = media[0];
-      return first ? resolveMediaUrl(first.url) : '';
+    // Every media item is resolved up front (not just the first) so
+    // the post's photo/video carousel can swipe through all of them
+    // without a signed-URL round trip mid-scroll.
+    const resolvedMedia = await Promise.all(announcements.map(async (a) => {
+      const { items } = parseMediaField(a.media);
+      const urls = await Promise.all(items.map(m => resolveMediaUrl(m.url)));
+      return items.map((m, i) => ({ ...m, resolvedUrl: urls[i] })).filter(m => m.resolvedUrl);
     }));
 
     // A newer render started while these URLs were resolving — bail
@@ -153,68 +200,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     grid.innerHTML = announcements.map((a, i) => {
       const statusActions = a.published
-        ? `<button type="button" class="ann-action-btn ann-unpublish" data-id="${a.id}">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/></svg>
-            Unpublish
+        ? `<button type="button" class="post-icon-btn ann-unpublish" data-id="${a.id}" title="Unpublish">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/></svg>
+            <span>Unpublish</span>
           </button>`
-        : `<button type="button" class="ann-action-btn ann-republish" data-id="${a.id}">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-            Republish
+        : `<button type="button" class="post-icon-btn ann-republish" data-id="${a.id}" title="Republish">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            <span>Republish</span>
           </button>`;
 
-      const media = a.media ? JSON.parse(a.media) : [];
-      const firstMedia = media[0];
-      const firstMediaUrl = firstMediaUrls[i];
-      let mediaHtml = '';
-      if (firstMedia && firstMediaUrl) {
-        const thumb = firstMedia.type === 'video'
-          ? `<video class="announcement-image" src="${firstMediaUrl}" muted></video><span class="announcement-video-badge"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
-          : `<img class="announcement-image" src="${firstMediaUrl}" alt="${escapeHtml(a.title)}" />`;
-        mediaHtml = `
-          <div class="announcement-image-wrap">
-            ${thumb}
-            ${media.length > 1 ? `<span class="announcement-media-count">+${media.length - 1} more</span>` : ''}
-          </div>
-        `;
-      }
+      const { eventDate, location } = parseMediaField(a.media);
+      const media = resolvedMedia[i];
+      const cover = media[0];
+
+      const coverHtml = cover
+        ? (cover.type === 'video'
+            ? `<video class="post-card-cover-media" src="${cover.resolvedUrl}" muted></video>`
+            : `<img class="post-card-cover-media" src="${cover.resolvedUrl}" alt="${escapeHtml(a.title)}" />`)
+        : `<div class="post-card-cover-placeholder">${MEGAPHONE_ICON}</div>`;
+
+      const statusBadge = a.published
+        ? `<span class="post-status-badge live">Live</span>`
+        : `<span class="post-status-badge draft">Unpublished</span>`;
 
       return `
-        <div class="announcement-card ${a.published ? '' : 'unpublished'} audience-${audienceClass(a.audience)}" data-id="${a.id}" role="button" tabindex="0" aria-label="View announcement: ${escapeHtml(a.title)}">
-          ${a.published ? '' : '<span class="ann-status-ribbon">Unpublished</span>'}
-          ${mediaHtml}
-          <div class="announcement-top">
-            <p class="announcement-title">${escapeHtml(a.title)}</p>
+        <article class="post-card ${a.published ? '' : 'unpublished'}" data-id="${a.id}" role="button" tabindex="0" aria-label="View announcement: ${escapeHtml(a.title)}">
+          <div class="post-card-cover">
+            ${coverHtml}
+            ${statusBadge}
+            ${media.length > 1 ? `<span class="post-card-media-count">${CAMERA_ICON}${media.length}</span>` : ''}
           </div>
-          <p class="announcement-excerpt">${escapeHtml(a.body)}</p>
-          <div class="announcement-meta">
-            <span class="announcement-date">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              ${formatShortDate(a.createdAt)}
-            </span>
-            <span class="audience-tag ${audienceClass(a.audience)}">${escapeHtml(a.audience)}</span>
+          <div class="post-card-body">
+            <p class="post-card-title">${escapeHtml(a.title)}</p>
+            ${eventBarHtml(eventDate, location)}
+            <p class="post-card-excerpt">${escapeHtml(a.body)}</p>
+            <div class="post-card-meta">
+              <span class="announcement-date">${CALENDAR_ICON}${formatShortDate(a.createdAt)}</span>
+              <span class="audience-tag ${audienceClass(a.audience)}">${escapeHtml(a.audience)}</span>
+            </div>
           </div>
-          <div class="announcement-actions">
-            <button type="button" class="ann-action-btn ann-edit" data-id="${a.id}">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-              Edit
+          <div class="post-card-footer">
+            <button type="button" class="post-icon-btn ann-edit" data-id="${a.id}" title="Edit">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              <span>Edit</span>
             </button>
             ${statusActions}
-            <button type="button" class="ann-action-btn ann-delete" data-id="${a.id}" aria-label="Delete announcement" title="Delete announcement">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+            <button type="button" class="post-icon-btn ann-delete" data-id="${a.id}" title="Delete">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
             </button>
           </div>
-        </div>
+        </article>
       `;
     }).join('');
   }
 
   grid.addEventListener('click', async (e) => {
-    const photoImg = e.target.closest('.announcement-image');
-    if (photoImg && photoImg.tagName === 'IMG') {
-      openLightbox(photoImg.src, photoImg.alt);
-      return;
-    }
-
     const editBtn       = e.target.closest('.ann-edit');
     const unpublishBtn   = e.target.closest('.ann-unpublish');
     const republishBtn   = e.target.closest('.ann-republish');
@@ -239,15 +279,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Click landed somewhere on the card itself (not a button or the
-    // thumbnail) — open the full post detail view.
-    const card = e.target.closest('.announcement-card');
+    // Click landed anywhere else on the card — open the full post
+    // detail view (with its own full-size photo/video carousel).
+    const card = e.target.closest('.post-card');
     if (card) openDetailModal(card.dataset.id);
   });
 
   grid.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const card = e.target.closest('.announcement-card');
+    const card = e.target.closest('.post-card');
     if (card && e.target === card) {
       e.preventDefault();
       openDetailModal(card.dataset.id);
@@ -257,58 +297,163 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
      1b. ANNOUNCEMENT DETAIL MODAL
-     Full post preview — title, complete body,
-     audience, date, status, and every attached
-     photo/video (not just the card's thumbnail).
+     Full post preview — a big photo/video carousel
+     (page counter, always-visible prev/next arrows,
+     a "View" button that opens the full-size photo
+     lightbox) plus title, complete body, audience,
+     date, status, and the Edit/Unpublish actions.
   ------------------------------------------ */
   const detailModal      = document.getElementById('detail-modal');
+  const detailMediaWrap     = document.getElementById('detail-media');
+  const detailMediaScroll    = document.getElementById('detail-media-scroll');
+  const detailCounter          = document.getElementById('detail-counter');
+  const detailDots                = document.getElementById('detail-dots');
+  const detailViewBtn                = document.getElementById('detail-view-btn');
+  const detailNavPrev                   = document.getElementById('detail-nav-prev');
+  const detailNavNext                      = document.getElementById('detail-nav-next');
   const detailTitle        = document.getElementById('detail-title');
   const detailBody          = document.getElementById('detail-body');
   const detailDate            = document.getElementById('detail-date');
   const detailAudience          = document.getElementById('detail-audience');
   const detailStatus              = document.getElementById('detail-status');
-  const detailMediaGrid              = document.getElementById('detail-media-grid');
+  const detailEventbar    = document.getElementById('detail-eventbar');
+  const detailEventDateChip = document.getElementById('detail-event-date-chip');
+  const detailEventDateText = document.getElementById('detail-event-date-text');
+  const detailLocationChip  = document.getElementById('detail-location-chip');
+  const detailLocationText  = document.getElementById('detail-location-text');
+  const detailEditBtn       = document.getElementById('detail-edit-btn');
+  const detailUnpublishBtn  = document.getElementById('detail-unpublish-btn');
+
+  let detailMedia = []; // resolved {type,url,name,resolvedUrl} items for the open post
+  let detailAnnId = null;
 
   async function openDetailModal(id) {
     const a = announcements.find(x => x.id === id);
     if (!a) return;
+    detailAnnId = id;
 
     detailTitle.textContent    = a.title;
-    detailBody.textContent     = a.body;
+    detailBody.innerHTML       = bodyParagraphsHtml(a.body);
     detailDate.textContent     = formatShortDate(a.createdAt);
     detailAudience.textContent = a.audience;
     detailAudience.className   = `audience-tag ${audienceClass(a.audience)}`;
     detailStatus.textContent   = a.published ? '' : 'Unpublished';
     detailStatus.className     = `ann-detail-status-badge ${a.published ? 'hidden' : ''}`;
 
-    detailMediaGrid.innerHTML = '';
-    detailMediaGrid.classList.add('hidden');
+    detailUnpublishBtn.dataset.id = id;
+    detailUnpublishBtn.querySelector('span').textContent = a.published ? 'Unpublish' : 'Republish';
+    detailUnpublishBtn.classList.toggle('ann-unpublish', a.published);
+    detailUnpublishBtn.classList.toggle('ann-republish', !a.published);
+
+    const { items: media, eventDate, location } = parseMediaField(a.media);
+    detailEventDateChip.classList.toggle('hidden', !eventDate);
+    detailEventDateText.textContent = eventDate ? formatEventDate(eventDate) : '';
+    detailLocationChip.classList.toggle('hidden', !location);
+    detailLocationText.textContent = location || '';
+    detailEventbar.classList.toggle('hidden', !eventDate && !location);
+
+    detailMedia = [];
+    detailMediaScroll.innerHTML = '';
+    detailMediaWrap.classList.add('hidden');
     openModal(detailModal);
 
-    const media = a.media ? JSON.parse(a.media) : [];
     if (media.length === 0) return;
 
-    // Resolve every attachment for the full gallery here (the card
-    // thumbnail only ever resolves the first one).
+    // Resolve every attachment for the full carousel here (the card
+    // cover thumbnail only ever resolves the first one).
     const resolvedItems = await Promise.all(media.map(async (m) => ({ ...m, resolvedUrl: await resolveMediaUrl(m.url) })));
 
     // The admin may have closed the modal (or opened a different
     // announcement) while these were resolving.
-    if (detailModal.classList.contains('hidden') || detailTitle.textContent !== a.title) return;
+    if (detailModal.classList.contains('hidden') || detailAnnId !== id) return;
 
     const items = resolvedItems.filter(m => m.resolvedUrl);
     if (items.length === 0) return;
 
-    detailMediaGrid.innerHTML = items.map(m => m.type === 'video'
-      ? `<div class="ann-detail-media-item"><video src="${m.resolvedUrl}" controls></video></div>`
-      : `<div class="ann-detail-media-item"><img src="${m.resolvedUrl}" alt="${escapeHtml(a.title)}" /></div>`
-    ).join('');
-    detailMediaGrid.classList.remove('hidden');
+    detailMedia = items;
+    renderDetailMedia();
+    detailMediaWrap.classList.remove('hidden');
   }
 
-  detailMediaGrid.addEventListener('click', (e) => {
-    const img = e.target.closest('.ann-detail-media-item img');
-    if (img) openLightbox(img.src, img.alt);
+  function renderDetailMedia() {
+    const multi = detailMedia.length > 1;
+    detailMediaScroll.innerHTML = detailMedia.map(m => `
+      <div class="post-detail-media-slide">
+        ${m.type === 'video'
+          ? `<video class="post-detail-media-el" src="${m.resolvedUrl}" controls></video>`
+          : `<img class="post-detail-media-el" src="${m.resolvedUrl}" alt="${escapeHtml(detailTitle.textContent)}" />`}
+      </div>`).join('');
+    detailMediaScroll.scrollLeft = 0;
+
+    detailCounter.classList.toggle('hidden', !multi);
+    detailCounter.textContent = multi ? `1/${detailMedia.length}` : '';
+    detailNavPrev.classList.toggle('hidden', !multi);
+    detailNavNext.classList.toggle('hidden', !multi);
+    detailDots.innerHTML = multi
+      ? detailMedia.map((_, i) => `<span class="dot${i === 0 ? ' active' : ''}" data-index="${i}"></span>`).join('')
+      : '';
+  }
+
+  // Keep the counter + dots in sync with free scrolling/swiping, not
+  // just button clicks.
+  detailMediaScroll.addEventListener('scroll', () => {
+    if (detailMedia.length < 2) return;
+    const index = Math.round(detailMediaScroll.scrollLeft / detailMediaScroll.clientWidth);
+    detailCounter.textContent = `${index + 1}/${detailMedia.length}`;
+    detailDots.querySelectorAll('.dot').forEach((dot, i) => dot.classList.toggle('active', i === index));
+  });
+
+  detailNavPrev.addEventListener('click', () => {
+    detailMediaScroll.scrollBy({ left: -detailMediaScroll.clientWidth, behavior: 'smooth' });
+  });
+  detailNavNext.addEventListener('click', () => {
+    detailMediaScroll.scrollBy({ left: detailMediaScroll.clientWidth, behavior: 'smooth' });
+  });
+
+  detailDots.addEventListener('click', (e) => {
+    const dot = e.target.closest('.dot');
+    if (!dot) return;
+    detailMediaScroll.scrollTo({ left: Number(dot.dataset.index) * detailMediaScroll.clientWidth, behavior: 'smooth' });
+  });
+
+  // Clicking a photo directly (not just the "View" button) also opens
+  // the full-size lightbox. Videos already have native controls.
+  detailMediaScroll.addEventListener('click', (e) => {
+    const img = e.target.closest('.post-detail-media-el');
+    if (img && img.tagName === 'IMG') openLightbox(img.src, img.alt);
+  });
+
+  detailViewBtn.addEventListener('click', () => {
+    if (detailMedia.length === 0) return;
+    const index = Math.round(detailMediaScroll.scrollLeft / detailMediaScroll.clientWidth);
+    const item = detailMedia[index];
+    if (item && item.type !== 'video') openLightbox(item.resolvedUrl, detailTitle.textContent);
+  });
+
+  detailEditBtn.addEventListener('click', () => {
+    if (!detailAnnId) return;
+    closeModal(detailModal);
+    openEditModal(detailAnnId);
+  });
+
+  detailUnpublishBtn.addEventListener('click', async () => {
+    if (!detailAnnId) return;
+    const a = announcements.find(x => x.id === detailAnnId);
+    if (!a) return;
+    if (a.published) {
+      closeModal(detailModal);
+      openUnpublishModal(detailAnnId);
+      return;
+    }
+    try {
+      const result = await client.models.Announcement.update({ id: detailAnnId, published: true });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      showToast(`"${a.title}" republished.`);
+      closeModal(detailModal);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Couldn't republish.", true);
+    }
   });
 
 
@@ -321,6 +466,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const titleInput          = document.getElementById('ann-title');
   const bodyInput            = document.getElementById('ann-body');
   const audienceSelect        = document.getElementById('ann-audience');
+  const eventDateInput          = document.getElementById('ann-event-date');
+  const locationInput             = document.getElementById('ann-location');
 
   const dropzone            = document.getElementById('ann-dropzone');
   const mediaInput            = document.getElementById('ann-media-input');
@@ -407,6 +554,8 @@ document.addEventListener('DOMContentLoaded', () => {
     titleInput.value = '';
     bodyInput.value = '';
     audienceSelect.value = 'All Parishioners';
+    eventDateInput.value = '';
+    locationInput.value = '';
     currentMedia = [];
     renderMediaGrid();
     openModal(modal);
@@ -427,7 +576,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // displays. New items added in this session get a `file` instead
     // until they're uploaded on save, and already have a usable
     // `previewUrl` from the local FileReader preview.
-    const existingMedia = a.media ? JSON.parse(a.media) : [];
+    const { items: existingMedia, eventDate, location } = parseMediaField(a.media);
+    eventDateInput.value = eventDate || '';
+    locationInput.value = location || '';
     currentMedia = await Promise.all(
       existingMedia.map(async (m) => ({ ...m, previewUrl: await resolveMediaUrl(m.url) }))
     );
@@ -460,6 +611,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const title    = titleInput.value.trim();
     const body      = bodyInput.value.trim();
     const audience   = audienceSelect.value;
+    const eventDate    = eventDateInput.value;
+    const location       = locationInput.value.trim();
 
     if (!title || !body) {
       showToast('Please fill in both title and body.', true);
@@ -470,7 +623,8 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.textContent = 'Saving…';
 
     try {
-      const media = JSON.stringify(await uploadPendingMedia(currentMedia));
+      const items = await uploadPendingMedia(currentMedia);
+      const media = JSON.stringify({ items, eventDate, location });
 
       if (editTargetId !== null) {
         const result = await client.models.Announcement.update({ id: editTargetId, title, body, audience, media });

@@ -49,8 +49,8 @@
     <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
 
       <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
-          <span class="text-white font-bold text-xs">SD</span>
+        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="sacradigit-images/sacradigit-logo.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
         </div>
         <div class="leading-tight">
           <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
@@ -234,6 +234,14 @@
             <label class="form-label" for="ann-title">Title</label>
             <input type="text" id="ann-title" class="form-input" placeholder="e.g. Parish Fiesta Schedule" />
           </div>
+          <div>
+            <label class="form-label" for="ann-event-date">Event Date <span class="text-gray-400 font-normal normal-case">(optional)</span></label>
+            <input type="date" id="ann-event-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="ann-location">Location <span class="text-gray-400 font-normal normal-case">(optional)</span></label>
+            <input type="text" id="ann-location" class="form-input" placeholder="e.g. Parish Grounds" />
+          </div>
           <div class="col-span-2">
             <label class="form-label" for="ann-body">Body</label>
             <textarea id="ann-body" class="form-input" rows="4" placeholder="Write the full announcement text..."></textarea>
@@ -307,24 +315,60 @@
 
   <!-- ========== ANNOUNCEMENT DETAIL MODAL ========== -->
   <div id="detail-modal" class="modal-overlay hidden">
-    <div class="modal-card ann-detail-card">
-      <div class="modal-header">
-        <h3 class="modal-title" id="detail-title"></h3>
-        <button class="modal-close" data-close-modal aria-label="Close">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    <div class="modal-card post-detail-card">
+      <button type="button" class="post-detail-close" data-close-modal aria-label="Close">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <div id="detail-media" class="post-detail-media hidden">
+        <span id="detail-counter" class="post-detail-counter hidden"></span>
+        <div id="detail-media-scroll" class="post-detail-media-scroll"></div>
+        <button type="button" id="detail-nav-prev" class="post-detail-nav prev hidden" aria-label="Previous photo">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
         </button>
+        <button type="button" id="detail-nav-next" class="post-detail-nav next hidden" aria-label="Next photo">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button type="button" id="detail-view-btn" class="post-detail-view-btn">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+          View
+        </button>
+        <div id="detail-dots" class="post-detail-dots"></div>
       </div>
-      <div class="modal-body">
-        <div class="ann-detail-meta">
+      <div class="modal-body post-detail-content">
+        <div class="post-detail-meta">
+          <span class="audience-tag" id="detail-audience"></span>
+          <span class="post-detail-dot">&middot;</span>
           <span class="announcement-date">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <span id="detail-date"></span>
           </span>
-          <span class="audience-tag" id="detail-audience"></span>
           <span class="ann-detail-status-badge hidden" id="detail-status"></span>
         </div>
-        <p class="ann-detail-body" id="detail-body"></p>
-        <div id="detail-media-grid" class="ann-detail-media-grid hidden"></div>
+        <div class="social-post-eventbar hidden" id="detail-eventbar">
+          <span class="chip chip-date hidden" id="detail-event-date-chip">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span id="detail-event-date-text"></span>
+          </span>
+          <span class="chip chip-location hidden" id="detail-location-chip">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span id="detail-location-text"></span>
+          </span>
+        </div>
+        <h3 class="post-detail-title" id="detail-title"></h3>
+        <div class="post-detail-body" id="detail-body"></div>
+      </div>
+      <div class="modal-footer post-detail-footer">
+        <div class="post-detail-actions">
+          <button type="button" id="detail-edit-btn" class="post-icon-btn ann-edit">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            <span>Edit</span>
+          </button>
+          <button type="button" id="detail-unpublish-btn" class="post-icon-btn ann-unpublish">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/></svg>
+            <span>Unpublish</span>
+          </button>
+        </div>
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>
   </div>

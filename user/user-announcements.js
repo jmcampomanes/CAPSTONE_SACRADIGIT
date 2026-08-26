@@ -9,6 +9,10 @@
    src. Resolution happens at render time and is cached
    briefly, mirroring the same fix applied to the admin
    Announcements page.
+
+   Read-only: parishioners browse a simple card grid and
+   open a bigger detail view with a photo/video carousel —
+   no like/share/edit actions here.
    ============================================ */
 
 import { client } from '../amplify-init.js';
@@ -25,28 +29,66 @@ document.addEventListener('DOMContentLoaded', () => {
   const audienceFilter   = document.getElementById('audience-filter');
   const clearBtn          = document.getElementById('btn-clear');
 
-  const detailModal = document.getElementById('detail-modal');
-  const detailTitle  = document.getElementById('detail-title');
-  const detailBody    = document.getElementById('detail-body');
-  const detailAudience = document.getElementById('detail-audience');
-  const detailDate      = document.getElementById('detail-date');
-  const detailMediaGrid  = document.getElementById('detail-media-grid');
-
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str || '';
     return div.innerHTML;
   }
-  function formatDate(input) {
+
+  function formatShortDate(input) {
+    if (!input) return '';
     const d = new Date(input);
-    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
-  function formatShort(input) {
-    const d = new Date(input);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
+
   function audienceClass(audience) {
     return audience === 'All Parishioners' ? 'all' : 'ministry';
+  }
+
+  /* Parse the `media` AWSJSON field. Older records stored a bare
+     array of {type,url,name} items; newer records store an object
+     carrying that same array under `.items` plus the optional
+     `eventDate` / `location` badges shown on the post card. Both
+     shapes are normalized so every call site can just read
+     `.items` / `.eventDate` / `.location`. */
+  function parseMediaField(raw) {
+    if (!raw) return { items: [], eventDate: '', location: '' };
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { return { items: [], eventDate: '', location: '' }; }
+    if (Array.isArray(parsed)) return { items: parsed, eventDate: '', location: '' };
+    return {
+      items: Array.isArray(parsed.items) ? parsed.items : [],
+      eventDate: parsed.eventDate || '',
+      location: parsed.location || '',
+    };
+  }
+
+  function formatEventDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  /* Split a body into paragraphs on blank lines (a single newline
+     within a paragraph becomes a <br>), so the detail view reads
+     like the multi-paragraph announcements admins actually write
+     instead of one unbroken block of text. */
+  function bodyParagraphsHtml(text) {
+    return (text || '').split(/\n{2,}/).map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+  }
+
+  const CALENDAR_ICON  = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
+  const PIN_ICON       = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+  const MEGAPHONE_ICON = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>';
+  const CAMERA_ICON    = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-width="2"/></svg>';
+
+  function eventBarHtml(eventDate, location) {
+    if (!eventDate && !location) return '';
+    return `
+      <div class="social-post-eventbar">
+        ${eventDate ? `<span class="chip chip-date">${CALENDAR_ICON}${formatEventDate(eventDate)}</span>` : ''}
+        ${location ? `<span class="chip chip-location">${PIN_ICON}${escapeHtml(location)}</span>` : ''}
+      </div>`;
   }
 
   /* Resolve a stored S3 path into a real, fetchable URL,
@@ -109,12 +151,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     annEmpty.classList.add('hidden');
 
-    // Only the first media item of each card is shown as a thumbnail,
-    // so that's the only one worth resolving here.
-    const firstMediaUrls = await Promise.all(filtered.map(async (a) => {
-      const media = a.media ? JSON.parse(a.media) : [];
-      const first = media[0];
-      return first ? resolveMediaUrl(first.url) : '';
+    // Only the cover (first) item is needed for the card grid.
+    const resolvedCovers = await Promise.all(filtered.map(async (a) => {
+      const { items } = parseMediaField(a.media);
+      if (items.length === 0) return null;
+      const resolvedUrl = await resolveMediaUrl(items[0].url);
+      return resolvedUrl ? { ...items[0], resolvedUrl } : null;
     }));
 
     // A newer render started while these URLs were resolving (e.g. the
@@ -122,45 +164,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if (myToken !== renderToken) return;
 
     grid.innerHTML = filtered.map((a, i) => {
-      const media = a.media ? JSON.parse(a.media) : [];
-      const firstMedia = media[0];
-      const firstMediaUrl = firstMediaUrls[i];
-      let mediaHtml = '';
-      if (firstMedia && firstMediaUrl) {
-        const thumb = firstMedia.type === 'video'
-          ? `<video class="ann-card-image" src="${firstMediaUrl}" muted></video><span class="ann-card-video-badge"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`
-          : `<img class="ann-card-image" src="${firstMediaUrl}" alt="${escapeHtml(a.title)}" />`;
-        mediaHtml = `
-          <div class="ann-card-image-wrap">
-            ${thumb}
-            ${media.length > 1 ? `<span class="ann-card-media-count">+${media.length - 1} more</span>` : ''}
-          </div>`;
-      }
+      const { items, eventDate, location } = parseMediaField(a.media);
+      const cover = resolvedCovers[i];
+
+      const coverHtml = cover
+        ? (cover.type === 'video'
+            ? `<video class="post-card-cover-media" src="${cover.resolvedUrl}" muted></video>`
+            : `<img class="post-card-cover-media" src="${cover.resolvedUrl}" alt="${escapeHtml(a.title)}" />`)
+        : `<div class="post-card-cover-placeholder">${MEGAPHONE_ICON}</div>`;
 
       return `
-      <div class="ann-card audience-${audienceClass(a.audience)}" data-id="${a.id}" role="button" tabindex="0" aria-label="Read announcement: ${escapeHtml(a.title)}">
-        ${mediaHtml}
-        <p class="ann-card-title">${escapeHtml(a.title)}</p>
-        <p class="ann-card-excerpt">${escapeHtml(a.body)}</p>
-        <div class="ann-card-footer">
-          <span class="ann-card-date">${formatShort(a.createdAt)}</span>
-          <span class="ann-audience-tag ${audienceClass(a.audience)}">${escapeHtml(a.audience)}</span>
-          <button type="button" class="ann-read-more" data-id="${a.id}">Read more ›</button>
-        </div>
-      </div>`;
+        <article class="post-card" data-id="${a.id}" role="button" tabindex="0" aria-label="Read announcement: ${escapeHtml(a.title)}">
+          <div class="post-card-cover">
+            ${coverHtml}
+            ${items.length > 1 ? `<span class="post-card-media-count">${CAMERA_ICON}${items.length}</span>` : ''}
+          </div>
+          <div class="post-card-body">
+            <p class="post-card-title">${escapeHtml(a.title)}</p>
+            ${eventBarHtml(eventDate, location)}
+            <p class="post-card-excerpt">${escapeHtml(a.body)}</p>
+            <div class="post-card-meta">
+              <span class="announcement-date">${CALENDAR_ICON}${formatShortDate(a.createdAt)}</span>
+              <span class="ann-audience-tag ${audienceClass(a.audience)}">${escapeHtml(a.audience)}</span>
+            </div>
+          </div>
+        </article>`;
     }).join('');
   }
 
   grid.addEventListener('click', (e) => {
-    const card = e.target.closest('.ann-card');
-    if (!card) return;
-    openDetail(card.dataset.id);
+    const card = e.target.closest('.post-card');
+    if (card) openDetailModal(card.dataset.id);
   });
 
   grid.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      const card = e.target.closest('.ann-card');
-      if (card) { e.preventDefault(); openDetail(card.dataset.id); }
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.post-card');
+    if (card && e.target === card) {
+      e.preventDefault();
+      openDetailModal(card.dataset.id);
     }
   });
 
@@ -172,59 +214,146 @@ document.addEventListener('DOMContentLoaded', () => {
     renderGrid();
   });
 
-  async function openDetail(id) {
+
+  /* ------------------------------------------
+     ANNOUNCEMENT DETAIL MODAL
+     A big photo/video carousel (page counter,
+     always-visible prev/next arrows, a "View"
+     button that opens the full-size photo
+     lightbox) plus title, complete body,
+     audience, and date. Read-only.
+  ------------------------------------------ */
+  const detailModal      = document.getElementById('detail-modal');
+  const detailMediaWrap    = document.getElementById('detail-media');
+  const detailMediaScroll   = document.getElementById('detail-media-scroll');
+  const detailCounter        = document.getElementById('detail-counter');
+  const detailDots              = document.getElementById('detail-dots');
+  const detailViewBtn              = document.getElementById('detail-view-btn');
+  const detailNavPrev                 = document.getElementById('detail-nav-prev');
+  const detailNavNext                    = document.getElementById('detail-nav-next');
+  const detailTitle      = document.getElementById('detail-title');
+  const detailBody        = document.getElementById('detail-body');
+  const detailDate          = document.getElementById('detail-date');
+  const detailAudience        = document.getElementById('detail-audience');
+  const detailEventbar  = document.getElementById('detail-eventbar');
+  const detailEventDateChip = document.getElementById('detail-event-date-chip');
+  const detailEventDateText = document.getElementById('detail-event-date-text');
+  const detailLocationChip  = document.getElementById('detail-location-chip');
+  const detailLocationText  = document.getElementById('detail-location-text');
+
+  let detailMedia = []; // resolved {type,url,name,resolvedUrl} items for the open post
+  let detailAnnId = null;
+
+  async function openDetailModal(id) {
     const a = announcements.find(x => x.id === id);
     if (!a) return;
+    detailAnnId = id;
+
     detailTitle.textContent    = a.title;
-    detailBody.textContent     = a.body;
-    detailDate.textContent     = formatDate(a.createdAt);
+    detailBody.innerHTML       = bodyParagraphsHtml(a.body);
+    detailDate.textContent     = formatShortDate(a.createdAt);
     detailAudience.textContent = a.audience;
     detailAudience.className   = `ann-audience-tag ${audienceClass(a.audience)}`;
 
-    detailMediaGrid.innerHTML = '';
-    detailMediaGrid.classList.add('hidden');
-    detailModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    const { items: media, eventDate, location } = parseMediaField(a.media);
+    detailEventDateChip.classList.toggle('hidden', !eventDate);
+    detailEventDateText.textContent = eventDate ? formatEventDate(eventDate) : '';
+    detailLocationChip.classList.toggle('hidden', !location);
+    detailLocationText.textContent = location || '';
+    detailEventbar.classList.toggle('hidden', !eventDate && !location);
 
-    const media = a.media ? JSON.parse(a.media) : [];
+    detailMedia = [];
+    detailMediaScroll.innerHTML = '';
+    detailMediaWrap.classList.add('hidden');
+    openModal(detailModal);
+
     if (media.length === 0) return;
 
-    // Resolve every attachment for the full gallery (not just the
-    // first, unlike the card thumbnail) — this is the modal the
-    // parishioner is actually viewing the announcement's media in.
+    // Resolve every attachment for the full carousel here (the card
+    // cover thumbnail only ever resolves the first one).
     const resolvedItems = await Promise.all(media.map(async (m) => ({ ...m, resolvedUrl: await resolveMediaUrl(m.url) })));
 
-    // The parishioner may have closed the modal (or opened a
-    // different announcement) while these were resolving.
-    if (detailModal.classList.contains('hidden') || detailTitle.textContent !== a.title) return;
+    // The parishioner may have closed the modal (or opened a different
+    // announcement) while these were resolving.
+    if (detailModal.classList.contains('hidden') || detailAnnId !== id) return;
 
     const items = resolvedItems.filter(m => m.resolvedUrl);
     if (items.length === 0) return;
 
-    detailMediaGrid.innerHTML = items.map(m => m.type === 'video'
-      ? `<div class="ann-detail-media-item"><video src="${m.resolvedUrl}" controls></video></div>`
-      : `<div class="ann-detail-media-item"><img src="${m.resolvedUrl}" alt="${escapeHtml(a.title)}" /></div>`
-    ).join('');
-    detailMediaGrid.classList.remove('hidden');
+    detailMedia = items;
+    renderDetailMedia();
+    detailMediaWrap.classList.remove('hidden');
   }
 
-  function closeDetail() {
-    detailModal.classList.add('hidden');
-    document.body.style.overflow = '';
+  function renderDetailMedia() {
+    const multi = detailMedia.length > 1;
+    detailMediaScroll.innerHTML = detailMedia.map(m => `
+      <div class="post-detail-media-slide">
+        ${m.type === 'video'
+          ? `<video class="post-detail-media-el" src="${m.resolvedUrl}" controls></video>`
+          : `<img class="post-detail-media-el" src="${m.resolvedUrl}" alt="${escapeHtml(detailTitle.textContent)}" />`}
+      </div>`).join('');
+    detailMediaScroll.scrollLeft = 0;
+
+    detailCounter.classList.toggle('hidden', !multi);
+    detailCounter.textContent = multi ? `1/${detailMedia.length}` : '';
+    detailNavPrev.classList.toggle('hidden', !multi);
+    detailNavNext.classList.toggle('hidden', !multi);
+    detailDots.innerHTML = multi
+      ? detailMedia.map((_, i) => `<span class="dot${i === 0 ? ' active' : ''}" data-index="${i}"></span>`).join('')
+      : '';
   }
+
+  // Keep the counter + dots in sync with free scrolling/swiping, not
+  // just button clicks.
+  detailMediaScroll.addEventListener('scroll', () => {
+    if (detailMedia.length < 2) return;
+    const index = Math.round(detailMediaScroll.scrollLeft / detailMediaScroll.clientWidth);
+    detailCounter.textContent = `${index + 1}/${detailMedia.length}`;
+    detailDots.querySelectorAll('.dot').forEach((dot, i) => dot.classList.toggle('active', i === index));
+  });
+
+  detailNavPrev.addEventListener('click', () => {
+    detailMediaScroll.scrollBy({ left: -detailMediaScroll.clientWidth, behavior: 'smooth' });
+  });
+  detailNavNext.addEventListener('click', () => {
+    detailMediaScroll.scrollBy({ left: detailMediaScroll.clientWidth, behavior: 'smooth' });
+  });
+
+  detailDots.addEventListener('click', (e) => {
+    const dot = e.target.closest('.dot');
+    if (!dot) return;
+    detailMediaScroll.scrollTo({ left: Number(dot.dataset.index) * detailMediaScroll.clientWidth, behavior: 'smooth' });
+  });
+
+  // Clicking a photo directly (not just the "View" button) also opens
+  // the full-size lightbox. Videos already have native controls.
+  detailMediaScroll.addEventListener('click', (e) => {
+    const img = e.target.closest('.post-detail-media-el');
+    if (img && img.tagName === 'IMG') openLightbox(img.src, img.alt);
+  });
+
+  detailViewBtn.addEventListener('click', () => {
+    if (detailMedia.length === 0) return;
+    const index = Math.round(detailMediaScroll.scrollLeft / detailMediaScroll.clientWidth);
+    const item = detailMedia[index];
+    if (item && item.type !== 'video') openLightbox(item.resolvedUrl, detailTitle.textContent);
+  });
+
 
   /* ------------------------------------------
      PHOTO LIGHTBOX — click a photo in the detail
-     modal's media grid to view it full-size.
-     Sits on top of the detail modal (which stays
-     open behind it). Videos are left alone since
-     they already have native playback controls.
+     modal's carousel (or tap "View") to view it
+     full-size. Sits on top of the detail modal
+     (which stays open behind it). Videos are left
+     alone since they already have native controls.
   ------------------------------------------ */
   const photoLightbox   = document.getElementById('photo-lightbox');
   const lightboxImg       = document.getElementById('lightbox-img');
   const lightboxCloseBtn    = document.getElementById('lightbox-close');
 
   function openLightbox(src, alt) {
+    if (!src) return;
     lightboxImg.src = src;
     lightboxImg.alt = alt || '';
     photoLightbox.classList.remove('hidden');
@@ -235,11 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
     photoLightbox.classList.add('hidden');
     lightboxImg.src = '';
   }
-
-  detailMediaGrid.addEventListener('click', (e) => {
-    const img = e.target.closest('.ann-detail-media-item img');
-    if (img) openLightbox(img.src, img.alt);
-  });
 
   lightboxCloseBtn.addEventListener('click', closeLightbox);
   photoLightbox.addEventListener('click', (e) => { if (e.target === photoLightbox) closeLightbox(); });
@@ -254,8 +378,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeDetail));
-  detailModal.addEventListener('click', (e) => { if (e.target === detailModal) closeDetail(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+
+  /* ------------------------------------------
+     MODAL HELPERS (open/close/escape)
+  ------------------------------------------ */
+  document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(detailModal)));
+  detailModal.addEventListener('click', (e) => { if (e.target === detailModal) closeModal(detailModal); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(detailModal); });
+
+  function openModal(m) {
+    m.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(m) {
+    if (m.classList.contains('hidden')) return;
+    m.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
 
 });
