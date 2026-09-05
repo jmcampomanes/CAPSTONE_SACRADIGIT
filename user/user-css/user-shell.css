@@ -67,6 +67,63 @@ body { background-color: #f7f8fa; }
 
 .sidebar-link.active svg { color: #c9a84c; }
 
+/* ---------- Per-tab sidebar icon colors (user) ---------- */
+.sidebar-link[data-nav="dashboard"] svg,
+.sidebar-link[data-nav="dashboard"]:hover svg { color: #8a3040; }
+.sidebar-link[data-nav="dashboard"].active { background-color: rgba(138,48,64,0.12); color: #8a3040; }
+.sidebar-link[data-nav="dashboard"].active svg { color: #8a3040; }
+
+.sidebar-link[data-nav="mass-schedule"] svg,
+.sidebar-link[data-nav="mass-schedule"]:hover svg { color: #2166a8; }
+.sidebar-link[data-nav="mass-schedule"].active { background-color: rgba(33,102,168,0.12); color: #2166a8; }
+.sidebar-link[data-nav="mass-schedule"].active svg { color: #2166a8; }
+
+.sidebar-link[data-nav="announcements"] svg,
+.sidebar-link[data-nav="announcements"]:hover svg { color: #c2701c; }
+.sidebar-link[data-nav="announcements"].active { background-color: rgba(194,112,28,0.14); color: #c2701c; }
+.sidebar-link[data-nav="announcements"].active svg { color: #c2701c; }
+
+.sidebar-link[data-nav="request-certificate"] svg,
+.sidebar-link[data-nav="request-certificate"]:hover svg { color: #5b5fa8; }
+.sidebar-link[data-nav="request-certificate"].active { background-color: rgba(91,95,168,0.14); color: #5b5fa8; }
+.sidebar-link[data-nav="request-certificate"].active svg { color: #5b5fa8; }
+
+.sidebar-link[data-nav="my-requests"] svg,
+.sidebar-link[data-nav="my-requests"]:hover svg { color: #0f8a7a; }
+.sidebar-link[data-nav="my-requests"].active { background-color: rgba(15,138,122,0.12); color: #0f8a7a; }
+.sidebar-link[data-nav="my-requests"].active svg { color: #0f8a7a; }
+
+.sidebar-link[data-nav="request-service"] svg,
+.sidebar-link[data-nav="request-service"]:hover svg { color: #7a4ea8; }
+.sidebar-link[data-nav="request-service"].active { background-color: rgba(122,78,168,0.12); color: #7a4ea8; }
+.sidebar-link[data-nav="request-service"].active svg { color: #7a4ea8; }
+
+.sidebar-link[data-nav="requested-services"] svg,
+.sidebar-link[data-nav="requested-services"]:hover svg { color: #1590a8; }
+.sidebar-link[data-nav="requested-services"].active { background-color: rgba(21,144,168,0.12); color: #1590a8; }
+.sidebar-link[data-nav="requested-services"].active svg { color: #1590a8; }
+
+.sidebar-link[data-nav="blessings"] svg,
+.sidebar-link[data-nav="blessings"]:hover svg { color: #b5476e; }
+.sidebar-link[data-nav="blessings"].active { background-color: rgba(181,71,110,0.12); color: #b5476e; }
+.sidebar-link[data-nav="blessings"].active svg { color: #b5476e; }
+
+.sidebar-link[data-nav="mass-intentions"] svg,
+.sidebar-link[data-nav="mass-intentions"]:hover svg { color: #b5943e; }
+.sidebar-link[data-nav="mass-intentions"].active { background-color: rgba(201,168,76,0.16); color: #b5943e; }
+.sidebar-link[data-nav="mass-intentions"].active svg { color: #b5943e; }
+
+.sidebar-link[data-nav="facility-booking"] svg,
+.sidebar-link[data-nav="facility-booking"]:hover svg { color: #1e2a4a; }
+.sidebar-link[data-nav="facility-booking"].active { background-color: rgba(30,42,74,0.08); color: #1e2a4a; }
+.sidebar-link[data-nav="facility-booking"].active svg { color: #1e2a4a; }
+
+.sidebar-link[data-nav="donations"] svg,
+.sidebar-link[data-nav="donations"]:hover svg { color: #15803d; }
+.sidebar-link[data-nav="donations"].active { background-color: rgba(21,128,61,0.12); color: #15803d; }
+.sidebar-link[data-nav="donations"].active svg { color: #15803d; }
+
+
 /* ---------- Mobile sidebar overlay ---------- */
 .sidebar-overlay {
   position: fixed;
