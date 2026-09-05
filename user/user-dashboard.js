@@ -10,7 +10,44 @@ import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  function toLocalISODate(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const todayISO = toLocalISODate();
+
+  // Recurring weekly pattern — mirrors the admin "Regular Weekly Mass
+  // Schedule" template. Not stored in the database; used only to fill
+  // in today's schedule when no real Mass record exists yet.
+  const weeklySchedule = [
+    { day: 'Monday',    times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
+    { day: 'Tuesday',   times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
+    { day: 'Wednesday', times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
+    { day: 'Thursday',  times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
+    { day: 'Friday',    times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
+    { day: 'Saturday',  times: ['7:00 AM', '5:30 PM'],            type: 'Anticipated Mass' },
+    { day: 'Sunday',    times: ['6:00 AM', '8:00 AM', '10:00 AM', '5:00 PM'], type: 'Sunday Mass' },
+  ];
+
+  function parseTimeToMinutes(time12) {
+    const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec((time12 || '').trim());
+    if (!m) return 0;
+    let h = parseInt(m[1], 10);
+    const min = parseInt(m[2], 10);
+    const ap = m[3].toUpperCase();
+    if (ap === 'PM' && h !== 12) h += 12;
+    if (ap === 'AM' && h === 12) h = 0;
+    return h * 60 + min;
+  }
+
+  const todaysDayName = new Date(todayISO + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+  const todaysTemplate = weeklySchedule.find(w => w.day === todaysDayName);
+  const recurringToday = todaysTemplate
+    ? todaysTemplate.times.map(t => ({ time: t, title: todaysTemplate.type, note: '', isRecurring: true }))
+    : [];
 
   const greetingName = document.getElementById('greeting-name');
   if (greetingName) greetingName.textContent = 'Maria';
@@ -52,22 +89,42 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Today's Mass Schedule --- */
   const massesList = document.getElementById('todays-masses');
   if (massesList) {
-    client.models.Mass.observeQuery({ filter: { date: { eq: todayISO } } }).subscribe({
-      next: ({ items }) => {
-        const sorted = items.slice().sort((a, b) => a.time.localeCompare(b.time));
-        massesList.innerHTML = sorted.length === 0
-          ? `<li class="text-sm text-gray-400 py-4">No masses scheduled today.</li>`
-          : sorted.map(m => `
+    let latestRealMasses = [];
+
+    function renderTodaysSchedule() {
+      const nowMinutes = (() => {
+        const n = new Date();
+        return n.getHours() * 60 + n.getMinutes();
+      })();
+
+      const combined = recurringToday.concat(latestRealMasses)
+        .sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
+
+      const upcoming = combined.filter(m => parseTimeToMinutes(m.time) >= nowMinutes);
+
+      massesList.innerHTML = upcoming.length === 0
+        ? `<li class="text-sm text-gray-400 py-4">No more masses scheduled today.</li>`
+        : upcoming.map(m => `
               <li><div class="mass-row">
                 <span class="mass-time">${m.time}</span>
                 <div class="flex-1 min-w-0">
-                  <p class="mass-type">${m.title || m.type}</p>
+                  <p class="mass-type">${m.title || m.type}${m.isRecurring ? ' <span class="text-xs text-gray-400">(Recurring)</span>' : ''}</p>
                   ${m.note ? `<p class="mass-note">${m.note}</p>` : ''}
                 </div>
               </div></li>`).join('');
+    }
+
+    client.models.Mass.observeQuery({ filter: { date: { eq: todayISO } } }).subscribe({
+      next: ({ items }) => {
+        latestRealMasses = items.map(m => ({ ...m, isRecurring: false }));
+        renderTodaysSchedule();
       },
       error: (err) => { console.error(err); massesList.innerHTML = `<li class="text-sm text-red-500 py-4">Couldn't load schedule.</li>`; },
     });
+
+    // Re-check every minute so a mass drops off the list right after
+    // its time passes, even if nothing in the database changes.
+    setInterval(renderTodaysSchedule, 60 * 1000);
   }
 
   /* --- Upcoming Special Masses --- */

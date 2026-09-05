@@ -10,7 +10,14 @@ import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  function toLocalISODate(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const todayISO = toLocalISODate();
 
   let allMasses = []; // kept in sync via observeQuery, each has .id
   let currentDateMasses = []; // sorted masses for the currently selected date
@@ -152,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const weekStart = new Date(todayISO + 'T00:00:00');
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
-    const weekEndISO = weekEnd.toISOString().slice(0, 10);
+    const weekEndISO = toLocalISODate(weekEnd);
 
     const thisWeek = allMasses.filter(m => m.date >= todayISO && m.date < weekEndISO);
 

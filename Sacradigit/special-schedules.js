@@ -7,7 +7,14 @@ import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  function toLocalISODate(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const todayISO = toLocalISODate();
 
   let schedules = []; // kept in sync via observeQuery, each has .id
 

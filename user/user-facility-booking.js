@@ -157,11 +157,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const BOOKING_MAX_HOURS      = 5;
   const BOOKING_MIN_ADVANCE_DAYS = 3;
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  function toLocalISODate(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const todayISO = toLocalISODate();
   const earliestBookableIso = (() => {
     const d = new Date(todayISO + 'T00:00:00');
     d.setDate(d.getDate() + BOOKING_MIN_ADVANCE_DAYS);
-    return d.toISOString().slice(0, 10);
+    return toLocalISODate(d);
   })();
 
   function parseTimeToMinutes(time12) {

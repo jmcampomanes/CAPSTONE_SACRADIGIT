@@ -148,6 +148,7 @@ body {
 }
 
 .certificate-border {
+  position: relative;
   width: 100%;
   max-width: 780px;
   background-color: var(--paper);
@@ -157,10 +158,39 @@ body {
   color: var(--ink);
 }
 
+/* ---------- Decorative border accents (corners + inner rule) ---------- */
+.certificate-border::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid var(--ink);
+  pointer-events: none;
+}
+
+.cert-corner {
+  position: absolute;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--ink);
+  pointer-events: none;
+}
+
+.cert-corner svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cert-corner-tl { top: 0.6rem; left: 0.6rem; }
+.cert-corner-tr { top: 0.6rem; right: 0.6rem; transform: scaleX(-1); }
+.cert-corner-bl { bottom: 0.6rem; left: 0.6rem; transform: scaleY(-1); }
+.cert-corner-br { bottom: 0.6rem; right: 0.6rem; transform: scale(-1, -1); }
+
 /* ---------- Header: logo + parish name ---------- */
 .cert-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1.25rem;
   margin-bottom: 0.25rem;
 }
@@ -178,8 +208,9 @@ body {
 }
 
 .cert-heading {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  text-align: center;
 }
 
 .cert-parish-name {
