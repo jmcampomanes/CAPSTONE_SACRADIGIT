@@ -390,3 +390,96 @@ button:focus-visible {
   background-color: #f0f1f4;
   margin: 0.3rem 0.2rem;
 }
+
+/* ============================================
+   Sacred Art — rotating icon-style background
+   Shared base rules for any [data-sacred-art] frame
+   on the admin side (dashboard + profile pages).
+   The rotator logic lives in sacred-art.js.
+   ============================================ */
+.sacred-art-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sacred-art-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+
+.sacred-art-layer.sacred-art-visible {
+  opacity: 1;
+}
+
+.sacred-art-layer svg,
+.sacred-art-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sacred-art-layer .sacred-kb-group {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: sacred-kb 46s ease-in-out infinite alternate;
+}
+
+@keyframes sacred-kb {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.12) translate(-1.5%, -1%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sacred-art-layer .sacred-kb-group { animation: none; }
+}
+
+/* ---------- Dashboard banner (uses the frame above) ---------- */
+.sacred-dashboard-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  min-height: 128px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 14px 34px rgba(30, 42, 74, 0.22);
+}
+
+.sacred-dashboard-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(30, 42, 74, 0.86) 0%, rgba(42, 58, 92, 0.8) 100%);
+  z-index: 1;
+}
+
+.sacred-dashboard-banner > *:not(.sacred-art-frame) {
+  position: relative;
+  z-index: 2;
+}
+
+.sacred-dashboard-banner-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sacred-dashboard-banner-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0.2rem 0 0.15rem;
+}
+
+.sacred-dashboard-banner-sub {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.65);
+}

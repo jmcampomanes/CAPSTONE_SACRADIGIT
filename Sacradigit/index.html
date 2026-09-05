@@ -94,8 +94,10 @@
 
   <!-- ========== HERO ========== -->
   <section id="hero" class="hero-section relative flex items-center justify-center text-center overflow-hidden">
-    <!-- Background overlay -->
-    <div class="absolute inset-0 bg-navy opacity-95 z-0"></div>
+    <!-- Rotating sacred art backdrop (see sacred-art.js) — changes every 3 hours -->
+    <div id="sacred-art-hero" class="absolute inset-0 z-0" data-sacred-art aria-hidden="true"></div>
+    <!-- Dark tint so the art stays a backdrop, not a distraction -->
+    <div class="absolute inset-0 hero-art-overlay z-0"></div>
     <!-- Subtle cross pattern overlay -->
     <div class="absolute inset-0 hero-pattern z-0"></div>
 
@@ -253,6 +255,7 @@
   </footer>
 
   <!-- Custom JS -->
+  <script type="module" src="sacred-art.js"></script>
   <script type="module" src="scripts.js"></script>
 </body>
 </html>

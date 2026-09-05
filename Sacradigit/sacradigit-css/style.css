@@ -65,6 +65,60 @@ body {
   opacity: 1;
 }
 
+/* Dark tint over the rotating sacred art (see sacred-art.js) — lighter
+   in the middle so the artwork reads through, darker top/bottom so the
+   hero text and pattern above still have full contrast. */
+.hero-art-overlay {
+  background: linear-gradient(165deg, rgba(30, 42, 74, 0.92) 0%, rgba(30, 42, 74, 0.68) 45%, rgba(30, 42, 74, 0.92) 100%);
+}
+
+/* ============================================
+   Sacred Art — rotating icon-style background
+   Base rules for the [data-sacred-art] hero frame.
+   The rotator logic lives in sacred-art.js.
+   ============================================ */
+.sacred-art-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sacred-art-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+
+.sacred-art-layer.sacred-art-visible {
+  opacity: 1;
+}
+
+.sacred-art-layer svg,
+.sacred-art-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sacred-art-layer .sacred-kb-group {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: sacred-kb 46s ease-in-out infinite alternate;
+}
+
+@keyframes sacred-kb {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.12) translate(-1.5%, -1%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sacred-art-layer .sacred-kb-group { animation: none; }
+}
+
 /* Get Started button pulse on hover */
 .btn-get-started {
   position: relative;

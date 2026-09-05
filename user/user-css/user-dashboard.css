@@ -17,16 +17,19 @@
   box-shadow: 0 14px 34px rgba(30, 42, 74, 0.22);
 }
 
+/* Combines the original corner-glow decoration with a flat dark tint —
+   the tint is what keeps the greeting text readable over the rotating
+   sacred art frame (see [data-sacred-art] below), which paints beneath
+   this pseudo-element. */
 .greeting-banner::before {
   content: '';
   position: absolute;
-  top: -45%;
-  right: -8%;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(201, 168, 76, 0.28), transparent 70%);
+  inset: 0;
+  z-index: 1;
   pointer-events: none;
+  background:
+    radial-gradient(circle at 96% -30%, rgba(201, 168, 76, 0.28), transparent 45%),
+    linear-gradient(135deg, rgba(30, 42, 74, 0.86) 0%, rgba(42, 58, 92, 0.8) 100%);
 }
 
 .greeting-banner::after {
@@ -39,6 +42,14 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(139, 143, 199, 0.22), transparent 70%);
   pointer-events: none;
+  z-index: 1;
+}
+
+/* The rotating sacred art sits behind the tint above; everything else
+   in the banner (the greeting text, the icon) stays above both. */
+.greeting-banner > *:not(.sacred-art-frame) {
+  position: relative;
+  z-index: 2;
 }
 
 .greeting-label {

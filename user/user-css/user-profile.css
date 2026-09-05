@@ -13,6 +13,24 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dark tint over the rotating sacred art frame (see sacred-art.js) so
+   the name/avatar stay readable no matter which piece is showing. */
+.profile-header-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(30, 42, 74, 0.86) 0%, rgba(42, 58, 92, 0.8) 100%);
+}
+
+.profile-header-card > *:not(.sacred-art-frame) {
+  position: relative;
+  z-index: 2;
 }
 
 @media (min-width: 640px) {

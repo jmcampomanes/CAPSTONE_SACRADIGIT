@@ -408,6 +408,54 @@ a:focus-visible, button:focus-visible {
 .user-menu-item-danger { color: #b91c1c; }
 .user-menu-item-danger:hover { background-color: #fef2f2; }
 
+/* ============================================
+   Sacred Art — rotating icon-style background
+   Shared base rules for any [data-sacred-art] frame
+   on the parishioner side (dashboard + profile pages).
+   The rotator logic lives in sacred-art.js.
+   ============================================ */
+.sacred-art-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sacred-art-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+
+.sacred-art-layer.sacred-art-visible {
+  opacity: 1;
+}
+
+.sacred-art-layer svg,
+.sacred-art-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sacred-art-layer .sacred-kb-group {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: sacred-kb 46s ease-in-out infinite alternate;
+}
+
+@keyframes sacred-kb {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.12) translate(-1.5%, -1%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sacred-art-layer .sacred-kb-group { animation: none; }
+}
+
 .user-menu-divider {
   height: 1px;
   background-color: #f0f1f4;
