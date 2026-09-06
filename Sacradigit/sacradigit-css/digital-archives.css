@@ -367,6 +367,27 @@
   margin-top: 0.3rem;
 }
 
+/* ---------- Name field group (First / Middle / Last / Ext.) ----------
+   Shared across every form that collects a person's name — certificates,
+   blessings, mass intentions, digital archive records — so first/middle/
+   last/extension are always separate inputs (and separate variables),
+   which is what lets generated documents format a name correctly. */
+.name-field-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.3fr 1.3fr 0.9fr;
+  gap: 0.5rem;
+}
+
+.name-ext-input {
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .name-field-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* ---------- Clickable stat cards (used as quick filters) ---------- */
 .stat-card-clickable {
   cursor: pointer;

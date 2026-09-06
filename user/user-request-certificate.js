@@ -7,6 +7,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { nameFieldsHtml, readNameFields, nameFieldsFilled } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -21,14 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
       // the officiating priest, and the issue date are filled in by the
       // parish office from the register, not asked of the requester here.
       fields: [
-        { id: 'baptized-name', label: 'Full Name of Baptized Person', placeholder: 'e.g. Maria Paz Santos', required: true },
+        { id: 'baptized-name', label: 'Full Name of Baptized Person', kind: 'name', required: true },
         { id: 'birth-date', label: 'Date of Birth', type: 'date', required: false },
         { id: 'birthplace', label: 'Place of Birth', placeholder: 'e.g. Quezon City', required: false },
         { id: 'baptism-date', label: 'Date of Baptism', type: 'date', required: false },
-        { id: 'father-name', label: "Father's Full Name", placeholder: 'e.g. Jose Santos', required: false },
-        { id: 'mother-name', label: "Mother's Maiden Name", placeholder: 'e.g. Remedios Reyes', required: false },
-        { id: 'sponsor-1', label: 'Principal Sponsor (Godparent) 1', placeholder: 'e.g. Elena Cruz', required: false },
-        { id: 'sponsor-2', label: 'Principal Sponsor (Godparent) 2', placeholder: 'e.g. Ramon Torres', required: false },
+        { id: 'father-name', label: "Father's Full Name", kind: 'name', required: true },
+        { id: 'mother-name', label: "Mother's Maiden Name", kind: 'name', required: true },
+        { id: 'sponsor-1', label: 'Principal Sponsor (Godparent) 1', kind: 'name', required: false },
+        { id: 'sponsor-2', label: 'Principal Sponsor (Godparent) 2', kind: 'name', required: false },
       ] },
     { id: 'confirmation', name: 'Confirmation Certificate', desc: 'Proof of confirmation sacrament.',
       iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
@@ -39,14 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
       // in by the parish office from the register, not asked of the
       // requester here.
       fields: [
-        { id: 'confirmed-name', label: 'Full Name of Confirmand', placeholder: 'e.g. Maria Paz Santos', required: true },
-        { id: 'father-name', label: "Father's Name", placeholder: 'e.g. Jose Santos', required: false },
-        { id: 'mother-name', label: "Mother's Name", placeholder: 'e.g. Remedios Reyes', required: false },
+        { id: 'confirmed-name', label: 'Full Name of Confirmand', kind: 'name', required: true },
+        { id: 'father-name', label: "Father's Name", kind: 'name', required: false },
+        { id: 'mother-name', label: "Mother's Name", kind: 'name', required: false },
         { id: 'baptism-date', label: 'Date of Baptism', type: 'date', required: false },
         { id: 'baptism-church', label: 'Church of Baptism', placeholder: 'e.g. Our Lady of Fatima Parish', required: false },
         { id: 'confirmation-name', label: 'Confirmation Name (Saint Name)', placeholder: 'e.g. Teresa', required: false },
         { id: 'confirmation-date', label: 'Approximate Date of Confirmation', type: 'date', required: false },
-        { id: 'sponsor-name', label: "Sponsor's Name", placeholder: 'e.g. Elena Cruz', required: false },
+        { id: 'sponsor-name', label: "Sponsor's Name", kind: 'name', required: false },
       ] },
     { id: 'first-communion', name: 'First Communion Certificate', desc: 'Proof of First Holy Communion.',
       iconBg: 'rgba(180,140,60,0.16)', iconColor: '#8a6d1f',
@@ -58,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // asked of the requester here. Purpose is already collected below
       // as a general field, so it isn't repeated per certificate type.
       fields: [
-        { id: 'fc-name', label: 'Full Name of Communicant', placeholder: 'e.g. Keiana Brielle A. Ching', required: true },
+        { id: 'fc-name', label: 'Full Name of Communicant', kind: 'name', required: true },
         { id: 'fc-communion-date', label: 'Approximate Date of First Communion', type: 'date', required: false },
       ] },
     { id: 'marriage', name: 'Marriage Certificate', desc: 'Parish record of a Catholic marriage.',
@@ -71,16 +72,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // filled in by the parish office from the register, not asked of
       // the requester here.
       fields: [
-        { id: 'groom-name', label: "Groom's Full Name", placeholder: 'e.g. Juan Dela Cruz', required: true },
-        { id: 'bride-name', label: "Bride's Full Name", placeholder: 'e.g. Ana Reyes', required: true },
-        { id: 'groom-father', label: "Groom's Father's Name", placeholder: 'e.g. Pedro Dela Cruz', required: false },
-        { id: 'groom-mother', label: "Groom's Mother's Name", placeholder: 'e.g. Corazon Santos', required: false },
-        { id: 'bride-father', label: "Bride's Father's Name", placeholder: 'e.g. Ramon Reyes', required: false },
-        { id: 'bride-mother', label: "Bride's Mother's Name", placeholder: 'e.g. Luz Bautista', required: false },
+        { id: 'groom-name', label: "Groom's Full Name", kind: 'name', required: true },
+        { id: 'bride-name', label: "Bride's Full Name", kind: 'name', required: true },
+        { id: 'groom-father', label: "Groom's Father's Name", kind: 'name', required: false },
+        { id: 'groom-mother', label: "Groom's Mother's Name", kind: 'name', required: false },
+        { id: 'bride-father', label: "Bride's Father's Name", kind: 'name', required: false },
+        { id: 'bride-mother', label: "Bride's Mother's Name", kind: 'name', required: false },
         { id: 'marriage-date', label: 'Date of Marriage', type: 'date', required: false },
         { id: 'marriage-place', label: 'Place of Marriage', placeholder: 'e.g. Our Lady of Fatima Parish', required: false },
-        { id: 'witness-1', label: 'Witness 1', placeholder: 'e.g. Mark Villanueva', required: false },
-        { id: 'witness-2', label: 'Witness 2', placeholder: 'e.g. Carla Mendoza', required: false },
+        { id: 'witness-1', label: 'Witness 1', kind: 'name', required: false },
+        { id: 'witness-2', label: 'Witness 2', kind: 'name', required: false },
       ] },
     { id: 'death', name: 'Death Certificate', desc: 'Parish record of a Catholic burial or funeral mass.',
       iconBg: 'rgba(107,114,128,0.12)', iconColor: '#6b7280',
@@ -91,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // filled in by the parish office from the register, not asked
       // of the requester here.
       fields: [
-        { id: 'deceased-name', label: 'Full Name of Deceased', placeholder: 'e.g. Pedro Garcia', required: true },
+        { id: 'deceased-name', label: 'Full Name of Deceased', kind: 'name', required: true },
         { id: 'age', label: 'Age at Time of Death', placeholder: 'e.g. 78', required: false },
         { id: 'death-date', label: 'Approximate Date of Death', type: 'date', required: false },
         { id: 'place-of-death', label: 'Place of Death', placeholder: 'e.g. Quezon City', required: false },
@@ -134,13 +135,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.cert-type-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
     formTypeLabel.textContent = selectedType.name;
 
-    dynamicFields.innerHTML = selectedType.fields.map(f => `
-      <div class="${['baptized-name','confirmed-name','fc-name','groom-name','bride-name','deceased-name'].includes(f.id) ? 'sm:col-span-2' : ''}">
+    dynamicFields.innerHTML = selectedType.fields.map(f => {
+      if (f.kind === 'name') return nameFieldsHtml(f.id, f.label, { required: f.required, spanFull: true });
+      return `
+      <div>
         <label class="form-label" for="${f.id}">${f.label}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
         ${f.type === 'date'
           ? `<input type="date" id="${f.id}" class="form-input" />`
           : `<input type="text" id="${f.id}" class="form-input" placeholder="${f.placeholder || ''}" />`}
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     menuView.classList.add('hidden');
     formView.classList.remove('hidden');
@@ -169,17 +173,30 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-submit-request').addEventListener('click', async () => {
     if (!selectedType) return;
 
-    const requiredFields = selectedType.fields.filter(f => f.required);
     let allFilled = true;
     const details = {};
 
+    function flagInvalid(el) {
+      if (!el) return;
+      el.classList.add('border-red-400');
+      el.addEventListener('input', () => el.classList.remove('border-red-400'), { once: true });
+    }
+
     selectedType.fields.forEach(f => {
+      if (f.kind === 'name') {
+        details[f.id] = readNameFields(f.id);
+        if (f.required && !nameFieldsFilled(f.id)) {
+          allFilled = false;
+          flagInvalid(document.getElementById(`${f.id}-first`));
+          flagInvalid(document.getElementById(`${f.id}-last`));
+        }
+        return;
+      }
       const el = document.getElementById(f.id);
       details[f.id] = el ? el.value.trim() : '';
       if (f.required && (!el || !el.value.trim())) {
         allFilled = false;
-        el?.classList.add('border-red-400');
-        el?.addEventListener('input', () => el.classList.remove('border-red-400'), { once: true });
+        flagInvalid(el);
       }
     });
 

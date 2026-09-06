@@ -433,17 +433,32 @@
           baptismal register below. This produces a print-ready Certificate of Baptism on the next screen.
         </p>
         <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="cert-child-name">Full Name of Baptized Person</label>
-            <input type="text" id="cert-child-name" class="form-input" placeholder="e.g. Maria Paz Santos" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Full Name of Baptized Person</label>
+            <div class="name-field-row">
+              <input type="text" id="cert-child-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="cert-child-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="cert-child-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="cert-child-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="cert-father-name">Father's Name</label>
-            <input type="text" id="cert-father-name" class="form-input" placeholder="e.g. Jose Santos" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Father's Name</label>
+            <div class="name-field-row">
+              <input type="text" id="cert-father-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="cert-father-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="cert-father-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="cert-father-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="cert-mother-name">Mother's Maiden Name</label>
-            <input type="text" id="cert-mother-name" class="form-input" placeholder="e.g. Remedios Reyes" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Mother's Maiden Name</label>
+            <div class="name-field-row">
+              <input type="text" id="cert-mother-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="cert-mother-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="cert-mother-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="cert-mother-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div class="col-span-2">
             <label class="form-label" for="cert-birthplace">Place of Birth</label>
@@ -461,13 +476,23 @@
             <label class="form-label" for="cert-priest">Officiating Priest</label>
             <input type="text" id="cert-priest" class="form-input" value="Fredrick Edward C. Simon" />
           </div>
-          <div>
-            <label class="form-label" for="cert-sponsor-1">Sponsor 1</label>
-            <input type="text" id="cert-sponsor-1" class="form-input" placeholder="e.g. Elena Cruz" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Sponsor 1</label>
+            <div class="name-field-row">
+              <input type="text" id="cert-sponsor-1-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="cert-sponsor-1-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="cert-sponsor-1-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="cert-sponsor-1-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="cert-sponsor-2">Sponsor 2</label>
-            <input type="text" id="cert-sponsor-2" class="form-input" placeholder="e.g. Ramon Torres" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Sponsor 2</label>
+            <div class="name-field-row">
+              <input type="text" id="cert-sponsor-2-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="cert-sponsor-2-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="cert-sponsor-2-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="cert-sponsor-2-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div>
             <label class="form-label" for="cert-book-no">Bk. No.</label>
@@ -509,17 +534,32 @@
           confirmation register below. This produces a print-ready Confirmation Certificate on the next screen.
         </p>
         <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="confirm-cert-name">Full Name of Confirmand</label>
-            <input type="text" id="confirm-cert-name" class="form-input" placeholder="e.g. Maria Paz Santos" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Full Name of Confirmand</label>
+            <div class="name-field-row">
+              <input type="text" id="confirm-cert-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="confirm-cert-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="confirm-cert-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="confirm-cert-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="confirm-cert-father-name">Father's Name</label>
-            <input type="text" id="confirm-cert-father-name" class="form-input" placeholder="e.g. Jose Santos" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Father's Name</label>
+            <div class="name-field-row">
+              <input type="text" id="confirm-cert-father-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="confirm-cert-father-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="confirm-cert-father-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="confirm-cert-father-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="confirm-cert-mother-name">Mother's Name</label>
-            <input type="text" id="confirm-cert-mother-name" class="form-input" placeholder="e.g. Remedios Reyes" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Mother's Name</label>
+            <div class="name-field-row">
+              <input type="text" id="confirm-cert-mother-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="confirm-cert-mother-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="confirm-cert-mother-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="confirm-cert-mother-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div>
             <label class="form-label" for="confirm-cert-baptism-date">Date of Baptism</label>
@@ -541,9 +581,14 @@
             <label class="form-label" for="confirm-cert-bishop">Confirmed by (Most Rev.)</label>
             <input type="text" id="confirm-cert-bishop" class="form-input" placeholder="e.g. Honesto F. Ongtioco" />
           </div>
-          <div>
-            <label class="form-label" for="confirm-cert-sponsor">Sponsor</label>
-            <input type="text" id="confirm-cert-sponsor" class="form-input" placeholder="e.g. Elena Cruz" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Sponsor</label>
+            <div class="name-field-row">
+              <input type="text" id="confirm-cert-sponsor-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="confirm-cert-sponsor-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="confirm-cert-sponsor-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="confirm-cert-sponsor-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div>
             <label class="form-label" for="confirm-cert-dated">Dated</label>
@@ -573,9 +618,14 @@
           First Communion register below. This produces a print-ready First Communion Certificate on the next screen.
         </p>
         <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="fc-cert-name">Full Name of Communicant</label>
-            <input type="text" id="fc-cert-name" class="form-input" placeholder="e.g. Keiana Brielle A. Ching" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Full Name of Communicant</label>
+            <div class="name-field-row">
+              <input type="text" id="fc-cert-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="fc-cert-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="fc-cert-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="fc-cert-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div>
             <label class="form-label" for="fc-cert-communion-date">Date of First Communion</label>
@@ -633,29 +683,59 @@
           marriage register below. This is a parish-style certificate, not the full civil registrar form.
         </p>
         <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="marriage-cert-groom-name">Groom's Full Name</label>
-            <input type="text" id="marriage-cert-groom-name" class="form-input" placeholder="e.g. Juan Dela Cruz" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Groom's Full Name</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-groom-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-groom-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-groom-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-groom-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div class="col-span-2">
-            <label class="form-label" for="marriage-cert-bride-name">Bride's Full Name</label>
-            <input type="text" id="marriage-cert-bride-name" class="form-input" placeholder="e.g. Ana Reyes" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Bride's Full Name</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-bride-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-bride-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-bride-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-bride-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="marriage-cert-groom-father">Groom's Father</label>
-            <input type="text" id="marriage-cert-groom-father" class="form-input" placeholder="e.g. Pedro Dela Cruz" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Groom's Father</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-groom-father-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-groom-father-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-groom-father-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-groom-father-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="marriage-cert-groom-mother">Groom's Mother</label>
-            <input type="text" id="marriage-cert-groom-mother" class="form-input" placeholder="e.g. Corazon Santos" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Groom's Mother</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-groom-mother-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-groom-mother-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-groom-mother-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-groom-mother-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="marriage-cert-bride-father">Bride's Father</label>
-            <input type="text" id="marriage-cert-bride-father" class="form-input" placeholder="e.g. Ramon Reyes" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Bride's Father</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-bride-father-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-bride-father-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-bride-father-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-bride-father-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="marriage-cert-bride-mother">Bride's Mother</label>
-            <input type="text" id="marriage-cert-bride-mother" class="form-input" placeholder="e.g. Luz Bautista" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Bride's Mother</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-bride-mother-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-bride-mother-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-bride-mother-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-bride-mother-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div>
             <label class="form-label" for="marriage-cert-marriage-date">Date of Marriage</label>
@@ -665,13 +745,23 @@
             <label class="form-label" for="marriage-cert-marriage-place">Place of Marriage</label>
             <input type="text" id="marriage-cert-marriage-place" class="form-input" placeholder="e.g. Our Lady of Fatima Parish" />
           </div>
-          <div>
-            <label class="form-label" for="marriage-cert-witness-1">Witness 1</label>
-            <input type="text" id="marriage-cert-witness-1" class="form-input" placeholder="e.g. Mark Villanueva" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Witness 1</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-witness-1-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-witness-1-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-witness-1-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-witness-1-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
-          <div>
-            <label class="form-label" for="marriage-cert-witness-2">Witness 2</label>
-            <input type="text" id="marriage-cert-witness-2" class="form-input" placeholder="e.g. Carla Mendoza" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Witness 2</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-witness-2-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-witness-2-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-witness-2-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-witness-2-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div class="col-span-2">
             <label class="form-label" for="marriage-cert-priest">Officiating Priest</label>
@@ -717,9 +807,14 @@
           death register below. This produces a print-ready Certificate of Death on the next screen.
         </p>
         <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="death-cert-name">Full Name of Deceased</label>
-            <input type="text" id="death-cert-name" class="form-input" placeholder="e.g. Pedro Garcia" />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Full Name of Deceased</label>
+            <div class="name-field-row">
+              <input type="text" id="death-cert-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="death-cert-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="death-cert-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="death-cert-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div>
             <label class="form-label" for="death-cert-age">Age at Time of Death</label>

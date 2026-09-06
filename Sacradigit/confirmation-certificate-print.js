@@ -18,6 +18,7 @@
 
 import { client } from '../amplify-init.js';
 import { uploadData } from 'aws-amplify/storage';
+import { formatFullName } from '../name-utils.js';
 
 const CERT_STORAGE_KEY = 'sacradigit_confirmation_cert_draft';
 
@@ -68,13 +69,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.getElementById('out-confirmand-name').textContent = escapeOrDash(data['confirm-cert-name']);
-  document.getElementById('out-father-name').textContent = escapeOrDash(data['confirm-cert-father-name']);
-  document.getElementById('out-mother-name').textContent = escapeOrDash(data['confirm-cert-mother-name']);
+  document.getElementById('out-confirmand-name').textContent = escapeOrDash(formatFullName(data['confirm-cert-name']));
+  document.getElementById('out-father-name').textContent = escapeOrDash(formatFullName(data['confirm-cert-father-name']));
+  document.getElementById('out-mother-name').textContent = escapeOrDash(formatFullName(data['confirm-cert-mother-name']));
   document.getElementById('out-baptism-church').textContent = escapeOrDash(data['confirm-cert-baptism-church']);
   document.getElementById('out-received-name').textContent = escapeOrDash(data['confirm-cert-received-name']);
   document.getElementById('out-bishop').textContent = escapeOrDash(data['confirm-cert-bishop']);
-  document.getElementById('out-sponsor').textContent = escapeOrDash(data['confirm-cert-sponsor']);
+  document.getElementById('out-sponsor').textContent = escapeOrDash(formatFullName(data['confirm-cert-sponsor']));
 
   const baptism = splitDate(data['confirm-cert-baptism-date']);
   document.getElementById('out-baptism-date').textContent = baptism.monthDay || '_______________';
@@ -144,8 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const path = `certificateUploads/confirmation_${Date.now()}.png`;
       await uploadData({ path, data: blob }).result;
 
+      const confirmandName = data['confirm-cert-name'] || {};
       const recordResult = await client.models.ParishRecord.create({
-        fullName: (data['confirm-cert-name'] || '').trim() || 'Unnamed',
+        fullName: formatFullName(confirmandName) || 'Unnamed',
+        firstName: confirmandName.firstName || undefined,
+        middleName: confirmandName.middleName || undefined,
+        lastName: confirmandName.lastName || undefined,
+        extension: confirmandName.extension || undefined,
         type: 'confirmation',
         dateOfEvent: data['confirm-cert-date'] || data['confirm-cert-baptism-date'] || undefined,
         officiant: (data['confirm-cert-bishop'] || '').trim() || undefined,

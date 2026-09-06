@@ -293,6 +293,27 @@ body { background-color: #f7f8fa; }
   box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.15);
 }
 
+/* ---------- Name field group (First / Middle / Last / Ext.) ----------
+   Shared across every form that collects a person's name — certificate
+   requests, service requests, mass intentions — so first/middle/last/
+   extension are always separate inputs (and separate variables), which
+   is what lets generated documents format a name correctly. */
+.name-field-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.3fr 1.3fr 0.9fr;
+  gap: 0.5rem;
+}
+
+.name-ext-input {
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .name-field-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* ---------- Modal ---------- */
 .modal-overlay {
   position: fixed;

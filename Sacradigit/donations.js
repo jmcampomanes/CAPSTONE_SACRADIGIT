@@ -10,6 +10,11 @@ import { client } from '../amplify-init.js';
 document.addEventListener('DOMContentLoaded', () => {
 
   let donations = []; // kept in sync via observeQuery
+  let goals     = []; // kept in sync via observeQuery, each has .id
+
+  const goalsGrid   = document.getElementById('goals-grid');
+  const goalsEmpty  = document.getElementById('goals-empty');
+  const goalsCount  = document.getElementById('goals-count');
 
   const tbody          = document.getElementById('donations-tbody');
   const donationsCount  = document.getElementById('donations-count');
@@ -27,6 +32,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const div = document.createElement('div');
     div.textContent = str || '';
     return div.innerHTML;
+  }
+
+  function setFieldError(input, message) {
+    input.classList.add('has-error');
+    let msg = input.parentElement.querySelector('.form-error-msg');
+    if (!msg) {
+      msg = document.createElement('p');
+      msg.className = 'form-error-msg';
+      input.insertAdjacentElement('afterend', msg);
+    }
+    msg.textContent = message;
+  }
+
+  function clearFieldError(input) {
+    input.classList.remove('has-error');
+    const msg = input.parentElement.querySelector('.form-error-msg');
+    if (msg) msg.remove();
   }
 
   function formatPeso(amount) {
@@ -63,11 +85,240 @@ document.addEventListener('DOMContentLoaded', () => {
       donations = items;
       renderStats();
       renderTable();
+      renderGoals();
     },
     error: (err) => {
       console.error('Failed to load donations:', err);
       tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Couldn't load donations.</td></tr>`;
     },
+  });
+
+
+  /* ------------------------------------------
+     FUNDRAISING GOALS
+     A goal tracks progress toward a specific,
+     one-time need (e.g. "New Church Bell —
+     ₱10,000") rather than a recurring fund.
+     Progress is computed live by summing existing
+     Donation records whose purpose matches the
+     goal's name — no separate link field needed,
+     the same approach already used for fund totals
+     on the user donations page.
+  ------------------------------------------ */
+  const addGoalBtn = document.getElementById('btn-add-goal');
+
+  if (!client.models.DonationGoal) {
+    console.error('DonationGoal model is missing from the deployed backend schema (amplify_outputs.json). Fundraising Goals cannot load, save, or delete until this model is added to the backend.');
+
+    goalsCount.textContent = '';
+    goalsGrid.innerHTML = '';
+    goalsEmpty.innerHTML = `
+      <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <p class="text-sm font-medium text-gray-600">Fundraising Goals isn't connected to a database table yet</p>
+      <p class="text-xs text-gray-400 mt-1">The DonationGoal model is missing from the backend schema — check with the developer before this feature can be used.</p>
+    `;
+    goalsEmpty.classList.remove('hidden');
+
+    if (addGoalBtn) {
+      addGoalBtn.disabled = true;
+      addGoalBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      addGoalBtn.title = "Fundraising Goals isn't connected to a database table yet.";
+    }
+  } else {
+    client.models.DonationGoal.observeQuery().subscribe({
+      next: ({ items }) => {
+        goals = items;
+        renderGoals();
+      },
+      error: (err) => {
+        console.error('Failed to load fundraising goals:', err);
+        goalsGrid.innerHTML = '';
+        goalsEmpty.classList.remove('hidden');
+      },
+    });
+  }
+
+  function goalRaised(goalName) {
+    return donations.filter(d => d.purpose === goalName).reduce((sum, d) => sum + (d.amount || 0), 0);
+  }
+
+  function formatShortDeadline(iso) {
+    if (!iso) return '';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderGoals() {
+    if (!client.models.DonationGoal) return;
+
+    goalsCount.textContent = `${goals.length} goal${goals.length === 1 ? '' : 's'}`;
+
+    if (goals.length === 0) {
+      goalsGrid.innerHTML = '';
+      goalsEmpty.classList.remove('hidden');
+      return;
+    }
+    goalsEmpty.classList.add('hidden');
+
+    const sorted = goals.slice().sort((a, b) => (a.active === b.active) ? 0 : (a.active ? -1 : 1));
+
+    goalsGrid.innerHTML = sorted.map(g => {
+      const raised  = goalRaised(g.name);
+      const target  = g.targetAmount || 0;
+      const percent = target > 0 ? Math.min(100, Math.round((raised / target) * 100)) : 0;
+      const reached = target > 0 && raised >= target;
+
+      return `
+        <div class="goal-card ${reached ? 'reached' : ''}">
+          <div class="goal-card-body">
+            <div class="goal-card-top">
+              <p class="goal-name">${escapeHtml(g.name)}</p>
+              ${reached ? '<span class="goal-badge-reached">Goal Reached</span>' : (g.active === false ? '<span class="goal-badge-inactive">Inactive</span>' : '')}
+            </div>
+            ${g.description ? `<p class="goal-desc">${escapeHtml(g.description)}</p>` : ''}
+            ${g.deadline ? `
+              <div class="goal-deadline">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                By ${formatShortDeadline(g.deadline)}
+              </div>` : ''}
+            <div class="goal-progress-wrap">
+              <div class="goal-progress-numbers">
+                <span class="goal-progress-raised">${formatPeso(raised)}</span>
+                <span class="goal-progress-target">of ${formatPeso(target)}</span>
+              </div>
+              <div class="goal-progress-track">
+                <div class="goal-progress-fill" style="width: ${percent}%"></div>
+              </div>
+              <p class="goal-progress-percent">${percent}% funded</p>
+            </div>
+          </div>
+          <div class="goal-card-footer">
+            <button type="button" class="goal-edit" data-id="${g.id}">Edit</button>
+            <button type="button" class="goal-delete" data-id="${g.id}">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  goalsGrid.addEventListener('click', (e) => {
+    const editBtn   = e.target.closest('.goal-edit');
+    const deleteBtn = e.target.closest('.goal-delete');
+    if (editBtn) openGoalEditModal(editBtn.dataset.id);
+    if (deleteBtn) openGoalDeleteModal(deleteBtn.dataset.id);
+  });
+
+  /* --- Add/Edit Goal Modal --- */
+  const goalModal        = document.getElementById('goal-modal');
+  const goalModalTitle    = document.getElementById('goal-modal-title');
+  const goalSubmitBtn      = document.getElementById('goal-submit');
+  const goalNameInput        = document.getElementById('goal-name');
+  const goalTargetInput        = document.getElementById('goal-target');
+  const goalDeadlineInput        = document.getElementById('goal-deadline');
+  const goalDescriptionInput       = document.getElementById('goal-description');
+  const goalActiveInput              = document.getElementById('goal-active');
+
+  let goalEditTargetId = null;
+
+  if (addGoalBtn) {
+    addGoalBtn.addEventListener('click', () => {
+      goalEditTargetId = null;
+      goalModalTitle.textContent = 'New Fundraising Goal';
+      goalSubmitBtn.textContent = 'Save Goal';
+      goalNameInput.value = '';
+      goalTargetInput.value = '';
+      goalDeadlineInput.value = '';
+      goalDescriptionInput.value = '';
+      goalActiveInput.checked = true;
+      [goalNameInput, goalTargetInput].forEach(clearFieldError);
+      openModal(goalModal);
+    });
+  }
+
+  function openGoalEditModal(id) {
+    const g = goals.find(x => x.id === id);
+    if (!g) return;
+    goalEditTargetId = id;
+    goalModalTitle.textContent = 'Edit Fundraising Goal';
+    goalSubmitBtn.textContent = 'Save Changes';
+    goalNameInput.value = g.name || '';
+    goalTargetInput.value = g.targetAmount || '';
+    goalDeadlineInput.value = g.deadline || '';
+    goalDescriptionInput.value = g.description || '';
+    goalActiveInput.checked = g.active !== false;
+    [goalNameInput, goalTargetInput].forEach(clearFieldError);
+    openModal(goalModal);
+  }
+
+  [goalNameInput, goalTargetInput].forEach(input => {
+    input.addEventListener('input', () => clearFieldError(input));
+  });
+
+  goalSubmitBtn.addEventListener('click', async () => {
+    const name        = goalNameInput.value.trim();
+    const targetAmount = parseFloat(goalTargetInput.value);
+    const deadline      = goalDeadlineInput.value || null;
+    const description     = goalDescriptionInput.value.trim() || null;
+    const active            = goalActiveInput.checked;
+
+    [goalNameInput, goalTargetInput].forEach(clearFieldError);
+
+    let hasError = false;
+    if (!name) { setFieldError(goalNameInput, 'Goal name is required.'); hasError = true; }
+    if (!targetAmount || targetAmount <= 0) { setFieldError(goalTargetInput, 'Enter a target amount greater than 0.'); hasError = true; }
+
+    if (hasError) {
+      showToast('Please fix the highlighted fields.', true);
+      return;
+    }
+
+    try {
+      if (goalEditTargetId !== null) {
+        const result = await client.models.DonationGoal.update({
+          id: goalEditTargetId, name, targetAmount, deadline, description, active,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`"${name}" updated.`);
+      } else {
+        const result = await client.models.DonationGoal.create({
+          name, targetAmount, deadline, description, active,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`"${name}" added.`);
+      }
+      closeModal(goalModal);
+    } catch (err) {
+      console.error('Failed to save fundraising goal:', err);
+      showToast(err.message || "Couldn't save the goal.", true);
+    }
+  });
+
+  /* --- Delete Goal Confirmation Modal --- */
+  const goalDeleteModal      = document.getElementById('goal-delete-modal');
+  const goalDeleteTargetName  = document.getElementById('goal-delete-target-name');
+  let goalDeleteTargetId = null;
+
+  function openGoalDeleteModal(id) {
+    const g = goals.find(x => x.id === id);
+    if (!g) return;
+    goalDeleteTargetId = id;
+    goalDeleteTargetName.textContent = g.name;
+    openModal(goalDeleteModal);
+  }
+
+  document.getElementById('goal-delete-confirm-submit').addEventListener('click', async () => {
+    if (goalDeleteTargetId === null) return;
+    const g = goals.find(x => x.id === goalDeleteTargetId);
+
+    try {
+      const result = await client.models.DonationGoal.delete({ id: goalDeleteTargetId });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeModal(goalDeleteModal);
+      showToast(`"${g ? g.name : 'Goal'}" removed.`);
+      goalDeleteTargetId = null;
+    } catch (err) {
+      console.error('Failed to delete fundraising goal:', err);
+      showToast(err.message || "Couldn't delete the goal.", true);
+    }
   });
 
   function renderStats() {

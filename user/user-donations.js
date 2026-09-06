@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allDonations = [];
   let myDonations = [];
+  let goals = []; // fundraising goals, kept in sync via observeQuery
+
+  // Looked up early (before any observeQuery fires) so renderGoalGrid can
+  // safely reference them from inside the Donation subscription below.
+  const goalsSection = document.getElementById('goals-section');
+  const goalGrid      = document.getElementById('goal-grid');
 
   function formatPeso(n) { return '₱' + (n || 0).toLocaleString('en-US'); }
   function formatShortDate(input) {
@@ -49,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       allDonations = items;
       myDonations = items.filter(d => d.donor === DONOR_NAME);
       renderFundGrid();
+      renderGoalGrid();
       renderStats();
       renderHistory();
     },
@@ -60,6 +67,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function fundTotal(fundName) {
     return allDonations.filter(d => d.purpose === fundName).reduce((s, d) => s + (d.amount || 0), 0);
+  }
+
+
+  /* ------------------------------------------
+     FUNDRAISING GOALS
+     A goal tracks progress toward a specific,
+     one-time need (e.g. "New Church Bell —
+     ₱10,000") set up by the parish office on the
+     admin side. Progress reuses the same live-sum
+     approach as the recurring funds above — a
+     donation with purpose === the goal's name
+     counts toward it — so giving to a goal is just
+     giving with that goal's name as the purpose.
+  ------------------------------------------ */
+  if (!client.models.DonationGoal) {
+    console.error('DonationGoal model is missing from the deployed backend schema (amplify_outputs.json). Fundraising Goals will stay hidden until this model is added to the backend.');
+    if (goalsSection) goalsSection.classList.add('hidden');
+  } else {
+    client.models.DonationGoal.observeQuery().subscribe({
+      next: ({ items }) => {
+        goals = items.filter(g => g.active !== false);
+        renderGoalGrid();
+      },
+      error: (err) => {
+        console.error('Failed to load fundraising goals:', err);
+        if (goalsSection) goalsSection.classList.add('hidden');
+      },
+    });
+  }
+
+  function formatShortDeadline(iso) {
+    if (!iso) return '';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderGoalGrid() {
+    if (!client.models.DonationGoal || !goalsSection) return;
+
+    if (goals.length === 0) {
+      goalsSection.classList.add('hidden');
+      return;
+    }
+    goalsSection.classList.remove('hidden');
+
+    goalGrid.innerHTML = goals.map(g => {
+      const raised  = fundTotal(g.name);
+      const target  = g.targetAmount || 0;
+      const percent = target > 0 ? Math.min(100, Math.round((raised / target) * 100)) : 0;
+      const reached = target > 0 && raised >= target;
+
+      return `
+        <div class="donation-goal-card ${reached ? 'reached' : ''}">
+          <div class="goal-card-top">
+            <p class="goal-name">${escapeHtml(g.name)}</p>
+            ${reached ? '<span class="goal-badge-reached">Goal Reached</span>' : ''}
+          </div>
+          ${g.description ? `<p class="goal-desc">${escapeHtml(g.description)}</p>` : ''}
+          ${g.deadline ? `
+            <div class="goal-deadline">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              By ${formatShortDeadline(g.deadline)}
+            </div>` : ''}
+          <div class="goal-progress-wrap">
+            <div class="goal-progress-numbers">
+              <span class="goal-progress-raised">${formatPeso(raised)}</span>
+              <span class="goal-progress-target">of ${formatPeso(target)}</span>
+            </div>
+            <div class="goal-progress-track">
+              <div class="goal-progress-fill" style="width: ${percent}%"></div>
+            </div>
+            <p class="goal-progress-percent">${percent}% funded</p>
+          </div>
+          <button type="button" class="btn-lavender goal-give-btn" data-goal-id="${g.id}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            ${reached ? 'Give More' : 'Give to this Goal'}
+          </button>
+        </div>`;
+    }).join('');
+
+    goalGrid.querySelectorAll('.goal-give-btn').forEach(btn => {
+      btn.addEventListener('click', () => openModal('goal-' + btn.dataset.goalId));
+    });
   }
 
   function renderFundGrid() {
@@ -152,8 +241,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedFundId = null;
   let selectedMethod  = 'GCash';
 
+  // Recurring funds plus active fundraising goals, combined into one list
+  // so a goal ("New Church Bell") is just another purpose a donor can pick
+  // — giving to it works exactly like giving to a fund.
+  function givingOptions() {
+    return [...fundDefs, ...goals.map(g => ({ id: 'goal-' + g.id, name: g.name }))];
+  }
+
   function populateFundSelector(preSelectId = null) {
-    fundSelector.innerHTML = fundDefs.map(f => `<button type="button" class="donate-fund-btn ${f.id === preSelectId ? 'selected' : ''}" data-fund-id="${f.id}">${f.name}</button>`).join('');
+    fundSelector.innerHTML = givingOptions().map(f => `<button type="button" class="donate-fund-btn ${f.id === preSelectId ? 'selected' : ''}" data-fund-id="${f.id}">${f.name}</button>`).join('');
     selectedFundId = preSelectId || null;
     fundSelector.querySelectorAll('.donate-fund-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -211,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const fund = fundDefs.find(f => f.id === selectedFundId);
+    const fund = givingOptions().find(f => f.id === selectedFundId);
     if (!fund) return;
 
     try {

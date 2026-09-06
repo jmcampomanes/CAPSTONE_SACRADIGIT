@@ -308,13 +308,16 @@
              categories (e.g. one name for Healing, another for a Birthday
              Blessing). -->
         <div>
-          <label class="form-label" for="mi-name-input">
+          <label class="form-label">
             Name<span id="mi-name-label-suffix"></span> <span class="text-red-500">*</span>
           </label>
-          <div class="name-chip-input-row">
-            <input type="text" id="mi-name-input" class="form-input" placeholder="Type a name, then press Add" />
-            <button type="button" id="mi-add-name" class="btn-secondary shrink-0">Add</button>
+          <div class="name-field-row">
+            <input type="text" id="mi-name-first" class="form-input" placeholder="First Name" />
+            <input type="text" id="mi-name-middle" class="form-input" placeholder="Middle Name" />
+            <input type="text" id="mi-name-last" class="form-input" placeholder="Last Name" />
+            <input type="text" id="mi-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
           </div>
+          <button type="button" id="mi-add-name" class="btn-secondary mt-2">Add Name</button>
           <p class="text-xs text-gray-400 mt-1">Each name is tagged with the category currently selected above.</p>
         </div>
 

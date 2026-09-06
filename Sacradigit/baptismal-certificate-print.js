@@ -18,6 +18,7 @@
 
 import { client } from '../amplify-init.js';
 import { uploadData } from 'aws-amplify/storage';
+import { formatFullName } from '../name-utils.js';
 
 const CERT_STORAGE_KEY = 'sacradigit_baptismal_cert_draft';
 
@@ -74,9 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.getElementById('out-child-name').textContent = escapeOrDash(data['cert-child-name']);
-  document.getElementById('out-father-name').textContent = escapeOrDash(data['cert-father-name']);
-  document.getElementById('out-mother-name').textContent = escapeOrDash(data['cert-mother-name']);
+  document.getElementById('out-child-name').textContent = escapeOrDash(formatFullName(data['cert-child-name']));
+  document.getElementById('out-father-name').textContent = escapeOrDash(formatFullName(data['cert-father-name']));
+  document.getElementById('out-mother-name').textContent = escapeOrDash(formatFullName(data['cert-mother-name']));
   document.getElementById('out-birthplace').textContent = escapeOrDash(data['cert-birthplace']);
 
   const birth = splitDate(data['cert-birth-date']);
@@ -88,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('out-baptism-month').textContent = baptism.month || '_______________';
 
   document.getElementById('out-priest').textContent = escapeOrDash(data['cert-priest']);
-  document.getElementById('out-sponsor-1').textContent = escapeOrDash(data['cert-sponsor-1']);
-  document.getElementById('out-sponsor-2').textContent = escapeOrDash(data['cert-sponsor-2']);
+  document.getElementById('out-sponsor-1').textContent = escapeOrDash(formatFullName(data['cert-sponsor-1']));
+  document.getElementById('out-sponsor-2').textContent = escapeOrDash(formatFullName(data['cert-sponsor-2']));
   document.getElementById('out-book-no').textContent = data['cert-book-no'] || '___';
   document.getElementById('out-page').textContent = data['cert-page'] || '___';
   document.getElementById('out-line').textContent = data['cert-line'] || '___';
@@ -153,8 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const path = `certificateUploads/baptismal_${Date.now()}.png`;
       await uploadData({ path, data: blob }).result;
 
+      const childName = data['cert-child-name'] || {};
       const recordResult = await client.models.ParishRecord.create({
-        fullName: (data['cert-child-name'] || '').trim() || 'Unnamed',
+        fullName: formatFullName(childName) || 'Unnamed',
+        firstName: childName.firstName || undefined,
+        middleName: childName.middleName || undefined,
+        lastName: childName.lastName || undefined,
+        extension: childName.extension || undefined,
         type: 'baptism',
         dateOfEvent: data['cert-baptism-date'] || data['cert-birth-date'] || undefined,
         officiant: (data['cert-priest'] || '').trim() || undefined,

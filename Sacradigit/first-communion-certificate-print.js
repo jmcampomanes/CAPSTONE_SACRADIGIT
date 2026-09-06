@@ -18,6 +18,7 @@
 
 import { client } from '../amplify-init.js';
 import { uploadData } from 'aws-amplify/storage';
+import { formatFullName } from '../name-utils.js';
 
 const CERT_STORAGE_KEY = 'sacradigit_first_communion_cert_draft';
 
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.getElementById('out-name').textContent = escapeOrDash(data['fc-cert-name']);
+  document.getElementById('out-name').textContent = escapeOrDash(formatFullName(data['fc-cert-name']));
   document.getElementById('out-catechist').textContent = escapeOrDash(data['fc-cert-catechist']);
   document.getElementById('out-priest').textContent = escapeOrDash(data['fc-cert-priest']);
   document.getElementById('out-book-no').textContent = data['fc-cert-book-no'] || '___';
@@ -141,8 +142,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const path = `certificateUploads/first_communion_${Date.now()}.png`;
       await uploadData({ path, data: blob }).result;
 
+      const communicantName = data['fc-cert-name'] || {};
       const recordResult = await client.models.ParishRecord.create({
-        fullName: (data['fc-cert-name'] || '').trim() || 'Unnamed',
+        fullName: formatFullName(communicantName) || 'Unnamed',
+        firstName: communicantName.firstName || undefined,
+        middleName: communicantName.middleName || undefined,
+        lastName: communicantName.lastName || undefined,
+        extension: communicantName.extension || undefined,
         // No 'communion' value exists in the deployed ParishRecordType
         // enum (baptism/confirmation/marriage/death only), so `type`
         // is left unset rather than sending an invalid value.

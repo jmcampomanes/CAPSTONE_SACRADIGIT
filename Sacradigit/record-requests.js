@@ -8,6 +8,7 @@
 
 import { client } from '../amplify-init.js';
 import { uploadData } from 'aws-amplify/storage';
+import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -532,6 +533,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------
+     Shared helpers for every "Generate Certificate"
+     modal below. Each modal mixes plain fields (dates,
+     places, Bk./Page/Line) with name-group fields
+     (first/middle/last/extension in 4 separate boxes) —
+     nameFieldIds lists which field ids in that modal are
+     name groups so the same clear/prefill/collect logic
+     works for all five certificate types.
+  ------------------------------------------ */
+  function clearCertFields(fieldIds, nameFieldIds) {
+    fieldIds.forEach(fid => {
+      if (nameFieldIds.includes(fid)) { setNameFields(fid, null); return; }
+      const el = document.getElementById(fid);
+      if (el) el.value = '';
+    });
+  }
+
+  function prefillCertFieldsFromDetails(mapping, details, nameFieldIds) {
+    Object.entries(mapping).forEach(([detailKey, certFieldId]) => {
+      const value = details[detailKey];
+      if (!value) return;
+      if (nameFieldIds.includes(certFieldId)) { setNameFields(certFieldId, value); return; }
+      const el = document.getElementById(certFieldId);
+      if (el) el.value = value;
+    });
+  }
+
+  function collectCertFieldsData(fieldIds, nameFieldIds) {
+    const data = {};
+    fieldIds.forEach(fid => {
+      data[fid] = nameFieldIds.includes(fid) ? readNameFields(fid) : document.getElementById(fid).value.trim();
+    });
+    return data;
+  }
+
+  /* ------------------------------------------
      14. GENERATE BAPTISMAL CERTIFICATE MODAL
          The CertificateRequest model only tracks
          requester/purpose/status, so the rest of
@@ -548,6 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'cert-birth-date', 'cert-baptism-date', 'cert-priest',
     'cert-sponsor-1', 'cert-sponsor-2', 'cert-book-no', 'cert-page', 'cert-line', 'cert-dated',
   ];
+  const certNameFieldIds = ['cert-child-name', 'cert-father-name', 'cert-mother-name', 'cert-sponsor-1', 'cert-sponsor-2'];
 
   let generateCertTargetId = null;
 
@@ -573,17 +610,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!r) return;
 
     generateCertTargetId = id;
-    certFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+    clearCertFields(certFieldIds, certNameFieldIds);
 
     let details = {};
     if (r.details) {
       try { details = JSON.parse(r.details); } catch { details = {}; }
     }
-    Object.entries(requestDetailsToCertField).forEach(([detailKey, certFieldId]) => {
-      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
-    });
+    prefillCertFieldsFromDetails(requestDetailsToCertField, details, certNameFieldIds);
 
-    document.getElementById('cert-child-name').value = document.getElementById('cert-child-name').value || r.requesterName || '';
+    // Fallback if the requester's own name wasn't captured as the
+    // baptized person's name (e.g. a draft with no linked request).
+    if (isNameEmpty(readNameFields('cert-child-name')) && r.requesterName) {
+      setNameFields('cert-child-name', { firstName: r.requesterName });
+    }
     document.getElementById('cert-priest').value = 'Fredrick Edward C. Simon';
     document.getElementById('cert-dated').value = new Date().toISOString().slice(0, 10);
 
@@ -591,17 +630,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('cert-generate-submit').addEventListener('click', () => {
-    const childNameInput = document.getElementById('cert-child-name');
-    if (!childNameInput.value.trim()) {
+    if (!nameFieldsFilled('cert-child-name')) {
       showToast('Please enter the full name of the baptized person.', true);
-      childNameInput.focus();
+      document.getElementById('cert-child-name-first').focus();
       return;
     }
 
-    const data = { requestId: generateCertTargetId };
-    certFieldIds.forEach(fid => {
-      data[fid] = document.getElementById(fid).value.trim();
-    });
+    const data = { requestId: generateCertTargetId, ...collectCertFieldsData(certFieldIds, certNameFieldIds) };
 
     try {
       sessionStorage.setItem(CERT_STORAGE_KEY, JSON.stringify(data));
@@ -629,6 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'confirm-cert-baptism-date', 'confirm-cert-baptism-church', 'confirm-cert-received-name',
     'confirm-cert-date', 'confirm-cert-bishop', 'confirm-cert-sponsor', 'confirm-cert-dated',
   ];
+  const confirmationCertNameFieldIds = ['confirm-cert-name', 'confirm-cert-father-name', 'confirm-cert-mother-name', 'confirm-cert-sponsor'];
 
   let generateConfirmationCertTargetId = null;
 
@@ -653,17 +689,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!r) return;
 
     generateConfirmationCertTargetId = id;
-    confirmationCertFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+    clearCertFields(confirmationCertFieldIds, confirmationCertNameFieldIds);
 
     let details = {};
     if (r.details) {
       try { details = JSON.parse(r.details); } catch { details = {}; }
     }
-    Object.entries(requestDetailsToConfirmationCertField).forEach(([detailKey, certFieldId]) => {
-      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
-    });
+    prefillCertFieldsFromDetails(requestDetailsToConfirmationCertField, details, confirmationCertNameFieldIds);
 
-    document.getElementById('confirm-cert-name').value = document.getElementById('confirm-cert-name').value || r.requesterName || '';
+    if (isNameEmpty(readNameFields('confirm-cert-name')) && r.requesterName) {
+      setNameFields('confirm-cert-name', { firstName: r.requesterName });
+    }
     document.getElementById('confirm-cert-bishop').value = document.getElementById('confirm-cert-bishop').value || 'Honesto F. Ongtioco';
     document.getElementById('confirm-cert-dated').value = new Date().toISOString().slice(0, 10);
 
@@ -671,17 +707,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('confirm-cert-generate-submit').addEventListener('click', () => {
-    const nameInput = document.getElementById('confirm-cert-name');
-    if (!nameInput.value.trim()) {
+    if (!nameFieldsFilled('confirm-cert-name')) {
       showToast('Please enter the full name of the confirmand.', true);
-      nameInput.focus();
+      document.getElementById('confirm-cert-name-first').focus();
       return;
     }
 
-    const data = { requestId: generateConfirmationCertTargetId };
-    confirmationCertFieldIds.forEach(fid => {
-      data[fid] = document.getElementById(fid).value.trim();
-    });
+    const data = { requestId: generateConfirmationCertTargetId, ...collectCertFieldsData(confirmationCertFieldIds, confirmationCertNameFieldIds) };
 
     try {
       sessionStorage.setItem(CONFIRMATION_CERT_STORAGE_KEY, JSON.stringify(data));
@@ -708,6 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'fc-cert-name', 'fc-cert-communion-date', 'fc-cert-catechist', 'fc-cert-priest',
     'fc-cert-book-no', 'fc-cert-page', 'fc-cert-line', 'fc-cert-purpose', 'fc-cert-dated',
   ];
+  const firstCommunionCertNameFieldIds = ['fc-cert-name'];
 
   let generateFirstCommunionCertTargetId = null;
 
@@ -724,17 +757,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!r) return;
 
     generateFirstCommunionCertTargetId = id;
-    firstCommunionCertFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+    clearCertFields(firstCommunionCertFieldIds, firstCommunionCertNameFieldIds);
 
     let details = {};
     if (r.details) {
       try { details = JSON.parse(r.details); } catch { details = {}; }
     }
-    Object.entries(requestDetailsToFirstCommunionCertField).forEach(([detailKey, certFieldId]) => {
-      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
-    });
+    prefillCertFieldsFromDetails(requestDetailsToFirstCommunionCertField, details, firstCommunionCertNameFieldIds);
 
-    document.getElementById('fc-cert-name').value = document.getElementById('fc-cert-name').value || r.requesterName || '';
+    if (isNameEmpty(readNameFields('fc-cert-name')) && r.requesterName) {
+      setNameFields('fc-cert-name', { firstName: r.requesterName });
+    }
     document.getElementById('fc-cert-priest').value = 'Fredrick Edward C. Simon';
     document.getElementById('fc-cert-purpose').value = r.purpose || '';
     document.getElementById('fc-cert-dated').value = new Date().toISOString().slice(0, 10);
@@ -743,17 +776,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('fc-cert-generate-submit').addEventListener('click', () => {
-    const nameInput = document.getElementById('fc-cert-name');
-    if (!nameInput.value.trim()) {
+    if (!nameFieldsFilled('fc-cert-name')) {
       showToast('Please enter the full name of the communicant.', true);
-      nameInput.focus();
+      document.getElementById('fc-cert-name-first').focus();
       return;
     }
 
-    const data = { requestId: generateFirstCommunionCertTargetId };
-    firstCommunionCertFieldIds.forEach(fid => {
-      data[fid] = document.getElementById(fid).value.trim();
-    });
+    const data = { requestId: generateFirstCommunionCertTargetId, ...collectCertFieldsData(firstCommunionCertFieldIds, firstCommunionCertNameFieldIds) };
 
     try {
       sessionStorage.setItem(FIRST_COMMUNION_CERT_STORAGE_KEY, JSON.stringify(data));
@@ -784,6 +813,12 @@ document.addEventListener('DOMContentLoaded', () => {
     'marriage-cert-witness-1', 'marriage-cert-witness-2', 'marriage-cert-priest',
     'marriage-cert-book-no', 'marriage-cert-page', 'marriage-cert-line', 'marriage-cert-dated',
   ];
+  const marriageCertNameFieldIds = [
+    'marriage-cert-groom-name', 'marriage-cert-bride-name',
+    'marriage-cert-groom-father', 'marriage-cert-groom-mother',
+    'marriage-cert-bride-father', 'marriage-cert-bride-mother',
+    'marriage-cert-witness-1', 'marriage-cert-witness-2',
+  ];
 
   let generateMarriageCertTargetId = null;
 
@@ -808,15 +843,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!r) return;
 
     generateMarriageCertTargetId = id;
-    marriageCertFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+    clearCertFields(marriageCertFieldIds, marriageCertNameFieldIds);
 
     let details = {};
     if (r.details) {
       try { details = JSON.parse(r.details); } catch { details = {}; }
     }
-    Object.entries(requestDetailsToMarriageCertField).forEach(([detailKey, certFieldId]) => {
-      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
-    });
+    prefillCertFieldsFromDetails(requestDetailsToMarriageCertField, details, marriageCertNameFieldIds);
 
     document.getElementById('marriage-cert-priest').value = 'Fredrick Edward C. Simon';
     document.getElementById('marriage-cert-dated').value = new Date().toISOString().slice(0, 10);
@@ -825,18 +858,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('marriage-cert-generate-submit').addEventListener('click', () => {
-    const groomInput = document.getElementById('marriage-cert-groom-name');
-    const brideInput = document.getElementById('marriage-cert-bride-name');
-    if (!groomInput.value.trim() || !brideInput.value.trim()) {
+    const groomFilled = nameFieldsFilled('marriage-cert-groom-name');
+    const brideFilled = nameFieldsFilled('marriage-cert-bride-name');
+    if (!groomFilled || !brideFilled) {
       showToast("Please enter both the groom's and bride's full names.", true);
-      (groomInput.value.trim() ? brideInput : groomInput).focus();
+      document.getElementById(groomFilled ? 'marriage-cert-bride-name-first' : 'marriage-cert-groom-name-first').focus();
       return;
     }
 
-    const data = { requestId: generateMarriageCertTargetId };
-    marriageCertFieldIds.forEach(fid => {
-      data[fid] = document.getElementById(fid).value.trim();
-    });
+    const data = { requestId: generateMarriageCertTargetId, ...collectCertFieldsData(marriageCertFieldIds, marriageCertNameFieldIds) };
 
     try {
       sessionStorage.setItem(MARRIAGE_CERT_STORAGE_KEY, JSON.stringify(data));
@@ -866,6 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'death-cert-burial-date', 'death-cert-burial-place', 'death-cert-priest',
     'death-cert-book-no', 'death-cert-page', 'death-cert-line', 'death-cert-dated',
   ];
+  const deathCertNameFieldIds = ['death-cert-name'];
 
   let generateDeathCertTargetId = null;
 
@@ -888,15 +919,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!r) return;
 
     generateDeathCertTargetId = id;
-    deathCertFieldIds.forEach(fid => { document.getElementById(fid).value = ''; });
+    clearCertFields(deathCertFieldIds, deathCertNameFieldIds);
 
     let details = {};
     if (r.details) {
       try { details = JSON.parse(r.details); } catch { details = {}; }
     }
-    Object.entries(requestDetailsToDeathCertField).forEach(([detailKey, certFieldId]) => {
-      if (details[detailKey]) document.getElementById(certFieldId).value = details[detailKey];
-    });
+    prefillCertFieldsFromDetails(requestDetailsToDeathCertField, details, deathCertNameFieldIds);
 
     document.getElementById('death-cert-priest').value = 'Fredrick Edward C. Simon';
     document.getElementById('death-cert-dated').value = new Date().toISOString().slice(0, 10);
@@ -905,17 +934,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('death-cert-generate-submit').addEventListener('click', () => {
-    const nameInput = document.getElementById('death-cert-name');
-    if (!nameInput.value.trim()) {
+    if (!nameFieldsFilled('death-cert-name')) {
       showToast('Please enter the full name of the deceased.', true);
-      nameInput.focus();
+      document.getElementById('death-cert-name-first').focus();
       return;
     }
 
-    const data = { requestId: generateDeathCertTargetId };
-    deathCertFieldIds.forEach(fid => {
-      data[fid] = document.getElementById(fid).value.trim();
-    });
+    const data = { requestId: generateDeathCertTargetId, ...collectCertFieldsData(deathCertFieldIds, deathCertNameFieldIds) };
 
     try {
       sessionStorage.setItem(DEATH_CERT_STORAGE_KEY, JSON.stringify(data));

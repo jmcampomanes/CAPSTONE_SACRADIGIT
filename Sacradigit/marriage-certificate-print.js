@@ -14,6 +14,7 @@
 
 import { client } from '../amplify-init.js';
 import { uploadData } from 'aws-amplify/storage';
+import { formatFullName } from '../name-utils.js';
 
 const CERT_STORAGE_KEY = 'sacradigit_marriage_cert_draft';
 
@@ -66,21 +67,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  const groomName = escapeOrDash(data['marriage-cert-groom-name']);
-  const brideName = escapeOrDash(data['marriage-cert-bride-name']);
+  const groomFullName = escapeOrDash(formatFullName(data['marriage-cert-groom-name']));
+  const brideFullName = escapeOrDash(formatFullName(data['marriage-cert-bride-name']));
 
-  document.getElementById('out-groom-name').textContent = groomName;
-  document.getElementById('out-groom-name-2').textContent = groomName;
-  document.getElementById('out-groom-father').textContent = escapeOrDash(data['marriage-cert-groom-father']);
-  document.getElementById('out-groom-mother').textContent = escapeOrDash(data['marriage-cert-groom-mother']);
-  document.getElementById('out-bride-name').textContent = brideName;
-  document.getElementById('out-bride-name-2').textContent = brideName;
-  document.getElementById('out-bride-father').textContent = escapeOrDash(data['marriage-cert-bride-father']);
-  document.getElementById('out-bride-mother').textContent = escapeOrDash(data['marriage-cert-bride-mother']);
+  document.getElementById('out-groom-name').textContent = groomFullName;
+  document.getElementById('out-groom-name-2').textContent = groomFullName;
+  document.getElementById('out-groom-father').textContent = escapeOrDash(formatFullName(data['marriage-cert-groom-father']));
+  document.getElementById('out-groom-mother').textContent = escapeOrDash(formatFullName(data['marriage-cert-groom-mother']));
+  document.getElementById('out-bride-name').textContent = brideFullName;
+  document.getElementById('out-bride-name-2').textContent = brideFullName;
+  document.getElementById('out-bride-father').textContent = escapeOrDash(formatFullName(data['marriage-cert-bride-father']));
+  document.getElementById('out-bride-mother').textContent = escapeOrDash(formatFullName(data['marriage-cert-bride-mother']));
   document.getElementById('out-marriage-place').textContent = escapeOrDash(data['marriage-cert-marriage-place']);
   document.getElementById('out-priest').textContent = escapeOrDash(data['marriage-cert-priest']);
-  document.getElementById('out-witness-1').textContent = escapeOrDash(data['marriage-cert-witness-1']);
-  document.getElementById('out-witness-2').textContent = escapeOrDash(data['marriage-cert-witness-2']);
+  document.getElementById('out-witness-1').textContent = escapeOrDash(formatFullName(data['marriage-cert-witness-1']));
+  document.getElementById('out-witness-2').textContent = escapeOrDash(formatFullName(data['marriage-cert-witness-2']));
   document.getElementById('out-book-no').textContent = data['marriage-cert-book-no'] || '___';
   document.getElementById('out-page').textContent = data['marriage-cert-page'] || '___';
   document.getElementById('out-line').textContent = data['marriage-cert-line'] || '___';
@@ -150,8 +151,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const path = `certificateUploads/marriage_${Date.now()}.png`;
       await uploadData({ path, data: blob }).result;
 
-      const groomName = (data['marriage-cert-groom-name'] || '').trim();
-      const brideName = (data['marriage-cert-bride-name'] || '').trim();
+      // A marriage record names two people, but ParishRecord's split
+      // name fields (firstName/middleName/lastName/extension) only hold
+      // one person — so those stay unset here and `fullName` carries
+      // the combined "Groom & Bride" display string instead.
+      const groomName = formatFullName(data['marriage-cert-groom-name']);
+      const brideName = formatFullName(data['marriage-cert-bride-name']);
       const coupleName = groomName && brideName ? `${groomName} & ${brideName}` : (groomName || brideName || 'Unnamed');
 
       const recordResult = await client.models.ParishRecord.create({

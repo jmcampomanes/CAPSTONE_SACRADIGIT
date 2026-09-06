@@ -4,6 +4,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -242,14 +243,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('upload-submit').addEventListener('click', async () => {
     const type = document.getElementById('upload-type').value;
-    const name = document.getElementById('upload-name').value.trim();
+    const name = readNameFields('upload-name');
 
     if (!fileInput.files.length) { showToast('Please select a file to upload.', true); return; }
-    if (!type || !name) { showToast('Please fill in record type and name.', true); return; }
+    if (!type || !nameFieldsFilled('upload-name')) { showToast('Please fill in record type and name.', true); return; }
+
+    const fullName = formatFullName(name);
 
     try {
       const result = await client.models.ParishRecord.create({
-        fullName: name,
+        fullName,
+        firstName: name.firstName || undefined,
+        middleName: name.middleName || undefined,
+        lastName: name.lastName || undefined,
+        extension: name.extension || undefined,
         type: type.toLowerCase(),
         addedByName: 'Admin User', // TODO: pull from signed-in Cognito user once auth UI exists
         status: 'processing',
@@ -257,11 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal(uploadModal);
-      showToast(`"${name}" uploaded and queued for processing.`);
+      showToast(`"${fullName}" uploaded and queued for processing.`);
       fileInput.value = '';
       uploadFilename.classList.add('hidden');
       document.getElementById('upload-type').value = '';
-      document.getElementById('upload-name').value = '';
+      setNameFields('upload-name', null);
     } catch (err) {
       console.error('Failed to save record:', err);
       showToast(err.message || "Couldn't save the record.", true);
@@ -271,16 +278,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* --- New Record modal (manual entry) --- */
   document.getElementById('new-record-submit').addEventListener('click', async () => {
-    const name      = document.getElementById('new-name').value.trim();
+    const name      = readNameFields('new-name');
     const type      = document.getElementById('new-type').value;
     const date      = document.getElementById('new-date').value;
     const officiant = document.getElementById('new-officiant').value.trim();
 
-    if (!name || !type || !date) { showToast('Please fill in name, type, and date.', true); return; }
+    if (!nameFieldsFilled('new-name') || !type || !date) { showToast('Please fill in name, type, and date.', true); return; }
+
+    const fullName = formatFullName(name);
 
     try {
       const result = await client.models.ParishRecord.create({
-        fullName: name,
+        fullName,
+        firstName: name.firstName || undefined,
+        middleName: name.middleName || undefined,
+        lastName: name.lastName || undefined,
+        extension: name.extension || undefined,
         type: type.toLowerCase(),
         dateOfEvent: date,
         officiant: officiant || undefined,
@@ -290,8 +303,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal(newRecordModal);
-      showToast(`Record for "${name}" saved.`);
-      ['new-name', 'new-officiant', 'new-notes'].forEach(id => { document.getElementById(id).value = ''; });
+      showToast(`Record for "${fullName}" saved.`);
+      setNameFields('new-name', null);
+      ['new-officiant', 'new-notes'].forEach(id => { document.getElementById(id).value = ''; });
       document.getElementById('new-type').value = '';
       document.getElementById('new-date').value = '';
     } catch (err) {

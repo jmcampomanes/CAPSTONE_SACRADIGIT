@@ -8,17 +8,19 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  function toLocalISODate(d = new Date()) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+  // Names are stored as { firstName, middleName, lastName, extension }
+  // objects (see name-utils.js). normalizeName tolerates any older
+  // plain-string entries so display code never has to branch on shape.
+  function normalizeName(n) {
+    return typeof n === 'string' ? { firstName: n, middleName: '', lastName: '', extension: '' } : (n || {});
   }
+  function nameDisplay(n) { return formatFullName(normalizeName(n)); }
 
-  const todayISO = toLocalISODate();
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   let intentions = []; // kept in sync via observeQuery, each has .id
 
@@ -86,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const matchesQuery = !query ||
       (it.donor || '').toLowerCase().includes(query) ||
-      getNames(it).some(n => n.toLowerCase().includes(query));
+      getNames(it).some(n => nameDisplay(n).toLowerCase().includes(query));
 
     const matchesType   = !typeVal || it.type === typeVal;
     const matchesStatus  = !statusVal || it.status === statusVal;
@@ -94,6 +96,192 @@ document.addEventListener('DOMContentLoaded', () => {
     return matchesQuery && matchesType && matchesStatus;
   }
 
+  /* ------------------------------------------
+     READER'S SHEET — declared here, ABOVE the observeQuery
+     subscription just below, because that subscription's callback
+     (via renderSheetOptions -> renderSheet -> applyCategoryFilter /
+     refreshFindMatches) can fire synchronously on first subscribe
+     and reads these consts/lets. Same TDZ pitfall documented on the
+     user-facing Mass Intentions and Donations pages.
+  ------------------------------------------ */
+  const sheetMassSelect = document.getElementById('sheet-mass-select');
+  const sheetEmpty        = document.getElementById('sheet-empty');
+  const sheetBody           = document.getElementById('sheet-body');
+  const sheetMassRange        = document.getElementById('sheet-mass-range');
+
+  const sheetListEls = {
+    thanksgiving: document.getElementById('sheet-list-thanksgiving'),
+    special: document.getElementById('sheet-list-special'),
+    souls: document.getElementById('sheet-list-souls'),
+  };
+
+  let currentSheetKey = '';
+
+  /* ------------------------------------------
+     Category filter (All / one category at a time)
+  ------------------------------------------ */
+  const sheetCatBtns   = document.querySelectorAll('.sheet-cat-btn');
+  const sheetGroupEls    = document.querySelectorAll('.sheet-group');
+  const sheetBoilerplateEl = document.querySelector('.sheet-boilerplate');
+  const sheetClosingEl       = document.querySelector('.sheet-closing');
+
+  let activeCategory = 'all';
+
+  function applyCategoryFilter() {
+    sheetGroupEls.forEach(g => {
+      const show = activeCategory === 'all' || g.dataset.cat === activeCategory;
+      g.classList.toggle('sheet-group-filtered-out', !show);
+    });
+    // The standing intentions aren't part of any one category, so
+    // they only make sense in the full "All" view.
+    const showStanding = activeCategory === 'all';
+    sheetBoilerplateEl?.classList.toggle('sheet-group-filtered-out', !showStanding);
+    sheetClosingEl?.classList.toggle('sheet-group-filtered-out', !showStanding);
+
+    refreshFindMatches();
+  }
+
+  sheetCatBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.cat;
+      sheetCatBtns.forEach(b => b.classList.toggle('active', b === btn));
+      applyCategoryFilter();
+    });
+  });
+
+  /* ------------------------------------------
+     Find a name (Ctrl+F-style, scoped to the sheet)
+  ------------------------------------------ */
+  const findInput   = document.getElementById('sheet-find-input');
+  const findCount     = document.getElementById('sheet-find-count');
+  const findPrevBtn     = document.getElementById('sheet-find-prev');
+  const findNextBtn       = document.getElementById('sheet-find-next');
+  const findClearBtn        = document.getElementById('sheet-find-clear');
+
+  let findQuery = '';
+  let findMatches = [];
+  let findActiveIndex = -1;
+
+  function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  /* Wraps matches of findQuery inside already-escaped HTML text.
+     The query is escaped the same way the source text was, so the
+     regex only ever matches against literal (already-safe) markup. */
+  function highlightText(escapedText, query) {
+    const escapedQuery = escapeHtml(query.trim());
+    if (!escapedQuery) return escapedText;
+    const re = new RegExp(escapeRegExp(escapedQuery), 'gi');
+    return escapedText.replace(re, (m) => `<mark class="sheet-highlight">${m}</mark>`);
+  }
+
+  function refreshFindMatches() {
+    // Only search within whatever category is currently visible —
+    // matches hidden by the category filter shouldn't count or be
+    // jumped to.
+    const scopeEls = activeCategory === 'all'
+      ? [sheetListEls.thanksgiving, sheetListEls.special, sheetListEls.souls]
+      : [sheetListEls[activeCategory]];
+    findMatches = scopeEls.flatMap(el => [...el.querySelectorAll('mark.sheet-highlight')]);
+    findActiveIndex = findMatches.length ? 0 : -1;
+    updateFindUI();
+    if (findActiveIndex >= 0) focusMatch(findActiveIndex);
+  }
+
+  function updateFindUI() {
+    const hasQuery = findQuery.trim().length > 0;
+    findClearBtn.classList.toggle('hidden', !hasQuery);
+
+    if (!hasQuery) {
+      findCount.classList.add('hidden');
+      findPrevBtn.disabled = true;
+      findNextBtn.disabled = true;
+      return;
+    }
+
+    findCount.classList.remove('hidden');
+    findCount.textContent = findMatches.length ? `${findActiveIndex + 1} of ${findMatches.length}` : 'No matches';
+    findPrevBtn.disabled = findMatches.length === 0;
+    findNextBtn.disabled = findMatches.length === 0;
+  }
+
+  function focusMatch(index) {
+    findMatches.forEach(m => m.classList.remove('sheet-highlight-active'));
+    const el = findMatches[index];
+    if (!el) return;
+    el.classList.add('sheet-highlight-active');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  findInput.addEventListener('input', () => {
+    findQuery = findInput.value;
+    renderSheet();
+  });
+
+  findInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (e.shiftKey) findPrevBtn.click(); else findNextBtn.click();
+  });
+
+  findNextBtn.addEventListener('click', () => {
+    if (!findMatches.length) return;
+    findActiveIndex = (findActiveIndex + 1) % findMatches.length;
+    updateFindUI();
+    focusMatch(findActiveIndex);
+  });
+
+  findPrevBtn.addEventListener('click', () => {
+    if (!findMatches.length) return;
+    findActiveIndex = (findActiveIndex - 1 + findMatches.length) % findMatches.length;
+    updateFindUI();
+    focusMatch(findActiveIndex);
+  });
+
+  findClearBtn.addEventListener('click', () => {
+    findInput.value = '';
+    findQuery = '';
+    renderSheet();
+    findInput.focus();
+  });
+
+  /* ------------------------------------------
+     STAT CARDS AS QUICK FILTERS
+     Only "Pending Mass Assignment" maps to a
+     single status value, so it's the only stat
+     card wired as a clickable quick filter —
+     "Total Intentions This Week" and "Total
+     Offerings" don't map to one status and stay
+     plain, non-interactive stat cards.
+
+     NOTE: declared above the observeQuery subscription below, since
+     its callback (via renderTable -> updateActiveStatCard) can fire
+     synchronously on first subscribe and reads statCardsByStatus.
+  ------------------------------------------ */
+  const statCardsByStatus = [
+    { card: document.getElementById('stat-pending').closest('.stat-card'), status: 'pending' },
+  ];
+
+  statCardsByStatus.forEach(({ card, status }) => {
+    card.classList.add('stat-card-clickable');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    const activate = () => {
+      searchInput.value = '';
+      statusFilter.value = status;
+      currentPage = 1;
+      renderTable();
+    };
+    card.addEventListener('click', activate);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
+  });
+
+  function updateActiveStatCard() {
+    statCardsByStatus.forEach(({ card, status }) => {
+      card.classList.toggle('stat-card-active', statusFilter.value === status);
+    });
+  }
 
   /* --- Live data --- */
   client.models.MassIntention.observeQuery().subscribe({
@@ -129,42 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ------------------------------------------
-     STAT CARDS AS QUICK FILTERS
-     Only "Pending Mass Assignment" maps to a
-     single status value, so it's the only stat
-     card wired as a clickable quick filter —
-     "Total Intentions This Week" and "Total
-     Offerings" don't map to one status and stay
-     plain, non-interactive stat cards.
-  ------------------------------------------ */
-  const statCardsByStatus = [
-    { card: document.getElementById('stat-pending').closest('.stat-card'), status: 'pending' },
-  ];
-
-  statCardsByStatus.forEach(({ card, status }) => {
-    card.classList.add('stat-card-clickable');
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    const activate = () => {
-      searchInput.value = '';
-      statusFilter.value = status;
-      currentPage = 1;
-      renderTable();
-    };
-    card.addEventListener('click', activate);
-    card.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
-    });
-  });
-
-  function updateActiveStatCard() {
-    statCardsByStatus.forEach(({ card, status }) => {
-      card.classList.toggle('stat-card-active', statusFilter.value === status);
-    });
-  }
-
-
   function intentionRowHtml(it) {
     const massDateLabel = it.massDate
       ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}`
@@ -184,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="font-medium text-gray-900">${escapeHtml(it.donor)}</td>
         <td>
           ${escapeHtml(it.type)}
-          ${names.length ? `<div class="text-xs text-gray-400 mt-0.5">${escapeHtml(names.join(', '))}</div>` : ''}
+          ${names.length ? `<div class="text-xs text-gray-400 mt-0.5">${escapeHtml(names.map(nameDisplay).join(', '))}</div>` : ''}
           ${it.startTime && it.endTime ? `<div class="intention-timeline">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</div>` : ''}
         </td>
         <td>${massDateLabel}</td>
@@ -282,7 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Add/Edit Intention Modal --- */
   const addModal = document.getElementById('add-modal');
 
-  const addNameInput  = document.getElementById('add-name-input');
   const addAddNameBtn  = document.getElementById('add-add-name');
   const addNameChipsBox = document.getElementById('add-name-chips');
   const addAddedSection = document.getElementById('add-added-section');
@@ -360,7 +511,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <div class="mi-added-item mi-added-item-editing" data-index="${i}">
             <div class="mi-added-item-edit-fields">
-              <input type="text" class="form-input add-name-edit-input" data-index="${i}" value="${escapeHtml(item.name)}" />
+              <div class="name-field-row">
+                <input type="text" class="form-input add-name-edit-name-first" data-index="${i}" value="${escapeHtml(item.name.firstName || '')}" placeholder="First Name" />
+                <input type="text" class="form-input add-name-edit-name-middle" data-index="${i}" value="${escapeHtml(item.name.middleName || '')}" placeholder="Middle Name" />
+                <input type="text" class="form-input add-name-edit-name-last" data-index="${i}" value="${escapeHtml(item.name.lastName || '')}" placeholder="Last Name" />
+                <input type="text" class="form-input add-name-edit-name-ext name-ext-input" data-index="${i}" value="${escapeHtml(item.name.extension || '')}" placeholder="Ext." />
+              </div>
               <select class="form-input add-name-edit-type" data-index="${i}">
                 ${intentionTypes.map(t => `<option value="${t.id}" ${t.id === item.typeId ? 'selected' : ''}>${escapeHtml(t.label)}</option>`).join('')}
               </select>
@@ -376,17 +532,18 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>`;
       }
       const cfg = typeConfig(item.typeId);
+      const displayName = escapeHtml(nameDisplay(item.name));
       return `
         <div class="mi-added-item" data-index="${i}">
           <div class="mi-added-item-body">
-            <p class="mi-added-item-name">${escapeHtml(item.name)}</p>
+            <p class="mi-added-item-name">${displayName}</p>
             <p class="mi-added-item-type" style="color:${cfg.iconColor};">${escapeHtml(cfg.label)}</p>
           </div>
           <div class="mi-added-item-actions">
-            <button type="button" class="mi-added-item-edit" data-index="${i}" aria-label="Edit ${escapeHtml(item.name)}">
+            <button type="button" class="mi-added-item-edit" data-index="${i}" aria-label="Edit ${displayName}">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
             </button>
-            <button type="button" class="mi-added-item-remove" data-index="${i}" aria-label="Remove ${escapeHtml(item.name)}">
+            <button type="button" class="mi-added-item-remove" data-index="${i}" aria-label="Remove ${displayName}">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -394,38 +551,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     if (addNameEditingIndex !== null) {
-      const field = addNameChipsBox.querySelector(`.add-name-edit-input[data-index="${addNameEditingIndex}"]`);
+      const field = addNameChipsBox.querySelector(`.add-name-edit-name-first[data-index="${addNameEditingIndex}"]`);
       if (field) { field.focus(); field.select(); }
     }
   }
 
   function saveAddNameEdit(index) {
-    const nameField = addNameChipsBox.querySelector(`.add-name-edit-input[data-index="${index}"]`);
+    const get = (suffix) => addNameChipsBox.querySelector(`.add-name-edit-name-${suffix}[data-index="${index}"]`);
+    const firstEl = get('first'), middleEl = get('middle'), lastEl = get('last'), extEl = get('ext');
     const typeField = addNameChipsBox.querySelector(`.add-name-edit-type[data-index="${index}"]`);
-    if (!nameField || !typeField) return;
-    const val = nameField.value.trim();
-    if (!val) { nameField.classList.add('border-red-400'); return; }
-    addedIntentions[index] = { name: val, typeId: typeField.value };
+    if (!firstEl || !lastEl || !typeField) return;
+    const name = {
+      firstName: firstEl.value.trim(),
+      middleName: (middleEl?.value || '').trim(),
+      lastName: lastEl.value.trim(),
+      extension: (extEl?.value || '').trim(),
+    };
+    if (!name.firstName || !name.lastName) {
+      [firstEl, lastEl].forEach(el => { if (!el.value.trim()) el.classList.add('border-red-400'); });
+      return;
+    }
+    addedIntentions[index] = { name, typeId: typeField.value };
     addNameEditingIndex = null;
     renderAddNameChips();
   }
 
   function addIntentionName() {
-    const val = addNameInput.value.trim();
-    if (!val) return;
+    if (!nameFieldsFilled('add-name')) {
+      const firstEl = document.getElementById('add-name-first');
+      const lastEl = document.getElementById('add-name-last');
+      if (!firstEl.value.trim()) firstEl.classList.add('border-red-400');
+      if (!lastEl.value.trim()) lastEl.classList.add('border-red-400');
+      return;
+    }
     // Newest addition goes to the top, so it's visible right away.
-    addedIntentions.unshift({ name: val, typeId: selectedTypeId });
+    addedIntentions.unshift({ name: readNameFields('add-name'), typeId: selectedTypeId });
     if (addNameEditingIndex !== null) addNameEditingIndex += 1;
-    addNameInput.value = '';
-    addNameInput.classList.remove('border-red-400');
+    setNameFields('add-name', {});
+    ['add-name-first', 'add-name-middle', 'add-name-last', 'add-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
     renderAddNameChips();
-    addNameInput.focus();
+    document.getElementById('add-name-first').focus();
   }
 
   addAddNameBtn.addEventListener('click', addIntentionName);
 
-  addNameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); addIntentionName(); }
+  ['add-name-first', 'add-name-middle', 'add-name-last', 'add-name-ext'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addIntentionName(); } });
+    el.addEventListener('input', () => el.classList.remove('border-red-400'));
   });
 
   addNameChipsBox.addEventListener('click', (e) => {
@@ -468,6 +641,8 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedTypeId = intentionTypes[0].id;
     selectTypeButton(selectedTypeId);
     updateAddNameLabelSuffix();
+    setNameFields('add-name', {});
+    ['add-name-first', 'add-name-middle', 'add-name-last', 'add-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
     renderAddNameChips();
   }
 
@@ -498,11 +673,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // so admin can re-tag any of them individually while editing.
     const typeId = typeIdFromLabel(it.type);
     const names = getNames(it);
-    addedIntentions = names.length ? names.map(n => ({ name: n, typeId })) : [];
+    addedIntentions = names.length ? names.map(n => ({ name: normalizeName(n), typeId })) : [];
     addNameEditingIndex = null;
     selectedTypeId = typeId;
     selectTypeButton(typeId);
     updateAddNameLabelSuffix();
+    setNameFields('add-name', {});
+    ['add-name-first', 'add-name-middle', 'add-name-last', 'add-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
     renderAddNameChips();
 
     openModal(addModal);
@@ -667,7 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('add-submit').addEventListener('click', async () => {
-    if (addNameInput.value.trim()) addIntentionName();
+    if (!isNameEmpty(readNameFields('add-name'))) addIntentionName();
 
     const donor       = document.getElementById('add-donor').value.trim();
     const offering          = parseInt(document.getElementById('add-offering').value, 10);
@@ -782,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="mt-3">
         <p class="so-detail-label">Name${names.length === 1 ? '' : 's'} (${names.length})</p>
         <div class="name-chip-list">
-          ${names.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('') || '<span class="text-xs text-gray-400">—</span>'}
+          ${names.map(n => `<span class="name-chip">${escapeHtml(nameDisplay(n))}</span>`).join('') || '<span class="text-xs text-gray-400">—</span>'}
         </div>
       </div>
     `;
@@ -846,153 +1023,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-
-  /* ------------------------------------------
-     READER'S SHEET
-     A read-aloud version of the Mass Intentions
-     Log, grouped into the 3 categories a lector
-     traditionally reads from — replaces the old
-     manual Excel sheet-per-mass workflow.
-  ------------------------------------------ */
-  const sheetMassSelect = document.getElementById('sheet-mass-select');
-  const sheetEmpty        = document.getElementById('sheet-empty');
-  const sheetBody           = document.getElementById('sheet-body');
-  const sheetMassRange        = document.getElementById('sheet-mass-range');
-
-  const sheetListEls = {
-    thanksgiving: document.getElementById('sheet-list-thanksgiving'),
-    special: document.getElementById('sheet-list-special'),
-    souls: document.getElementById('sheet-list-souls'),
-  };
-
-  let currentSheetKey = '';
-
-  /* ------------------------------------------
-     Category filter (All / one category at a time)
-  ------------------------------------------ */
-  const sheetCatBtns   = document.querySelectorAll('.sheet-cat-btn');
-  const sheetGroupEls    = document.querySelectorAll('.sheet-group');
-  const sheetBoilerplateEl = document.querySelector('.sheet-boilerplate');
-  const sheetClosingEl       = document.querySelector('.sheet-closing');
-
-  let activeCategory = 'all';
-
-  function applyCategoryFilter() {
-    sheetGroupEls.forEach(g => {
-      const show = activeCategory === 'all' || g.dataset.cat === activeCategory;
-      g.classList.toggle('sheet-group-filtered-out', !show);
-    });
-    // The standing intentions aren't part of any one category, so
-    // they only make sense in the full "All" view.
-    const showStanding = activeCategory === 'all';
-    sheetBoilerplateEl?.classList.toggle('sheet-group-filtered-out', !showStanding);
-    sheetClosingEl?.classList.toggle('sheet-group-filtered-out', !showStanding);
-
-    refreshFindMatches();
-  }
-
-  sheetCatBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeCategory = btn.dataset.cat;
-      sheetCatBtns.forEach(b => b.classList.toggle('active', b === btn));
-      applyCategoryFilter();
-    });
-  });
-
-  /* ------------------------------------------
-     Find a name (Ctrl+F-style, scoped to the sheet)
-  ------------------------------------------ */
-  const findInput   = document.getElementById('sheet-find-input');
-  const findCount     = document.getElementById('sheet-find-count');
-  const findPrevBtn     = document.getElementById('sheet-find-prev');
-  const findNextBtn       = document.getElementById('sheet-find-next');
-  const findClearBtn        = document.getElementById('sheet-find-clear');
-
-  let findQuery = '';
-  let findMatches = [];
-  let findActiveIndex = -1;
-
-  function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-  /* Wraps matches of findQuery inside already-escaped HTML text.
-     The query is escaped the same way the source text was, so the
-     regex only ever matches against literal (already-safe) markup. */
-  function highlightText(escapedText, query) {
-    const escapedQuery = escapeHtml(query.trim());
-    if (!escapedQuery) return escapedText;
-    const re = new RegExp(escapeRegExp(escapedQuery), 'gi');
-    return escapedText.replace(re, (m) => `<mark class="sheet-highlight">${m}</mark>`);
-  }
-
-  function refreshFindMatches() {
-    // Only search within whatever category is currently visible —
-    // matches hidden by the category filter shouldn't count or be
-    // jumped to.
-    const scopeEls = activeCategory === 'all'
-      ? [sheetListEls.thanksgiving, sheetListEls.special, sheetListEls.souls]
-      : [sheetListEls[activeCategory]];
-    findMatches = scopeEls.flatMap(el => [...el.querySelectorAll('mark.sheet-highlight')]);
-    findActiveIndex = findMatches.length ? 0 : -1;
-    updateFindUI();
-    if (findActiveIndex >= 0) focusMatch(findActiveIndex);
-  }
-
-  function updateFindUI() {
-    const hasQuery = findQuery.trim().length > 0;
-    findClearBtn.classList.toggle('hidden', !hasQuery);
-
-    if (!hasQuery) {
-      findCount.classList.add('hidden');
-      findPrevBtn.disabled = true;
-      findNextBtn.disabled = true;
-      return;
-    }
-
-    findCount.classList.remove('hidden');
-    findCount.textContent = findMatches.length ? `${findActiveIndex + 1} of ${findMatches.length}` : 'No matches';
-    findPrevBtn.disabled = findMatches.length === 0;
-    findNextBtn.disabled = findMatches.length === 0;
-  }
-
-  function focusMatch(index) {
-    findMatches.forEach(m => m.classList.remove('sheet-highlight-active'));
-    const el = findMatches[index];
-    if (!el) return;
-    el.classList.add('sheet-highlight-active');
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  findInput.addEventListener('input', () => {
-    findQuery = findInput.value;
-    renderSheet();
-  });
-
-  findInput.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    if (e.shiftKey) findPrevBtn.click(); else findNextBtn.click();
-  });
-
-  findNextBtn.addEventListener('click', () => {
-    if (!findMatches.length) return;
-    findActiveIndex = (findActiveIndex + 1) % findMatches.length;
-    updateFindUI();
-    focusMatch(findActiveIndex);
-  });
-
-  findPrevBtn.addEventListener('click', () => {
-    if (!findMatches.length) return;
-    findActiveIndex = (findActiveIndex - 1 + findMatches.length) % findMatches.length;
-    updateFindUI();
-    focusMatch(findActiveIndex);
-  });
-
-  findClearBtn.addEventListener('click', () => {
-    findInput.value = '';
-    findQuery = '';
-    renderSheet();
-    findInput.focus();
-  });
 
   function sheetKey(it) { return `${it.massDate}||${it.massTime || ''}`; }
 
@@ -1081,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // is folded in as a small inline tag right after its names.
       listEl.innerHTML = items.map(it => {
         const names = getNames(it);
-        const namesText = names.length ? names.join(' / ') : it.donor;
+        const namesText = names.length ? names.map(nameDisplay).join(' / ') : it.donor;
         const tag = (it.startTime && it.endTime)
           ? ` <span class="sheet-entry-tag">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</span>`
           : '';

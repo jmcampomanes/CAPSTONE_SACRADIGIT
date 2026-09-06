@@ -14,6 +14,7 @@
 
 import { client } from '../amplify-init.js';
 import { uploadData } from 'aws-amplify/storage';
+import { formatFullName } from '../name-utils.js';
 
 const CERT_STORAGE_KEY = 'sacradigit_death_cert_draft';
 
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.getElementById('out-deceased-name').textContent = escapeOrDash(data['death-cert-name']);
+  document.getElementById('out-deceased-name').textContent = escapeOrDash(formatFullName(data['death-cert-name']));
   document.getElementById('out-age').textContent = (data['death-cert-age'] || '').trim() || '____';
   document.getElementById('out-death-date').textContent = formatDatedLine(data['death-cert-death-date']) || '_______________';
   document.getElementById('out-place-of-death').textContent = escapeOrDash(data['death-cert-place-of-death']);
@@ -124,8 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const path = `certificateUploads/death_${Date.now()}.png`;
       await uploadData({ path, data: blob }).result;
 
+      const deceasedName = data['death-cert-name'] || {};
       const recordResult = await client.models.ParishRecord.create({
-        fullName: (data['death-cert-name'] || '').trim() || 'Unnamed',
+        fullName: formatFullName(deceasedName) || 'Unnamed',
+        firstName: deceasedName.firstName || undefined,
+        middleName: deceasedName.middleName || undefined,
+        lastName: deceasedName.lastName || undefined,
+        extension: deceasedName.extension || undefined,
         type: 'death',
         dateOfEvent: data['death-cert-death-date'] || undefined,
         officiant: (data['death-cert-priest'] || '').trim() || undefined,

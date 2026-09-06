@@ -7,8 +7,17 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  // Names are stored as { firstName, middleName, lastName, extension }
+  // objects (see name-utils.js). normalizeName tolerates any older
+  // plain-string entries so display code never has to branch on shape.
+  function normalizeName(n) {
+    return typeof n === 'string' ? { firstName: n, middleName: '', lastName: '', extension: '' } : (n || {});
+  }
+  function nameDisplay(n) { return formatFullName(normalizeName(n)); }
 
   const DONOR_NAME = 'Maria P. Santos';
 
@@ -88,8 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const cfg = typeConfig(typeIdFromLabel(it.type));
       const names = getNames(it);
       const namesDisplay = names.length > 1
-        ? `${escapeHtml(names[0])} <span class="text-gray-400 font-medium">+${names.length - 1} more</span>`
-        : escapeHtml(names[0] || '');
+        ? `${escapeHtml(nameDisplay(names[0]))} <span class="text-gray-400 font-medium">+${names.length - 1} more</span>`
+        : escapeHtml(nameDisplay(names[0]) || '');
 
       return `<li><div class="intention-row">
         <div class="intention-icon" style="background-color:${cfg.iconBg};color:${cfg.iconColor};">${cfg.icon}</div>
@@ -116,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Submit Intention Modal --- */
   const modal     = document.getElementById('intention-modal');
   const typeGrid   = document.getElementById('intention-type-grid');
-  const nameInput    = document.getElementById('mi-name-input');
   const addNameBtn    = document.getElementById('mi-add-name');
   const dateInput    = document.getElementById('mi-date');
   const offeringInput = document.getElementById('mi-offering');
@@ -327,7 +335,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <div class="mi-added-item mi-added-item-editing" data-index="${i}">
             <div class="mi-added-item-edit-fields">
-              <input type="text" class="form-input mi-added-edit-name" data-index="${i}" value="${escapeHtml(item.name)}" />
+              <div class="name-field-row">
+                <input type="text" class="form-input mi-added-edit-name-first" data-index="${i}" value="${escapeHtml(item.name.firstName || '')}" placeholder="First Name" />
+                <input type="text" class="form-input mi-added-edit-name-middle" data-index="${i}" value="${escapeHtml(item.name.middleName || '')}" placeholder="Middle Name" />
+                <input type="text" class="form-input mi-added-edit-name-last" data-index="${i}" value="${escapeHtml(item.name.lastName || '')}" placeholder="Last Name" />
+                <input type="text" class="form-input mi-added-edit-name-ext name-ext-input" data-index="${i}" value="${escapeHtml(item.name.extension || '')}" placeholder="Ext." />
+              </div>
               <select class="form-input mi-added-edit-type" data-index="${i}">
                 ${intentionTypes.map(t => `<option value="${t.id}" ${t.id === item.typeId ? 'selected' : ''}>${escapeHtml(t.label)}</option>`).join('')}
               </select>
@@ -343,17 +356,18 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>`;
       }
       const cfg = typeConfig(item.typeId);
+      const displayName = escapeHtml(nameDisplay(item.name));
       return `
         <div class="mi-added-item" data-index="${i}">
           <div class="mi-added-item-body">
-            <p class="mi-added-item-name">${escapeHtml(item.name)}</p>
+            <p class="mi-added-item-name">${displayName}</p>
             <p class="mi-added-item-type" style="color:${cfg.iconColor};">${escapeHtml(cfg.label)}</p>
           </div>
           <div class="mi-added-item-actions">
-            <button type="button" class="mi-added-item-edit" data-index="${i}" aria-label="Edit ${escapeHtml(item.name)}">
+            <button type="button" class="mi-added-item-edit" data-index="${i}" aria-label="Edit ${displayName}">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
             </button>
-            <button type="button" class="mi-added-item-remove" data-index="${i}" aria-label="Remove ${escapeHtml(item.name)}">
+            <button type="button" class="mi-added-item-remove" data-index="${i}" aria-label="Remove ${displayName}">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -362,37 +376,55 @@ document.addEventListener('DOMContentLoaded', () => {
     updateOfferingDefault();
 
     if (editingIndex !== null) {
-      const nameField = addedList.querySelector(`.mi-added-edit-name[data-index="${editingIndex}"]`);
+      const nameField = addedList.querySelector(`.mi-added-edit-name-first[data-index="${editingIndex}"]`);
       if (nameField) { nameField.focus(); nameField.select(); }
     }
   }
 
   function saveEdit(index) {
-    const nameField = addedList.querySelector(`.mi-added-edit-name[data-index="${index}"]`);
+    const get = (suffix) => addedList.querySelector(`.mi-added-edit-name-${suffix}[data-index="${index}"]`);
+    const firstEl = get('first'), middleEl = get('middle'), lastEl = get('last'), extEl = get('ext');
     const typeField = addedList.querySelector(`.mi-added-edit-type[data-index="${index}"]`);
-    if (!nameField || !typeField) return;
-    const val = nameField.value.trim();
-    if (!val) { nameField.classList.add('border-red-400'); return; }
-    addedIntentions[index] = { name: val, typeId: typeField.value };
+    if (!firstEl || !lastEl || !typeField) return;
+    const name = {
+      firstName: firstEl.value.trim(),
+      middleName: (middleEl?.value || '').trim(),
+      lastName: lastEl.value.trim(),
+      extension: (extEl?.value || '').trim(),
+    };
+    if (!name.firstName || !name.lastName) {
+      [firstEl, lastEl].forEach(el => { if (!el.value.trim()) el.classList.add('border-red-400'); });
+      return;
+    }
+    addedIntentions[index] = { name, typeId: typeField.value };
     editingIndex = null;
     renderAddedList();
   }
 
   function addName() {
-    const val = nameInput.value.trim();
-    if (!val) return;
+    if (!nameFieldsFilled('mi-name')) {
+      const firstEl = document.getElementById('mi-name-first');
+      const lastEl = document.getElementById('mi-name-last');
+      if (!firstEl.value.trim()) firstEl.classList.add('border-red-400');
+      if (!lastEl.value.trim()) lastEl.classList.add('border-red-400');
+      return;
+    }
     // Newest addition goes to the top of the list, so what was just
     // added is immediately visible without scrolling.
-    addedIntentions.unshift({ name: val, typeId: selectedTypeId });
+    addedIntentions.unshift({ name: readNameFields('mi-name'), typeId: selectedTypeId });
     if (editingIndex !== null) editingIndex += 1;
-    nameInput.value = '';
-    nameInput.classList.remove('border-red-400');
+    setNameFields('mi-name', {});
+    ['mi-name-first', 'mi-name-middle', 'mi-name-last', 'mi-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
     renderAddedList();
-    nameInput.focus();
+    document.getElementById('mi-name-first').focus();
   }
 
   addNameBtn.addEventListener('click', addName);
-  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addName(); } });
+  ['mi-name-first', 'mi-name-middle', 'mi-name-last', 'mi-name-ext'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addName(); } });
+    el.addEventListener('input', () => el.classList.remove('border-red-400'));
+  });
 
   addedList.addEventListener('click', e => {
     const editBtn = e.target.closest('.mi-added-item-edit');
@@ -450,7 +482,8 @@ document.addEventListener('DOMContentLoaded', () => {
     offeringManuallyEdited = false;
     document.querySelectorAll('.intention-type-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
     updateNameLabelSuffix();
-    nameInput.value = '';
+    setNameFields('mi-name', {});
+    ['mi-name-first', 'mi-name-middle', 'mi-name-last', 'mi-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
     renderAddedList();
     dateInput.value = '';
     selectedWeekend = null;
@@ -476,11 +509,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('mi-submit');
 
   submitBtn.addEventListener('click', async () => {
-    if (nameInput.value.trim()) addName();
+    if (!isNameEmpty(readNameFields('mi-name'))) addName();
 
     if (addedIntentions.length === 0) {
-      nameInput.classList.add('border-red-400');
-      nameInput.addEventListener('input', () => nameInput.classList.remove('border-red-400'), { once: true });
+      ['mi-name-first', 'mi-name-last'].forEach(id => document.getElementById(id).classList.add('border-red-400'));
       window.showToast('Please add at least one name.', true);
       return;
     }
@@ -556,15 +588,31 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   let allIntentions = [];
 
-  client.models.MassIntention.observeQuery().subscribe({
-    next: ({ items }) => {
-      allIntentions = items;
-      renderSheetOptions();
-    },
-    error: (err) => {
-      console.error('Failed to load community intentions:', err);
-    },
-  });
+  // These DOM lookups and constants are read by renderSheetOptions(),
+  // which the observeQuery subscription below can invoke synchronously
+  // on first subscribe — so they must be declared (and thus initialized)
+  // before that subscription is registered, not after. (Same TDZ pitfall
+  // documented for user-donations.js's goal-rendering wiring.)
+  const sheetMassSelect = document.getElementById('sheet-mass-select');
+  const sheetEmpty        = document.getElementById('sheet-empty');
+  const sheetBody           = document.getElementById('sheet-body');
+  const sheetMassRange        = document.getElementById('sheet-mass-range');
+
+  const GROUP_TYPE_MAP = {
+    'Thanksgiving': 'thanksgiving',
+    'Birthday Blessing': 'thanksgiving',
+    'Special Intention': 'special',
+    'Healing': 'special',
+    'For the Soul of...': 'souls',
+  };
+
+  const sheetListEls = {
+    thanksgiving: document.getElementById('sheet-list-thanksgiving'),
+    special: document.getElementById('sheet-list-special'),
+    souls: document.getElementById('sheet-list-souls'),
+  };
+
+  let currentSheetKey = '';
 
   function formatShortDate(iso) {
     if (!iso) return '—';
@@ -588,29 +636,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return massTime ? `FOR ${dateLabel}, ${massTime.toUpperCase()} MASS` : `FOR ${dateLabel} MASS`;
   }
 
-  const sheetMassSelect = document.getElementById('sheet-mass-select');
-  const sheetEmpty        = document.getElementById('sheet-empty');
-  const sheetBody           = document.getElementById('sheet-body');
-  const sheetMassRange        = document.getElementById('sheet-mass-range');
-
-  const GROUP_TYPE_MAP = {
-    'Thanksgiving': 'thanksgiving',
-    'Birthday Blessing': 'thanksgiving',
-    'Special Intention': 'special',
-    'Healing': 'special',
-    'For the Soul of...': 'souls',
-  };
-
-  const sheetListEls = {
-    thanksgiving: document.getElementById('sheet-list-thanksgiving'),
-    special: document.getElementById('sheet-list-special'),
-    souls: document.getElementById('sheet-list-souls'),
-  };
-
-  let currentSheetKey = '';
-
   /* ------------------------------------------
      Category filter (All / one category at a time)
+     NOTE: declared before the observeQuery subscription further down,
+     since its callback (via renderSheetOptions -> renderSheet ->
+     applyCategoryFilter/refreshFindMatches) can run synchronously on
+     first subscribe and references these consts/lets.
   ------------------------------------------ */
   const sheetCatBtns   = document.querySelectorAll('.sheet-cat-btn');
   const sheetGroupEls    = document.querySelectorAll('.sheet-group');
@@ -736,6 +767,16 @@ document.addEventListener('DOMContentLoaded', () => {
     findInput.focus();
   });
 
+  client.models.MassIntention.observeQuery().subscribe({
+    next: ({ items }) => {
+      allIntentions = items;
+      renderSheetOptions();
+    },
+    error: (err) => {
+      console.error('Failed to load community intentions:', err);
+    },
+  });
+
   function sheetKey(it) { return `${it.massDate}||${it.massTime || ''}`; }
 
   function getSheetOptions() {
@@ -815,7 +856,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       listEl.innerHTML = items.map(it => {
         const names = getNames(it);
-        const namesText = names.length ? names.join(' / ') : it.donor;
+        const namesText = names.length ? names.map(nameDisplay).join(' / ') : it.donor;
         const tag = (it.startTime && it.endTime)
           ? ` <span class="sheet-entry-tag">🕐 ${escapeHtml(it.startTime)} – ${escapeHtml(it.endTime)}</span>`
           : '';
@@ -863,7 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div>
         <p class="details-label">Name${names.length === 1 ? '' : 's'} (${names.length})</p>
-        <div class="name-chip-list">${names.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('')}</div>
+        <div class="name-chip-list">${names.map(n => `<span class="name-chip">${escapeHtml(nameDisplay(n))}</span>`).join('')}</div>
       </div>
       <div class="details-grid">
         <div><p class="details-label">Submitted</p><p class="details-value">${formatShort(it.createdAt)}</p></div>

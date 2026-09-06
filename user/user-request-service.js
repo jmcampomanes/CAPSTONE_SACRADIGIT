@@ -9,6 +9,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -19,22 +20,22 @@ document.addEventListener('DOMContentLoaded', () => {
       iconBg: 'rgba(139,143,199,0.16)', iconColor: '#5b5fa8',
       icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3C8 3 5 6 5 9c0 4 7 12 7 12s7-8 7-12c0-3-3-6-7-6z"/></svg>`,
       fields: [
-        { id: 'child-name', label: "Child's Full Name", placeholder: 'e.g. Sofia Santos', required: true, span2: true },
-        { id: 'father-name', label: "Father's Name", placeholder: 'e.g. Ricardo Santos', required: false },
-        { id: 'mother-name', label: "Mother's Maiden Name", placeholder: 'e.g. Elena Reyes', required: false },
+        { id: 'child-name', label: "Child's Full Name", kind: 'name', required: true, span2: true },
+        { id: 'father-name', label: "Father's Name", kind: 'name', required: false },
+        { id: 'mother-name', label: "Mother's Maiden Name", kind: 'name', required: false },
       ] },
     { id: 'wedding', name: 'Wedding', desc: 'Sacrament of matrimony for the Catholic rite.',
       iconBg: 'rgba(239,68,68,0.1)', iconColor: '#dc2626',
       icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`,
       fields: [
-        { id: 'groom-name', label: "Groom's Full Name", placeholder: 'e.g. Juan Dela Cruz', required: true },
-        { id: 'bride-name', label: "Bride's Full Name", placeholder: 'e.g. Ana Reyes', required: true },
+        { id: 'groom-name', label: "Groom's Full Name", kind: 'name', required: true, span2: true },
+        { id: 'bride-name', label: "Bride's Full Name", kind: 'name', required: true, span2: true },
       ] },
     { id: 'funeral', name: 'Funeral Mass', desc: 'Mass and rites for a deceased loved one.',
       iconBg: 'rgba(107,114,128,0.12)', iconColor: '#6b7280',
       icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
       fields: [
-        { id: 'deceased-name', label: 'Full Name of Deceased', placeholder: 'e.g. Pedro Garcia', required: true, span2: true },
+        { id: 'deceased-name', label: 'Full Name of Deceased', kind: 'name', required: true, span2: true },
         { id: 'requester-rel', label: 'Relationship to Deceased', placeholder: 'e.g. Son, Daughter, Spouse', required: true },
       ] },
     { id: 'house-blessing', name: 'House Blessing', desc: 'Blessing for a home or residence.',
@@ -55,8 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
       iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
       icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
       fields: [
-        { id: 'child-name-fc', label: "Child's Full Name", placeholder: 'e.g. Sofia Reyes', required: true, span2: true },
-        { id: 'parents-fc', label: "Parent(s)' Names", placeholder: 'e.g. Carmen & Jose Reyes', required: false },
+        { id: 'child-name-fc', label: "Child's Full Name", kind: 'name', required: true, span2: true },
+        { id: 'parent-1-fc', label: 'Parent 1', kind: 'name', required: false, span2: true },
+        { id: 'parent-2-fc', label: 'Parent 2', kind: 'name', required: false, span2: true },
       ] },
     { id: 'business-dedication', name: 'Business Dedication', desc: 'Blessing to dedicate a new or existing business.',
       iconBg: 'rgba(139,143,199,0.16)', iconColor: '#5b5fa8',
@@ -69,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
       iconBg: 'rgba(239,68,68,0.1)', iconColor: '#dc2626',
       icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>`,
       fields: [
-        { id: 'couple-names', label: "Couple's Names", placeholder: 'e.g. Ricardo & Maria Santos', required: true, span2: true },
+        { id: 'spouse-1', label: 'Spouse 1', kind: 'name', required: true, span2: true },
+        { id: 'spouse-2', label: 'Spouse 2', kind: 'name', required: true, span2: true },
         { id: 'years', label: 'Years Being Celebrated', placeholder: 'e.g. 15 years', required: false },
       ] },
   ];
@@ -129,11 +132,14 @@ document.addEventListener('DOMContentLoaded', () => {
     svcNotesInput.value = '';
     [svcDateInput, svcContactInput].forEach(clearFieldError);
 
-    svcDynamicFields.innerHTML = svc.fields.map(f => `
+    svcDynamicFields.innerHTML = svc.fields.map(f => {
+      if (f.kind === 'name') return nameFieldsHtml(f.id, escapeHtml(f.label), { required: f.required, spanFull: !!f.span2 });
+      return `
       <div class="${f.span2 ? 'sm:col-span-2' : ''}">
         <label class="form-label" for="${f.id}">${escapeHtml(f.label)}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
         <input type="text" id="${f.id}" class="form-input" placeholder="${f.placeholder || ''}" />
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     menuView.classList.add('hidden');
     formView.classList.remove('hidden');
@@ -164,6 +170,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let hasError = false;
     svc.fields.filter(f => f.required).forEach(f => {
+      if (f.kind === 'name') {
+        const firstEl = document.getElementById(`${f.id}-first`);
+        const lastEl = document.getElementById(`${f.id}-last`);
+        [firstEl, lastEl].forEach(clearFieldError);
+        if (!nameFieldsFilled(f.id)) {
+          setFieldError(lastEl, `${f.label} is required.`);
+          hasError = true;
+        }
+        return;
+      }
       const el = document.getElementById(f.id);
       clearFieldError(el);
       if (!el.value.trim()) { setFieldError(el, `${f.label} is required.`); hasError = true; }
@@ -179,6 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const details = {};
     svc.fields.forEach(f => {
+      if (f.kind === 'name') {
+        const nameVal = readNameFields(f.id);
+        if (!isNameEmpty(nameVal)) details[f.label] = nameVal;
+        return;
+      }
       const val = document.getElementById(f.id).value.trim();
       if (val) details[f.label] = val;
     });
