@@ -1,0 +1,50 @@
+/* ============================================
+   SacraDigit Media — Media Library page styles
+   ============================================ */
+
+.media-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.media-card-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.6rem;
+  background: rgba(139, 143, 199, 0.16);
+  color: #6c6fb0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-card-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.media-card-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.media-card-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c6fb0;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.media-card-link:hover { color: #1e2a4a; }
+
+.media-card-actions {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}

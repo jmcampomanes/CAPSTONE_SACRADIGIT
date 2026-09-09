@@ -1,0 +1,14 @@
+/* ============================================
+   SacraDigit Media — Livestream Manager page styles
+   Mostly reuses .panel / .form-* / .btn-* / .badge
+   from media-shell.css.
+   ============================================ */
+
+#toggle-live-btn.is-live {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+#toggle-live-btn.is-live:hover {
+  background-color: #b91c1c;
+}

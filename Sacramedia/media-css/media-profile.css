@@ -1,0 +1,10 @@
+/* ============================================
+   SacraDigit Media — Profile page styles
+   Reuses .profile-header-card / .profile-tabs /
+   .pw-strength-* / .twofa-* / .toggle-switch etc.
+   from ../Sacradigit/sacradigit-css/profile.css —
+   shared VISUAL styling only. This page's data
+   (name, email, password) is entirely separate
+   from the Admin account and lives under its own
+   localStorage key, sacradigit_media_profile.
+   ============================================ */
