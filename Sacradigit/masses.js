@@ -7,17 +7,14 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { massTypeInfo, massTypeBadgeHtml, massTypeLegendHtml } from '../mass-types.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  function toLocalISODate(d = new Date()) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
+  const todayISO = new Date().toISOString().slice(0, 10);
 
-  const todayISO = toLocalISODate();
+  const massTypeLegendEl = document.getElementById('mass-type-legend');
+  if (massTypeLegendEl) massTypeLegendEl.innerHTML = massTypeLegendHtml();
 
   let allMasses = []; // kept in sync via observeQuery, each has .id
   let currentDateMasses = []; // sorted masses for the currently selected date
@@ -108,9 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="schedule-time">${escapeHtml(m.time)}</span>
           <div class="schedule-info">
             <p class="schedule-type">${escapeHtml(m.title || m.type)}</p>
-            ${m.note ? `<p class="schedule-note">${escapeHtml(m.note)}</p>` : ''}
+            ${m.note && m.title !== m.note ? `<p class="schedule-note">${escapeHtml(m.note)}</p>` : ''}
           </div>
-          ${m.isSpecial ? '<span class="schedule-special-tag">Special</span>' : ''}
+          ${massTypeBadgeHtml(m.type)}
           <button type="button" class="schedule-details-btn" data-index="${idx}">See Full Details ›</button>
         </div>
       `;
@@ -159,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const weekStart = new Date(todayISO + 'T00:00:00');
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
-    const weekEndISO = toLocalISODate(weekEnd);
+    const weekEndISO = weekEnd.toISOString().slice(0, 10);
 
     const thisWeek = allMasses.filter(m => m.date >= todayISO && m.date < weekEndISO);
 
@@ -267,12 +264,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const visible = dayItems.slice(0, MAX_VISIBLE);
       const remaining = dayItems.length - visible.length;
 
-      const itemsHtml = visible.map(item => `
-        <div class="calendar-cell-booking ${item.isSpecial ? 'special' : ''}">
+      // Colored per Mass type (not just a binary special/regular flag)
+      // so every mass on the calendar is visually distinguishable, not
+      // only the special ones.
+      const itemsHtml = visible.map(item => {
+        const info = massTypeInfo(item.type);
+        return `
+        <div class="calendar-cell-booking" style="background-color:${info.bg};color:${info.color};">
           <span class="calendar-cell-booking-time">${escapeHtml(item.time || '—')}</span>
           <span class="calendar-cell-booking-facility">${escapeHtml(item.title)}</span>
         </div>
-      `).join('') + (remaining > 0 ? `<div class="calendar-cell-more">+${remaining} more</div>` : '');
+      `;
+      }).join('') + (remaining > 0 ? `<div class="calendar-cell-more">+${remaining} more</div>` : '');
 
       cellsHtml += `
         <div class="calendar-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-date="${iso}">
@@ -309,9 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="day-plan-item-time">${escapeHtml(item.time || '—')}</span>
           <div class="day-plan-item-body">
             <p class="day-plan-item-facility">${escapeHtml(item.title)}</p>
-            <p class="day-plan-item-purpose">${escapeHtml(item.type)}${item.note ? ` · ${escapeHtml(item.note)}` : ''}</p>
+            ${item.note && item.note !== item.title ? `<p class="day-plan-item-purpose">${escapeHtml(item.note)}</p>` : ''}
           </div>
-          ${item.isSpecial ? '<span class="badge badge-amber">Special</span>' : ''}
+          ${massTypeBadgeHtml(item.type)}
         </div>
       `).join('');
       dayPlanList.classList.remove('hidden');
@@ -387,7 +390,10 @@ document.addEventListener('DOMContentLoaded', () => {
         date,
         time: time12,
         type,
-        title: isSpecial ? (note || type) : type,
+        // Prefer the admin's own Title/Intention text (e.g. "Sunday
+        // Mass" for a plain `daily`-type entry) and only fall back to
+        // the type's generic label when none was given.
+        title: note || massTypeInfo(type).label,
         note: note || undefined,
         isSpecial,
       });
@@ -437,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div>
           <p class="so-detail-label">Mass Type</p>
-          <p class="so-detail-value">${escapeHtml(m.type)}</p>
+          <p class="so-detail-value">${massTypeBadgeHtml(m.type)}</p>
         </div>
         <div>
           <p class="so-detail-label">Special Mass</p>

@@ -196,6 +196,47 @@
 }
 
 /* ---------- Service type selector (on-page catalog) ---------- */
+/* Grouped into one labeled row per category (Blessings, Sacraments,
+   Special Masses) instead of one flat mixed grid, so it's clear at a
+   glance what kind of request each card is. This wraps the 3
+   .svc-category-block sections — it must stay a plain vertical stack
+   (not a grid) or the blocks render as side-by-side columns instead
+   of full-width rows. */
+.svc-categories {
+  display: flex;
+  flex-direction: column;
+}
+
+.svc-category-block + .svc-category-block {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f1f2f5;
+}
+
+.svc-category-header {
+  margin-bottom: 0.875rem;
+}
+
+.svc-category-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.svc-category-desc {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.125rem;
+}
+
+.svc-type-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.875rem;
+}
+
 .svc-type-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

@@ -2,6 +2,155 @@
    SacraDigit Admin — Dashboard Scripts
    ============================================ */
 
+import { initPageHelp } from '../help-tutorial.js';
+
+/* ------------------------------------------
+   Per-page "How to use this page" content for
+   the (?) help icon in the top bar. Keyed by
+   filename so it works for every admin page
+   that loads this shared shell script — see
+   help-tutorial.js for how it's rendered.
+------------------------------------------ */
+const HELP_CONTENT = {
+  'dashboard.html': {
+    title: 'Dashboard',
+    intro: 'Your at-a-glance overview of what’s happening across the parish today.',
+    steps: [
+      'Check Today’s Schedule for the masses and events happening today.',
+      'Review Pending Requests to see what needs your attention first.',
+      'Glance at Cloud Status and Recent Records for a quick system health check.',
+      'Use the sidebar on the left to jump into any module — Digital Archives, Record Requests, Masses, and more.',
+    ],
+  },
+  'announcements.html': {
+    title: 'Announcements',
+    intro: 'Publish parish-wide announcements that parishioners see on their end.',
+    steps: [
+      'Click “New Announcement” to open the form.',
+      'Fill in a title, the location (if any), and the full announcement text.',
+      'Save to publish it — it appears right away under Published Announcements.',
+      'Edit or remove an existing announcement any time from its row.',
+    ],
+  },
+  'digital-archives.html': {
+    title: 'Digital Archives',
+    intro: 'Browse, search, and manage every digitized sacramental record on file.',
+    steps: [
+      'Search by name, record type, or reference number to find a specific record.',
+      'Click “New Record” to digitize and add a record manually.',
+      'Click “Upload” to attach a scanned document to a record.',
+      'Open any row in All Records to view or edit its details.',
+      'Use “Clear Filters” to reset your search and see the full list again.',
+    ],
+  },
+  'record-requests.html': {
+    title: 'Record Requests',
+    intro: 'Review and process certificate requests submitted by parishioners.',
+    steps: [
+      'Search by requester name or reference number to find a specific request.',
+      'Open a request to review the requester’s details and the certificate type.',
+      'Approve, Reject, or mark a request Released once the certificate has been handed over.',
+      'Click “New Request” to log a request made in person or by phone.',
+      'Click “Upload” to attach a supporting document to a request.',
+    ],
+  },
+  'cloud-access.html': {
+    title: 'Cloud Access',
+    intro: 'Manage cloud storage, access control, and backups for parish files.',
+    steps: [
+      'Browse Storage Folders to see how files are organized.',
+      'Click “Upload” to add a new file to cloud storage.',
+      'Check the Recent Access Log to see who accessed or changed a file, and when.',
+      'Review Access Roles & Permissions to see who has access to what.',
+    ],
+  },
+  'schedule-offers.html': {
+    title: 'Schedule Offers',
+    intro: 'Review parishioner service requests and confirm a date, time, and officiant.',
+    steps: [
+      'Search by name or service type to find a specific request.',
+      'Open a pending request to review the requester’s details.',
+      'Confirm a date, time, and assign an officiant — or leave a note if it can’t be accommodated as requested.',
+      'Use “Clear Filters” to reset the list.',
+    ],
+  },
+  'blessings.html': {
+    title: 'Blessings',
+    intro: 'Review and schedule every service request parishioners submit — blessings, sacraments, and special masses alike.',
+    steps: [
+      'Switch between List View and Calendar View with the toggle at the top.',
+      'Open a pending request to see the requester’s details and preferred date/time.',
+      'Approve a request to confirm it, or add a note if you need to follow up with the requester.',
+      'Click “Blessing Schedule” to add one directly, without waiting for a request.',
+      'Use “Clear Filters” to reset your search.',
+    ],
+  },
+  'facility-booking.html': {
+    title: 'Facility Booking',
+    intro: 'Manage bookings for parish rooms, halls, and chapels.',
+    steps: [
+      'Switch between List View and Calendar View with the toggle at the top.',
+      'Click “New Booking” to reserve a facility directly.',
+      'Open a pending booking to review its details, then Approve or Decline it.',
+      'Check the calendar view to see which dates are already booked before confirming a new one.',
+    ],
+  },
+  'mass-intentions.html': {
+    title: 'Mass Intentions',
+    intro: 'Manage donor-submitted mass intentions and offerings.',
+    steps: [
+      'Search by donor or name(s), or use “Find a name…” to locate a specific intention.',
+      'Click “Add Intention” to log one submitted in person or by phone.',
+      'Mark an intention Completed once it’s been said/offered.',
+      'Click “Print Sheet” to print the intentions log for a mass.',
+      'Use “Clear Filters” to reset your search.',
+    ],
+  },
+  'masses.html': {
+    title: 'Special Masses',
+    intro: 'Schedule and manage the parish’s regular and special masses.',
+    steps: [
+      'Check the legend at the top to see what each mass-type badge (Daily, Anticipated, Special, Baptism) means.',
+      'Pick a date to see that day’s full schedule, or switch to Calendar View for a month at a glance.',
+      'Click “Schedule Mass” to add a new mass — choose its type and, optionally, a title/intention.',
+      'Review the Regular Weekly Mass Schedule table for the recurring pattern that applies every week.',
+      'Click “See Full Details” on any mass for its complete information.',
+    ],
+  },
+  'donations.html': {
+    title: 'Donations',
+    intro: 'Track parish donations, collections, and financial contributions.',
+    steps: [
+      'Click “New Goal” to set up a fundraising goal to track progress against.',
+      'Search by donor or fund to find a specific donation.',
+      'Click “Export Report” to download the donations log.',
+      'Click “View Graph” on a goal to see its progress visually.',
+      'Use “Clear Filters” to reset your search.',
+    ],
+  },
+  'special-schedules.html': {
+    title: 'Special Schedules',
+    intro: 'Manage seasonal and special liturgical schedules, like Simbang Gabi or Holy Week.',
+    steps: [
+      'Click “Add Schedule” to create a new seasonal schedule with its own dates and description.',
+      'Switch to Calendar View to see all special schedules laid out by date.',
+      'Mark a schedule Completed once the season has ended.',
+      'Review Upcoming Special Schedules for what’s coming next.',
+    ],
+  },
+  'profile.html': {
+    title: 'My Profile',
+    intro: 'Manage your admin account information, security, and preferences.',
+    steps: [
+      'Update your Profile Information — name, contact number, and role note — then save your changes.',
+      'Use Change Password to update your login password.',
+      'Turn on Two-Factor Authentication for extra account security.',
+      'Adjust Notification Preferences to control what you’re alerted about.',
+      'Check Recent Activity to review recent actions on your account.',
+    ],
+  },
+};
+
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
@@ -21,6 +170,14 @@ document.addEventListener('DOMContentLoaded', () => {
       link.classList.remove('active');
     }
   });
+
+
+  /* ------------------------------------------
+     1b. PAGE HELP — "?" icon + tutorial modal
+     Content lives in HELP_CONTENT above; the
+     widget itself is shared (help-tutorial.js).
+  ------------------------------------------ */
+  initPageHelp(HELP_CONTENT[currentPage]);
 
 
   /* ------------------------------------------

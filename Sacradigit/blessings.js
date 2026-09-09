@@ -10,14 +10,7 @@ import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  function toLocalISODate(d = new Date()) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  const todayISO = toLocalISODate();
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   let upcoming = [];
   let requests = [];
@@ -216,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="request-info">
             <p class="request-name">${escapeHtml(r.requesterName)}</p>
-            <p class="request-meta">${escapeHtml(r.type)} · requested for ${formatLongDate(r.preferredDate)}</p>
+            <p class="request-meta">${escapeHtml(r.type)} · requested for ${formatLongDate(r.preferredDate)}${r.time ? ` at ${escapeHtml(r.time)}` : ''}</p>
           </div>
           <div class="request-actions">
             <div class="request-action-row">
@@ -653,8 +646,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (section === 'requests') {
       record = requests.find(x => x.id === id);
       statusLabel = 'Pending Approval';
-      dateLabel = 'Preferred Date';
-      if (record) dateValue = formatLongDate(record.preferredDate);
+      dateLabel = 'Preferred Date & Time';
+      // The requester's preferred time is optional — they may not have
+      // one in mind, in which case only the date shows here (Approve
+      // still falls back to 09:00 AM in that case; see approveRequest()).
+      if (record) dateValue = `${formatLongDate(record.preferredDate)}${record.time ? ` · ${record.time}` : ' · No preferred time given'}`;
     } else {
       record = completed.find(x => x.id === id);
       statusLabel = 'Completed';

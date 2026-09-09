@@ -145,7 +145,7 @@
             </div>
             <div>
               <p class="info-banner-title">What can I request here?</p>
-              <p class="info-banner-text">Sacraments (Baptism, Wedding, First Communion), blessings (house, vehicle, business), and special masses (funeral, anniversary) can all be requested from this page. The parish office will review your request and confirm a date, time, and officiant — track its status any time under "Requested Services."</p>
+              <p class="info-banner-text">Sacraments (Baptism, Wedding, First Communion), blessings (house, vehicle, business), and special masses (funeral, anniversary) can all be requested from this page — grouped into rows below. The parish office will review your request and confirm a date, time, and officiant — track any of them under "Requested Services," or see your blessing requests specifically on a calendar under "Blessings."</p>
             </div>
           </div>
 
@@ -156,7 +156,7 @@
               <p class="text-xs text-gray-400 font-medium">Tap a service to request it</p>
             </div>
             <div class="p-4">
-              <div class="svc-type-grid" id="svc-type-grid"></div>
+              <div class="svc-categories" id="svc-type-grid"></div>
             </div>
           </div>
 
@@ -185,6 +185,10 @@
                   <input type="date" id="svc-date" class="form-input" />
                 </div>
                 <div>
+                  <label class="form-label" for="svc-time">Preferred Time (optional)</label>
+                  <input type="time" id="svc-time" class="form-input" />
+                </div>
+                <div class="sm:col-span-2">
                   <label class="form-label" for="svc-contact">Contact Number</label>
                   <input type="text" id="svc-contact" class="form-input" placeholder="e.g. 0917 123 4567" />
                 </div>

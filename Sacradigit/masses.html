@@ -208,8 +208,19 @@
           </div>
         </div>
 
+        <!-- Mass type legend — explains what makes each color-coded badge
+             shown throughout this page (list rows, calendar, day plan)
+             different from the others. Sits outside the List/Calendar
+             toggle since both views use the same badges. -->
+        <div class="mass-legend" id="mass-type-legend"></div>
+
         <!-- List view (date picker + list panels + weekly table) -->
-        <div id="list-view-panel">
+        <!-- space-y-5 here because these sections are nested one level
+             inside #list-view-panel, so the space-y-5 on <main> above
+             (which only spaces its own direct children: heading, legend,
+             this panel, calendar panel) never reached them — they were
+             butting up against each other with zero gap. -->
+        <div id="list-view-panel" class="space-y-5">
 
         <!-- Date picker -->
         <div>
@@ -374,16 +385,16 @@
             <label class="form-label" for="schedule-type">Mass Type</label>
             <select id="schedule-type" class="form-input">
               <option value="">Select type</option>
-              <option value="daily">Daily Mass</option>
-              <option value="daily">Sunday Mass</option>
-              <option value="anticipated">Anticipated Mass (Sat. Vigil)</option>
+              <option value="daily">Daily / Sunday Mass</option>
+              <option value="anticipated">Anticipated Mass</option>
               <option value="special">Special Mass</option>
-              <option value="binyag">Binyag (Baptism)</option>
+              <option value="binyag">Baptism Mass</option>
             </select>
           </div>
           <div class="col-span-2">
-            <label class="form-label" for="schedule-note">Intention / Note (optional)</label>
-            <input type="text" id="schedule-note" class="form-input" placeholder="e.g. Feast of the Sacred Heart" />
+            <label class="form-label" for="schedule-note">Title / Intention (optional)</label>
+            <input type="text" id="schedule-note" class="form-input" placeholder="e.g. Sunday Mass, Feast of the Sacred Heart" />
+            <p class="text-xs text-gray-400 mt-1">Shown as this Mass's name on the schedule. Leave blank to use the type above (e.g. "Daily Mass").</p>
           </div>
           <div class="col-span-2 flex items-center gap-2 mt-1">
             <input type="checkbox" id="schedule-special" class="checkbox-input" />
