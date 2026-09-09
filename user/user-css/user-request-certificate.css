@@ -329,3 +329,111 @@
   padding: 0.625rem 1rem;
   word-break: break-word;
 }
+
+/* ---------- Marriage Certificate — Groom/Bride comparison table ---------- */
+/* A real <table>: one row per field, one column per person. Wide
+   content that doesn't have a good "stacked" fallback (each cell holds
+   a full 4-part name row, and the Guardian cells can expand further
+   still) scrolls horizontally on narrow screens instead of trying to
+   force a cramped reflow. */
+.marriage-table-wrap {
+  grid-column: 1 / -1;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  overflow-x: auto;
+  /* Warm off-white instead of stark white — softer on the eyes under
+     long reading, which matters most for older users filling this
+     form out. */
+  background-color: #faf9f6;
+}
+
+.marriage-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.marriage-table col.marriage-table-label-col { width: 15%; }
+.marriage-table col.marriage-table-person-col { width: 42.5%; }
+
+.marriage-table th,
+.marriage-table td {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.marriage-table thead th {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5b5fa8;
+  background-color: #eef1f5;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.marriage-table tbody th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  background-color: #f4f3ef;
+}
+
+.marriage-table tbody tr:not(:last-child) th,
+.marriage-table tbody tr:not(:last-child) td {
+  border-bottom: 1px solid #eef0f3;
+}
+
+/* Vertical dividers between Label | Groom | Bride, so all three lanes
+   — including the field-name column — read as clearly separate at a
+   glance. In the header row all 3 cells are <th> (blank, Groom,
+   Bride); in body rows the row's own <th> label takes slot 1, so
+   Groom/Bride are the 2nd/3rd-child <td>. */
+.marriage-table thead th:nth-child(2),
+.marriage-table thead th:nth-child(3),
+.marriage-table tbody td:nth-child(2),
+.marriage-table tbody td:nth-child(3) {
+  border-left: 1px solid #e5e7eb;
+}
+
+/* Calm, low-saturation color per person column (muted powder-blue for
+   the Groom, muted dusty-rose for the Bride) — gentle enough not to
+   glare, but distinct enough that each side is easy to track down a
+   long form, which especially helps older users' eyes. Zebra striping
+   is folded into these same tints rather than a separate gray so the
+   two systems don't fight each other. */
+.marriage-table tbody td:nth-child(2) { background-color: #eef3f7; }
+.marriage-table tbody td:nth-child(3) { background-color: #faf1ef; }
+.marriage-table tbody tr:nth-child(even) td:nth-child(2) { background-color: #e5edf4; }
+.marriage-table tbody tr:nth-child(even) td:nth-child(3) { background-color: #f6e9e7; }
+.marriage-table tbody tr:nth-child(even) th { background-color: #ecebe5; }
+
+/* Each cell is narrower than the old full-width columns were, so the
+   shared name-row/N/A-row components need the same "narrow" treatment
+   applied here that a groom/bride column needed before. */
+.marriage-table .name-field-row,
+.marriage-cell-name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.marriage-table .field-na-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.marriage-table .field-na-label {
+  white-space: normal;
+}
+
+.marriage-table-note {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: -0.5rem 0 0;
+}

@@ -26,6 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
     'birth-city': 'City/Municipality of Birth',
     'extraGodparents': 'Additional Godparents',
     'confirmation-name': 'Confirmation Name (Saint Name)',
+    'groom-name': "Groom's Full Name",
+    'groom-guardian': "Groom's Guardian",
+    'groom-father': "Groom's Father's Name",
+    'groom-mother': "Groom's Mother's Maiden Name",
+    'bride-name': "Bride's Full Name",
+    'bride-guardian': "Bride's Guardian",
+    'bride-father': "Bride's Father's Name",
+    'bride-mother': "Bride's Mother's Maiden Name",
+    'marriage-place': 'Place of Marriage',
   };
 
   function humanizeDetailLabel(key) {
@@ -50,7 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function formatDetailValue(key, value) {
     if (isNameShaped(value)) return isNameEmpty(value) ? null : formatFullName(value);
 
-    if (key === 'guardian' && value && typeof value === 'object') {
+    // Matches 'guardian' (Baptismal/Confirmation) as well as
+    // 'groom-guardian'/'bride-guardian' (Marriage, one per side).
+    if (key.endsWith('guardian') && value && typeof value === 'object') {
       const name = formatFullName(value.name);
       if (!name) return null;
       const bday = value.birthdate ? formatShortDate(value.birthdate) : '';
