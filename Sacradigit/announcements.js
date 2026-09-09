@@ -23,7 +23,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const grid              = document.getElementById('announcements-grid');
   const announcementsEmpty  = document.getElementById('announcements-empty');
+  const announcementsEmptyText = document.getElementById('announcements-empty-text');
   const announcementsCount  = document.getElementById('announcements-count');
+
+  /* ------------------------------------------
+     Active / Draft / Archived tabs
+  ------------------------------------------ */
+  let activeTab = 'active'; // 'active' | 'draft' | 'archived'
+  const tabActiveBtn   = document.getElementById('ann-tab-active');
+  const tabDraftBtn    = document.getElementById('ann-tab-draft');
+  const tabArchivedBtn = document.getElementById('ann-tab-archived');
+  const allTabBtns = [tabActiveBtn, tabDraftBtn, tabArchivedBtn];
+
+  allTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.annTab;
+      if (tab === activeTab) return;
+      activeTab = tab;
+      allTabBtns.forEach(b => {
+        const isSelected = b.dataset.annTab === activeTab;
+        b.classList.toggle('active', isSelected);
+        b.setAttribute('aria-selected', String(isSelected));
+      });
+      renderGrid();
+    });
+  });
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -48,14 +72,21 @@ document.addEventListener('DOMContentLoaded', () => {
      Both shapes are normalized to one return value so every call
      site can just read `.items` / `.eventDate` / `.location`. */
   function parseMediaField(raw) {
-    if (!raw) return { items: [], eventDate: '', location: '' };
+    if (!raw) return { items: [], eventDate: '', location: '', startDate: '', endDate: '', duration: '' };
     let parsed;
-    try { parsed = JSON.parse(raw); } catch { return { items: [], eventDate: '', location: '' }; }
-    if (Array.isArray(parsed)) return { items: parsed, eventDate: '', location: '' };
+    try { parsed = JSON.parse(raw); } catch { return { items: [], eventDate: '', location: '', startDate: '', endDate: '', duration: '' }; }
+    if (Array.isArray(parsed)) return { items: parsed, eventDate: '', location: '', startDate: '', endDate: '', duration: '' };
     return {
       items: Array.isArray(parsed.items) ? parsed.items : [],
       eventDate: parsed.eventDate || '',
       location: parsed.location || '',
+      startDate: parsed.startDate || '',
+      endDate: parsed.endDate || '',
+      // Legacy field from the first cut of this feature (preset "1w"/
+      // "1m"/"2m" instead of an explicit end date) — kept only so
+      // posts saved under that scheme still know when to archive
+      // until an admin edits them and picks a real End Date.
+      duration: parsed.duration || '',
     };
   }
 
@@ -63,6 +94,78 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!iso) return '';
     const d = new Date(iso + 'T00:00:00');
     return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatPlainDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  /* ------------------------------------------
+     Timeline / Archive — every post now carries a
+     required Start Date + End Date, packed into the
+     `media` AWSJSON field alongside items/eventDate/
+     location (same precedent as those two — no schema
+     change needed). Start Date is informational only
+     (the post is visible right away); End Date is what
+     drives archiving. Once the end of that day passes,
+     the post moves to the Archived tab automatically —
+     computed client-side, nothing is ever written back.
+  ------------------------------------------ */
+  function computeLegacyExpiryDate(createdAt, duration) {
+    if (!createdAt || !duration) return null;
+    const d = new Date(createdAt);
+    if (isNaN(d.getTime())) return null;
+    switch (duration) {
+      case '1w': d.setDate(d.getDate() + 7); break;
+      case '1m': d.setMonth(d.getMonth() + 1); break;
+      case '2m': d.setMonth(d.getMonth() + 2); break;
+      default: return null;
+    }
+    return d;
+  }
+
+  /* Resolves the moment a post archives: its explicit End Date (through
+     the end of that day) when set, falling back to the legacy preset-
+     duration math for posts saved before End Date existed. Posts with
+     neither never auto-archive — they stay in Active until edited. */
+  function getEndMoment(a) {
+    const { endDate, duration } = parseMediaField(a.media);
+    if (endDate) {
+      const d = new Date(endDate + 'T23:59:59');
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return computeLegacyExpiryDate(a.createdAt, duration);
+  }
+
+  function isExpired(a) {
+    const end = getEndMoment(a);
+    return end !== null && Date.now() >= end.getTime();
+  }
+
+  /* Draft covers two cases: a manually-unpublished post, and a
+     published post whose Start Date hasn't arrived yet ("Scheduled").
+     That second case is what lets an admin schedule a post ahead of
+     time — publish it with a future Start Date and it sits in Draft
+     until that date, then moves itself to Active with no further
+     action needed. A post past its End Date is Archived regardless
+     of its publish state. */
+  function getPostStatus(a) {
+    if (isExpired(a)) return 'archived';
+    if (!a.published) return 'draft';
+    const { startDate } = parseMediaField(a.media);
+    if (startDate && startDate > todayIso()) return 'scheduled';
+    return 'active';
+  }
+
+  function matchesTab(a, tab) {
+    const status = getPostStatus(a);
+    if (tab === 'active') return status === 'active';
+    if (tab === 'draft') return status === 'draft' || status === 'scheduled';
+    if (tab === 'archived') return status === 'archived';
+    return false;
   }
 
   const CALENDAR_ICON = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
@@ -175,11 +278,25 @@ document.addEventListener('DOMContentLoaded', () => {
   async function renderGrid() {
     const myToken = ++renderToken;
 
-    const publishedCount = announcements.filter(a => a.published).length;
-    announcementsCount.textContent = `${publishedCount} published`;
+    // Each post's tab is derived from its publish flag + Start/End
+    // Date, not stored — Active, Draft (incl. scheduled), or Archived.
+    const visible = announcements.filter(a => matchesTab(a, activeTab));
 
-    if (announcements.length === 0) {
+    if (activeTab === 'archived') {
+      announcementsCount.textContent = `${visible.length} archived`;
+    } else if (activeTab === 'draft') {
+      announcementsCount.textContent = `${visible.length} in Draft`;
+    } else {
+      announcementsCount.textContent = `${visible.length} published`;
+    }
+
+    if (visible.length === 0) {
       grid.innerHTML = '';
+      announcementsEmptyText.textContent = activeTab === 'archived'
+        ? 'No archived announcements'
+        : activeTab === 'draft'
+        ? 'No drafts or scheduled posts'
+        : 'No published announcements yet';
       announcementsEmpty.classList.remove('hidden');
       return;
     }
@@ -188,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Every media item is resolved up front (not just the first) so
     // the post's photo/video carousel can swipe through all of them
     // without a signed-URL round trip mid-scroll.
-    const resolvedMedia = await Promise.all(announcements.map(async (a) => {
+    const resolvedMedia = await Promise.all(visible.map(async (a) => {
       const { items } = parseMediaField(a.media);
       const urls = await Promise.all(items.map(m => resolveMediaUrl(m.url)));
       return items.map((m, i) => ({ ...m, resolvedUrl: urls[i] })).filter(m => m.resolvedUrl);
@@ -198,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // out so a stale (possibly reordered) grid never gets painted.
     if (myToken !== renderToken) return;
 
-    grid.innerHTML = announcements.map((a, i) => {
+    grid.innerHTML = visible.map((a, i) => {
       const statusActions = a.published
         ? `<button type="button" class="post-icon-btn ann-unpublish" data-id="${a.id}" title="Unpublish">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/></svg>
@@ -209,9 +326,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>Republish</span>
           </button>`;
 
-      const { eventDate, location } = parseMediaField(a.media);
+      const { eventDate, location, startDate, endDate } = parseMediaField(a.media);
       const media = resolvedMedia[i];
       const cover = media[0];
+      const status = getPostStatus(a);
 
       const coverHtml = cover
         ? (cover.type === 'video'
@@ -219,12 +337,25 @@ document.addEventListener('DOMContentLoaded', () => {
             : `<img class="post-card-cover-media" src="${cover.resolvedUrl}" alt="${escapeHtml(a.title)}" />`)
         : `<div class="post-card-cover-placeholder">${MEGAPHONE_ICON}</div>`;
 
-      const statusBadge = a.published
-        ? `<span class="post-status-badge live">Live</span>`
-        : `<span class="post-status-badge draft">Unpublished</span>`;
+      const statusBadge = activeTab === 'archived'
+        ? `<span class="post-status-badge archived">Archived</span>`
+        : activeTab === 'draft'
+        ? (status === 'scheduled'
+            ? `<span class="post-status-badge scheduled">Scheduled</span>`
+            : `<span class="post-status-badge draft">Draft</span>`)
+        : `<span class="post-status-badge live">Live</span>`;
+
+      let metaDateText;
+      if (activeTab === 'archived' && endDate) {
+        metaDateText = `Ended ${formatPlainDate(endDate)}`;
+      } else if (activeTab === 'draft' && status === 'scheduled' && startDate) {
+        metaDateText = `Starts ${formatPlainDate(startDate)}`;
+      } else {
+        metaDateText = formatShortDate(a.createdAt);
+      }
 
       return `
-        <article class="post-card ${a.published ? '' : 'unpublished'}" data-id="${a.id}" role="button" tabindex="0" aria-label="View announcement: ${escapeHtml(a.title)}">
+        <article class="post-card ${activeTab === 'active' ? '' : 'unpublished'}" data-id="${a.id}" role="button" tabindex="0" aria-label="View announcement: ${escapeHtml(a.title)}">
           <div class="post-card-cover">
             ${coverHtml}
             ${statusBadge}
@@ -235,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${eventBarHtml(eventDate, location)}
             <p class="post-card-excerpt">${escapeHtml(a.body)}</p>
             <div class="post-card-meta">
-              <span class="announcement-date">${CALENDAR_ICON}${formatShortDate(a.createdAt)}</span>
+              <span class="announcement-date">${CALENDAR_ICON}${metaDateText}</span>
               <span class="audience-tag ${audienceClass(a.audience)}">${escapeHtml(a.audience)}</span>
             </div>
           </div>
@@ -321,6 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const detailEventDateText = document.getElementById('detail-event-date-text');
   const detailLocationChip  = document.getElementById('detail-location-chip');
   const detailLocationText  = document.getElementById('detail-location-text');
+  const detailExpiryChip    = document.getElementById('detail-expiry-chip');
+  const detailExpiryText    = document.getElementById('detail-expiry-text');
   const detailEditBtn       = document.getElementById('detail-edit-btn');
   const detailUnpublishBtn  = document.getElementById('detail-unpublish-btn');
 
@@ -337,20 +470,32 @@ document.addEventListener('DOMContentLoaded', () => {
     detailDate.textContent     = formatShortDate(a.createdAt);
     detailAudience.textContent = a.audience;
     detailAudience.className   = `audience-tag ${audienceClass(a.audience)}`;
-    detailStatus.textContent   = a.published ? '' : 'Unpublished';
-    detailStatus.className     = `ann-detail-status-badge ${a.published ? 'hidden' : ''}`;
+    const status = getPostStatus(a);
+    const expired = status === 'archived';
+    const statusLabel = { archived: 'Archived', draft: 'Draft', scheduled: 'Scheduled', active: '' }[status];
+    detailStatus.textContent   = statusLabel;
+    detailStatus.className     = `ann-detail-status-badge ${status === 'active' ? 'hidden' : ''}`;
 
     detailUnpublishBtn.dataset.id = id;
     detailUnpublishBtn.querySelector('span').textContent = a.published ? 'Unpublish' : 'Republish';
     detailUnpublishBtn.classList.toggle('ann-unpublish', a.published);
     detailUnpublishBtn.classList.toggle('ann-republish', !a.published);
 
-    const { items: media, eventDate, location } = parseMediaField(a.media);
+    const { items: media, eventDate, location, startDate, endDate } = parseMediaField(a.media);
     detailEventDateChip.classList.toggle('hidden', !eventDate);
     detailEventDateText.textContent = eventDate ? formatEventDate(eventDate) : '';
     detailLocationChip.classList.toggle('hidden', !location);
     detailLocationText.textContent = location || '';
-    detailEventbar.classList.toggle('hidden', !eventDate && !location);
+
+    const rangeVerb = status === 'archived' ? 'Ran' : status === 'scheduled' ? 'Scheduled to run' : 'Running';
+    const rangeLabel = startDate && endDate
+      ? `${rangeVerb} ${formatPlainDate(startDate)} – ${formatPlainDate(endDate)}`
+      : (endDate ? `${expired ? 'Ended' : 'Until'} ${formatPlainDate(endDate)}` : '');
+    detailExpiryChip.classList.toggle('hidden', !rangeLabel);
+    detailExpiryChip.classList.toggle('expiring-soon', expired);
+    detailExpiryText.textContent = rangeLabel;
+
+    detailEventbar.classList.toggle('hidden', !eventDate && !location && !rangeLabel);
 
     detailMedia = [];
     detailMediaScroll.innerHTML = '';
@@ -463,11 +608,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const modal          = document.getElementById('announcement-modal');
   const modalTitle       = document.getElementById('announcement-modal-title');
   const submitBtn         = document.getElementById('announcement-submit');
+  const draftBtn           = document.getElementById('announcement-save-draft');
   const titleInput          = document.getElementById('ann-title');
   const bodyInput            = document.getElementById('ann-body');
   const audienceSelect        = document.getElementById('ann-audience');
   const eventDateInput          = document.getElementById('ann-event-date');
   const locationInput             = document.getElementById('ann-location');
+  const startDateInput            = document.getElementById('ann-start-date');
+  const endDateInput              = document.getElementById('ann-end-date');
+
+  function todayIso() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
 
   const dropzone            = document.getElementById('ann-dropzone');
   const mediaInput            = document.getElementById('ann-media-input');
@@ -551,11 +705,16 @@ document.addEventListener('DOMContentLoaded', () => {
     editTargetId = null;
     modalTitle.textContent = 'New Announcement';
     submitBtn.textContent = 'Publish Now';
+    draftBtn.textContent = 'Save as Draft';
+    submitBtn.disabled = false;
+    draftBtn.disabled = false;
     titleInput.value = '';
     bodyInput.value = '';
     audienceSelect.value = 'All Parishioners';
     eventDateInput.value = '';
     locationInput.value = '';
+    startDateInput.value = todayIso();
+    endDateInput.value = '';
     currentMedia = [];
     renderMediaGrid();
     openModal(modal);
@@ -567,6 +726,9 @@ document.addEventListener('DOMContentLoaded', () => {
     editTargetId = id;
     modalTitle.textContent = 'Edit Announcement';
     submitBtn.textContent = 'Save Changes';
+    draftBtn.textContent = 'Save as Draft';
+    submitBtn.disabled = false;
+    draftBtn.disabled = false;
     titleInput.value = a.title;
     bodyInput.value = a.body;
     audienceSelect.value = a.audience;
@@ -576,9 +738,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // displays. New items added in this session get a `file` instead
     // until they're uploaded on save, and already have a usable
     // `previewUrl` from the local FileReader preview.
-    const { items: existingMedia, eventDate, location } = parseMediaField(a.media);
+    const { items: existingMedia, eventDate, location, startDate, endDate } = parseMediaField(a.media);
     eventDateInput.value = eventDate || '';
     locationInput.value = location || '';
+    // Posts saved under the old preset-duration scheme (or created
+    // before this feature existed) have no explicit Start/End Date —
+    // default Start to today and leave End blank so the admin has to
+    // actively pick one before saving (matching "required").
+    startDateInput.value = startDate || todayIso();
+    endDateInput.value = endDate || '';
     currentMedia = await Promise.all(
       existingMedia.map(async (m) => ({ ...m, previewUrl: await resolveMediaUrl(m.url) }))
     );
@@ -607,33 +775,62 @@ document.addEventListener('DOMContentLoaded', () => {
     return uploaded;
   }
 
-  submitBtn.addEventListener('click', async () => {
+  /* Publish Now / Save Changes always save with published: true.
+     Save as Draft always forces published: false — that's what puts
+     (or keeps) a post in the Draft tab. Scheduling a post is just
+     Publish Now with a future Start Date: the post is published, but
+     getPostStatus() reports it as "scheduled" (shown in Draft) until
+     that date arrives, then it moves to Active on its own. */
+  async function saveAnnouncement(publishedFlag) {
     const title    = titleInput.value.trim();
     const body      = bodyInput.value.trim();
     const audience   = audienceSelect.value;
     const eventDate    = eventDateInput.value;
     const location       = locationInput.value.trim();
+    const startDate          = startDateInput.value;
+    const endDate                = endDateInput.value;
 
     if (!title || !body) {
       showToast('Please fill in both title and body.', true);
       return;
     }
 
+    if (!startDate || !endDate) {
+      showToast('Please set both a Start Date and an End Date.', true);
+      return;
+    }
+
+    if (endDate < startDate) {
+      showToast('End Date can\'t be before Start Date.', true);
+      return;
+    }
+
+    const clickedBtn = publishedFlag ? submitBtn : draftBtn;
+    const clickedLabel = clickedBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving…';
+    draftBtn.disabled = true;
+    clickedBtn.textContent = 'Saving…';
 
     try {
       const items = await uploadPendingMedia(currentMedia);
-      const media = JSON.stringify({ items, eventDate, location });
+      const media = JSON.stringify({ items, eventDate, location, startDate, endDate });
 
       if (editTargetId !== null) {
-        const result = await client.models.Announcement.update({ id: editTargetId, title, body, audience, media });
+        // "Save Changes" leaves whatever publish state the post
+        // already had untouched (that's what the separate Unpublish/
+        // Republish action on the card is for) — only "Save as Draft"
+        // forces it back to a draft.
+        const payload = { id: editTargetId, title, body, audience, media };
+        if (!publishedFlag) payload.published = false;
+        const result = await client.models.Announcement.update(payload);
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(`"${title}" updated.`);
+        showToast(publishedFlag ? `"${title}" updated.` : `"${title}" saved as draft.`);
       } else {
-        const result = await client.models.Announcement.create({ title, body, audience, media, published: true });
+        const result = await client.models.Announcement.create({ title, body, audience, media, published: publishedFlag });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(`"${title}" published.`);
+        showToast(publishedFlag
+          ? (startDate > todayIso() ? `"${title}" scheduled for ${formatPlainDate(startDate)}.` : `"${title}" published.`)
+          : `"${title}" saved as draft.`);
       }
       closeModal(modal);
     } catch (err) {
@@ -641,9 +838,13 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(err.message || "Couldn't save the announcement.", true);
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = editTargetId !== null ? 'Save Changes' : 'Publish Now';
+      draftBtn.disabled = false;
+      clickedBtn.textContent = clickedLabel;
     }
-  });
+  }
+
+  submitBtn.addEventListener('click', () => saveAnnouncement(true));
+  draftBtn.addEventListener('click', () => saveAnnouncement(false));
 
 
   /* ------------------------------------------

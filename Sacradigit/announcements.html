@@ -201,10 +201,14 @@
           </button>
         </div>
 
-        <!-- Published Announcements -->
+        <!-- Announcements -->
         <div class="panel ann-panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Published Announcements</h2>
+          <div class="panel-header ann-panel-header">
+            <div class="ann-tabs" role="tablist">
+              <button type="button" class="ann-tab active" data-ann-tab="active" id="ann-tab-active" role="tab" aria-selected="true">Active</button>
+              <button type="button" class="ann-tab" data-ann-tab="draft" id="ann-tab-draft" role="tab" aria-selected="false">Draft</button>
+              <button type="button" class="ann-tab" data-ann-tab="archived" id="ann-tab-archived" role="tab" aria-selected="false">Archived</button>
+            </div>
             <p id="announcements-count" class="text-xs text-gray-400 font-medium"></p>
           </div>
           <div id="announcements-grid" class="announcements-grid">
@@ -212,7 +216,7 @@
           </div>
           <div id="announcements-empty" class="empty-state hidden">
             <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
-            <p class="text-sm font-medium text-gray-600">No published announcements yet</p>
+            <p id="announcements-empty-text" class="text-sm font-medium text-gray-600">No published announcements yet</p>
           </div>
         </div>
 
@@ -244,6 +248,19 @@
             <input type="text" id="ann-location" class="form-input" placeholder="e.g. Parish Grounds" />
           </div>
           <div class="col-span-2">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label" for="ann-start-date">Start Date</label>
+                <input type="date" id="ann-start-date" class="form-input" />
+              </div>
+              <div>
+                <label class="form-label" for="ann-end-date">End Date</label>
+                <input type="date" id="ann-end-date" class="form-input" />
+              </div>
+            </div>
+            <p class="ann-duration-hint">Both required. A future Start Date keeps the post in Draft (scheduled) until then; once the End Date passes it moves to Archived automatically.</p>
+          </div>
+          <div class="col-span-2">
             <label class="form-label" for="ann-body">Body</label>
             <textarea id="ann-body" class="form-input" rows="4" placeholder="Write the full announcement text..."></textarea>
           </div>
@@ -271,6 +288,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="announcement-save-draft" class="btn-secondary">Save as Draft</button>
         <button type="button" id="announcement-submit" class="btn-lavender">Publish Now</button>
       </div>
     </div>
@@ -353,6 +371,10 @@
           <span class="chip chip-location hidden" id="detail-location-chip">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             <span id="detail-location-text"></span>
+          </span>
+          <span class="chip chip-expiry hidden" id="detail-expiry-chip">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+            <span id="detail-expiry-text"></span>
           </span>
         </div>
         <h3 class="post-detail-title" id="detail-title"></h3>

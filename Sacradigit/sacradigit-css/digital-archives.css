@@ -197,6 +197,13 @@
   animation: modalIn 0.18s ease;
 }
 
+/* Wider variant for modals showing data-dense grids (e.g. the category
+   picker + added-names list here) that feel cramped at the default
+   480px. Matches the same class on the user side (user-shell.css). */
+.modal-card-wide {
+  max-width: 720px;
+}
+
 @keyframes modalIn {
   from {
     opacity: 0;
@@ -243,6 +250,7 @@
 
 .modal-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.625rem;
   padding: 1rem 1.375rem;

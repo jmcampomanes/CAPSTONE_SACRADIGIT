@@ -117,6 +117,22 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'spouse-2', label: 'Spouse 2', kind: 'name', required: true, span2: true },
         { id: 'years', label: 'Years Being Celebrated', placeholder: 'e.g. 15 years', required: false },
       ] },
+    { id: 'pet-blessing', name: 'Pet Blessing', category: 'blessing', desc: 'Blessing for a pet or animal companion.',
+      iconBg: 'rgba(161,98,7,0.14)', iconColor: '#a16207',
+      icon: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><ellipse cx="6.5" cy="9" rx="2" ry="2.4"/><ellipse cx="11.5" cy="6.2" rx="2" ry="2.4"/><ellipse cx="16.5" cy="6.2" rx="2" ry="2.4"/><ellipse cx="20" cy="10.2" rx="2" ry="2.4"/><path d="M13.5 11c-4 0-7.5 2.7-7.5 6.2 0 2.7 2.6 3.8 6.4 3.8h1.7c3.8 0 7.4-1.1 7.4-3.8C21.5 13.7 17.5 11 13.5 11z"/></svg>`,
+      fields: [
+        { id: 'pet-name', label: "Pet's Name", placeholder: 'e.g. Bantay', required: true, span2: true },
+        { id: 'pet-type', label: 'Type of Pet', placeholder: 'e.g. Dog, Cat, Bird', required: false },
+        { id: 'pet-owner', label: "Owner's Name", placeholder: 'e.g. Santos Family', required: true },
+      ] },
+    { id: 'baccalaureate-mass', name: 'Baccalaureate Mass', category: 'special-mass', desc: 'Thanksgiving Mass for graduating students before commencement.',
+      iconBg: 'rgba(29,78,216,0.12)', iconColor: '#1d4ed8',
+      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>`,
+      fields: [
+        { id: 'graduate-name', label: "Graduate's Full Name", kind: 'name', required: true, span2: true },
+        { id: 'school-name', label: 'School / University', placeholder: 'e.g. Ateneo de Manila University', required: false, span2: true },
+        { id: 'graduation-year', label: 'Graduation Year / Batch', placeholder: 'e.g. 2026', required: false },
+      ] },
   ];
 
   const menuView      = document.getElementById('menu-view');

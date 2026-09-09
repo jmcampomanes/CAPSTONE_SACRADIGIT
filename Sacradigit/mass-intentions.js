@@ -8,7 +8,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
+import { formatFullName } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -511,12 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <div class="mi-added-item mi-added-item-editing" data-index="${i}">
             <div class="mi-added-item-edit-fields">
-              <div class="name-field-row">
-                <input type="text" class="form-input add-name-edit-name-first" data-index="${i}" value="${escapeHtml(item.name.firstName || '')}" placeholder="First Name" />
-                <input type="text" class="form-input add-name-edit-name-middle" data-index="${i}" value="${escapeHtml(item.name.middleName || '')}" placeholder="Middle Name" />
-                <input type="text" class="form-input add-name-edit-name-last" data-index="${i}" value="${escapeHtml(item.name.lastName || '')}" placeholder="Last Name" />
-                <input type="text" class="form-input add-name-edit-name-ext name-ext-input" data-index="${i}" value="${escapeHtml(item.name.extension || '')}" placeholder="Ext." />
-              </div>
+              <input type="text" class="form-input add-name-edit-name-full" data-index="${i}" value="${escapeHtml(nameDisplay(item.name))}" placeholder="Full Name" />
               <select class="form-input add-name-edit-type" data-index="${i}">
                 ${intentionTypes.map(t => `<option value="${t.id}" ${t.id === item.typeId ? 'selected' : ''}>${escapeHtml(t.label)}</option>`).join('')}
               </select>
@@ -551,55 +546,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     if (addNameEditingIndex !== null) {
-      const field = addNameChipsBox.querySelector(`.add-name-edit-name-first[data-index="${addNameEditingIndex}"]`);
+      const field = addNameChipsBox.querySelector(`.add-name-edit-name-full[data-index="${addNameEditingIndex}"]`);
       if (field) { field.focus(); field.select(); }
     }
   }
 
   function saveAddNameEdit(index) {
-    const get = (suffix) => addNameChipsBox.querySelector(`.add-name-edit-name-${suffix}[data-index="${index}"]`);
-    const firstEl = get('first'), middleEl = get('middle'), lastEl = get('last'), extEl = get('ext');
+    const fullEl = addNameChipsBox.querySelector(`.add-name-edit-name-full[data-index="${index}"]`);
     const typeField = addNameChipsBox.querySelector(`.add-name-edit-type[data-index="${index}"]`);
-    if (!firstEl || !lastEl || !typeField) return;
-    const name = {
-      firstName: firstEl.value.trim(),
-      middleName: (middleEl?.value || '').trim(),
-      lastName: lastEl.value.trim(),
-      extension: (extEl?.value || '').trim(),
-    };
-    if (!name.firstName || !name.lastName) {
-      [firstEl, lastEl].forEach(el => { if (!el.value.trim()) el.classList.add('border-red-400'); });
+    if (!fullEl || !typeField) return;
+    const fullName = fullEl.value.trim();
+    if (!fullName) {
+      fullEl.classList.add('border-red-400');
       return;
     }
-    addedIntentions[index] = { name, typeId: typeField.value };
+    addedIntentions[index] = { name: fullName, typeId: typeField.value };
     addNameEditingIndex = null;
     renderAddNameChips();
   }
 
   function addIntentionName() {
-    if (!nameFieldsFilled('add-name')) {
-      const firstEl = document.getElementById('add-name-first');
-      const lastEl = document.getElementById('add-name-last');
-      if (!firstEl.value.trim()) firstEl.classList.add('border-red-400');
-      if (!lastEl.value.trim()) lastEl.classList.add('border-red-400');
+    const fullNameInput = document.getElementById('add-name-full');
+    const fullName = fullNameInput.value.trim();
+    if (!fullName) {
+      fullNameInput.classList.add('border-red-400');
       return;
     }
     // Newest addition goes to the top, so it's visible right away.
-    addedIntentions.unshift({ name: readNameFields('add-name'), typeId: selectedTypeId });
+    addedIntentions.unshift({ name: fullName, typeId: selectedTypeId });
     if (addNameEditingIndex !== null) addNameEditingIndex += 1;
-    setNameFields('add-name', {});
-    ['add-name-first', 'add-name-middle', 'add-name-last', 'add-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
+    fullNameInput.value = '';
+    fullNameInput.classList.remove('border-red-400');
     renderAddNameChips();
-    document.getElementById('add-name-first').focus();
+    fullNameInput.focus();
   }
 
   addAddNameBtn.addEventListener('click', addIntentionName);
 
-  ['add-name-first', 'add-name-middle', 'add-name-last', 'add-name-ext'].forEach(id => {
-    const el = document.getElementById(id);
+  {
+    const el = document.getElementById('add-name-full');
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addIntentionName(); } });
     el.addEventListener('input', () => el.classList.remove('border-red-400'));
-  });
+  }
 
   addNameChipsBox.addEventListener('click', (e) => {
     const editBtn = e.target.closest('.mi-added-item-edit');
@@ -641,8 +629,8 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedTypeId = intentionTypes[0].id;
     selectTypeButton(selectedTypeId);
     updateAddNameLabelSuffix();
-    setNameFields('add-name', {});
-    ['add-name-first', 'add-name-middle', 'add-name-last', 'add-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
+    document.getElementById('add-name-full').value = '';
+    document.getElementById('add-name-full').classList.remove('border-red-400');
     renderAddNameChips();
   }
 
@@ -678,8 +666,8 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedTypeId = typeId;
     selectTypeButton(typeId);
     updateAddNameLabelSuffix();
-    setNameFields('add-name', {});
-    ['add-name-first', 'add-name-middle', 'add-name-last', 'add-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
+    document.getElementById('add-name-full').value = '';
+    document.getElementById('add-name-full').classList.remove('border-red-400');
     renderAddNameChips();
 
     openModal(addModal);
@@ -844,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('add-submit').addEventListener('click', async () => {
-    if (!isNameEmpty(readNameFields('add-name'))) addIntentionName();
+    if (document.getElementById('add-name-full').value.trim()) addIntentionName();
 
     const donor       = document.getElementById('add-donor').value.trim();
     const offering          = parseInt(document.getElementById('add-offering').value, 10);

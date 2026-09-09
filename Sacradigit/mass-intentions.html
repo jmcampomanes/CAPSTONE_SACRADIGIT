@@ -414,7 +414,7 @@
 
   <!-- ========== ADD / EDIT INTENTION MODAL ========== -->
   <div id="add-modal" class="modal-overlay hidden">
-    <div class="modal-card">
+    <div class="modal-card modal-card-wide">
       <div class="modal-header">
         <h3 class="modal-title" id="add-modal-title">Add Mass Intention</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
@@ -437,12 +437,7 @@
             <label class="form-label">
               Name<span id="add-name-label-suffix"></span> <span class="text-red-500">*</span>
             </label>
-            <div class="name-field-row">
-              <input type="text" id="add-name-first" class="form-input" placeholder="First Name" />
-              <input type="text" id="add-name-middle" class="form-input" placeholder="Middle Name" />
-              <input type="text" id="add-name-last" class="form-input" placeholder="Last Name" />
-              <input type="text" id="add-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
-            </div>
+            <input type="text" id="add-name-full" class="form-input" placeholder="e.g. Juan M. Santos Jr." />
             <button type="button" id="add-add-name" class="btn-secondary mt-2">Add Name</button>
             <p class="text-xs text-gray-400 mt-1">Each name is tagged with the category currently selected above.</p>
           </div>
