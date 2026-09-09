@@ -1,0 +1,24 @@
+/* ============================================
+   SacraDigit Media — Event Coverage & Approvals
+   page styles. Mostly reuses .panel /
+   .records-table / .badge / .btn-* / .filter-bar
+   from media-shell.css.
+   ============================================ */
+
+.row-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.4rem;
+}
+
+.row-action-approve { color: #16a34a; }
+.row-action-approve:hover { color: #15803d; }
+
+.row-action-reject { color: #dc2626; }
+.row-action-reject:hover { color: #b91c1c; }
+
+.row-action-delete { color: #9ca3af; }
+.row-action-delete:hover { color: #4b5563; }

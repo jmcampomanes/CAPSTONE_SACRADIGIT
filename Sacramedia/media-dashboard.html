@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – SacraDigit Media</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              DEFAULT: '#1e2a4a',
+              dark: '#16213a',
+              light: '#2a3a5c',
+            },
+            gold: '#c9a84c',
+            lavender: '#8b8fc7',
+            'lavender-light': '#a8acda',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../Sacradigit/sacradigit-css/admin-shell.css" />
+  <link rel="stylesheet" href="media-css/media-shell.css" />
+  <link rel="stylesheet" href="media-css/media-dashboard.css" />
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="admin-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <!-- Logo -->
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="../sacradigit-images/scaradigit-logo.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Media Team</p>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="Media navigation">
+
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="media-dashboard.html" data-nav="media-dashboard" class="sidebar-link active">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Dashboard
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Content</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="../Sacradigit/announcements.html" data-nav="announcements" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+              Announcements
+            </a>
+          </li>
+          <li>
+            <a href="content-calendar.html" data-nav="content-calendar" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Content Calendar
+            </a>
+          </li>
+          <li>
+            <a href="post-templates.html" data-nav="post-templates" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Post Templates
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Media</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="media-library.html" data-nav="media-library" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h16M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
+              Media Library
+            </a>
+          </li>
+          <li>
+            <a href="livestream.html" data-nav="livestream" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              Livestream Manager
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Requests</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="event-coverage.html" data-nav="event-coverage" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Event Coverage & Approvals
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- User -->
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
+          <div class="w-9 h-9 rounded-full bg-lavender flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs">MT</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate">Media Team</p>
+            <p class="text-gray-400 text-xs truncate">Communications</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#8b8fc7;border-bottom-width:3px;">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(139,143,199,0.16);color:#6c6fb0;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <!-- Page content -->
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-6">
+
+        <!-- Welcome banner -->
+        <div class="rounded-xl px-6 py-6" style="background: linear-gradient(120deg, #1e2a4a, #2a3a5c);">
+          <p class="text-xs font-semibold tracking-wide uppercase" style="color:#a8acda;">Our Lady of Fatima Parish</p>
+          <h2 class="text-xl md:text-2xl font-bold text-white mt-1">Welcome back, Media Team</h2>
+          <p class="text-sm mt-1" style="color:#c7c9e8;">Here's what's happening with parish content today.</p>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Scheduled This Week</p>
+              <div class="stat-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+            </div>
+            <p class="stat-value" id="stat-scheduled">–</p>
+            <p class="stat-sub">on the content calendar</p>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Pending Approvals</p>
+              <div class="stat-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+            </div>
+            <p class="stat-value" id="stat-pending">–</p>
+            <p class="stat-sub">awaiting review</p>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Media Files</p>
+              <div class="stat-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h16M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg></div>
+            </div>
+            <p class="stat-value" id="stat-library">–</p>
+            <p class="stat-sub">in the library</p>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Livestream</p>
+              <div class="stat-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div>
+            </div>
+            <p class="stat-value" id="stat-livestream">–</p>
+            <p class="stat-sub" id="stat-livestream-sub">status</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Upcoming Content</h2>
+              <a href="content-calendar.html" class="panel-link">View calendar →</a>
+            </div>
+            <ul class="divide-y divide-gray-100" id="upcoming-content-list">
+              <li class="list-row text-sm text-gray-400">Loading…</li>
+            </ul>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Pending Approvals</h2>
+              <a href="event-coverage.html" class="panel-link">View all →</a>
+            </div>
+            <ul class="divide-y divide-gray-100" id="pending-approvals-list">
+              <li class="list-row text-sm text-gray-400">Loading…</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Quick links -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Quick Actions</h2>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4">
+            <a href="../Sacradigit/announcements.html" class="quick-action">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>New Announcement</span>
+            </a>
+            <a href="content-calendar.html" class="quick-action">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span>Plan Content</span>
+            </a>
+            <a href="media-library.html" class="quick-action">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h16M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
+              <span>Upload Media</span>
+            </a>
+            <a href="livestream.html" class="quick-action">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              <span>Manage Livestream</span>
+            </a>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <!-- Custom JS -->
+  <script type="module" src="media-shell.js"></script>
+  <script type="module" src="media-dashboard.js"></script>
+</body>
+</html>
