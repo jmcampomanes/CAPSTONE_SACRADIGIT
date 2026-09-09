@@ -13,15 +13,19 @@ import { formatFullName, isNameEmpty } from '../name-utils.js';
 document.addEventListener('DOMContentLoaded', () => {
 
   // Detail keys that are purely internal/derived — never shown to the
-  // parishioner (e.g. 'birthplace' is a combined City+Region string kept
-  // only so the admin's Generate Certificate modal can prefill from it;
-  // the same info already appears here as separate Region/City lines).
-  const HIDDEN_DETAIL_KEYS = new Set(['birthplace']);
+  // parishioner ('birthplace' is a combined City+Region string kept only
+  // so the admin's Generate Certificate modal can prefill from it, since
+  // the same info already appears here as separate Region/City lines;
+  // 'baptism-church' on a Confirmation Certificate request is never
+  // actually asked of the requester — it's always Our Lady of Fatima
+  // Parish — so showing it back would just be redundant noise).
+  const HIDDEN_DETAIL_KEYS = new Set(['birthplace', 'baptism-church']);
 
   const DETAIL_LABEL_OVERRIDES = {
     'birth-region': 'Region of Birth',
     'birth-city': 'City/Municipality of Birth',
     'extraGodparents': 'Additional Godparents',
+    'confirmation-name': 'Confirmation Name (Saint Name)',
   };
 
   function humanizeDetailLabel(key) {

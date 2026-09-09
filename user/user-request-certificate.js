@@ -9,6 +9,7 @@
 import { client } from '../amplify-init.js';
 import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled, formatFullName, isNameEmpty } from '../name-utils.js';
 import { regionOptionsHtml, cityOptionsHtml, OTHER_CITY_VALUE } from '../ph-locations.js';
+import { confirmationNameOptionsHtml, OTHER_NAME_VALUE as OTHER_SAINT_NAME_VALUE } from '../saint-names.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -82,19 +83,26 @@ document.addEventListener('DOMContentLoaded', () => {
     { id: 'confirmation', name: 'Confirmation Certificate', desc: 'Proof of confirmation sacrament.',
       iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
       icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
-      // These mirror exactly what appears on the printed Confirmation
-      // Certificate (see confirmation-certificate-print.html) — the
-      // confirming bishop and the certificate's issue date are filled
-      // in by the parish office from the register, not asked of the
-      // requester here.
+      // Rendering, validation, and data collection for this type are
+      // custom (see renderConfirmationFieldsHtml / validateAndCollectConfirmation
+      // below) — it needs a guardian sub-section (mirroring the
+      // Baptismal Certificate's), independent N/A toggles on Father's/
+      // Mother's names, and a Confirmation Name dropdown that the
+      // generic field-array renderer used by First Communion/Marriage/
+      // Death can't express. "Church of Baptism" isn't asked of the
+      // requester — this parish only has records for itself, so it's
+      // always filled in as Our Lady of Fatima Parish automatically
+      // (see validateAndCollectConfirmation). This `fields` array only
+      // documents the field ids/labels that end up as keys in the
+      // stored `details` JSON.
+      confirmationCustom: true,
       fields: [
         { id: 'confirmed-name', label: 'Full Name of Confirmand', kind: 'name', required: true },
-        { id: 'father-name', label: "Father's Name", kind: 'name', required: false },
-        { id: 'mother-name', label: "Mother's Name", kind: 'name', required: false },
         { id: 'baptism-date', label: 'Date of Baptism', type: 'date', required: false },
-        { id: 'baptism-church', label: 'Church of Baptism', placeholder: 'e.g. Our Lady of Fatima Parish', required: false },
-        { id: 'confirmation-name', label: 'Confirmation Name (Saint Name)', placeholder: 'e.g. Teresa', required: false },
+        { id: 'confirmation-name', label: 'Confirmation Name (Saint Name)', required: true },
         { id: 'confirmation-date', label: 'Approximate Date of Confirmation', type: 'date', required: false },
+        { id: 'father-name', label: "Father's Full Name", kind: 'name', required: true },
+        { id: 'mother-name', label: "Mother's Full Maiden Name", kind: 'name', required: true },
         { id: 'sponsor-name', label: "Sponsor's Name", kind: 'name', required: false },
       ] },
     { id: 'first-communion', name: 'First Communion Certificate', desc: 'Proof of First Holy Communion.',
@@ -232,11 +240,27 @@ document.addEventListener('DOMContentLoaded', () => {
     { key: 'extraGodparents', label: 'Additional Godparents' },
   ];
 
+  // Same idea for the Confirmation Certificate — 'baptism-church' is
+  // skipped since it's never actually asked of the requester (always
+  // Our Lady of Fatima Parish; see validateAndCollectConfirmation).
+  const CONFIRMATION_PREVIEW_FIELDS = [
+    { key: 'confirmed-name', label: 'Full Name of Confirmand' },
+    { key: 'baptism-date', label: 'Date of Baptism', isDate: true },
+    { key: 'confirmation-name', label: 'Confirmation Name (Saint Name)' },
+    { key: 'confirmation-date', label: 'Approximate Date of Confirmation', isDate: true },
+    { key: 'guardian', label: 'Guardian' },
+    { key: 'father-name', label: "Father's Name" },
+    { key: 'mother-name', label: "Mother's Name" },
+    { key: 'sponsor-name', label: "Sponsor's Name" },
+  ];
+
   function buildPreviewGridHtml(details, purpose, notes) {
     const rows = [];
     const fieldList = selectedType.baptismalCustom
       ? BAPTISMAL_PREVIEW_FIELDS
-      : selectedType.fields.map(f => ({ key: f.id, label: f.label, isDate: f.type === 'date' }));
+      : selectedType.confirmationCustom
+        ? CONFIRMATION_PREVIEW_FIELDS
+        : selectedType.fields.map(f => ({ key: f.id, label: f.label, isDate: f.type === 'date' }));
 
     fieldList.forEach(({ key, label, isDate }) => {
       const raw = details[key];
@@ -290,6 +314,9 @@ document.addEventListener('DOMContentLoaded', () => {
       godparentCounter = 2;
       dynamicFields.innerHTML = renderBaptismalFieldsHtml();
       wireBaptismalFields();
+    } else if (selectedType.confirmationCustom) {
+      dynamicFields.innerHTML = renderConfirmationFieldsHtml();
+      wireConfirmationFields();
     } else {
       dynamicFields.innerHTML = selectedType.fields.map(f => {
         if (f.kind === 'name') return nameFieldsHtml(f.id, f.label, { required: f.required, spanFull: true });
@@ -657,6 +684,272 @@ document.addEventListener('DOMContentLoaded', () => {
     return { allFilled, details };
   }
 
+  /* ------------------------------------------
+     CONFIRMATION CERTIFICATE — custom fields
+     (guardian sub-section mirroring the Baptismal
+     Certificate's, independent N/A toggles on
+     Father's/Mother's names, Confirmation Name
+     dropdown with an "Other" fallback)
+  ------------------------------------------ */
+  function renderConfirmationFieldsHtml() {
+    return `
+      ${nameFieldsHtml('confirmed-name', 'Full Name of Confirmand', { required: true, spanFull: true })}
+
+      <div>
+        <label class="form-label" for="baptism-date">Date of Baptism</label>
+        <input type="date" id="baptism-date" class="form-input" min="${MIN_DATE_ISO}" max="${TODAY_ISO}" />
+      </div>
+
+      <div>
+        <label class="form-label" for="confirmation-name">Confirmation Name (Saint Name) <span class="text-red-500">*</span></label>
+        <select id="confirmation-name" class="form-input">${confirmationNameOptionsHtml()}</select>
+        <input type="text" id="confirmation-name-other" class="form-input mt-2 hidden" placeholder="Enter confirmation name" />
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="form-label" for="confirmation-date">Approximate Date of Confirmation</label>
+        <input type="date" id="confirmation-date" class="form-input" min="${MIN_DATE_ISO}" max="${TODAY_ISO}" />
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="field-na-label" style="font-size:0.8125rem;color:#374151;">
+          <input type="checkbox" id="guardian-toggle" class="checkbox-input" />
+          This person is being presented by a guardian (not the parents)
+        </label>
+      </div>
+
+      <div class="form-subblock hidden" id="guardian-fields">
+        <div class="sm:col-span-2">
+          <label class="form-label" for="guardian-relationship">Guardian's Relationship to the Confirmand <span class="text-red-500">*</span></label>
+          <select id="guardian-relationship" class="form-input">
+            <option value="">Select relationship…</option>
+            ${GUARDIAN_RELATIONSHIPS.map(r => `<option value="${r}">${r}</option>`).join('')}
+          </select>
+        </div>
+        <div class="sm:col-span-2 hidden" id="guardian-relationship-other-wrap">
+          <label class="form-label" for="guardian-relationship-other">Specify Relationship <span class="text-red-500">*</span></label>
+          <input type="text" id="guardian-relationship-other" class="form-input" placeholder="e.g. Family friend" />
+        </div>
+        ${nameFieldsHtml('guardian-name', "Guardian's Full Name", { required: true, spanFull: true })}
+        <div class="sm:col-span-2">
+          <label class="form-label" for="guardian-birthdate">Guardian's Birthday <span class="text-red-500">*</span></label>
+          <input type="date" id="guardian-birthdate" class="form-input" min="${MIN_DATE_ISO}" max="${TODAY_ISO}" />
+        </div>
+      </div>
+
+      <div class="sm:col-span-2 name-field-group">
+        <div class="field-na-row">
+          <label class="form-label" style="margin-bottom:0;">Father's Full Name <span class="text-red-500 father-name-required-mark">*</span></label>
+          <label class="field-na-label"><input type="checkbox" id="father-name-na" class="checkbox-input" /> Not Applicable / Prefer not to say</label>
+        </div>
+        <div class="name-field-row">
+          <input type="text" id="father-name-first" class="form-input" placeholder="First Name" />
+          <input type="text" id="father-name-middle" class="form-input" placeholder="Middle Name" />
+          <input type="text" id="father-name-last" class="form-input" placeholder="Last Name" />
+          <input type="text" id="father-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+        </div>
+      </div>
+
+      <div class="sm:col-span-2 name-field-group">
+        <div class="field-na-row">
+          <label class="form-label" style="margin-bottom:0;">Mother's Full Maiden Name <span class="text-red-500 mother-name-required-mark">*</span></label>
+          <label class="field-na-label"><input type="checkbox" id="mother-name-na" class="checkbox-input" /> Not Applicable / Prefer not to say</label>
+        </div>
+        <div class="name-field-row">
+          <input type="text" id="mother-name-first" class="form-input" placeholder="First Name" />
+          <input type="text" id="mother-name-middle" class="form-input" placeholder="Middle Name" />
+          <input type="text" id="mother-name-last" class="form-input" placeholder="Last Name" />
+          <input type="text" id="mother-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+        </div>
+      </div>
+
+      ${nameFieldsHtml('sponsor-name', "Sponsor's Name", { required: false, spanFull: true })}
+    `;
+  }
+
+  function wireConfirmationFields() {
+    [document.getElementById('baptism-date'), document.getElementById('confirmation-date'), document.getElementById('guardian-birthdate')]
+      .forEach(guardDateInputRange);
+
+    const confirmationNameEl = document.getElementById('confirmation-name');
+    const confirmationNameOtherEl = document.getElementById('confirmation-name-other');
+    confirmationNameEl.addEventListener('change', () => {
+      confirmationNameOtherEl.classList.toggle('hidden', confirmationNameEl.value !== OTHER_SAINT_NAME_VALUE);
+      if (confirmationNameEl.value !== OTHER_SAINT_NAME_VALUE) confirmationNameOtherEl.value = '';
+    });
+
+    const guardianToggle = document.getElementById('guardian-toggle');
+    const guardianFields = document.getElementById('guardian-fields');
+    guardianToggle.addEventListener('change', () => {
+      guardianFields.classList.toggle('hidden', !guardianToggle.checked);
+      if (!guardianToggle.checked) {
+        document.getElementById('guardian-relationship').value = '';
+        document.getElementById('guardian-relationship-other-wrap').classList.add('hidden');
+        document.getElementById('guardian-relationship-other').value = '';
+        setNameFields('guardian-name', null);
+        document.getElementById('guardian-birthdate').value = '';
+      }
+      updateParentFieldsState();
+    });
+
+    // Same "guardian supersedes parents" graying-out behavior as the
+    // Baptismal Certificate's identically-structured block — see
+    // wireBaptismalFields() above for the fuller explanation. Kept as
+    // a separate copy (not a shared helper) so the two certificate
+    // types' forms can't accidentally affect each other.
+    function updateParentFieldsState() {
+      const guardianOn = guardianToggle.checked;
+      [
+        { prefix: 'father-name', naId: 'father-name-na', markClass: 'father-name-required-mark' },
+        { prefix: 'mother-name', naId: 'mother-name-na', markClass: 'mother-name-required-mark' },
+      ].forEach(({ prefix, naId, markClass }) => {
+        const naCheckbox = document.getElementById(naId);
+        const inputs = [`${prefix}-first`, `${prefix}-middle`, `${prefix}-last`, `${prefix}-ext`]
+          .map(id => document.getElementById(id));
+        const requiredMark = document.querySelector(`.${markClass}`);
+        const disabled = guardianOn || naCheckbox.checked;
+        inputs.forEach(el => { el.disabled = disabled; });
+        naCheckbox.disabled = guardianOn;
+        if (requiredMark) requiredMark.classList.toggle('hidden', disabled);
+      });
+    }
+
+    const relationshipEl = document.getElementById('guardian-relationship');
+    const relationshipOtherWrap = document.getElementById('guardian-relationship-other-wrap');
+    relationshipEl.addEventListener('change', () => {
+      relationshipOtherWrap.classList.toggle('hidden', relationshipEl.value !== 'Other');
+      if (relationshipEl.value !== 'Other') document.getElementById('guardian-relationship-other').value = '';
+    });
+
+    function wireNotApplicable(checkboxId, fieldPrefix) {
+      const checkbox = document.getElementById(checkboxId);
+      const inputs = [`${fieldPrefix}-first`, `${fieldPrefix}-middle`, `${fieldPrefix}-last`, `${fieldPrefix}-ext`]
+        .map(id => document.getElementById(id));
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) inputs.forEach(el => { el.value = ''; });
+        updateParentFieldsState();
+      });
+    }
+    wireNotApplicable('father-name-na', 'father-name');
+    wireNotApplicable('mother-name-na', 'mother-name');
+    updateParentFieldsState();
+  }
+
+  /* Validates and collects the Confirmation Certificate's custom
+     fields. Mirrors validateAndCollectBaptismal() above. */
+  function validateAndCollectConfirmation(flagInvalid) {
+    let allFilled = true;
+    const details = {};
+
+    details['confirmed-name'] = readNameFields('confirmed-name');
+    if (!nameFieldsFilled('confirmed-name')) {
+      allFilled = false;
+      flagInvalid(document.getElementById('confirmed-name-first'));
+      flagInvalid(document.getElementById('confirmed-name-last'));
+    }
+
+    const baptismDateEl = document.getElementById('baptism-date');
+    details['baptism-date'] = baptismDateEl.value;
+    if (baptismDateEl.value && !isReasonableDate(baptismDateEl.value)) {
+      allFilled = false;
+      flagInvalid(baptismDateEl);
+    }
+
+    // Church of Baptism isn't asked of the requester — this parish only
+    // has records for itself, so it's always Our Lady of Fatima Parish.
+    // Stored under the same 'baptism-church' key the admin's Generate
+    // Certificate modal already reads from a parishioner's request, so
+    // that prefill keeps working unchanged (see record-requests.js).
+    details['baptism-church'] = PARISH_NAME;
+
+    const confirmationNameEl = document.getElementById('confirmation-name');
+    const confirmationNameOtherEl = document.getElementById('confirmation-name-other');
+    const confirmationNameValue = confirmationNameEl.value === OTHER_SAINT_NAME_VALUE
+      ? confirmationNameOtherEl.value.trim()
+      : confirmationNameEl.value;
+    if (!confirmationNameValue) {
+      allFilled = false;
+      flagInvalid(confirmationNameEl.value === OTHER_SAINT_NAME_VALUE ? confirmationNameOtherEl : confirmationNameEl);
+    }
+    details['confirmation-name'] = confirmationNameValue;
+
+    const confirmationDateEl = document.getElementById('confirmation-date');
+    details['confirmation-date'] = confirmationDateEl.value;
+    if (confirmationDateEl.value && !isReasonableDate(confirmationDateEl.value)) {
+      allFilled = false;
+      flagInvalid(confirmationDateEl);
+    }
+
+    const guardianToggle = document.getElementById('guardian-toggle');
+    if (guardianToggle.checked) {
+      const relationshipEl = document.getElementById('guardian-relationship');
+      const relationshipOtherEl = document.getElementById('guardian-relationship-other');
+      const guardianBirthdateEl = document.getElementById('guardian-birthdate');
+
+      let relationship = relationshipEl.value;
+      if (!relationship) { allFilled = false; flagInvalid(relationshipEl); }
+      if (relationship === 'Other') {
+        if (!relationshipOtherEl.value.trim()) { allFilled = false; flagInvalid(relationshipOtherEl); }
+        relationship = relationshipOtherEl.value.trim() || 'Other';
+      }
+
+      const guardianName = readNameFields('guardian-name');
+      if (!nameFieldsFilled('guardian-name')) {
+        allFilled = false;
+        flagInvalid(document.getElementById('guardian-name-first'));
+        flagInvalid(document.getElementById('guardian-name-last'));
+      }
+
+      // Unlike the Baptismal Certificate, this form doesn't collect the
+      // confirmand's own date of birth, so there's no field to compare
+      // the guardian's birthdate against for an "older than" check —
+      // only a sanity check on the guardian's own birthdate is possible.
+      if (!guardianBirthdateEl.value) {
+        allFilled = false;
+        flagInvalid(guardianBirthdateEl);
+      } else if (!isReasonableDate(guardianBirthdateEl.value)) {
+        allFilled = false;
+        flagInvalid(guardianBirthdateEl);
+      }
+
+      details['guardian'] = {
+        relationship,
+        name: guardianName,
+        birthdate: guardianBirthdateEl.value,
+      };
+    } else {
+      details['guardian'] = null;
+    }
+
+    const fatherNa = guardianToggle.checked || document.getElementById('father-name-na').checked;
+    if (fatherNa) {
+      details['father-name'] = null;
+    } else {
+      details['father-name'] = readNameFields('father-name');
+      if (!nameFieldsFilled('father-name')) {
+        allFilled = false;
+        flagInvalid(document.getElementById('father-name-first'));
+        flagInvalid(document.getElementById('father-name-last'));
+      }
+    }
+
+    const motherNa = guardianToggle.checked || document.getElementById('mother-name-na').checked;
+    if (motherNa) {
+      details['mother-name'] = null;
+    } else {
+      details['mother-name'] = readNameFields('mother-name');
+      if (!nameFieldsFilled('mother-name')) {
+        allFilled = false;
+        flagInvalid(document.getElementById('mother-name-first'));
+        flagInvalid(document.getElementById('mother-name-last'));
+      }
+    }
+
+    details['sponsor-name'] = readNameFields('sponsor-name');
+
+    return { allFilled, details };
+  }
+
   document.getElementById('btn-back-to-menu').addEventListener('click', goToMenu);
 
   document.addEventListener('keydown', (e) => {
@@ -679,6 +972,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (selectedType.baptismalCustom) {
       const result = validateAndCollectBaptismal(flagInvalid);
+      allFilled = result.allFilled;
+      details = result.details;
+    } else if (selectedType.confirmationCustom) {
+      const result = validateAndCollectConfirmation(flagInvalid);
       allFilled = result.allFilled;
       details = result.details;
     } else {
