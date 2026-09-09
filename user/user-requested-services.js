@@ -12,8 +12,24 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { formatFullName, isNameEmpty } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  function isNameShaped(v) {
+    return !!v && typeof v === 'object' && !Array.isArray(v) &&
+      ('firstName' in v || 'middleName' in v || 'lastName' in v || 'extension' in v);
+  }
+
+  // This page's `details` blob is keyed by field LABEL (not id), and most
+  // values are plain strings — except name fields, stored as
+  // {firstName, middleName, lastName, extension} objects (see
+  // name-utils.js). Returns null to skip a row entirely (an untouched,
+  // still-blank optional name field).
+  function formatDetailValue(value) {
+    if (isNameShaped(value)) return isNameEmpty(value) ? null : formatFullName(value);
+    return value === null || value === undefined || value === '' ? null : String(value);
+  }
 
   const REQUESTER_NAME = 'Maria P. Santos';
 
@@ -155,8 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
     modalStatusBadge.className = `badge ${badgeClass[r.status] || 'badge-gray'}`;
     modalSubmittedDate.textContent = `Submitted ${fmtDate(r.createdAt)}`;
 
-    modalDetails.innerHTML = Object.entries(details).map(([label, value]) => `
-      <div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('') + `
+    modalDetails.innerHTML = Object.entries(details)
+      .map(([label, value]) => [label, formatDetailValue(value)])
+      .filter(([, value]) => value)
+      .map(([label, value]) => `
+        <div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('') + `
       <div><p class="modal-detail-item-label">Preferred Date</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate)}</p></div>
       <div><p class="modal-detail-item-label">Contact</p><p class="modal-detail-item-value">${escapeHtml(r.contact)}</p></div>`;
 

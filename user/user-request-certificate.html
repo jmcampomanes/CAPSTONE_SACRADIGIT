@@ -165,7 +165,14 @@
                 <!-- Common fields for all types -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="sm:col-span-2">
-                    <label class="form-label" for="field-purpose">Purpose of Request</label>
+                    <label class="field-na-label" style="font-size:0.8125rem;color:#374151;align-items:flex-start;">
+                      <input type="checkbox" id="field-parish-confirm" class="checkbox-input" style="margin-top:0.15rem;" />
+                      <span>I confirm this sacrament/event took place at <strong>Our Lady of Fatima Parish</strong> and is recorded in the parish register. <span class="text-red-500">*</span></span>
+                    </label>
+                    <p class="text-xs text-gray-400 mt-1">We can only issue certificates for events recorded at this parish. If yours took place elsewhere, please request it from that parish instead.</p>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="form-label" for="field-purpose">Purpose of Request <span class="text-red-500">*</span></label>
                     <input type="text" id="field-purpose" class="form-input" placeholder="e.g. School enrollment, employment, travel" />
                   </div>
                   <div class="sm:col-span-2">
@@ -187,6 +194,33 @@
                     Submit Request
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Review & Confirm modal — shown after validation passes, before
+               the request is actually submitted, so the requester can catch
+               mistakes and go back to edit instead of submitting blind. -->
+          <div id="confirm-modal" class="modal-overlay hidden">
+            <div class="modal-card modal-card-wide">
+              <div class="modal-header">
+                <h3 class="modal-title">Review Your Request</h3>
+                <button class="modal-close" data-close-confirm-modal aria-label="Close">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <div class="modal-body space-y-4">
+                <p class="text-xs text-gray-500">Please double-check the details below. If something's wrong, go back and fix it before submitting.</p>
+                <div class="confirm-table-wrap">
+                  <table id="confirm-details-grid" class="confirm-table"></table>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" id="btn-back-to-edit" class="btn-secondary">Back to Edit</button>
+                <button type="button" id="btn-confirm-submit" class="btn-lavender">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  Confirm & Submit
+                </button>
               </div>
             </div>
           </div>

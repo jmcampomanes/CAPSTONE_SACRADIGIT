@@ -8,8 +8,63 @@
 
 import { client } from '../amplify-init.js';
 import { getUrl } from 'aws-amplify/storage';
+import { formatFullName, isNameEmpty } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  // Detail keys that are purely internal/derived — never shown to the
+  // parishioner (e.g. 'birthplace' is a combined City+Region string kept
+  // only so the admin's Generate Certificate modal can prefill from it;
+  // the same info already appears here as separate Region/City lines).
+  const HIDDEN_DETAIL_KEYS = new Set(['birthplace']);
+
+  const DETAIL_LABEL_OVERRIDES = {
+    'birth-region': 'Region of Birth',
+    'birth-city': 'City/Municipality of Birth',
+    'extraGodparents': 'Additional Godparents',
+  };
+
+  function humanizeDetailLabel(key) {
+    return DETAIL_LABEL_OVERRIDES[key] || key
+      .replace(/[-_]+/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function isNameShaped(v) {
+    return !!v && typeof v === 'object' && !Array.isArray(v) &&
+      ('firstName' in v || 'middleName' in v || 'lastName' in v || 'extension' in v);
+  }
+
+  // Every certificate type's `details` blob is a flat, freely-shaped JSON
+  // object — most values are plain strings, but name fields are
+  // {firstName, middleName, lastName, extension} objects (see
+  // name-utils.js), the Baptismal Certificate's guardian info is a small
+  // nested object, and its extra godparents are an array. This turns any
+  // of those shapes into one display-ready string, or null to skip the
+  // row entirely (e.g. an untouched, still-blank optional name field).
+  function formatDetailValue(key, value) {
+    if (isNameShaped(value)) return isNameEmpty(value) ? null : formatFullName(value);
+
+    if (key === 'guardian' && value && typeof value === 'object') {
+      const name = formatFullName(value.name);
+      if (!name) return null;
+      const bday = value.birthdate ? formatShortDate(value.birthdate) : '';
+      return `${name} (${value.relationship || 'Guardian'})${bday ? ` — b. ${bday}` : ''}`;
+    }
+
+    if (Array.isArray(value)) {
+      const parts = value
+        .map(g => {
+          const name = formatFullName(g && g.name);
+          return name ? `${name}${g.role ? ` (${g.role})` : ''}` : null;
+        })
+        .filter(Boolean);
+      return parts.length ? parts.join(', ') : null;
+    }
+
+    return value === null || value === undefined || value === '' ? null : String(value);
+  }
 
   const STEPS = ['Submitted', 'Under Review', 'Approved', 'Ready for Pick-up', 'Released'];
   const stepIndexFor = { pending: 0, approved: 2, released: 4, rejected: -1 };
@@ -193,8 +248,12 @@ document.addEventListener('DOMContentLoaded', () => {
     statusBadge.className   = `badge ${badgeClass[r.status] || 'badge-gray'}`;
 
     const detailGrid = document.getElementById('modal-details');
-    detailGrid.innerHTML = Object.entries(details).filter(([, v]) => v).map(([label, value]) => `
-      <div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('');
+    detailGrid.innerHTML = Object.entries(details)
+      .filter(([key]) => !HIDDEN_DETAIL_KEYS.has(key))
+      .map(([key, value]) => [key, formatDetailValue(key, value)])
+      .filter(([, value]) => value)
+      .map(([key, value]) => `
+        <div><p class="modal-detail-item-label">${escapeHtml(humanizeDetailLabel(key))}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('');
 
     const purposeWrap = document.getElementById('modal-purpose-wrap');
     if (r.purpose) { purposeWrap.classList.remove('hidden'); document.getElementById('modal-purpose').textContent = r.purpose; }
