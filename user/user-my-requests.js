@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 'baptism-church' on a Confirmation Certificate request is never
   // actually asked of the requester — it's always Our Lady of Fatima
   // Parish — so showing it back would just be redundant noise).
-  const HIDDEN_DETAIL_KEYS = new Set(['birthplace', 'baptism-church']);
+  const HIDDEN_DETAIL_KEYS = new Set(['birthplace', 'baptism-church', 'place-of-death']);
 
   const DETAIL_LABEL_OVERRIDES = {
     'birth-region': 'Region of Birth',
@@ -35,6 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
     'bride-father': "Bride's Father's Name",
     'bride-mother': "Bride's Mother's Maiden Name",
     'marriage-place': 'Place of Marriage',
+    'deceased-name': 'Full Name of Deceased',
+    'place-of-death-region': 'Region of Death',
+    'place-of-death-city': 'City/Municipality of Death',
+    'requester-rel': 'Relationship to the Deceased',
   };
 
   function humanizeDetailLabel(key) {

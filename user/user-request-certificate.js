@@ -23,6 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     'Cousin', 'Older Brother', 'Older Sister', 'Godmother', 'Godfather', 'Other',
   ];
 
+  // Options for the Death Certificate's "Relationship to the Deceased"
+  // dropdown — "Other" reveals a free-text field to specify, same pattern
+  // as GUARDIAN_RELATIONSHIPS above.
+  const DECEASED_RELATIONSHIPS = [
+    'Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Sibling',
+    'Grandson', 'Granddaughter', 'Grandparent', 'Other',
+  ];
+
   // Shared bounds for every date-of-event field on this form: nothing
   // can be dated in the future, and a 4-digit-year floor keeps the native
   // date picker's year spinner (which otherwise accepts up to 6 digits)
@@ -161,14 +169,27 @@ document.addEventListener('DOMContentLoaded', () => {
       // officiating priest, Bk./Page/Line, and the issue date are
       // filled in by the parish office from the register, not asked
       // of the requester here.
+      //
+      // Rendering, validation, and data collection for this type are
+      // custom (see renderDeathFieldsHtml / validateAndCollectDeath
+      // below) — Place of Death needs the same Region/City picker as
+      // the Baptismal Certificate's Place of Birth, Date of Burial and
+      // Place of Burial are grouped into a single row per request, and
+      // Relationship to the Deceased is a dropdown (mirroring the
+      // guardian-relationship dropdowns elsewhere) instead of free
+      // text — none of which the generic field-array renderer used by
+      // First Communion can express. This `fields` array only
+      // documents the field ids/labels that end up as keys in the
+      // stored `details` JSON.
+      deathCustom: true,
       fields: [
         { id: 'deceased-name', label: 'Full Name of Deceased', kind: 'name', required: true },
-        { id: 'age', label: 'Age at Time of Death', placeholder: 'e.g. 78', required: false },
-        { id: 'death-date', label: 'Approximate Date of Death', type: 'date', required: false },
-        { id: 'place-of-death', label: 'Place of Death', placeholder: 'e.g. Quezon City', required: false },
-        { id: 'burial-date', label: 'Date of Burial', type: 'date', required: false },
-        { id: 'burial-place', label: 'Place of Burial', placeholder: 'e.g. Loyola Memorial Park', required: false },
-        { id: 'requester-rel', label: 'Relationship to Deceased', placeholder: 'e.g. Son, Daughter, Spouse', required: true },
+        { id: 'age', label: 'Age at Time of Death', placeholder: 'e.g. 78', required: true },
+        { id: 'death-date', label: 'Date of Death', type: 'date', required: true },
+        { id: 'place-of-death', label: 'Place of Death (Region/City)', required: true },
+        { id: 'burial-date', label: 'Date of Burial', type: 'date', required: true },
+        { id: 'burial-place', label: 'Place of Burial', placeholder: 'e.g. Loyola Memorial Park', required: true },
+        { id: 'requester-rel', label: 'Relationship to the Deceased', required: true },
       ] },
   ];
 
@@ -287,6 +308,20 @@ document.addEventListener('DOMContentLoaded', () => {
     { key: 'witness-2', label: 'Witness 2' },
   ];
 
+  // 'place-of-death' is skipped here too — same reason as Baptismal's
+  // 'birthplace': it's just Region+City combined into one derived
+  // string, kept only for the admin's Generate Certificate prefill.
+  const DEATH_PREVIEW_FIELDS = [
+    { key: 'deceased-name', label: 'Full Name of Deceased' },
+    { key: 'age', label: 'Age at Time of Death' },
+    { key: 'death-date', label: 'Date of Death', isDate: true },
+    { key: 'place-of-death-region', label: 'Region of Death' },
+    { key: 'place-of-death-city', label: 'City/Municipality of Death' },
+    { key: 'burial-date', label: 'Date of Burial', isDate: true },
+    { key: 'burial-place', label: 'Place of Burial' },
+    { key: 'requester-rel', label: 'Relationship to the Deceased' },
+  ];
+
   function buildPreviewGridHtml(details, purpose, notes) {
     const rows = [];
     const fieldList = selectedType.baptismalCustom
@@ -295,7 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ? CONFIRMATION_PREVIEW_FIELDS
         : selectedType.marriageCustom
           ? MARRIAGE_PREVIEW_FIELDS
-          : selectedType.fields.map(f => ({ key: f.id, label: f.label, isDate: f.type === 'date' }));
+          : selectedType.deathCustom
+            ? DEATH_PREVIEW_FIELDS
+            : selectedType.fields.map(f => ({ key: f.id, label: f.label, isDate: f.type === 'date' }));
 
     fieldList.forEach(({ key, label, isDate }) => {
       const raw = details[key];
@@ -355,6 +392,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (selectedType.marriageCustom) {
       dynamicFields.innerHTML = renderMarriageFieldsHtml();
       wireMarriageFields();
+    } else if (selectedType.deathCustom) {
+      dynamicFields.innerHTML = renderDeathFieldsHtml();
+      wireDeathFields();
     } else {
       dynamicFields.innerHTML = selectedType.fields.map(f => {
         if (f.kind === 'name') return nameFieldsHtml(f.id, f.label, { required: f.required, spanFull: true });
@@ -1299,6 +1339,159 @@ document.addEventListener('DOMContentLoaded', () => {
     return { allFilled, details };
   }
 
+  /* ------------------------------------------
+     DEATH CERTIFICATE — custom fields
+     (Region/City picker for Place of Death,
+     mirroring the Baptismal Certificate's Place
+     of Birth; Date of Burial + Place of Burial
+     grouped into one row; a Relationship-to-the-
+     Deceased dropdown with an "Other" free-text
+     fallback, mirroring the guardian-relationship
+     dropdowns used elsewhere)
+  ------------------------------------------ */
+  function renderDeathFieldsHtml() {
+    return `
+      ${nameFieldsHtml('deceased-name', 'Full Name of Deceased', { required: true, spanFull: true })}
+
+      <div>
+        <label class="form-label" for="age">Age at Time of Death <span class="text-red-500">*</span></label>
+        <input type="text" id="age" class="form-input" inputmode="numeric" placeholder="e.g. 78" />
+      </div>
+
+      <div>
+        <label class="form-label" for="death-date">Date of Death <span class="text-red-500">*</span></label>
+        <input type="date" id="death-date" class="form-input" min="${MIN_DATE_ISO}" max="${TODAY_ISO}" />
+        <p class="text-xs text-gray-400 mt-1">Should not be approximate — if the death involved an accident, please have a hospital declaration or police report ready.</p>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="form-label">Place of Death <span class="text-red-500">*</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+          <select id="death-region" class="form-input">${regionOptionsHtml()}</select>
+          <select id="death-city" class="form-input" disabled>${cityOptionsHtml('')}</select>
+        </div>
+        <input type="text" id="death-city-other" class="form-input mt-2 hidden" placeholder="Enter city/municipality" />
+      </div>
+
+      <div class="sm:col-span-2">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div>
+            <label class="form-label" for="burial-date">Date of Burial <span class="text-red-500">*</span></label>
+            <input type="date" id="burial-date" class="form-input" min="${MIN_DATE_ISO}" max="${TODAY_ISO}" />
+          </div>
+          <div>
+            <label class="form-label" for="burial-place">Place of Burial <span class="text-red-500">*</span></label>
+            <input type="text" id="burial-place" class="form-input" placeholder="e.g. Loyola Memorial Park" />
+          </div>
+        </div>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="form-label" for="requester-rel">Relationship to the Deceased <span class="text-red-500">*</span></label>
+        <select id="requester-rel" class="form-input">
+          <option value="">Select relationship…</option>
+          ${DECEASED_RELATIONSHIPS.map(r => `<option value="${r}">${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="sm:col-span-2 hidden" id="requester-rel-other-wrap">
+        <label class="form-label" for="requester-rel-other">Specify Relationship <span class="text-red-500">*</span></label>
+        <input type="text" id="requester-rel-other" class="form-input" placeholder="e.g. Family friend" />
+      </div>
+    `;
+  }
+
+  function wireDeathFields() {
+    [document.getElementById('death-date'), document.getElementById('burial-date')]
+      .forEach(guardDateInputRange);
+
+    const regionEl = document.getElementById('death-region');
+    const cityEl = document.getElementById('death-city');
+    const cityOtherEl = document.getElementById('death-city-other');
+
+    regionEl.addEventListener('change', () => {
+      cityEl.innerHTML = cityOptionsHtml(regionEl.value);
+      cityEl.disabled = !regionEl.value;
+      cityOtherEl.classList.add('hidden');
+      cityOtherEl.value = '';
+    });
+
+    cityEl.addEventListener('change', () => {
+      cityOtherEl.classList.toggle('hidden', cityEl.value !== OTHER_CITY_VALUE);
+      if (cityEl.value !== OTHER_CITY_VALUE) cityOtherEl.value = '';
+    });
+
+    const relationshipEl = document.getElementById('requester-rel');
+    const relationshipOtherWrap = document.getElementById('requester-rel-other-wrap');
+    relationshipEl.addEventListener('change', () => {
+      relationshipOtherWrap.classList.toggle('hidden', relationshipEl.value !== 'Other');
+      if (relationshipEl.value !== 'Other') document.getElementById('requester-rel-other').value = '';
+    });
+  }
+
+  /* Validates and collects the Death Certificate's custom fields.
+     Mirrors the shape of flagInvalid()/allFilled from the generic
+     submit handler below — called from there when selectedType is
+     the death type. */
+  function validateAndCollectDeath(flagInvalid) {
+    let allFilled = true;
+    const details = {};
+
+    details['deceased-name'] = readNameFields('deceased-name');
+    if (!nameFieldsFilled('deceased-name')) {
+      allFilled = false;
+      flagInvalid(document.getElementById('deceased-name-first'));
+      flagInvalid(document.getElementById('deceased-name-last'));
+    }
+
+    const ageEl = document.getElementById('age');
+    const ageValue = ageEl.value.trim();
+    details['age'] = ageValue;
+    if (!ageValue || !/^\d{1,3}$/.test(ageValue)) {
+      allFilled = false;
+      flagInvalid(ageEl);
+    }
+
+    const deathDateEl = document.getElementById('death-date');
+    details['death-date'] = deathDateEl.value;
+    if (!deathDateEl.value) { allFilled = false; flagInvalid(deathDateEl); }
+    else if (!isReasonableDate(deathDateEl.value)) { allFilled = false; flagInvalid(deathDateEl); }
+
+    const regionEl = document.getElementById('death-region');
+    const cityEl = document.getElementById('death-city');
+    const cityOtherEl = document.getElementById('death-city-other');
+    const cityValue = cityEl.value === OTHER_CITY_VALUE ? cityOtherEl.value.trim() : cityEl.value;
+    if (!regionEl.value) { allFilled = false; flagInvalid(regionEl); }
+    if (!cityValue) { allFilled = false; flagInvalid(cityEl.value === OTHER_CITY_VALUE ? cityOtherEl : cityEl); }
+    details['place-of-death-region'] = regionEl.value;
+    details['place-of-death-city'] = cityValue;
+    // Kept as a single formatted string too, under the same
+    // 'place-of-death' key the admin's Generate Certificate modal
+    // already reads from a parishioner's request — same pattern as
+    // Baptismal's 'birthplace' (see validateAndCollectBaptismal).
+    details['place-of-death'] = [cityValue, regionEl.value].filter(Boolean).join(', ');
+
+    const burialDateEl = document.getElementById('burial-date');
+    details['burial-date'] = burialDateEl.value;
+    if (!burialDateEl.value) { allFilled = false; flagInvalid(burialDateEl); }
+    else if (!isReasonableDate(burialDateEl.value)) { allFilled = false; flagInvalid(burialDateEl); }
+
+    const burialPlaceEl = document.getElementById('burial-place');
+    details['burial-place'] = burialPlaceEl.value.trim();
+    if (!burialPlaceEl.value.trim()) { allFilled = false; flagInvalid(burialPlaceEl); }
+
+    const relationshipEl = document.getElementById('requester-rel');
+    const relationshipOtherEl = document.getElementById('requester-rel-other');
+    let relationship = relationshipEl.value;
+    if (!relationship) { allFilled = false; flagInvalid(relationshipEl); }
+    if (relationship === 'Other') {
+      if (!relationshipOtherEl.value.trim()) { allFilled = false; flagInvalid(relationshipOtherEl); }
+      relationship = relationshipOtherEl.value.trim() || 'Other';
+    }
+    details['requester-rel'] = relationship;
+
+    return { allFilled, details };
+  }
+
   document.getElementById('btn-back-to-menu').addEventListener('click', goToMenu);
 
   document.addEventListener('keydown', (e) => {
@@ -1329,6 +1522,10 @@ document.addEventListener('DOMContentLoaded', () => {
       details = result.details;
     } else if (selectedType.marriageCustom) {
       const result = validateAndCollectMarriage(flagInvalid);
+      allFilled = result.allFilled;
+      details = result.details;
+    } else if (selectedType.deathCustom) {
+      const result = validateAndCollectDeath(flagInvalid);
       allFilled = result.allFilled;
       details = result.details;
     } else {
