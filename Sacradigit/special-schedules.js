@@ -7,20 +7,16 @@ import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  function toLocalISODate(d = new Date()) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  const todayISO = toLocalISODate();
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   let schedules = []; // kept in sync via observeQuery, each has .id
 
   const grid           = document.getElementById('schedules-grid');
   const schedulesEmpty  = document.getElementById('schedules-empty');
+  const schedulesEmptyText = schedulesEmpty.querySelector('p');
   const schedulesCount  = document.getElementById('schedules-count');
+  const schedulesPanelTitle = document.getElementById('schedules-panel-title');
+  const viewAllBtn      = document.getElementById('btn-view-all-schedules');
 
   /* --- View toggle: list panels vs. calendar --- */
   const listViewPanel      = document.getElementById('list-view-panel');
@@ -101,6 +97,37 @@ document.addEventListener('DOMContentLoaded', () => {
     return `Day ${daysPassed} of ${totalDays}`;
   }
 
+  /* Whether a schedule is actually ongoing/upcoming/completed *right now*,
+     computed from its real date range — not from its (often stale) saved
+     `status` field, which a seed script or an old edit can easily leave
+     out of sync with the calendar (e.g. still "Upcoming" for an event
+     from January once it's September). Everything below sorts and
+     filters off this computed value instead. */
+  function getScheduleState(s) {
+    const today = parseDate(todayISO).getTime();
+    const start = parseDate(s.startDate).getTime();
+    const end   = parseDate(s.endDate).getTime();
+    if (today < start) return 'upcoming';
+    if (today > end)   return 'completed';
+    return 'ongoing';
+  }
+
+  const STATE_RANK = { ongoing: 0, upcoming: 1, completed: 2 };
+
+  /* Ongoing first, then upcoming, then completed last — within each
+     group, soonest-relevant first (ongoing: ending soonest; upcoming:
+     starting soonest; completed: most recently finished). */
+  function sortSchedules(list) {
+    return list.slice().sort((a, b) => {
+      const stateA = getScheduleState(a);
+      const stateB = getScheduleState(b);
+      if (STATE_RANK[stateA] !== STATE_RANK[stateB]) return STATE_RANK[stateA] - STATE_RANK[stateB];
+      if (stateA === 'completed') return parseDate(b.endDate) - parseDate(a.endDate);
+      if (stateA === 'ongoing')   return parseDate(a.endDate) - parseDate(b.endDate);
+      return parseDate(a.startDate) - parseDate(b.startDate);
+    });
+  }
+
 
   /* --- Live data --- */
   if (!client.models.SpecialSchedule) {
@@ -143,23 +170,38 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
+  const DEFAULT_VISIBLE_COUNT = 6; // two rows at the grid's usual 3-column width
+  let showAllSchedules = false;
+
+  viewAllBtn.addEventListener('click', () => {
+    showAllSchedules = !showAllSchedules;
+    renderGrid();
+  });
+
   function renderGrid() {
-    const sorted = schedules.slice().sort((a, b) => {
-      if (a.status === 'Ongoing' && b.status !== 'Ongoing') return -1;
-      if (b.status === 'Ongoing' && a.status !== 'Ongoing') return 1;
-      return parseDate(a.startDate) - parseDate(b.startDate);
-    });
+    const allSorted = sortSchedules(schedules);
+    const relevant   = allSorted.filter(s => getScheduleState(s) !== 'completed');
+    const visible    = showAllSchedules ? allSorted : relevant.slice(0, DEFAULT_VISIBLE_COUNT);
 
-    schedulesCount.textContent = `${sorted.length} schedule${sorted.length === 1 ? '' : 's'}`;
+    schedulesPanelTitle.textContent = showAllSchedules ? 'All Special Schedules' : 'Upcoming Special Schedules';
+    viewAllBtn.textContent = showAllSchedules ? 'Show Upcoming Only' : 'View All';
+    viewAllBtn.setAttribute('aria-pressed', String(showAllSchedules));
 
-    if (sorted.length === 0) {
+    schedulesCount.textContent = showAllSchedules
+      ? `${allSorted.length} schedule${allSorted.length === 1 ? '' : 's'}`
+      : (relevant.length > DEFAULT_VISIBLE_COUNT
+          ? `Showing ${visible.length} of ${relevant.length} upcoming`
+          : `${relevant.length} upcoming`);
+
+    if (visible.length === 0) {
       grid.innerHTML = '';
+      schedulesEmptyText.textContent = showAllSchedules ? 'No special schedules yet' : 'No upcoming special schedules';
       schedulesEmpty.classList.remove('hidden');
       return;
     }
     schedulesEmpty.classList.add('hidden');
 
-    grid.innerHTML = sorted.map((s) => {
+    grid.innerHTML = visible.map((s) => {
       const typeClass = typeClassMap[s.type] || 'special';
       const progress   = progressPercent(s.startDate, s.endDate);
       const durLabel    = durationLabel(s.startDate, s.endDate);

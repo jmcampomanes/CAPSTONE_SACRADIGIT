@@ -210,8 +210,11 @@
         <!-- Upcoming Special Schedules panel -->
         <div class="panel">
           <div class="panel-header">
-            <h2 class="panel-title">Upcoming Special Schedules</h2>
-            <p id="schedules-count" class="text-xs text-gray-400 font-medium"></p>
+            <h2 id="schedules-panel-title" class="panel-title">Upcoming Special Schedules</h2>
+            <div class="flex items-center gap-3">
+              <p id="schedules-count" class="text-xs text-gray-400 font-medium"></p>
+              <button type="button" id="btn-view-all-schedules" class="schedules-view-all-btn">View All</button>
+            </div>
           </div>
           <div id="schedules-grid" class="schedules-grid">
             <!-- Cards injected by special-schedules.js -->

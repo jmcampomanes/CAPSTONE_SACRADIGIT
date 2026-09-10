@@ -5,6 +5,7 @@
 
 import { client } from '../amplify-init.js';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../name-utils.js';
+import { uploadData, getUrl } from 'aws-amplify/storage';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -32,6 +33,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!iso) return '—';
     const d = new Date(iso);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  /* Resolve a stored S3 path (ParishRecord.fileURL) into a real, fetchable
+     URL — same pattern as announcements.js's resolveMediaUrl and
+     user-my-requests.js's openOfficialCertificate: the bucket is private,
+     so a bare path is stored and a signed URL (1hr) is generated on demand,
+     cached ~55 minutes so re-opening the same record doesn't re-sign it. */
+  const fileUrlCache = new Map(); // path -> { url, expiresAt }
+  async function resolveFileUrl(path) {
+    if (!path) return '';
+    const cached = fileUrlCache.get(path);
+    if (cached && cached.expiresAt > Date.now()) return cached.url;
+
+    const { url } = await getUrl({ path, options: { expiresIn: 3600 } });
+    const resolved = url.toString();
+    fileUrlCache.set(path, { url: resolved, expiresAt: Date.now() + 55 * 60 * 1000 });
+    return resolved;
   }
 
   /* --- Live data --- */
@@ -191,11 +209,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
 
-  function openViewModal(id) {
+  async function openViewModal(id) {
     const r = records.find(x => x.id === id);
     if (!r) return;
 
-    viewRecordBody.innerHTML = `
+    const detailGridHtml = `
       <div class="so-detail-grid">
         <div><p class="so-detail-label">Full Name</p><p class="so-detail-value">${escapeHtml(r.fullName)}</p></div>
         <div><p class="so-detail-label">Record Type</p><p class="so-detail-value">${escapeHtml(r.type)}</p></div>
@@ -204,20 +222,39 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><p class="so-detail-label">Officiant</p><p class="so-detail-value">${escapeHtml(r.officiant) || '—'}</p></div>
         <div><p class="so-detail-label">Added By</p><p class="so-detail-value">${escapeHtml(r.addedByName) || '—'}</p></div>
         <div><p class="so-detail-label">Date Added</p><p class="so-detail-value">${formatDate(r.createdAt)}</p></div>
-      </div>
-      ${r.fileURL ? `<div class="mt-3"><a href="${r.fileURL}" target="_blank" rel="noopener" class="certificate-chip">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4"/></svg>
-          View scanned file
-        </a></div>` : ''}
-    `;
+      </div>`;
+
+    // fileURL is a bare S3 path (bucket is private), not a directly-usable
+    // link — show a loading state while it's resolved to a signed URL, same
+    // as user-my-requests.js's openOfficialCertificate does for the same field.
+    viewRecordBody.innerHTML = detailGridHtml +
+      (r.fileURL ? `<p class="text-xs text-gray-400 mt-3">Loading scanned file…</p>` : '');
 
     openModal(viewRecordModal);
+
+    if (r.fileURL) {
+      try {
+        const url = await resolveFileUrl(r.fileURL);
+        // Guard against the modal having moved on to a different record
+        // (or closed) while the signed URL was resolving.
+        if (viewRecordModal.classList.contains('hidden')) return;
+        viewRecordBody.innerHTML = detailGridHtml + `
+          <div class="mt-3"><a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="certificate-chip">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4"/></svg>
+            View scanned file
+          </a></div>`;
+      } catch (err) {
+        console.error('Failed to resolve scanned file URL:', err);
+        viewRecordBody.innerHTML = detailGridHtml + `<p class="text-xs text-red-500 mt-3">Couldn't load the scanned file.</p>`;
+      }
+    }
   }
 
 
-  /* --- Upload modal (file picker only creates a record; actual file
-     storage would follow the same uploadData() pattern as
-     cloud-access.js if you want the scanned file itself stored) --- */
+  /* --- Upload modal — real S3 upload via Amplify Storage, same pattern
+     as cloud-access.js. Stored under cloudFiles/parishRecords/ so it
+     reuses the 'cloudFiles/*' path already allowed in storage/resource.ts
+     (guest read/write/delete) rather than needing a new backend deploy. --- */
   const dropzone       = document.getElementById('upload-dropzone');
   const fileInput       = document.getElementById('upload-file-input');
   const uploadFilename   = document.getElementById('upload-filename');
@@ -249,13 +286,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!type || !nameFieldsFilled('upload-name')) { showToast('Please fill in record type and name.', true); return; }
 
     const fullName = formatFullName(name);
+    const file = fileInput.files[0];
+    const submitBtn = document.getElementById('upload-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading…';
 
     try {
+      const path = `cloudFiles/parishRecords/${Date.now()}_${file.name}`;
+      await uploadData({ path, data: file }).result;
+
       const result = await client.models.ParishRecord.create({
         fullName,
         type: type.toLowerCase(),
         addedByName: 'Admin User', // TODO: pull from signed-in Cognito user once auth UI exists
         status: 'processing',
+        fileURL: path, // bare S3 path — resolved to a signed URL on demand, see resolveFileUrl()
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
@@ -268,6 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Failed to save record:', err);
       showToast(err.message || "Couldn't save the record.", true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Upload Record';
     }
   });
 
