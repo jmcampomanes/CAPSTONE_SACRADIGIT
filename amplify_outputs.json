@@ -17,7 +17,7 @@
     "groups": [
       {
         "staff": {
-          "precedence": 0
+          "precedence": 0 
         }
       },
       {

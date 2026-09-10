@@ -253,10 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const result = await client.models.ParishRecord.create({
         fullName,
-        firstName: name.firstName || undefined,
-        middleName: name.middleName || undefined,
-        lastName: name.lastName || undefined,
-        extension: name.extension || undefined,
         type: type.toLowerCase(),
         addedByName: 'Admin User', // TODO: pull from signed-in Cognito user once auth UI exists
         status: 'processing',
@@ -290,10 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const result = await client.models.ParishRecord.create({
         fullName,
-        firstName: name.firstName || undefined,
-        middleName: name.middleName || undefined,
-        lastName: name.lastName || undefined,
-        extension: name.extension || undefined,
         type: type.toLowerCase(),
         dateOfEvent: date,
         officiant: officiant || undefined,

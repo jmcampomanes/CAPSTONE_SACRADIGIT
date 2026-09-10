@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Import 2026 Special Masses – SacraDigit (Temporary Tool)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { DEFAULT: '#1e2a4a', dark: '#16213a', light: '#2a3a5c' },
+            gold: '#c9a84c',
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="special-masses-import.css" />
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="max-w-5xl mx-auto px-5 py-8">
+
+    <!-- Warning banner: this is a throwaway tool, not a permanent page -->
+    <div class="temp-banner">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376C1.83 17.933 2.914 20 4.657 20h14.686c1.743 0 2.828-2.067 1.96-3.874L13.66 3.876c-.87-1.813-3.45-1.813-4.32 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+      <div>
+        <p class="font-semibold text-sm">Temporary tool — delete this file after use</p>
+        <p class="text-xs mt-0.5 opacity-90">Not linked from any sidebar. Bulk-writes to the live <code>SpecialSchedule</code> table via the same Amplify client your admin pages use — review each row before importing.</p>
+      </div>
+    </div>
+
+    <div class="mt-6 mb-5">
+      <h1 class="text-2xl font-bold text-navy">Import 2026 Special Masses</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Curated from the <a href="https://gcatholic.org/calendar/2026/PH-en" target="_blank" rel="noopener" class="text-navy underline">GCatholic Philippines liturgical calendar</a> —
+        Solemnities, Feasts, and Holy Week only (daily Optional Memorials are left out on purpose).
+        Edit the Mass Time or Notes for any row, uncheck anything you don't want, then import.
+      </p>
+    </div>
+
+    <div class="toolbar">
+      <button id="select-all-btn" class="btn-secondary">Select All</button>
+      <button id="select-none-btn" class="btn-secondary">Select None</button>
+      <select id="rank-filter" class="form-input" style="width:auto;">
+        <option value="all">All ranks</option>
+        <option value="Solemnity">Solemnities only</option>
+        <option value="Feast">Feasts only</option>
+        <option value="Triduum">Holy Week / Triduum only</option>
+      </select>
+      <div class="flex-1"></div>
+      <span id="selected-count" class="text-xs text-gray-400 self-center"></span>
+      <button id="import-btn" class="btn-gold">Import Selected to SpecialSchedule</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="masses-table">
+        <thead>
+          <tr>
+            <th style="width:2rem;"><input type="checkbox" id="header-checkbox" /></th>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Rank</th>
+            <th>Mass Time</th>
+            <th>Note</th>
+            <th style="width:4rem;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="masses-tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="import-log" class="import-log hidden"></div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="special-masses-import.js"></script>
+</body>
+</html>

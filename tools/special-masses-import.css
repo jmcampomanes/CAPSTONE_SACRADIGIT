@@ -1,0 +1,156 @@
+/* ============================================
+   Special Masses Import Tool — standalone styles
+   Deliberately self-contained (not reusing
+   admin-shell.css) since this is a throwaway
+   utility page, not part of the permanent app.
+   ============================================ */
+
+* { box-sizing: border-box; }
+
+.temp-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #fef9ec;
+  border: 1px solid #e9d8a6;
+  color: #92670c;
+  border-radius: 0.75rem;
+  padding: 0.9rem 1.1rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.btn-secondary,
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.55rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-secondary { background-color: #f3f4f6; color: #374151; }
+.btn-secondary:hover { background-color: #e5e7eb; }
+
+.btn-gold { background-color: #c9a84c; color: #1e2a4a; }
+.btn-gold:hover { background-color: #b5943e; }
+.btn-gold:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.form-input {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  background: #ffffff;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #8b8fc7;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.15);
+}
+
+.table-wrap {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  overflow-x: auto;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+
+thead th {
+  text-align: left;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+  letter-spacing: 0.03em;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #f1f2f5;
+  vertical-align: middle;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr.row-imported { background: #f0fdf4; }
+tbody tr.row-error { background: #fef2f2; }
+
+.rank-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.rank-Solemnity { background: rgba(201, 168, 76, 0.2); color: #92670c; }
+.rank-Feast     { background: rgba(139, 143, 199, 0.16); color: #6c6fb0; }
+.rank-Triduum   { background: rgba(220, 38, 38, 0.1); color: #b91c1c; }
+
+.row-time-input,
+.row-note-input {
+  width: 100%;
+  min-width: 110px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+}
+
+.row-status { font-size: 0.7rem; font-weight: 600; }
+.row-status.pending { color: #9ca3af; }
+.row-status.ok { color: #16a34a; }
+.row-status.error { color: #dc2626; }
+
+.import-log {
+  margin-top: 1rem;
+  background: #111827;
+  color: #d1d5db;
+  border-radius: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.75rem;
+  max-height: 220px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background-color: #1e2a4a;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.7rem 1.1rem;
+  border-radius: 0.6rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }

@@ -1,14 +1,17 @@
 /* ============================================
    SacraDigit — User Mass Schedule Scripts (AWS Amplify)
    Runs after user-shell.js.
-   Weekly schedule + liturgical season banner stay
-   static/computed (no live data needed). Reminders
-   stay a local, in-session Set — no backend model
-   for personal reminders exists yet.
+   Weekly schedule is backed by the WeeklyMassSchedule
+   model — same shared merge logic (live rows + defaults)
+   as the admin Masses page, so parishioners always see
+   whatever the admin has set. Liturgical season banner
+   stays computed. Reminders stay a local, in-session Set
+   — no backend model for personal reminders exists yet.
    ============================================ */
 
 import { client } from '../amplify-init.js';
 import { massTypeBadgeHtml, massTypeLegendHtml } from '../mass-types.js';
+import { mergeWeeklySchedule, recurringMassesForDate } from '../weekly-mass-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -17,15 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const massTypeLegendEl = document.getElementById('mass-type-legend');
   if (massTypeLegendEl) massTypeLegendEl.innerHTML = massTypeLegendHtml();
 
-  const weeklySchedule = [
-    { day: 'Monday',    times: ['6:00 AM', '7:00 AM'],                       type: 'Daily Mass' },
-    { day: 'Tuesday',   times: ['6:00 AM', '7:00 AM'],                       type: 'Daily Mass' },
-    { day: 'Wednesday', times: ['6:00 AM', '7:00 AM'],                       type: 'Daily Mass' },
-    { day: 'Thursday',  times: ['6:00 AM', '7:00 AM'],                       type: 'Daily Mass' },
-    { day: 'Friday',    times: ['6:00 AM', '7:00 AM'],                       type: 'Daily Mass' },
-    { day: 'Saturday',  times: ['7:00 AM', '5:30 PM'],                       type: 'Anticipated Mass' },
-    { day: 'Sunday',    times: ['6:00 AM', '8:00 AM', '10:00 AM', '5:00 PM'], type: 'Sunday Mass' },
-  ];
+  let weeklySchedule = mergeWeeklySchedule([]); // merged view (live rows + defaults), see weekly-mass-schedule.js
 
   const reminders = new Set();
   let allMasses = [];
@@ -115,9 +110,35 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
+  // Guarded: if the WeeklyMassSchedule model hasn't been deployed to this
+  // backend yet, client.models.WeeklyMassSchedule is undefined — without
+  // this guard that throws here and aborts the rest of this script. Until
+  // it's deployed, the table just keeps showing its hardcoded defaults.
+  if (client.models.WeeklyMassSchedule) {
+    client.models.WeeklyMassSchedule.observeQuery().subscribe({
+      next: ({ items }) => {
+        weeklySchedule = mergeWeeklySchedule(items);
+        renderWeeklySchedule();
+        renderDateSchedule(); // Date's Schedule includes the recurring pattern too — refresh it when that pattern changes
+      },
+      error: (err) => {
+        console.error('Failed to load weekly mass schedule:', err);
+      },
+    });
+  } else {
+    console.warn('WeeklyMassSchedule model not found on this backend yet — showing default weekly schedule only.');
+  }
+
   function renderDateSchedule() {
     const iso = datePicker.value;
-    const masses = allMasses.filter(m => m.date === iso);
+    // Individually-scheduled Mass records for this exact date, plus the
+    // recurring weekly pattern for whatever day of the week this date
+    // falls on — so "today" shows the masses that actually happen today
+    // even if no one specifically scheduled them.
+    const masses = [
+      ...allMasses.filter(m => m.date === iso),
+      ...recurringMassesForDate(weeklySchedule, iso),
+    ];
 
     scheduleDateLabel.textContent = formatLongDate(iso);
     dateScheduleList.innerHTML = '';
@@ -194,9 +215,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderWeeklySchedule() {
     weeklyTbody.innerHTML = weeklySchedule.map(w => `
       <tr>
-        <td class="font-semibold text-gray-900">${escapeHtml(w.day)}</td>
+        <td class="font-semibold text-gray-900">${escapeHtml(w.dayLabel)}</td>
         <td>${w.times.map(t => `<span class="time-pill">${escapeHtml(t)}</span>`).join('')}</td>
-        <td>${escapeHtml(w.type)}</td>
+        <td>${escapeHtml(w.displayType)}</td>
       </tr>`).join('');
   }
 

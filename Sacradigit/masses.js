@@ -1,13 +1,15 @@
 /* ============================================
    SacraDigit Admin — Masses (Special Masses) Scripts (AWS Amplify)
-   Backed by the Mass model.
-   Weekly Schedule table stays static reference data —
-   it represents a recurring pattern, not individual
-   Mass records, so it isn't wired to the database.
+   Backed by the Mass model. The Regular Weekly Mass
+   Schedule table is backed by the WeeklyMassSchedule
+   model (one row per day of the week) — see
+   weekly-mass-schedule.js for the shared merge logic
+   with the parishioner-facing page.
    ============================================ */
 
 import { client } from '../amplify-init.js';
 import { massTypeInfo, massTypeBadgeHtml, massTypeLegendHtml } from '../mass-types.js';
+import { mergeWeeklySchedule, recurringMassesForDate } from '../weekly-mass-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -19,15 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let allMasses = []; // kept in sync via observeQuery, each has .id
   let currentDateMasses = []; // sorted masses for the currently selected date
 
-  const weeklySchedule = [
-    { day: 'Monday',    times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Tuesday',   times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Wednesday', times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Thursday',  times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Friday',    times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Saturday',  times: ['7:00 AM', '5:30 PM'],            type: 'Anticipated Mass' },
-    { day: 'Sunday',    times: ['6:00 AM', '8:00 AM', '10:00 AM', '5:00 PM'], type: 'Sunday Mass' },
-  ];
+  let weeklyLive = []; // raw WeeklyMassSchedule rows, kept in sync via observeQuery
+  let weeklySchedule = mergeWeeklySchedule([]); // merged view (live rows + defaults), see weekly-mass-schedule.js
 
   const datePicker          = document.getElementById('date-picker');
   const scheduleDateLabel     = document.getElementById('schedule-date-label');
@@ -80,11 +75,41 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
+  // Guarded: if the WeeklyMassSchedule model hasn't been deployed to this
+  // backend yet, client.models.WeeklyMassSchedule is undefined — without
+  // this guard that throws here and aborts the rest of this script (stats,
+  // modals, everything below never runs). Until it's deployed, the table
+  // just keeps showing its hardcoded defaults and Edit saves will fail
+  // with a clear toast instead of the whole page breaking silently.
+  if (client.models.WeeklyMassSchedule) {
+    client.models.WeeklyMassSchedule.observeQuery().subscribe({
+      next: ({ items }) => {
+        weeklyLive = items;
+        weeklySchedule = mergeWeeklySchedule(weeklyLive);
+        renderWeeklySchedule();
+        renderDateSchedule(); // Date's Schedule includes the recurring pattern too — refresh it when that pattern changes
+      },
+      error: (err) => {
+        console.error('Failed to load weekly mass schedule:', err);
+      },
+    });
+  } else {
+    console.warn('WeeklyMassSchedule model not found on this backend yet — showing default weekly schedule only. Deploy the updated amplify/data/resource.ts to enable live editing.');
+  }
+
 
   /* --- Date's Schedule --- */
   function renderDateSchedule() {
     const iso = datePicker.value;
-    const masses = allMasses.filter(m => m.date === iso);
+    // Individually-scheduled Mass records for this exact date, plus the
+    // recurring weekly pattern for whatever day of the week this date
+    // falls on (e.g. every Monday's 6:00 AM / 7:00 AM Daily Mass) — so
+    // "today" shows the masses that actually happen today even if no
+    // one ever specifically scheduled them via "Schedule Mass".
+    const masses = [
+      ...allMasses.filter(m => m.date === iso),
+      ...recurringMassesForDate(weeklySchedule, iso),
+    ];
 
     scheduleDateLabel.textContent = formatLongDate(iso);
     dateScheduleList.innerHTML = '';
@@ -179,13 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  /* --- Regular Weekly Mass Schedule (static reference) --- */
+  /* --- Regular Weekly Mass Schedule (backed by WeeklyMassSchedule) --- */
   function renderWeeklySchedule() {
     weeklyTbody.innerHTML = weeklySchedule.map((w, idx) => `
       <tr>
-        <td class="day-cell">${escapeHtml(w.day)}</td>
+        <td class="day-cell">${escapeHtml(w.dayLabel)}</td>
         <td>${w.times.map(t => `<span class="time-pill">${escapeHtml(t)}</span>`).join('')}</td>
-        <td>${escapeHtml(w.type)}</td>
+        <td>${escapeHtml(w.displayType)}</td>
         <td class="text-right"><button type="button" class="row-action" data-day-index="${idx}">Edit ›</button></td>
       </tr>
     `).join('');
@@ -193,10 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   weeklyTbody.addEventListener('click', (e) => {
     const btn = e.target.closest('.row-action');
-    if (btn) {
-      const idx = parseInt(btn.dataset.dayIndex, 10);
-      showToast(`Editing ${weeklySchedule[idx].day}'s schedule… (not yet wired to a form)`);
-    }
+    if (btn) openWeeklyEditModal(parseInt(btn.dataset.dayIndex, 10));
   });
 
   renderWeeklySchedule();
@@ -421,6 +443,109 @@ document.addEventListener('DOMContentLoaded', () => {
     h = h % 12 || 12;
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${meridiem}`;
   }
+
+
+  /* --- Edit Weekly Schedule Modal (Regular Weekly Mass Schedule) --- */
+  const weeklyEditModal    = document.getElementById('weekly-edit-modal');
+  const weeklyEditTitle    = document.getElementById('weekly-edit-title');
+  const weeklyEditTimeInput = document.getElementById('weekly-edit-time-input');
+  const weeklyEditTimeAdd   = document.getElementById('weekly-edit-time-add');
+  const weeklyEditTimeList  = document.getElementById('weekly-edit-time-list');
+  const weeklyEditType      = document.getElementById('weekly-edit-type');
+  const weeklyEditLabel     = document.getElementById('weekly-edit-label');
+  const weeklyEditSubmit    = document.getElementById('weekly-edit-submit');
+
+  let editingDayIndex = null;
+  let editingTimes = []; // array of "h:mm AM/PM" strings, chronologically sorted
+
+  function renderWeeklyEditTimeChips() {
+    weeklyEditTimeList.innerHTML = editingTimes.map((t, i) => `
+      <span class="name-chip">
+        ${escapeHtml(t)}
+        <button type="button" class="name-chip-remove" data-remove-time="${i}" aria-label="Remove ${escapeHtml(t)}">×</button>
+      </span>
+    `).join('') || `<p class="text-xs text-gray-400">No times added yet.</p>`;
+  }
+
+  function addEditingTime(time12) {
+    if (editingTimes.includes(time12)) return;
+    editingTimes.push(time12);
+    editingTimes.sort((a, b) => to24h(a) - to24h(b));
+    renderWeeklyEditTimeChips();
+  }
+
+  weeklyEditTimeAdd.addEventListener('click', () => {
+    const time24 = weeklyEditTimeInput.value;
+    if (!time24) return;
+    addEditingTime(formatTime12(time24));
+    weeklyEditTimeInput.value = '';
+  });
+
+  weeklyEditTimeList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-time]');
+    if (!btn) return;
+    editingTimes.splice(parseInt(btn.dataset.removeTime, 10), 1);
+    renderWeeklyEditTimeChips();
+  });
+
+  function openWeeklyEditModal(idx) {
+    const w = weeklySchedule[idx];
+    if (!w) return;
+
+    editingDayIndex = idx;
+    editingTimes = w.times.slice();
+
+    weeklyEditTitle.textContent = `Edit ${w.dayLabel}'s Schedule`;
+    weeklyEditType.value = w.massType;
+    weeklyEditLabel.value = w.label || '';
+    renderWeeklyEditTimeChips();
+
+    openModal(weeklyEditModal);
+  }
+
+  weeklyEditSubmit.addEventListener('click', async () => {
+    const w = weeklySchedule[editingDayIndex];
+    if (!w) return;
+
+    if (!client.models.WeeklyMassSchedule) {
+      showToast('This feature needs a backend update that hasn\'t been deployed yet — ask your developer to deploy the latest schema.', true);
+      return;
+    }
+
+    if (editingTimes.length === 0) {
+      showToast('Add at least one time.', true);
+      return;
+    }
+
+    const massType = weeklyEditType.value;
+    const label = weeklyEditLabel.value.trim();
+
+    try {
+      if (w.id) {
+        const result = await client.models.WeeklyMassSchedule.update({
+          id: w.id,
+          times: editingTimes,
+          massType,
+          label: label || null,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      } else {
+        const result = await client.models.WeeklyMassSchedule.create({
+          dayOfWeek: w.dayKey,
+          times: editingTimes,
+          massType,
+          label: label || null,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      }
+
+      closeModal(weeklyEditModal);
+      showToast(`Saved ${w.dayLabel}'s schedule.`);
+    } catch (err) {
+      console.error('Failed to save weekly schedule:', err);
+      showToast(err.message || "Couldn't save this day's schedule.", true);
+    }
+  });
 
 
   /* --- Mass Details Modal --- */

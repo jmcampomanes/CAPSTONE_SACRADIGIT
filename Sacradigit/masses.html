@@ -451,6 +451,49 @@
     </div>
   </div>
 
+  <!-- ========== EDIT WEEKLY SCHEDULE MODAL ========== -->
+  <div id="weekly-edit-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="weekly-edit-title">Edit Schedule</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="weekly-edit-time-input">Times</label>
+            <div class="name-chip-input-row">
+              <input type="time" id="weekly-edit-time-input" class="form-input" />
+              <button type="button" id="weekly-edit-time-add" class="btn-secondary">Add</button>
+            </div>
+            <div id="weekly-edit-time-list" class="name-chip-list"></div>
+            <p class="text-xs text-gray-400 mt-1">Add each Mass time for this day. At least one is required.</p>
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="weekly-edit-type">Mass Type</label>
+            <select id="weekly-edit-type" class="form-input">
+              <option value="daily">Daily / Sunday Mass</option>
+              <option value="anticipated">Anticipated Mass</option>
+              <option value="special">Special Mass</option>
+              <option value="binyag">Baptism Mass</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="weekly-edit-label">Title (optional)</label>
+            <input type="text" id="weekly-edit-label" class="form-input" placeholder="e.g. Sunday Mass" />
+            <p class="text-xs text-gray-400 mt-1">Shown as this day's schedule name. Leave blank to use the type above (e.g. "Daily Mass").</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="weekly-edit-submit" class="btn-lavender">Save Schedule</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 

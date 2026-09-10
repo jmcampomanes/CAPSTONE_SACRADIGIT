@@ -7,47 +7,11 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../weekly-mass-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  function toLocalISODate(d = new Date()) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  const todayISO = toLocalISODate();
-
-  // Recurring weekly pattern — mirrors the "Regular Weekly Mass Schedule"
-  // template on masses.html. Not stored in the database; used only to
-  // fill in today's schedule when no real Mass record exists yet.
-  const weeklySchedule = [
-    { day: 'Monday',    times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Tuesday',   times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Wednesday', times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Thursday',  times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Friday',    times: ['6:00 AM', '7:00 AM'],            type: 'Daily Mass' },
-    { day: 'Saturday',  times: ['7:00 AM', '5:30 PM'],            type: 'Anticipated Mass' },
-    { day: 'Sunday',    times: ['6:00 AM', '8:00 AM', '10:00 AM', '5:00 PM'], type: 'Sunday Mass' },
-  ];
-
-  function parseTimeToMinutes(time12) {
-    const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec((time12 || '').trim());
-    if (!m) return 0;
-    let h = parseInt(m[1], 10);
-    const min = parseInt(m[2], 10);
-    const ap = m[3].toUpperCase();
-    if (ap === 'PM' && h !== 12) h += 12;
-    if (ap === 'AM' && h === 12) h = 0;
-    return h * 60 + min;
-  }
-
-  const todaysDayName = new Date(todayISO + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
-  const todaysTemplate = weeklySchedule.find(w => w.day === todaysDayName);
-  const recurringToday = todaysTemplate
-    ? todaysTemplate.times.map(t => ({ time: t, title: todaysTemplate.type, isRecurring: true, isSpecial: false }))
-    : [];
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   function formatShortDate(input) {
     if (!input) return '—';
@@ -58,44 +22,64 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusBadge = { digitized: 'badge-green', processing: 'badge-amber', queued: 'badge-gray' };
   const statusLabel = { digitized: 'Digitized', processing: 'Processing', queued: 'Queued' };
 
-  /* --- Today's Masses --- */
+  /* --- Today's Masses ---
+     Combines individually-scheduled Mass records for today with the
+     recurring weekly pattern for today's day of the week (see
+     weekly-mass-schedule.js), so this stat/list reflects the masses
+     that actually happen today even on a day nobody specifically
+     scheduled one via "Schedule Mass" on the Masses page.
+
+     The list itself only shows masses that aren't done yet — a mass
+     drops off an hour after its start time (masses run about an hour),
+     re-checked every minute so it disappears live without a reload.
+     The stat count above it still counts the whole day, done or not. */
   const scheduleList = document.getElementById('todays-schedule-list');
-  let latestRealMasses = [];
+  let todaysMassRecords = [];
+  let weeklySchedule = mergeWeeklySchedule([]);
 
-  function renderTodaysSchedule() {
-    const nowMinutes = (() => {
-      const n = new Date();
-      return n.getHours() * 60 + n.getMinutes();
-    })();
+  const MASS_DURATION_MINUTES = 60;
+  function nowMinutesLocal() {
+    const n = new Date();
+    return n.getHours() * 60 + n.getMinutes();
+  }
+  function isMassDone(mass) {
+    return nowMinutesLocal() >= timeToMinutes(mass.time) + MASS_DURATION_MINUTES;
+  }
 
-    const combinedAll = recurringToday.concat(latestRealMasses)
-      .sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
+  function renderTodaysMasses() {
+    const sorted = [
+      ...todaysMassRecords,
+      ...recurringMassesForDate(weeklySchedule, todayISO),
+    ].sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
 
-    // Only show masses that haven't happened yet today.
-    const upcoming = combinedAll.filter(m => parseTimeToMinutes(m.time) >= nowMinutes);
+    const special = sorted.filter(m => m.isSpecial).length;
+    const regular = sorted.length - special;
 
-    const special = latestRealMasses.filter(m => m.isSpecial).length;
-    const regular = combinedAll.length - special;
-
-    document.getElementById('stat-todays-masses').textContent = combinedAll.length;
+    document.getElementById('stat-todays-masses').textContent = sorted.length;
     document.getElementById('stat-todays-masses-sub').textContent = `${regular} regular · ${special} special`;
 
+    const upcoming = sorted.filter(m => !isMassDone(m));
+
     scheduleList.innerHTML = upcoming.length === 0
-      ? `<li class="list-row text-sm text-gray-400">No more masses today.</li>`
+      ? `<li class="list-row text-sm text-gray-400">${sorted.length === 0 ? 'No masses today.' : 'No more masses today.'}</li>`
       : upcoming.map(m => `
           <li class="list-row">
             <span class="list-time">${m.time}</span>
-            <span class="list-name">${m.title || m.type}${m.isRecurring ? ' <span class="text-xs text-gray-400">(Recurring)</span>' : ''}</span>
+            <span class="list-name">${m.title || m.type}</span>
             <a href="masses.html" class="list-action">Details ›</a>
           </li>`).join('');
   }
+
+  // Re-render every minute so a mass drops off the list right after its
+  // hour is up, even if nothing in the database changes in the meantime.
+  setInterval(renderTodaysMasses, 60 * 1000);
 
   client.models.Mass.observeQuery({
     filter: { date: { eq: todayISO } },
   }).subscribe({
     next: ({ items }) => {
-      latestRealMasses = items.map(m => ({ ...m, isRecurring: false }));
-      renderTodaysSchedule();
+      todaysMassRecords = items;
+      renderTodaysMasses();
     },
     error: (err) => {
       console.error('Failed to load masses:', err);
@@ -103,9 +87,19 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  // Re-check every minute so a mass drops off the list right after its
-  // time passes, even if nothing in the database changes.
-  setInterval(renderTodaysSchedule, 60 * 1000);
+  // Guarded the same way as Sacradigit/masses.js: client.models.WeeklyMassSchedule
+  // is undefined until the WeeklyMassSchedule model is deployed to this backend.
+  if (client.models.WeeklyMassSchedule) {
+    client.models.WeeklyMassSchedule.observeQuery().subscribe({
+      next: ({ items }) => {
+        weeklySchedule = mergeWeeklySchedule(items);
+        renderTodaysMasses();
+      },
+      error: (err) => console.error('Failed to load weekly mass schedule:', err),
+    });
+  } else {
+    console.warn('WeeklyMassSchedule model not found on this backend yet — Today\'s Masses will only show individually-scheduled masses.');
+  }
 
   /* --- Pending Requests --- */
   const pendingList = document.getElementById('pending-requests-list');
