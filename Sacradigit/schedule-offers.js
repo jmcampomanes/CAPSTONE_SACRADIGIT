@@ -1,129 +1,27 @@
 /* ============================================
-   SacraDigit Admin — Schedule Offers Scripts
-   (schedule-offers.js)
-   Runs after dashboard.js
+   SacraDigit Admin — Schedule Offers Scripts (AWS Amplify)
+   Runs after dashboard.js.
+
+   Backed by the same Blessing model as Sacradigit/blessings.js and
+   user/user-request-service.js — despite the model's name, it's used
+   as the general parishioner service-request record for everything in
+   user-request-service.js's catalog (sacraments, special masses, and
+   literal blessings alike), so this page reviews all of it, not just
+   blessings. Status mapping matches user-requested-services.js exactly:
+   pending -> Pending, scheduled -> Approved, completed -> Completed,
+   declined -> Rejected.
    ============================================ */
+
+import { client } from '../amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const TODAY_ISO = '2026-06-19';
+  const todayISO = new Date().toISOString().slice(0, 10);
 
-  /* ------------------------------------------
-     0. SAMPLE DATA
-  ------------------------------------------ */
-  let offers = [
-    {
-      requester: 'Santos Family',
-      service: 'Baptism',
-      preferredDate: '2026-07-05',
-      submitted: '2026-06-15',
-      contact: '09171234567',
-      status: 'Approved',
-      confirmedDate: '2026-07-05',
-      confirmedTime: '10:00 AM',
-      officiant: 'Fr. Mark D.',
-      details: { "Child's Name": 'Juan Santos Jr.', "Parents": 'Juan & Maria Santos' },
-      notes: '',
-    },
-    {
-      requester: 'Dela Cruz, Ana',
-      service: 'Wedding',
-      preferredDate: '2026-08-14',
-      submitted: '2026-06-18',
-      contact: '09281234567',
-      status: 'Pending',
-      confirmedDate: null,
-      confirmedTime: null,
-      officiant: '',
-      details: { "Groom": 'Juan Dela Cruz', "Bride": 'Ana Reyes' },
-      notes: '',
-    },
-    {
-      requester: 'Garcia Family',
-      service: 'Funeral Mass',
-      preferredDate: '2026-06-22',
-      submitted: '2026-06-19',
-      contact: '09351234567',
-      status: 'Pending',
-      confirmedDate: null,
-      confirmedTime: null,
-      officiant: '',
-      details: { "Deceased": 'Pedro M. Garcia', "Relationship": 'Son' },
-      notes: '',
-    },
-    {
-      requester: 'Villanueva, Rosa',
-      service: 'House Blessing',
-      preferredDate: '2026-06-28',
-      submitted: '2026-06-10',
-      contact: '09171112233',
-      status: 'Approved',
-      confirmedDate: '2026-06-28',
-      confirmedTime: '09:00 AM',
-      officiant: 'Fr. Mark D.',
-      details: { "Address": '42 Maligaya St., Cubao', "Owner": 'Villanueva Family' },
-      notes: 'Please arrive 30 minutes early.',
-    },
-    {
-      requester: 'Bautista, Carlo',
-      service: 'Vehicle / Item Blessing',
-      preferredDate: '2026-06-21',
-      submitted: '2026-06-08',
-      contact: '09501234567',
-      status: 'Completed',
-      confirmedDate: '2026-06-21',
-      confirmedTime: '11:00 AM',
-      officiant: 'Fr. Mark D.',
-      details: { "Vehicle": '2024 Toyota Fortuner — ABC 123', "Owner": 'Carlo Bautista' },
-      notes: '',
-    },
-    {
-      requester: 'Reyes, Carmen',
-      service: 'First Communion',
-      preferredDate: '2026-07-12',
-      submitted: '2026-06-17',
-      contact: '09221234567',
-      status: 'Pending',
-      confirmedDate: null,
-      confirmedTime: null,
-      officiant: '',
-      details: { "Child": 'Sofia Reyes', "Parents": 'Carmen & Jose Reyes' },
-      notes: '',
-    },
-    {
-      requester: 'Torres, Manuel',
-      service: 'Business Dedication',
-      preferredDate: '2026-07-01',
-      submitted: '2026-06-12',
-      contact: '09171239999',
-      status: 'Rejected',
-      confirmedDate: null,
-      confirmedTime: null,
-      officiant: '',
-      details: { "Business": 'Torres Hardware', "Address": '10 Aurora Blvd., Cubao' },
-      notes: 'Date unavailable. Please re-submit with a new preferred date.',
-    },
-    {
-      requester: 'Mendoza, Elena',
-      service: 'Anniversary Mass',
-      preferredDate: '2026-07-20',
-      submitted: '2026-06-16',
-      contact: '09281112233',
-      status: 'Pending',
-      confirmedDate: null,
-      confirmedTime: null,
-      officiant: '',
-      details: { "Couple": 'Jose & Elena Mendoza', "Years": '25 years' },
-      notes: '',
-    },
-  ];
+  let offers = []; // kept in sync via observeQuery, each has .id
 
-  const badgeClass = {
-    Pending:   'badge-amber',
-    Approved:  'badge-green',
-    Rejected:  'badge-red',
-    Completed: 'badge-blue',
-  };
+  const statusLabel = { pending: 'Pending', scheduled: 'Approved', declined: 'Rejected', completed: 'Completed' };
+  const badgeClass = { Pending: 'badge-amber', Approved: 'badge-green', Rejected: 'badge-red', Completed: 'badge-blue' };
 
   const tbody       = document.getElementById('offers-tbody');
   const offersEmpty  = document.getElementById('offers-empty');
@@ -133,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusFilter    = document.getElementById('status-filter');
 
   function escapeHtml(str) {
-    const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+    const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML;
   }
 
   function fmtDate(iso) {
@@ -141,6 +39,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric',
     });
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // record.details is stored as an AWSJSON string (see
+  // user-request-service.js's create() call) — parse it defensively,
+  // since a malformed or missing value shouldn't break the row/modal.
+  function parseDetails(record) {
+    if (!record.details) return {};
+    if (typeof record.details !== 'string') return record.details;
+    try {
+      const parsed = JSON.parse(record.details);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  // A detail value can be a plain string, or a { firstName, middleName,
+  // lastName, extension } name object (see name-utils.js) for any
+  // name-kind field in the request form.
+  function formatDetailValue(value) {
+    if (value && typeof value === 'object') {
+      return [value.firstName, value.middleName, value.lastName].filter(Boolean).join(' ') +
+        (value.extension ? ` ${value.extension}` : '');
+    }
+    return value;
   }
 
   function setFieldError(input, message) {
@@ -161,23 +89,56 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* --- Live data --- */
+  client.models.Blessing.observeQuery().subscribe({
+    next: ({ items }) => {
+      offers = items;
+      renderTypeFilterOptions();
+      renderStats();
+      renderTable();
+    },
+    error: (err) => {
+      console.error('Failed to load schedule requests:', err);
+      tbody.innerHTML = '';
+      offersEmpty.classList.remove('hidden');
+      offersEmpty.querySelector('p').textContent = "Couldn't load schedule requests from the database.";
+    },
+  });
+
+  // Built from whatever service types actually exist in the live data
+  // (rather than a hardcoded list) so it can never drift out of sync
+  // with user-request-service.js's catalog of requestable services.
+  let lastTypeOptions = null;
+  function renderTypeFilterOptions() {
+    const types = [...new Set(offers.map(o => o.type).filter(Boolean))].sort();
+    const key = types.join('|');
+    if (key === lastTypeOptions) return; // avoid clobbering an open selection on every live update
+    lastTypeOptions = key;
+
+    const current = typeFilter.value;
+    typeFilter.innerHTML = `<option value="">All Services</option>` +
+      types.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+    if (types.includes(current)) typeFilter.value = current;
+  }
+
+
   /* ------------------------------------------
      1. STAT BOXES
   ------------------------------------------ */
   function renderStats() {
-    const weekStart = new Date(TODAY_ISO + 'T00:00:00');
+    const weekStart = new Date(todayISO + 'T00:00:00');
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
 
     const weekCount = offers.filter(o => {
-      if (!o.confirmedDate) return false;
-      const d = new Date(o.confirmedDate + 'T00:00:00');
+      if (!o.date) return false;
+      const d = new Date(o.date + 'T00:00:00');
       return d >= weekStart && d < weekEnd;
     }).length;
 
     document.getElementById('stat-total').textContent    = offers.length;
-    document.getElementById('stat-pending').textContent  = offers.filter(o => o.status === 'Pending').length;
-    document.getElementById('stat-approved').textContent = offers.filter(o => o.status === 'Approved').length;
+    document.getElementById('stat-pending').textContent  = offers.filter(o => o.status === 'pending').length;
+    document.getElementById('stat-approved').textContent = offers.filter(o => o.status === 'scheduled').length;
     document.getElementById('stat-week').textContent     = weekCount;
 
     updateActiveStatCard();
@@ -235,51 +196,55 @@ document.addEventListener('DOMContentLoaded', () => {
     updateActiveStatCard();
 
     const filtered = offers.filter(o => {
-      const matchQuery  = !query || o.requester.toLowerCase().includes(query) || o.service.toLowerCase().includes(query);
-      const matchType    = !typeVal   || o.service === typeVal;
-      const matchStatus  = !statusVal || o.status  === statusVal;
+      const label = statusLabel[o.status] || o.status;
+      const matchQuery  = !query || (o.requesterName || '').toLowerCase().includes(query) || (o.type || '').toLowerCase().includes(query);
+      const matchType    = !typeVal   || o.type === typeVal;
+      const matchStatus  = !statusVal || label  === statusVal;
       return matchQuery && matchType && matchStatus;
     });
 
-    resultsCount.textContent = `${filtered.length} request${filtered.length === 1 ? '' : 's'}`;
+    const sorted = filtered.slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
-    if (filtered.length === 0) {
+    resultsCount.textContent = `${sorted.length} request${sorted.length === 1 ? '' : 's'}`;
+
+    if (sorted.length === 0) {
       tbody.innerHTML = '';
+      offersEmpty.querySelector('p').textContent = 'No requests match your filters';
       offersEmpty.classList.remove('hidden');
       return;
     }
     offersEmpty.classList.add('hidden');
 
-    tbody.innerHTML = filtered.map(o => {
-      const realIdx = offers.indexOf(o);
+    tbody.innerHTML = sorted.map(o => {
+      const label = statusLabel[o.status] || o.status;
 
       let actionsHtml = '';
-      if (o.status === 'Pending') {
+      if (o.status === 'pending') {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="row-approve" data-index="${realIdx}">Approve</button>
-            <button type="button" class="row-reject"  data-index="${realIdx}">Decline</button>
+            <button type="button" class="row-approve" data-id="${o.id}">Approve</button>
+            <button type="button" class="row-reject"  data-id="${o.id}">Decline</button>
           </div>`;
       } else {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="row-view" data-index="${realIdx}">View ›</button>
+            <button type="button" class="row-view" data-id="${o.id}">View ›</button>
           </div>`;
       }
 
       return `
         <tr>
-          <td class="font-medium text-gray-900">${escapeHtml(o.requester)}</td>
+          <td class="font-medium text-gray-900">${escapeHtml(o.requesterName)}</td>
           <td>
-            <span class="service-type-tag">${escapeHtml(o.service)}</span>
+            <span class="service-type-tag">${escapeHtml(o.type)}</span>
           </td>
           <td>
             ${fmtDate(o.preferredDate)}
-            ${o.confirmedDate && o.confirmedDate !== o.preferredDate
-              ? `<span class="confirmed-chip">→ ${fmtDate(o.confirmedDate)}</span>` : ''}
+            ${o.date && o.date !== o.preferredDate
+              ? `<span class="confirmed-chip">→ ${fmtDate(o.date)}</span>` : ''}
           </td>
-          <td class="text-gray-400">${fmtDate(o.submitted)}</td>
-          <td><span class="badge ${badgeClass[o.status] || 'badge-gray'}">${escapeHtml(o.status)}</span></td>
+          <td class="text-gray-400">${fmtDateTime(o.createdAt)}</td>
+          <td><span class="badge ${badgeClass[label] || 'badge-gray'}">${escapeHtml(label)}</span></td>
           <td class="text-right">${actionsHtml}</td>
         </tr>
       `;
@@ -303,13 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const rejectBtn   = e.target.closest('.row-reject');
     const viewBtn      = e.target.closest('.row-view');
 
-    if (approveBtn) openAssignModal(parseInt(approveBtn.dataset.index, 10));
-    if (rejectBtn)  openRejectModal(parseInt(rejectBtn.dataset.index, 10));
-    if (viewBtn)    openViewModal(parseInt(viewBtn.dataset.index, 10));
+    if (approveBtn) openAssignModal(approveBtn.dataset.id);
+    if (rejectBtn)  openRejectModal(rejectBtn.dataset.id);
+    if (viewBtn)    openViewModal(viewBtn.dataset.id);
   });
-
-  renderStats();
-  renderTable();
 
 
   /* ------------------------------------------
@@ -321,28 +283,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const assignDetailGrid  = document.getElementById('assign-detail-grid');
   const assignDateInput    = document.getElementById('assign-date');
   const assignTimeInput     = document.getElementById('assign-time');
-  const assignOfficiantInput = document.getElementById('assign-officiant');
   const assignNoteInput      = document.getElementById('assign-note');
 
-  let assignTargetIndex = null;
+  let assignTargetId = null;
 
-  function openAssignModal(idx) {
-    assignTargetIndex = idx;
-    const o = offers[idx];
+  function openAssignModal(id) {
+    const o = offers.find(x => x.id === id);
+    if (!o) return;
+    assignTargetId = id;
 
-    assignName.textContent    = o.requester;
-    assignService.textContent  = o.service;
+    assignName.textContent    = o.requesterName;
+    assignService.textContent  = o.type;
     assignDateInput.value      = o.preferredDate || '';
     assignTimeInput.value       = '';
-    assignOfficiantInput.value   = '';
-    assignNoteInput.value         = '';
+    assignNoteInput.value         = o.notes || '';
     [assignDateInput, assignTimeInput].forEach(clearFieldError);
 
-    // Show request details in the gray box
-    assignDetailGrid.innerHTML = Object.entries(o.details).map(([label, value]) => `
+    const details = parseDetails(o);
+    assignDetailGrid.innerHTML = Object.entries(details).map(([label, value]) => `
       <div>
         <p class="so-detail-label">${escapeHtml(label)}</p>
-        <p class="so-detail-value">${escapeHtml(value)}</p>
+        <p class="so-detail-value">${escapeHtml(formatDetailValue(value))}</p>
       </div>
     `).join('') + `
       <div>
@@ -351,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div>
         <p class="so-detail-label">Contact</p>
-        <p class="so-detail-value">${escapeHtml(o.contact)}</p>
+        <p class="so-detail-value">${escapeHtml(o.contact) || '—'}</p>
       </div>
     `;
 
@@ -363,12 +324,11 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('change', () => clearFieldError(input));
   });
 
-  document.getElementById('assign-submit').addEventListener('click', () => {
-    if (assignTargetIndex === null) return;
+  document.getElementById('assign-submit').addEventListener('click', async () => {
+    if (assignTargetId === null) return;
 
     const date      = assignDateInput.value;
     const time24     = assignTimeInput.value;
-    const officiant   = assignOfficiantInput.value.trim();
     const note         = assignNoteInput.value.trim();
 
     [assignDateInput, assignTimeInput].forEach(clearFieldError);
@@ -382,18 +342,30 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const o = offers[assignTargetIndex];
-    o.status         = 'Approved';
-    o.confirmedDate   = date;
-    o.confirmedTime    = formatTime12(time24);
-    o.officiant         = officiant;
-    o.notes              = note;
+    const o = offers.find(x => x.id === assignTargetId);
+    const submitBtn = document.getElementById('assign-submit');
+    submitBtn.disabled = true;
 
-    renderStats();
-    renderTable();
-    closeModal(assignModal);
-    showToast(`${o.service} for ${o.requester} approved — ${fmtDate(date)} at ${o.confirmedTime}.`);
-    assignTargetIndex = null;
+    try {
+      const confirmedTime = formatTime12(time24);
+      const result = await client.models.Blessing.update({
+        id: assignTargetId,
+        status: 'scheduled',
+        date,
+        time: confirmedTime,
+        notes: note || undefined,
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      closeModal(assignModal);
+      showToast(`${o ? o.type : 'Request'} for ${o ? o.requesterName : 'requester'} approved — ${fmtDate(date)} at ${confirmedTime}.`);
+      assignTargetId = null;
+    } catch (err) {
+      console.error('Failed to approve request:', err);
+      showToast(err.message || "Couldn't approve request.", true);
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
 
@@ -403,11 +375,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const rejectModal  = document.getElementById('reject-modal');
   const rejectName    = document.getElementById('reject-name');
   const rejectReason   = document.getElementById('reject-reason');
-  let rejectTargetIndex = null;
+  let rejectTargetId = null;
 
-  function openRejectModal(idx) {
-    rejectTargetIndex = idx;
-    rejectName.textContent = offers[idx].requester;
+  function openRejectModal(id) {
+    const o = offers.find(x => x.id === id);
+    if (!o) return;
+    rejectTargetId = id;
+    rejectName.textContent = o.requesterName;
     rejectReason.value      = '';
     clearFieldError(rejectReason);
     openModal(rejectModal);
@@ -415,8 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   rejectReason.addEventListener('input', () => clearFieldError(rejectReason));
 
-  document.getElementById('reject-submit').addEventListener('click', () => {
-    if (rejectTargetIndex === null) return;
+  document.getElementById('reject-submit').addEventListener('click', async () => {
+    if (rejectTargetId === null) return;
     const reason = rejectReason.value.trim();
     if (!reason) {
       setFieldError(rejectReason, 'Please provide a reason for declining.');
@@ -425,15 +399,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     clearFieldError(rejectReason);
 
-    const o = offers[rejectTargetIndex];
-    o.status = 'Rejected';
-    o.notes   = reason;
+    const o = offers.find(x => x.id === rejectTargetId);
+    const submitBtn = document.getElementById('reject-submit');
+    submitBtn.disabled = true;
 
-    renderStats();
-    renderTable();
-    closeModal(rejectModal);
-    showToast(`Request from ${o.requester} declined.`);
-    rejectTargetIndex = null;
+    try {
+      const result = await client.models.Blessing.update({
+        id: rejectTargetId,
+        status: 'declined',
+        declineReason: reason,
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      closeModal(rejectModal);
+      showToast(`Request from ${o ? o.requesterName : 'requester'} declined.`);
+      rejectTargetId = null;
+    } catch (err) {
+      console.error('Failed to decline request:', err);
+      showToast(err.message || "Couldn't decline request.", true);
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
 
@@ -446,25 +432,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewDetailGrid          = document.getElementById('view-detail-grid');
   const viewScheduleWrap           = document.getElementById('view-schedule-wrap');
   const viewScheduleValue             = document.getElementById('view-schedule-value');
-  const viewNotesWrap                    = document.getElementById('view-notes-wrap');
-  const viewNotes                           = document.getElementById('view-notes');
+  const viewDeclineWrap                = document.getElementById('view-decline-wrap');
+  const viewDeclineReason                = document.getElementById('view-decline-reason');
+  const viewNotesWrap                       = document.getElementById('view-notes-wrap');
+  const viewNotes                              = document.getElementById('view-notes');
 
-  function openViewModal(idx) {
-    const o = offers[idx];
+  function openViewModal(id) {
+    const o = offers.find(x => x.id === id);
+    if (!o) return;
 
-    viewName.textContent = o.requester;
-    viewStatusBadge.textContent = o.status;
-    viewStatusBadge.className = `badge ${badgeClass[o.status] || 'badge-gray'}`;
+    const label = statusLabel[o.status] || o.status;
+    viewName.textContent = o.requesterName;
+    viewStatusBadge.textContent = label;
+    viewStatusBadge.className = `badge ${badgeClass[label] || 'badge-gray'}`;
 
-    viewDetailGrid.innerHTML = Object.entries(o.details).map(([label, value]) => `
+    const details = parseDetails(o);
+    viewDetailGrid.innerHTML = Object.entries(details).map(([l, value]) => `
       <div>
-        <p class="so-detail-label">${escapeHtml(label)}</p>
-        <p class="so-detail-value">${escapeHtml(value)}</p>
+        <p class="so-detail-label">${escapeHtml(l)}</p>
+        <p class="so-detail-value">${escapeHtml(formatDetailValue(value))}</p>
       </div>
     `).join('') + `
       <div>
         <p class="so-detail-label">Service Type</p>
-        <p class="so-detail-value">${escapeHtml(o.service)}</p>
+        <p class="so-detail-value">${escapeHtml(o.type)}</p>
       </div>
       <div>
         <p class="so-detail-label">Preferred Date</p>
@@ -472,19 +463,26 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div>
         <p class="so-detail-label">Submitted</p>
-        <p class="so-detail-value">${fmtDate(o.submitted)}</p>
+        <p class="so-detail-value">${fmtDateTime(o.createdAt)}</p>
       </div>
       <div>
         <p class="so-detail-label">Contact</p>
-        <p class="so-detail-value">${escapeHtml(o.contact)}</p>
+        <p class="so-detail-value">${escapeHtml(o.contact) || '—'}</p>
       </div>
     `;
 
-    if (o.confirmedDate) {
-      viewScheduleValue.textContent = `${fmtDate(o.confirmedDate)} at ${o.confirmedTime}${o.officiant ? ` — ${o.officiant}` : ''}`;
+    if (o.date) {
+      viewScheduleValue.textContent = `${fmtDate(o.date)}${o.time ? ` at ${o.time}` : ''}`;
       viewScheduleWrap.classList.remove('hidden');
     } else {
       viewScheduleWrap.classList.add('hidden');
+    }
+
+    if (o.status === 'declined' && o.declineReason) {
+      viewDeclineReason.textContent = o.declineReason;
+      viewDeclineWrap.classList.remove('hidden');
+    } else {
+      viewDeclineWrap.classList.add('hidden');
     }
 
     if (o.notes) {
@@ -548,7 +546,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showToast(message, isError = false) {
     clearTimeout(toastTimer);
-    toast.querySelector('.toast-message').textContent = message;
+    const msgEl = toast.querySelector('.toast-message');
+    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
     toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));

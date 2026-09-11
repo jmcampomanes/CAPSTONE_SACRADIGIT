@@ -194,16 +194,9 @@
           </div>
           <select id="type-filter" class="filter-select">
             <option value="">All Services</option>
-            <option value="Baptism">Baptism</option>
-            <option value="Wedding">Wedding</option>
-            <option value="Funeral Mass">Funeral Mass</option>
-            <option value="House Blessing">House Blessing</option>
-            <option value="Vehicle / Item Blessing">Vehicle / Item Blessing</option>
-            <option value="First Communion">First Communion</option>
-            <option value="Confirmation">Confirmation</option>
-            <option value="Anniversary Mass">Anniversary Mass</option>
-            <option value="Burial Blessing">Burial Blessing</option>
-            <option value="Business Dedication">Business Dedication</option>
+            <!-- Remaining options populated by schedule-offers.js from whatever
+                 service types actually exist in the live data, so this list
+                 can't drift out of sync with user-request-service.js's catalog. -->
           </select>
           <select id="status-filter" class="filter-select">
             <option value="">All Statuses</option>
@@ -272,10 +265,6 @@
           </div>
         </div>
         <div>
-          <label class="form-label" for="assign-officiant">Assigned Officiant</label>
-          <input type="text" id="assign-officiant" class="form-input" placeholder="e.g. Fr. Mark D." />
-        </div>
-        <div>
           <label class="form-label" for="assign-note">Note to Parishioner (optional)</label>
           <textarea id="assign-note" class="form-input" rows="2" placeholder="e.g. Please arrive 30 minutes before the scheduled time."></textarea>
         </div>
@@ -326,6 +315,10 @@
         <div id="view-schedule-wrap" class="hidden">
           <p class="so-detail-label mb-1">Confirmed Schedule</p>
           <span class="confirmed-chip" id="view-schedule-value"></span>
+        </div>
+        <div id="view-decline-wrap" class="hidden">
+          <p class="so-detail-label mb-1">Decline Reason</p>
+          <p class="reason-callout" id="view-decline-reason"></p>
         </div>
         <div id="view-notes-wrap" class="hidden">
           <p class="so-detail-label mb-1">Note to Parishioner</p>
