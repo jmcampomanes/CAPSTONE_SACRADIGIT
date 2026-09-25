@@ -8,11 +8,16 @@
    user-request-service.js's catalog (sacraments, special masses, and
    literal blessings alike), so this page reviews all of it, not just
    blessings. Status mapping matches user-requested-services.js exactly:
-   pending -> Pending, scheduled -> Approved, completed -> Completed,
-   declined -> Rejected.
+   scheduled -> Scheduled, completed -> Completed, declined -> Cancelled,
+   pending -> Pending.
+
+   Parishioners now book fixed slots (../service-schedule.js), so new
+   records arrive already 'scheduled'. Approve/Decline only shows for
+   older 'pending' rows; upcoming bookings get a Cancel action instead.
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { logBookingAction } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -20,8 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let offers = []; // kept in sync via observeQuery, each has .id
 
-  const statusLabel = { pending: 'Pending', scheduled: 'Approved', declined: 'Rejected', completed: 'Completed' };
-  const badgeClass = { Pending: 'badge-amber', Approved: 'badge-green', Rejected: 'badge-red', Completed: 'badge-blue' };
+  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+  const badgeClass = { Pending: 'badge-amber', Scheduled: 'badge-green', Cancelled: 'badge-red', Completed: 'badge-blue' };
 
   const tbody       = document.getElementById('offers-tbody');
   const offersEmpty  = document.getElementById('offers-empty');
@@ -158,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statCardsByStatus = [
     { card: statCardTotal,    status: '' },
     { card: statCardPending,  status: 'Pending' },
-    { card: statCardApproved, status: 'Approved' },
+    { card: statCardApproved, status: 'Scheduled' },
   ];
 
   statCardsByStatus.forEach(({ card, status }) => {
@@ -225,6 +230,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <button type="button" class="row-approve" data-id="${o.id}">Approve</button>
             <button type="button" class="row-reject"  data-id="${o.id}">Decline</button>
           </div>`;
+      } else if (o.status === 'scheduled' && (o.date || '') >= todayISO) {
+        actionsHtml = `
+          <div class="row-actions">
+            <button type="button" class="row-view" data-id="${o.id}">View ›</button>
+            <button type="button" class="row-reject row-cancel" data-id="${o.id}">Cancel</button>
+          </div>`;
       } else {
         actionsHtml = `
           <div class="row-actions">
@@ -239,9 +250,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="service-type-tag">${escapeHtml(o.type)}</span>
           </td>
           <td>
-            ${fmtDate(o.preferredDate)}
-            ${o.date && o.date !== o.preferredDate
-              ? `<span class="confirmed-chip">→ ${fmtDate(o.date)}</span>` : ''}
+            ${o.date
+              ? `${fmtDate(o.date)}${o.time ? `<span class="text-gray-400"> · ${escapeHtml(o.time)}</span>` : ''}`
+              : `${fmtDate(o.preferredDate)} <span class="text-gray-400">(preferred)</span>`}
           </td>
           <td class="text-gray-400">${fmtDateTime(o.createdAt)}</td>
           <td><span class="badge ${badgeClass[label] || 'badge-gray'}">${escapeHtml(label)}</span></td>
@@ -269,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewBtn      = e.target.closest('.row-view');
 
     if (approveBtn) openAssignModal(approveBtn.dataset.id);
-    if (rejectBtn)  openRejectModal(rejectBtn.dataset.id);
+    if (rejectBtn)  openRejectModal(rejectBtn.dataset.id, { cancelBooking: rejectBtn.classList.contains('row-cancel') });
     if (viewBtn)    openViewModal(viewBtn.dataset.id);
   });
 
@@ -375,12 +386,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const rejectModal  = document.getElementById('reject-modal');
   const rejectName    = document.getElementById('reject-name');
   const rejectReason   = document.getElementById('reject-reason');
+  const rejectTitle    = document.getElementById('reject-title');
+  const rejectVerb     = document.getElementById('reject-verb');
+  const rejectSubmitBtn = document.getElementById('reject-submit');
   let rejectTargetId = null;
+  let rejectIsCancel = false;
 
-  function openRejectModal(id) {
+  // Also used to cancel a booked slot — status 'declined' frees the
+  // slot and shows the reason to the parishioner.
+  function openRejectModal(id, { cancelBooking = false } = {}) {
     const o = offers.find(x => x.id === id);
     if (!o) return;
     rejectTargetId = id;
+    rejectIsCancel = cancelBooking;
+    rejectTitle.textContent = cancelBooking ? 'Cancel Booking' : 'Decline Request';
+    rejectVerb.textContent = cancelBooking
+      ? `Cancelling the ${o.type} booking on ${fmtDate(o.date)}${o.time ? ` at ${o.time}` : ''} for`
+      : 'Declining request from';
+    rejectSubmitBtn.textContent = cancelBooking ? 'Cancel Booking' : 'Decline Request';
     rejectName.textContent = o.requesterName;
     rejectReason.value      = '';
     clearFieldError(rejectReason);
@@ -393,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (rejectTargetId === null) return;
     const reason = rejectReason.value.trim();
     if (!reason) {
-      setFieldError(rejectReason, 'Please provide a reason for declining.');
+      setFieldError(rejectReason, rejectIsCancel ? 'Please tell the parishioner why it was cancelled.' : 'Please provide a reason for declining.');
       showToast('Please fix the highlighted fields.', true);
       return;
     }
@@ -412,7 +435,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal(rejectModal);
-      showToast(`Request from ${o ? o.requesterName : 'requester'} declined.`);
+      logBookingAction(client, { action: rejectIsCancel ? 'Cancel' : 'Decline', record: o, reason });
+      showToast(rejectIsCancel
+        ? `Booking for ${o ? o.requesterName : 'requester'} cancelled — the slot is open again.`
+        : `Request from ${o ? o.requesterName : 'requester'} declined.`);
       rejectTargetId = null;
     } catch (err) {
       console.error('Failed to decline request:', err);

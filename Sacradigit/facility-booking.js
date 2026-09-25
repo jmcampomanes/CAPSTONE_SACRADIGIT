@@ -6,9 +6,17 @@
    the original splice-out behavior) rather than
    using the 'declined' status, since declined is
    meant for requests never approved in the first place.
+
+   Bookings are confirmed instantly ('approved') on
+   both the parishioner and admin side — the hourly
+   slot picker prevents conflicts, so Approve only
+   remains for older 'pending' bookings. Parish
+   closures block dates, and cancellations are
+   written to the AccessLog audit trail.
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { watchClosures, closureOn, logBookingAction } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -36,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bookingsCount   = document.getElementById('bookings-count');
 
   const badgeClass = { pending: 'badge-amber', approved: 'badge-green' };
-  const statusLabel = { pending: 'Pending', approved: 'Approved' };
+  const statusLabel = { pending: 'Pending', approved: 'Confirmed', declined: 'Cancelled' };
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -199,6 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const result = await client.models.FacilityBooking.delete({ id: cancelTargetId });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      if (removed) {
+        logBookingAction(client, {
+          action: 'Cancel',
+          record: { type: removed.facilityName, requesterName: removed.requesterName || 'Parish office', date: removed.date, time: removed.startTime },
+        });
+      }
       closeModal(cancelModal);
       showToast(`Booking for ${removed ? removed.facilityName : 'facility'} cancelled.`);
       cancelTargetId = null;
@@ -413,9 +427,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // by an existing booking for this facility on this date. Bookings
   // made before hourly slots existed may fall mid-hour — those still
   // block the whole hour(s) they overlap.
+  // Parish closures ("No Services" special schedules) block whole days
+  let closures = [];
+  watchClosures(client, (next) => { closures = next; renderBkCalendar(); renderBkTimeSlots(); });
+
   function getBookedHours(facility, iso) {
     const blocked = new Set();
-    bookings.filter(b => b.facilityName === facility && b.date === iso).forEach(b => {
+    bookings.filter(b => b.facilityName === facility && b.date === iso && b.status !== 'declined').forEach(b => {
       const startMin = parseTimeToMinutes(b.startTime);
       if (startMin === null) return;
       const endMin = b.endTime ? parseTimeToMinutes(b.endTime) : startMin + 60;
@@ -427,6 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function isDayFullyBooked(facility, iso) {
+    if (closureOn(iso, closures)) return true;
     const blocked = getBookedHours(facility, iso);
     for (let h = BOOKING_DAY_START; h < BOOKING_DAY_END; h++) {
       if (!blocked.has(h)) return false;
@@ -475,9 +494,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const isToday = iso === todayISO;
       const isSelected = iso === bkSelectedDateIso;
       const full = facility ? isDayFullyBooked(facility, iso) : false;
+      const closure = closureOn(iso, closures);
 
       html += `
-        <button type="button" class="bkcal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${facility ? (full ? 'full' : 'available') : ''}" data-date="${iso}" ${isPast ? 'disabled' : ''}>${day}</button>
+        <button type="button" class="bkcal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${facility ? (full ? 'full' : 'available') : ''}" data-date="${iso}" ${isPast || closure ? 'disabled' : ''}${closure ? ` title="Parish closed: ${escapeHtml(closure.name)}"` : ''}>${day}</button>
       `;
     }
 
@@ -502,6 +522,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!facility || !bkSelectedDateIso) {
       bkTimeSlots.innerHTML = '';
       bkTimeHint.textContent = 'Select a facility and date to see available times.';
+      bkTimeHint.classList.remove('hidden');
+      return;
+    }
+
+    const closure = closureOn(bkSelectedDateIso, closures);
+    if (closure) {
+      bkTimeSlots.innerHTML = '';
+      bkTimeHint.textContent = `The parish is closed on this date (${closure.name}).`;
       bkTimeHint.classList.remove('hidden');
       return;
     }
@@ -690,12 +718,12 @@ document.addEventListener('DOMContentLoaded', () => {
         date: bkSelectedDateIso,
         startTime: formatTime12(startTime24),
         endTime: formatTime12(endTime24),
-        status: 'pending',
+        status: 'approved', // confirmed instantly — the slot picker already rules out conflicts
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal(bookingModal);
-      showToast(`Booking request submitted for ${facility} on ${formatShortDate(bkSelectedDateIso)}.`);
+      showToast(`${facility} booked for ${formatShortDate(bkSelectedDateIso)}.`);
       bookingPurposeInput.value = '';
       bkSelectedStartHour = null;
     } catch (err) {

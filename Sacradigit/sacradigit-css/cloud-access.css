@@ -249,6 +249,12 @@
   color: #b45309;
 }
 
+/* Booking cancellations / declines logged by service-schedule.js */
+.action-cancel {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
 /* ---------- Roles table ---------- */
 .roles-table td {
   vertical-align: top;

@@ -3,12 +3,16 @@
    Runs after user-shell.js.
    Browsing + submitting only — the tracking log now
    lives on user-requested-services.html/.js. Backed
-   by the Blessing model. Status mapping: pending ->
-   Pending, scheduled -> Approved, completed ->
-   Completed, declined -> Rejected.
+   by the Blessing model.
+
+   Scheduling uses the parish's fixed slots from
+   ../service-schedule.js: the parishioner picks an
+   open slot and the request is saved directly as
+   status 'scheduled' — no admin approval step.
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, watchClosures } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -138,8 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuView      = document.getElementById('menu-view');
   const formView       = document.getElementById('form-view');
   const svcDynamicFields      = document.getElementById('svc-dynamic-fields');
-  const svcDateInput             = document.getElementById('svc-date');
-  const svcTimeInput             = document.getElementById('svc-time');
+  const slotPickerEl             = document.getElementById('svc-slot-picker');
+  const slotSummaryEl            = document.getElementById('svc-slot-summary');
   const svcContactInput             = document.getElementById('svc-contact');
   const svcNotesInput                  = document.getElementById('svc-notes');
   const svcSubmitBtn                     = document.getElementById('svc-submit');
@@ -147,6 +151,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const svcTypeGrid      = document.getElementById('svc-type-grid');
 
   let selectedTypeId = null;
+  let slotPicker = null;
+  let allBookings = []; // every Blessing record, kept live so full slots show as taken
+
+  client.models.Blessing.observeQuery().subscribe({
+    next: ({ items }) => {
+      allBookings = items;
+      if (slotPicker) slotPicker.refresh(allBookings);
+    },
+    error: (err) => console.error('Failed to load existing bookings:', err),
+  });
+
+  // "No Services (Parish Closed)" special schedules block those dates
+  let closures = [];
+  watchClosures(client, (next) => {
+    closures = next;
+    if (slotPicker) slotPicker.setClosures(closures);
+  });
+
+  function fmtLongDate(iso) {
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderSlotSummary(value) {
+    slotPickerEl.classList.remove('has-error');
+    if (!value) { slotSummaryEl.classList.add('hidden'); return; }
+    slotSummaryEl.textContent = `Selected: ${fmtLongDate(value.date)} at ${value.time}`;
+    slotSummaryEl.classList.remove('hidden');
+  }
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -164,15 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const msg = input.parentElement.querySelector('.form-error-msg');
     if (msg) msg.remove();
   }
-  /* Matches Sacradigit/blessings.js's formatTime12() — the native <input
-     type="time"> gives back 24-hour "HH:MM"; stored/displayed times
-     elsewhere in this app are 12-hour "hh:MM AM/PM". */
-  function formatTime12(time24) {
-    let [h, m] = time24.split(':').map(Number);
-    const meridiem = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${meridiem}`;
-  }
   /* --- Services We Offer — on-page catalog, grouped into a labeled row
      per category (Blessings, Sacraments, Special Masses) instead of one
      undifferentiated grid, so it's clear at a glance what kind of
@@ -183,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="svc-icon" style="background-color:${s.iconBg};color:${s.iconColor};">${s.icon}</div>
       <p class="svc-type-name">${escapeHtml(s.name)}</p>
       <p class="svc-type-desc">${escapeHtml(s.desc)}</p>
+      <p class="svc-type-sched">${escapeHtml(describeSchedule(s.name))}</p>
       <span class="svc-type-cta">Start request
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
       </span>
@@ -213,11 +237,16 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedTypeId = id;
 
     formViewTitle.textContent = `Request — ${svc.name}`;
-    svcDateInput.value = '';
-    svcTimeInput.value = '';
     svcContactInput.value = '';
     svcNotesInput.value = '';
-    [svcDateInput, svcContactInput].forEach(clearFieldError);
+    clearFieldError(svcContactInput);
+    renderSlotSummary(null);
+    slotPicker = createSlotPicker(slotPickerEl, {
+      type: svc.name,
+      records: allBookings,
+      closures,
+      onChange: renderSlotSummary,
+    });
 
     svcDynamicFields.innerHTML = svc.fields.map(f => {
       if (f.kind === 'name') return nameFieldsHtml(f.id, escapeHtml(f.label), { required: f.required, spanFull: !!f.span2 });
@@ -235,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function goToMenu() {
     selectedTypeId = null;
+    slotPicker = null;
     formView.classList.add('hidden');
     menuView.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -246,10 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape' && !formView.classList.contains('hidden')) goToMenu();
   });
 
-  [svcDateInput, svcContactInput].forEach(input => {
-    input.addEventListener('input', () => clearFieldError(input));
-    input.addEventListener('change', () => clearFieldError(input));
-  });
+  svcContactInput.addEventListener('input', () => clearFieldError(svcContactInput));
 
   svcSubmitBtn.addEventListener('click', async () => {
     if (!selectedTypeId) return;
@@ -272,13 +299,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!el.value.trim()) { setFieldError(el, `${f.label} is required.`); hasError = true; }
     });
 
-    clearFieldError(svcDateInput);
-    if (!svcDateInput.value) { setFieldError(svcDateInput, 'Preferred date is required.'); hasError = true; }
+    const slot = slotPicker && slotPicker.getValue();
+    if (!slot) { slotPickerEl.classList.add('has-error'); hasError = true; }
 
     clearFieldError(svcContactInput);
     if (!svcContactInput.value.trim()) { setFieldError(svcContactInput, 'Contact number is required.'); hasError = true; }
 
-    if (hasError) { window.showToast('Please fix the highlighted fields.', true); return; }
+    if (hasError) { window.showToast(slot ? 'Please fix the highlighted fields.' : 'Please pick a schedule.', true); return; }
 
     const details = {};
     svc.fields.forEach(f => {
@@ -294,27 +321,30 @@ document.addEventListener('DOMContentLoaded', () => {
     svcSubmitBtn.disabled = true;
 
     try {
+      // Last check against the freshest data so two people can't grab
+      // the final place in a slot at the same moment.
+      const { data: latest } = await client.models.Blessing.list({ limit: 1000 });
+      if (!slotHasRoom(svc.name, latest || allBookings, slot.date, slot.time, { closures })) {
+        slotPicker.refresh(latest || allBookings);
+        throw new Error('Sorry, that slot was just taken. Please pick another time.');
+      }
+
       const result = await client.models.Blessing.create({
         requesterName: REQUESTER_NAME,
         type: svc.name,
         contact: svcContactInput.value.trim(),
         notes: svcNotesInput.value.trim() || undefined,
         details: JSON.stringify(details),
-        preferredDate: svcDateInput.value,
-        // A specific time is optional here (the office may confirm one
-        // that works better), but it's collected up front rather than
-        // asked only on the admin side — the admin's one-click
-        // "Approve" (Sacradigit/blessings.js's approveRequest()) reads
-        // this same `time` field and otherwise silently defaults every
-        // approval to 09:00 AM, even for a request that never asked
-        // for that time.
-        time: svcTimeInput.value ? formatTime12(svcTimeInput.value) : undefined,
-        status: 'pending',
+        location: locationFor(svc.name, details),
+        preferredDate: slot.date,
+        date: slot.date,
+        time: slot.time,
+        status: 'scheduled',
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       goToMenu();
-      window.showToast(`Your ${svc.name} request has been submitted — track it under "Requested Services."`);
+      window.showToast(`${svc.name} booked for ${fmtLongDate(slot.date)} at ${slot.time}. See it under "Requested Services."`);
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);

@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'Novena':            'novena',
     'Feast Day Series':  'feast',
     'Special Event':     'special',
+    // Blocks service booking slots on these dates (see ../service-schedule.js)
+    'No Services (Parish Closed)': 'closure',
   };
 
   function escapeHtml(str) {

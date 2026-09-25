@@ -336,6 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function activityIcon(action) {
+    if (action === 'Cancel' || action === 'Decline') {
+      return { bg: 'rgba(220,38,38,0.12)', color: '#b91c1c', svg: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>` };
+    }
     if (action === 'Download') {
       return { bg: 'rgba(21,128,61,0.14)', color: '#15803d', svg: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>` };
     }

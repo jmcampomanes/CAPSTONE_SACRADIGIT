@@ -41,6 +41,7 @@
   <link rel="stylesheet" href="sacradigit-css/digital-archives.css" />
   <link rel="stylesheet" href="sacradigit-css/masses.css" />
   <link rel="stylesheet" href="sacradigit-css/blessings.css" />
+  <link rel="stylesheet" href="../service-schedule.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -198,6 +199,10 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               <span id="calendar-toggle-label">Calendar View</span>
             </button>
+            <button id="btn-print-today" type="button" class="btn-secondary" title="Print today's service schedule">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Print Today
+            </button>
             <button id="btn-schedule-blessing" type="button" class="btn-lavender">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
               Blessing Schedule
@@ -221,13 +226,13 @@
 
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Pending Requests</p>
+              <p class="stat-label">Older Requests</p>
               <div class="stat-icon stat-icon-amber">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
             </div>
             <p class="stat-value" id="stat-pending">0</p>
-            <p class="stat-sub">awaiting approval</p>
+            <p class="stat-sub">from before fixed schedules</p>
           </div>
 
           <div class="stat-card">
@@ -265,8 +270,8 @@
               <option value="">Type Filter</option>
               <option value="House Blessing">House Blessing</option>
               <option value="Business Dedication">Business Dedication</option>
-              <option value="Vehicle Blessing">Vehicle Blessing</option>
-              <option value="Other">Other</option>
+              <option value="Vehicle / Item Blessing">Vehicle / Item Blessing</option>
+              <option value="Pet Blessing">Pet Blessing</option>
             </select>
           </div>
 
@@ -301,7 +306,7 @@
 
             <div class="panel" id="requests-panel">
               <div class="panel-header">
-                <h2 class="panel-title">New Blessing Requests</h2>
+                <h2 class="panel-title">Older Requests Awaiting Review</h2>
                 <p id="requests-count" class="text-xs text-gray-400 font-medium"></p>
               </div>
               <ul id="requests-list" class="divide-y divide-gray-100">
@@ -309,7 +314,8 @@
               </ul>
               <div id="requests-empty" class="empty-state hidden">
                 <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
-                <p class="text-sm font-medium text-gray-600">No new blessing requests</p>
+                <p class="text-sm font-medium text-gray-600">Nothing to review</p>
+                <p class="text-xs text-gray-400 mt-1">New requests pick a fixed schedule slot and are booked automatically.</p>
               </div>
               <div id="requests-pagination" class="pagination-bar">
                 <!-- Injected by blessings.js -->
@@ -381,23 +387,21 @@
             <label class="form-label" for="schedule-requester">Requester Name</label>
             <input type="text" id="schedule-requester" class="form-input" placeholder="e.g. Santos Family" />
           </div>
-          <div>
-            <label class="form-label" for="schedule-date">Date</label>
-            <input type="date" id="schedule-date" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label" for="schedule-time">Time</label>
-            <input type="time" id="schedule-time" class="form-input" />
-          </div>
           <div class="col-span-2">
             <label class="form-label" for="schedule-type">Blessing Type</label>
             <select id="schedule-type" class="form-input">
               <option value="">Select type</option>
               <option value="House Blessing">House Blessing</option>
               <option value="Business Dedication">Business Dedication</option>
-              <option value="Vehicle Blessing">Vehicle Blessing</option>
-              <option value="Other">Other</option>
+              <option value="Vehicle / Item Blessing">Vehicle / Item Blessing</option>
+              <option value="Pet Blessing">Pet Blessing</option>
             </select>
+          </div>
+          <div class="col-span-2">
+            <p class="form-label">Schedule</p>
+            <div id="schedule-slot-picker" class="slot-picker">
+              <p class="slot-empty">Choose a blessing type first.</p>
+            </div>
           </div>
           <div class="col-span-2">
             <label class="form-label" for="schedule-location">Location / Address</label>
@@ -416,15 +420,15 @@
   <div id="decline-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Decline Blessing Request</h3>
+        <h3 class="modal-title" id="decline-modal-title">Decline Blessing Request</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <p class="text-sm text-gray-600 mb-3">Declining request from <span id="decline-target-name" class="font-semibold text-gray-900"></span>.</p>
+        <p class="text-sm text-gray-600 mb-3"><span id="decline-verb">Declining request from</span> <span id="decline-target-name" class="font-semibold text-gray-900"></span>.</p>
         <label class="form-label" for="decline-reason">Reason (optional)</label>
-        <textarea id="decline-reason" class="form-input" rows="3" placeholder="e.g. Requested date unavailable"></textarea>
+        <textarea id="decline-reason" class="form-input" rows="3" placeholder="e.g. Priest unavailable on this date"></textarea>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
@@ -446,6 +450,7 @@
         <!-- Injected by blessings.js -->
       </div>
       <div class="modal-footer">
+        <button type="button" id="details-cancel-booking" class="btn-danger hidden">Cancel Booking</button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>
@@ -470,6 +475,10 @@
         </div>
       </div>
       <div class="modal-footer">
+        <button type="button" id="day-plan-print" class="btn-secondary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print Day Schedule
+        </button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>

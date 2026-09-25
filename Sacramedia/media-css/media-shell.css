@@ -242,3 +242,50 @@
   align-items: center;
   gap: 0.625rem;
 }
+
+/* ---------- Media sidebar: lavender accent everywhere ----------
+   admin-shell.css gives the active link a gold background and some
+   links (e.g. Announcements) their own admin colours — override them
+   inside the media nav so the whole portal reads as one theme. */
+nav[aria-label="Media navigation"] .sidebar-link svg { color: #8b8fc7; }
+nav[aria-label="Media navigation"] .sidebar-link:hover { background-color: rgba(139, 143, 199, 0.08); color: #1e2a4a; }
+nav[aria-label="Media navigation"] .sidebar-link:hover svg { color: #6c6fb0; }
+nav[aria-label="Media navigation"] .sidebar-link.active {
+  background-color: rgba(139, 143, 199, 0.16);
+  color: #1e2a4a;
+  font-weight: 600;
+}
+nav[aria-label="Media navigation"] .sidebar-link.active svg { color: #6c6fb0; }
+
+/* ---------- List rows (dashboard panels, livestream history) ----------
+   The admin versions live in Sacradigit/sacradigit-css/dashboard.css,
+   which media pages don't load, so they're defined here. */
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.875rem;
+  padding: 0.8rem 1.25rem;
+  font-size: 0.8125rem;
+  transition: background-color 0.15s ease;
+}
+
+.list-row:hover { background-color: #fafafb; }
+
+.list-row > .min-w-0 { flex: 1; }
+
+.list-name {
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.35;
+}
+
+.list-time {
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.list-row .badge { flex-shrink: 0; }
+
+.list-row > .list-time { margin-top: 0; flex-shrink: 0; }

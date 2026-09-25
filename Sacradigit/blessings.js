@@ -4,9 +4,16 @@
    Fields: requesterName, type, location,
    status ('pending'|'scheduled'|'completed'|'declined'),
    preferredDate, date, time, declineReason
+
+   Parishioners now book fixed schedule slots
+   (../service-schedule.js) and land here already
+   'scheduled'. Approve/Decline only remains for
+   older 'pending' requests; the admin can cancel a
+   booking from its Details modal instead.
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -15,6 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let upcoming = [];
   let requests = [];
   let completed = [];
+  let allRecords = []; // every Blessing record — used to show which fixed slots are taken
+  let schedulePicker = null; // fixed-slot picker in the Schedule modal (set once a type is chosen)
+  let closures = [];         // 'No Services (Parish Closed)' date ranges from Special Schedules
+
+  watchClosures(client, (next) => {
+    closures = next;
+    if (schedulePicker) schedulePicker.setClosures(closures);
+  });
 
   const upcomingList   = document.getElementById('upcoming-list');
   const upcomingEmpty   = document.getElementById('upcoming-empty');
@@ -69,6 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Live data --- */
   client.models.Blessing.observeQuery().subscribe({
     next: ({ items }) => {
+      allRecords = items;
+      if (schedulePicker) schedulePicker.refresh(allRecords);
       upcoming = [];
       requests = [];
       completed = [];
@@ -442,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
      laid out as a timeline so the admin can see the whole day at a
      glance instead of just one entry at a time. */
   function openDayPlanModal(iso) {
-    const dayItems = calendarItems().filter(item => item.calDate === iso).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    const dayItems = calendarItems().filter(item => item.calDate === iso).sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
     const label = new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
     dayPlanTitle.textContent = label;
@@ -466,8 +483,95 @@ document.addEventListener('DOMContentLoaded', () => {
       dayPlanEmpty.classList.add('hidden');
     }
 
+    dayPlanPrintIso = iso;
     openModal(dayPlanModal);
   }
+
+  /* --- Printable day schedule ---
+     Opens a clean, print-ready sheet (for the priest / parish office)
+     with every booked service that day: time, service, requester,
+     location, contact, and the request details. Cancelled bookings are
+     left out; older pending requests are marked so they aren't missed. */
+  let dayPlanPrintIso = null;
+
+  function detailsOf(record) {
+    if (!record.details) return {};
+    try {
+      const parsed = typeof record.details === 'string' ? JSON.parse(record.details) : record.details;
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch { return {}; }
+  }
+
+  function detailText(value) {
+    if (value && typeof value === 'object') {
+      return [value.firstName, value.middleName, value.lastName, value.extension].filter(Boolean).join(' ');
+    }
+    return String(value ?? '');
+  }
+
+  function printDaySchedule(iso) {
+    const rows = allRecords
+      .filter(r => (r.status === 'scheduled' || r.status === 'completed') ? r.date === iso : (r.status === 'pending' && r.preferredDate === iso))
+      .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+
+    const label = new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const body = rows.length === 0
+      ? '<p class="empty">No services booked for this day.</p>'
+      : `<table>
+          <thead><tr><th>Time</th><th>Service</th><th>Requester</th><th>Location</th><th>Contact</th><th>Details</th><th>Done</th></tr></thead>
+          <tbody>${rows.map(r => {
+            const details = Object.entries(detailsOf(r))
+              .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
+              .map(([k, v]) => `<div><b>${escapeHtml(k)}:</b> ${escapeHtml(v)}</div>`).join('');
+            return `<tr>
+              <td class="nowrap">${escapeHtml(r.time || '—')}</td>
+              <td>${escapeHtml(r.type)}${r.status === 'pending' ? ' <span class="tag">Pending review</span>' : ''}</td>
+              <td>${escapeHtml(r.requesterName)}</td>
+              <td>${escapeHtml(r.location || '—')}</td>
+              <td class="nowrap">${escapeHtml(r.contact || '—')}</td>
+              <td class="details">${details}${r.notes ? `<div><b>Notes:</b> ${escapeHtml(r.notes)}</div>` : ''}</td>
+              <td class="check"></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`;
+
+    const win = window.open('', '_blank');
+    if (!win) { showToast('Allow pop-ups for this site to print the schedule.', true); return; }
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+      <title>Service Schedule — ${label}</title>
+      <style>
+        body { font-family: Inter, Arial, sans-serif; color: #111827; margin: 28px; }
+        h1 { font-size: 20px; margin: 0; }
+        .sub { color: #6b7280; font-size: 12px; margin: 4px 0 18px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #d1d5db; padding: 7px 8px; text-align: left; vertical-align: top; }
+        th { background: #f3f4f6; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+        .nowrap { white-space: nowrap; }
+        .details div { margin-bottom: 2px; }
+        .check { width: 38px; }
+        .tag { display: inline-block; font-size: 10px; background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 9px; }
+        .empty { color: #6b7280; }
+        .foot { margin-top: 18px; font-size: 11px; color: #9ca3af; }
+        @page { size: A4 landscape; margin: 14mm; }
+        @media print { body { margin: 0; } }
+      </style></head><body>
+      <h1>Our Lady of Fatima Parish — Service Schedule</h1>
+      <p class="sub">${label} · ${rows.length} booking${rows.length === 1 ? '' : 's'}</p>
+      ${body}
+      <p class="foot">Printed ${new Date().toLocaleString('en-US')} from SacraDigit.</p>
+      <script>window.onload = () => { window.print(); };<\/script>
+      </body></html>`);
+    win.document.close();
+  }
+
+  document.getElementById('day-plan-print').addEventListener('click', () => {
+    if (dayPlanPrintIso) printDaySchedule(dayPlanPrintIso);
+  });
+
+  document.getElementById('btn-print-today').addEventListener('click', () => {
+    const d = new Date();
+    printDaySchedule(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  });
 
   document.getElementById('cal-prev').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); });
   document.getElementById('cal-next').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); });
@@ -519,20 +623,48 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Schedule Blessing Modal --- */
   const scheduleModal = document.getElementById('schedule-modal');
 
+  const scheduleTypeSelect = document.getElementById('schedule-type');
+  const schedulePickerEl   = document.getElementById('schedule-slot-picker');
+
+  function resetSchedulePicker() {
+    schedulePicker = null;
+    schedulePickerEl.classList.remove('has-error');
+    schedulePickerEl.innerHTML = '<p class="slot-empty">Choose a blessing type first.</p>';
+  }
+
+  // Walk-in / phone bookings use the same fixed slots as parishioners,
+  // minus the lead-time rule (the office can book same-day).
+  scheduleTypeSelect.addEventListener('change', () => {
+    if (!scheduleTypeSelect.value) { resetSchedulePicker(); return; }
+    schedulePickerEl.classList.remove('has-error');
+    schedulePicker = createSlotPicker(schedulePickerEl, {
+      type: scheduleTypeSelect.value,
+      records: allRecords,
+      closures,
+      ignoreLead: true,
+      onChange: () => schedulePickerEl.classList.remove('has-error'),
+    });
+  });
+
   document.getElementById('btn-schedule-blessing').addEventListener('click', () => {
-    document.getElementById('schedule-date').value = todayISO;
     openModal(scheduleModal);
   });
 
   document.getElementById('schedule-submit').addEventListener('click', async () => {
     const requesterName = document.getElementById('schedule-requester').value.trim();
-    const date       = document.getElementById('schedule-date').value;
-    const time24     = document.getElementById('schedule-time').value;
-    const type        = document.getElementById('schedule-type').value;
+    const type        = scheduleTypeSelect.value;
     const location     = document.getElementById('schedule-location').value.trim();
+    const slot         = schedulePicker && schedulePicker.getValue();
 
-    if (!requesterName || !date || !time24 || !type) {
-      showToast('Please fill in requester, date, time, and blessing type.', true);
+    if (!requesterName || !type || !slot) {
+      if (type && !slot) schedulePickerEl.classList.add('has-error');
+      showToast('Please fill in requester, blessing type, and pick a schedule slot.', true);
+      return;
+    }
+
+    if (!slotHasRoom(type, allRecords, slot.date, slot.time, { closures })) {
+      showToast('That slot is already full. Please pick another.', true);
+      schedulePicker.refresh(allRecords);
       return;
     }
 
@@ -543,19 +675,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await client.models.Blessing.create({
         requesterName,
         type,
-        location: location || 'Not specified',
-        date,
-        time: formatTime12(time24),
+        location: location || locationFor(type),
+        preferredDate: slot.date,
+        date: slot.date,
+        time: slot.time,
         status: 'scheduled',
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal(scheduleModal);
-      showToast(`Blessing scheduled for ${requesterName} on ${formatLongDate(date)}.`);
+      showToast(`${type} scheduled for ${requesterName} on ${formatLongDate(slot.date)} at ${slot.time}.`);
       document.getElementById('schedule-requester').value = '';
-      document.getElementById('schedule-time').value = '';
-      document.getElementById('schedule-type').value = '';
+      scheduleTypeSelect.value = '';
       document.getElementById('schedule-location').value = '';
+      resetSchedulePicker();
     } catch (err) {
       console.error('Failed to schedule blessing:', err);
       showToast("Couldn't save the blessing.", true);
@@ -564,33 +697,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function formatTime12(time24) {
-    let [h, m] = time24.split(':').map(Number);
-    const meridiem = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${meridiem}`;
-  }
 
 
   /* --- Decline Reason Modal --- */
   const declineModal = document.getElementById('decline-modal');
   const declineTargetName = document.getElementById('decline-target-name');
   const declineReasonInput = document.getElementById('decline-reason');
+  const declineTitle = document.getElementById('decline-modal-title');
+  const declineVerb = document.getElementById('decline-verb');
+  const declineSubmitBtn = document.getElementById('decline-submit');
   let declineTargetId = null;
+  let declineIsCancel = false;
 
-  function openDeclineModal(id) {
-    const r = requests.find(x => x.id === id);
+  // Same modal for two jobs: declining an older pending request, or
+  // cancelling a booked slot (e.g. the priest is unavailable). Both set
+  // status 'declined', which frees the slot and shows the parishioner
+  // the reason on their Requested Services page.
+  function openDeclineModal(id, { cancelBooking = false } = {}) {
+    const r = (cancelBooking ? upcoming : requests).find(x => x.id === id);
     if (!r) return;
     declineTargetId = id;
+    declineIsCancel = cancelBooking;
+    declineTitle.textContent = cancelBooking ? 'Cancel Booking' : 'Decline Blessing Request';
+    declineVerb.textContent = cancelBooking ? `Cancelling the ${r.type} booking on ${formatLongDate(r.date)} at ${r.time} for` : 'Declining request from';
+    declineSubmitBtn.textContent = cancelBooking ? 'Cancel Booking' : 'Decline Request';
     declineTargetName.textContent = r.requesterName;
     declineReasonInput.value = '';
     openModal(declineModal);
   }
 
-  document.getElementById('decline-submit').addEventListener('click', async () => {
+  declineSubmitBtn.addEventListener('click', async () => {
     if (!declineTargetId) return;
 
-    const r = requests.find(x => x.id === declineTargetId);
+    const r = [...requests, ...upcoming].find(x => x.id === declineTargetId);
     const reason = declineReasonInput.value.trim();
 
     try {
@@ -601,7 +740,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(declineModal);
-      showToast(`Request from ${r ? r.requesterName : 'requester'} declined.`);
+      logBookingAction(client, { action: declineIsCancel ? 'Cancel' : 'Decline', record: r, reason });
+      showToast(declineIsCancel
+        ? `Booking for ${r ? r.requesterName : 'requester'} cancelled — the slot is open again.`
+        : `Request from ${r ? r.requesterName : 'requester'} declined.`);
       declineTargetId = null;
     } catch (err) {
       console.error('Failed to decline request:', err);
@@ -613,6 +755,14 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Modal helpers --- */
   const detailsModal = document.getElementById('details-modal');
   const detailsBody   = document.getElementById('details-body');
+  const detailsCancelBtn = document.getElementById('details-cancel-booking');
+  let detailsTargetId = null;
+
+  detailsCancelBtn.addEventListener('click', () => {
+    if (!detailsTargetId) return;
+    closeModal(detailsModal);
+    openDeclineModal(detailsTargetId, { cancelBooking: true });
+  });
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -659,6 +809,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!record) return;
+
+    detailsTargetId = id;
+    detailsCancelBtn.classList.toggle('hidden', !(section === 'upcoming' && (record.date || '') >= todayISO));
 
     detailsBody.innerHTML = `
       <div class="so-detail-grid">

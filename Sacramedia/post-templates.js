@@ -8,6 +8,8 @@
    ============================================ */
 
 const STORAGE_KEY = 'sacradigit_media_templates';
+// Read by Sacradigit/announcements.js to prefill a new post
+const ANNOUNCEMENT_PREFILL_KEY = 'sacradigit_announcement_prefill';
 
 function readTemplates() {
   try {
@@ -96,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="template-card-title">${escapeHtml(t.title)}</p>
         <p class="template-card-body">${escapeHtml(t.body)}</p>
         <div class="template-card-actions">
+          <button type="button" class="btn-lavender" data-use="${t.id}" title="Start a new announcement with this caption">Use in Announcement</button>
           <button type="button" class="btn-secondary" data-copy="${t.id}">Copy</button>
           <button type="button" class="btn-secondary" data-edit="${t.id}">Edit</button>
           <button type="button" class="btn-danger" data-delete="${t.id}">Delete</button>
@@ -168,7 +171,21 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   grid.addEventListener('click', async (e) => {
+    const useId = e.target.closest('[data-use]')?.dataset.use;
     const copyId = e.target.closest('[data-copy]')?.dataset.copy;
+
+    if (useId) {
+      const t = readTemplates().find(x => x.id === useId);
+      if (!t) return;
+      try {
+        sessionStorage.setItem(ANNOUNCEMENT_PREFILL_KEY, JSON.stringify({ title: t.title, body: t.body }));
+      } catch {
+        showToast("Couldn't hand the template over — your browser is blocking storage.", true);
+        return;
+      }
+      window.location.href = 'announcements.html';
+      return;
+    }
     const editId = e.target.closest('[data-edit]')?.dataset.edit;
     const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
 

@@ -26,6 +26,7 @@
 
   <link rel="stylesheet" href="user-css/user-shell.css" />
   <link rel="stylesheet" href="user-css/user-request-service.css" />
+  <link rel="stylesheet" href="../service-schedule.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -180,13 +181,10 @@
               <div id="svc-dynamic-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="form-label" for="svc-date">Preferred Date</label>
-                  <input type="date" id="svc-date" class="form-input" />
-                </div>
-                <div>
-                  <label class="form-label" for="svc-time">Preferred Time (optional)</label>
-                  <input type="time" id="svc-time" class="form-input" />
+                <div class="sm:col-span-2">
+                  <p class="form-label">Choose a Schedule <span class="text-red-500">*</span></p>
+                  <div id="svc-slot-picker" class="slot-picker"></div>
+                  <p id="svc-slot-summary" class="slot-summary hidden"></p>
                 </div>
                 <div class="sm:col-span-2">
                   <label class="form-label" for="svc-contact">Contact Number</label>
@@ -200,7 +198,7 @@
 
               <div class="req-info-note">
                 <svg class="w-4 h-4 shrink-0 mt-0.5 text-lavender" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <p class="text-xs text-gray-600 leading-relaxed">Your preferred date is not guaranteed until the parish office confirms it. You'll be notified here once your request is reviewed.</p>
+                <p class="text-xs text-gray-600 leading-relaxed">These are the parish's fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "Requested Services."</p>
               </div>
 
               <!-- Submit -->

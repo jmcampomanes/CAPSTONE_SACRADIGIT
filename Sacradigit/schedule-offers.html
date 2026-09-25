@@ -138,7 +138,7 @@
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Schedule Offers</h2>
-            <p class="text-gray-500 text-sm mt-1">Review, approve, and assign dates to parishioner service requests.</p>
+            <p class="text-gray-500 text-sm mt-1">Parishioners book the parish's fixed schedule slots directly — bookings appear here already scheduled. Cancel one if the parish can't honour it.</p>
           </div>
         </div>
 
@@ -156,23 +156,23 @@
           </div>
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Pending</p>
+              <p class="stat-label">Older Pending</p>
               <div class="stat-icon stat-icon-amber">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
             </div>
             <p class="stat-value" id="stat-pending">0</p>
-            <p class="stat-sub">awaiting review</p>
+            <p class="stat-sub">from before fixed schedules</p>
           </div>
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Approved</p>
+              <p class="stat-label">Scheduled</p>
               <div class="stat-icon stat-icon-green">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>
               </div>
             </div>
             <p class="stat-value" id="stat-approved">0</p>
-            <p class="stat-sub">schedule confirmed</p>
+            <p class="stat-sub">booked slots</p>
           </div>
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
@@ -200,9 +200,10 @@
           </select>
           <select id="status-filter" class="filter-select">
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
+            <option value="Scheduled">Scheduled</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="Pending">Pending (older)</option>
             <option value="Completed">Completed</option>
           </select>
           <button id="btn-clear-filters" type="button" class="btn-filter">
@@ -223,7 +224,7 @@
                 <tr>
                   <th>Requester</th>
                   <th>Service Type</th>
-                  <th>Preferred Date</th>
+                  <th>Schedule</th>
                   <th>Submitted</th>
                   <th>Status</th>
                   <th class="text-right">Action</th>
@@ -280,14 +281,14 @@
   <div id="reject-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Decline Request</h3>
+        <h3 class="modal-title" id="reject-title">Decline Request</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <p class="text-sm text-gray-600 mb-3">Declining request from <span id="reject-name" class="font-semibold text-gray-900"></span>.</p>
-        <label class="form-label" for="reject-reason">Reason for Declining <span class="text-red-500">*</span></label>
+        <p class="text-sm text-gray-600 mb-3"><span id="reject-verb">Declining request from</span> <span id="reject-name" class="font-semibold text-gray-900"></span>.</p>
+        <label class="form-label" for="reject-reason">Reason <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(shown to the parishioner)</span></label>
         <textarea id="reject-reason" class="form-input" rows="3" placeholder="e.g. Requested date is already booked. Please choose another date."></textarea>
       </div>
       <div class="modal-footer">
@@ -317,7 +318,7 @@
           <span class="confirmed-chip" id="view-schedule-value"></span>
         </div>
         <div id="view-decline-wrap" class="hidden">
-          <p class="so-detail-label mb-1">Decline Reason</p>
+          <p class="so-detail-label mb-1">Cancellation / Decline Reason</p>
           <p class="reason-callout" id="view-decline-reason"></p>
         </div>
         <div id="view-notes-wrap" class="hidden">

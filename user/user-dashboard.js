@@ -8,11 +8,27 @@
 
 import { client } from '../amplify-init.js';
 import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../weekly-mass-schedule.js';
+import { watchLivestream } from '../livestream-status.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
+  /* --- Watch Live banner ---
+     Appears the moment the media team clicks "Go Live" on
+     Sacramedia/livestream.html, and hides again when they end it. */
+  const watchLiveBanner = document.getElementById('watch-live-banner');
+  const watchLiveSub = document.getElementById('watch-live-sub');
+  if (watchLiveBanner) {
+    watchLivestream(client, (live) => {
+      const show = live.isLive && /^https?:\/\//i.test(live.url);
+      watchLiveBanner.classList.toggle('hidden', !show);
+      if (show) {
+        watchLiveBanner.href = live.url;
+        watchLiveSub.textContent = `Join us online on ${live.platform || 'our page'}`;
+      }
+    });
+  }
   const greetingName = document.getElementById('greeting-name');
   if (greetingName) greetingName.textContent = 'Maria';
 

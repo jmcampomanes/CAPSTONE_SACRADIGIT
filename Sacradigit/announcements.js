@@ -720,6 +720,29 @@ document.addEventListener('DOMContentLoaded', () => {
     openModal(modal);
   });
 
+  /* Prefill from the Media portal — Post Templates ("Use in
+     Announcement") and Content Calendar ("Schedule as Announcement")
+     hand over { title, body, startDate } via sessionStorage, then land
+     here. A future startDate + "Publish Now" makes the post appear
+     automatically on that day (see getPostStatus()'s 'scheduled'). */
+  (function applyPrefill() {
+    const PREFILL_KEY = 'sacradigit_announcement_prefill';
+    let prefill = null;
+    try {
+      prefill = JSON.parse(sessionStorage.getItem(PREFILL_KEY) || 'null');
+      sessionStorage.removeItem(PREFILL_KEY);
+    } catch { prefill = null; }
+    if (!prefill) return;
+
+    document.getElementById('btn-new-announcement').click();
+    titleInput.value = prefill.title || '';
+    bodyInput.value = prefill.body || '';
+    if (prefill.startDate && prefill.startDate > todayIso()) {
+      startDateInput.value = prefill.startDate;
+      submitBtn.textContent = 'Schedule Post';
+    }
+  })();
+
   async function openEditModal(id) {
     const a = announcements.find(x => x.id === id);
     if (!a) return;

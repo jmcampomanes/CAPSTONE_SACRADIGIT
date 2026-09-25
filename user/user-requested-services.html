@@ -151,15 +151,15 @@
               <div class="stat-icon stat-icon-amber"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
             </div>
             <p class="stat-value" id="stat-pending">0</p>
-            <p class="stat-sub">awaiting review</p>
+            <p class="stat-sub">older requests awaiting review</p>
           </div>
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Approved</p>
+              <p class="stat-label">Scheduled</p>
               <div class="stat-icon stat-icon-green"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg></div>
             </div>
             <p class="stat-value" id="stat-approved">0</p>
-            <p class="stat-sub">scheduled</p>
+            <p class="stat-sub">booked slots</p>
           </div>
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
@@ -224,6 +224,10 @@
       </div>
       <div class="modal-footer">
         <button type="button" id="modal-cancel-request" class="btn-danger hidden">Cancel Request</button>
+        <button type="button" id="modal-add-calendar" class="btn-secondary hidden">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Add to Calendar
+        </button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>
@@ -239,7 +243,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <p class="text-sm text-gray-600">Cancel this <span id="cancel-request-type" class="font-semibold text-gray-900"></span> request? This can't be undone.</p>
+        <p class="text-sm text-gray-600">Cancel this <span id="cancel-request-type" class="font-semibold text-gray-900"></span> request? Its schedule slot will be released for others. This can't be undone.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Keep Request</button>

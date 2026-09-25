@@ -55,3 +55,7 @@
 .template-card-actions button {
   flex: 1;
 }
+
+/* "Use in Announcement" gets its own full-width row above Copy / Edit / Delete */
+.template-card-actions { flex-wrap: wrap; }
+.template-card-actions [data-use] { flex-basis: 100%; justify-content: center; }

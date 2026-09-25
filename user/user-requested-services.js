@@ -5,14 +5,19 @@
    split out of user-request-service.js, which now
    only handles browsing services and submitting a
    new request. Backed by the same Blessing model.
-   Status mapping: pending -> Pending, scheduled ->
-   Approved, completed -> Completed, declined -> Rejected.
+   New requests book a fixed slot and are saved as
+   'scheduled' right away (see ../service-schedule.js).
+   Status mapping: scheduled -> Scheduled, completed ->
+   Completed, declined -> Cancelled (by the parish),
+   pending -> Pending (older requests from before
+   fixed schedules).
    Filters client-side by requesterName === hardcoded
    demo name (matches user-request-service.js).
    ============================================ */
 
 import { client } from '../amplify-init.js';
 import { formatFullName, isNameEmpty } from '../name-utils.js';
+import { downloadBookingIcs } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -63,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const serviceByName = name => serviceTypes.find(s => s.name === name);
 
   const badgeClass  = { pending: 'badge-amber', scheduled: 'badge-green', declined: 'badge-red', completed: 'badge-blue' };
-  const statusLabel = { pending: 'Pending', scheduled: 'Approved', declined: 'Rejected', completed: 'Completed' };
+  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
 
   let myRequests = [];
 
@@ -83,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalNotes                              = document.getElementById('modal-notes');
 
   const modalCancelBtn    = document.getElementById('modal-cancel-request');
+  const modalCalendarBtn  = document.getElementById('modal-add-calendar');
   const cancelRequestModal = document.getElementById('cancel-request-modal');
   const cancelRequestTypeEl = document.getElementById('cancel-request-type');
   const cancelRequestConfirm = document.getElementById('cancel-request-confirm');
@@ -141,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="svc-row-icon" style="background-color:${svc.iconBg};color:${svc.iconColor};">${svc.icon}</div>
         <div class="svc-row-body">
           <p class="svc-row-title">${escapeHtml(svc.name)}</p>
-          <p class="svc-row-meta">Preferred ${fmtDate(r.preferredDate)} · Submitted ${fmtDate(r.createdAt)}</p>
+          <p class="svc-row-meta">${r.date ? '' : `Preferred ${fmtDate(r.preferredDate)} · `}Submitted ${fmtDate(r.createdAt)}</p>
           <div>${scheduleChip}</div>
         </div>
         <div class="svc-row-actions">
@@ -164,7 +170,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const details = getDetails(r);
 
     currentDetailId = id;
-    modalCancelBtn.classList.toggle('hidden', r.status !== 'pending');
+    // Pending requests, and booked slots that haven't happened yet, can
+    // be cancelled — deleting the record frees the slot for someone else.
+    const todayISO = new Date().toLocaleDateString('en-CA');
+    const cancellable = r.status === 'pending' || (r.status === 'scheduled' && (r.date || '') >= todayISO);
+    modalCancelBtn.classList.toggle('hidden', !cancellable);
+    modalCalendarBtn.classList.toggle('hidden', !(r.status === 'scheduled' && r.date && r.time && r.date >= todayISO));
 
     document.getElementById('detail-modal-title').textContent = `${svc.name} Request`;
     modalStatusBadge.textContent = statusLabel[r.status] || r.status;
@@ -176,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter(([, value]) => value)
       .map(([label, value]) => `
         <div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('') + `
-      <div><p class="modal-detail-item-label">Preferred Date</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate)}</p></div>
+      ${r.date ? '' : `<div><p class="modal-detail-item-label">Preferred Date</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate)}</p></div>`}
       <div><p class="modal-detail-item-label">Contact</p><p class="modal-detail-item-value">${escapeHtml(r.contact)}</p></div>`;
 
     if (r.date) {
@@ -202,6 +213,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   [detailModal, cancelRequestModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(detailModal); closeModal(cancelRequestModal); } });
+
+  modalCalendarBtn.addEventListener('click', () => {
+    const r = myRequests.find(x => x.id === currentDetailId);
+    if (!r || !r.date || !r.time) return;
+    const name = serviceByName(r.type)?.name || r.type;
+    downloadBookingIcs({
+      uid: r.id,
+      title: name + ' - Our Lady of Fatima Parish',
+      date: r.date,
+      time: r.time,
+      location: r.location || '',
+      description: 'Your ' + name + ' booking with the parish. Please arrive 15 minutes early.',
+    });
+  });
 
   modalCancelBtn.addEventListener('click', () => {
     if (!currentDetailId) return;

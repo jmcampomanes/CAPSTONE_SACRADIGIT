@@ -7,13 +7,16 @@
    this file only seeds if a key is completely
    missing, so the dashboard never looks empty on
    a first-ever visit before any other page has
-   been opened.
+   been opened. The Media Files count is live from
+   the CloudFile model (folder 'media'), the same
+   records media-library.js reads and writes.
    ============================================ */
+
+import { client } from '../amplify-init.js';
+import { watchLivestream } from '../livestream-status.js';
 
 const KEYS = {
   calendar: 'sacradigit_media_calendar',
-  library: 'sacradigit_media_library',
-  livestream: 'sacradigit_media_livestream',
   coverage: 'sacradigit_media_coverage',
 };
 
@@ -41,19 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
     { id: 'c2', date: '2026-09-14', title: 'Feast of the Exaltation of the Cross — greeting', type: 'draft', platform: 'Facebook' },
     { id: 'c3', date: '2026-09-19', title: 'Recollection reminder', type: 'scheduled', platform: 'Facebook' },
   ]);
-  seedIfMissing(KEYS.library, [
-    { id: 'm1', title: 'Parish Fiesta 2026 — Album 1', tag: 'Event', type: 'photo', dateAdded: '2026-08-20', uploadedBy: 'Media Team' },
-    { id: 'm2', title: 'Sunday Homily — Sept 7', tag: 'Homily', type: 'video', dateAdded: '2026-09-07', uploadedBy: 'Media Team' },
-  ]);
-  seedIfMissing(KEYS.livestream, { isLive: false, platform: 'Facebook', url: '', updatedAt: '' });
   seedIfMissing(KEYS.coverage, [
     { id: 'r1', eventName: 'Youth Ministry Recollection', date: '2026-09-20', location: 'Parish Hall', contact: 'Youth Ministry', notes: 'Need photos + short recap video', status: 'pending' },
     { id: 'r2', eventName: 'First Communion Batch 2', date: '2026-09-27', location: 'Main Church', contact: 'Catechism Office', notes: '', status: 'approved' },
   ]);
 
   const calendar = readJSON(KEYS.calendar, []);
-  const library = readJSON(KEYS.library, []);
-  const livestream = readJSON(KEYS.livestream, { isLive: false });
   const coverage = readJSON(KEYS.coverage, []);
 
   // ---- Stat cards ----
@@ -63,18 +59,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const pendingCount = coverage.filter(r => r.status === 'pending').length;
   document.getElementById('stat-pending').textContent = String(pendingCount);
 
-  document.getElementById('stat-library').textContent = String(library.length);
+  const libraryStatEl = document.getElementById('stat-library');
+  client.models.CloudFile.observeQuery({ filter: { folder: { eq: 'media' } } }).subscribe({
+    next: ({ items }) => { libraryStatEl.textContent = String(items.length); },
+    error: (err) => {
+      console.error('Failed to count media files:', err);
+      libraryStatEl.textContent = '–';
+    },
+  });
 
   const liveStatEl = document.getElementById('stat-livestream');
   const liveSubEl = document.getElementById('stat-livestream-sub');
-  if (livestream.isLive) {
-    liveStatEl.textContent = 'Live';
-    liveStatEl.style.color = '#dc2626';
-    liveSubEl.textContent = `on ${livestream.platform || 'stream'}`;
-  } else {
-    liveStatEl.textContent = 'Off';
-    liveSubEl.textContent = 'not streaming';
-  }
+  watchLivestream(client, (livestream) => {
+    if (livestream.isLive) {
+      liveStatEl.textContent = 'Live';
+      liveStatEl.style.color = '#dc2626';
+      liveSubEl.textContent = `on ${livestream.platform || 'stream'}`;
+    } else {
+      liveStatEl.textContent = 'Off';
+      liveStatEl.style.color = '';
+      liveSubEl.textContent = 'not streaming';
+    }
+  });
 
   // ---- Upcoming content list ----
   const upcomingEl = document.getElementById('upcoming-content-list');

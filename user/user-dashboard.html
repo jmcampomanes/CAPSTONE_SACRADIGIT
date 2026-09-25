@@ -172,6 +172,19 @@
       <!-- Page content -->
       <main class="flex-1 px-6 md:px-8 py-6 space-y-6">
 
+        <!-- Watch Live banner — shown only while the media team has the stream marked live -->
+        <a id="watch-live-banner" class="watch-live-banner hidden" href="#" target="_blank" rel="noopener">
+          <span class="watch-live-dot" aria-hidden="true"></span>
+          <span class="watch-live-text">
+            <span class="watch-live-title">We're live now</span>
+            <span class="watch-live-sub" id="watch-live-sub">Join the Mass online</span>
+          </span>
+          <span class="watch-live-cta">
+            Watch Live
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </span>
+        </a>
+
         <!-- Personalized greeting -->
         <div class="greeting-banner">
           <div id="sacred-art-user-dashboard" class="absolute inset-0" data-sacred-art aria-hidden="true"></div>

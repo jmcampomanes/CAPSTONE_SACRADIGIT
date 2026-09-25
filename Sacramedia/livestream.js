@@ -1,47 +1,23 @@
 /* ============================================
-   SacraDigit Media — Livestream Manager Scripts
-   Client-side prototype: current status lives at
-   'sacradigit_media_livestream', past links at
-   'sacradigit_media_livestream_history'. Once this
-   is wired to Amplify, the parishioner dashboard's
-   "Today's Schedule" panel could read the same
-   record to surface a "Watch Live" banner
-   automatically when isLive is true.
+   SacraDigit Media — Livestream Manager Scripts (AWS Amplify)
+   Status and history are shared through
+   ../livestream-status.js, so every device sees the
+   same state — and when the stream is live, the
+   parishioner dashboard shows a "Watch Live" banner
+   with this link automatically.
    ============================================ */
 
-const CURRENT_KEY = 'sacradigit_media_livestream';
-const HISTORY_KEY = 'sacradigit_media_livestream_history';
-
-function readCurrent() {
-  try {
-    const raw = localStorage.getItem(CURRENT_KEY);
-    return raw ? JSON.parse(raw) : { isLive: false, platform: 'Facebook', url: '', updatedAt: '' };
-  } catch {
-    return { isLive: false, platform: 'Facebook', url: '', updatedAt: '' };
-  }
-}
-
-function writeCurrent(state) {
-  localStorage.setItem(CURRENT_KEY, JSON.stringify(state));
-}
-
-function readHistory() {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeHistory(history) {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-}
+import { client } from '../amplify-init.js';
+import { watchLivestream, saveLivestream, addLivestreamHistory, watchLivestreamHistory } from '../livestream-status.js';
 
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str ?? '';
   return div.innerHTML;
+}
+
+function isValidUrl(str) {
+  return /^https?:\/\/\S+$/i.test(str);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -52,6 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveBtn = document.getElementById('save-livestream-btn');
   const updatedEl = document.getElementById('livestream-updated');
   const historyList = document.getElementById('livestream-history-list');
+
+  let current = null;       // last status from the backend
+  let fieldsDirty = false;  // don't overwrite what the person is typing on live updates
+
+  [platformField, urlField].forEach(el => el.addEventListener('input', () => { fieldsDirty = true; }));
+  platformField.addEventListener('change', () => { fieldsDirty = true; });
 
   const toast = document.getElementById('toast');
   let toastTimer = null;
@@ -70,9 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderStatus() {
-    const state = readCurrent();
-    platformField.value = state.platform || 'Facebook';
-    urlField.value = state.url || '';
+    const state = current || { isLive: false, platform: 'Facebook', url: '', updatedAt: '' };
+    if (!fieldsDirty) {
+      platformField.value = state.platform || 'Facebook';
+      urlField.value = state.url || '';
+    }
 
     if (state.isLive) {
       statusBadge.textContent = 'Live Now';
@@ -91,62 +75,80 @@ document.addEventListener('DOMContentLoaded', () => {
       : '';
   }
 
-  function renderHistory() {
-    const history = readHistory();
+  function renderHistory(history) {
     if (history.length === 0) {
       historyList.innerHTML = '<li class="list-row text-sm text-gray-400">No history yet.</li>';
       return;
     }
     historyList.innerHTML = history.slice(0, 8).map(h => `
       <li class="list-row text-sm">
-        <p class="list-name truncate">${escapeHtml(h.platform)}</p>
-        <p class="list-time">${new Date(h.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+        <div class="min-w-0">
+          <p class="list-name truncate">${escapeHtml(h.platform)}</p>
+          ${h.url ? `<a href="${escapeHtml(h.url)}" target="_blank" rel="noopener" class="list-time truncate block" style="color:#6c6fb0;">${escapeHtml(h.url)}</a>` : ''}
+        </div>
+        <p class="list-time">${h.startedAt ? new Date(h.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</p>
       </li>
     `).join('');
   }
 
-  toggleBtn.addEventListener('click', () => {
-    const state = readCurrent();
-    const goingLive = !state.isLive;
+  watchLivestream(client, (status) => { current = status; renderStatus(); });
+  watchLivestreamHistory(client, renderHistory);
 
-    if (goingLive && !urlField.value.trim()) {
+  toggleBtn.addEventListener('click', async () => {
+    const goingLive = !(current && current.isLive);
+    const url = urlField.value.trim();
+
+    if (goingLive && !url) {
       showToast('Add the stream link before going live.', true);
       return;
     }
-
-    const next = {
-      isLive: goingLive,
-      platform: platformField.value,
-      url: urlField.value.trim(),
-      updatedAt: new Date().toISOString(),
-    };
-    writeCurrent(next);
-
-    if (goingLive) {
-      const history = readHistory();
-      history.unshift({ platform: platformField.value, url: urlField.value.trim(), startedAt: next.updatedAt });
-      writeHistory(history);
-      renderHistory();
-      showToast('Marked as live. The stream link is now visible to parishioners.');
-    } else {
-      showToast('Stream ended.');
+    if (goingLive && !isValidUrl(url)) {
+      showToast('The stream link must start with http:// or https://', true);
+      return;
     }
 
-    renderStatus();
+    toggleBtn.disabled = true;
+    try {
+      current = await saveLivestream(client, current, { isLive: goingLive, platform: platformField.value, url });
+      fieldsDirty = false;
+      if (goingLive) {
+        await addLivestreamHistory(client, { platform: platformField.value, url });
+        showToast('You\'re live. Parishioners now see a "Watch Live" banner on their dashboard.');
+      } else {
+        showToast('Stream ended. The banner is hidden for parishioners.');
+      }
+      renderStatus();
+    } catch (err) {
+      console.error('Failed to update livestream:', err);
+      showToast("Couldn't update the livestream status.", true);
+    } finally {
+      toggleBtn.disabled = false;
+    }
   });
 
-  saveBtn.addEventListener('click', () => {
-    const state = readCurrent();
-    writeCurrent({
-      ...state,
-      platform: platformField.value,
-      url: urlField.value.trim(),
-      updatedAt: new Date().toISOString(),
-    });
-    renderStatus();
-    showToast('Livestream details saved.');
+  saveBtn.addEventListener('click', async () => {
+    const url = urlField.value.trim();
+    if (url && !isValidUrl(url)) {
+      showToast('The stream link must start with http:// or https://', true);
+      return;
+    }
+    saveBtn.disabled = true;
+    try {
+      current = await saveLivestream(client, current, {
+        isLive: !!(current && current.isLive),
+        platform: platformField.value,
+        url,
+      });
+      fieldsDirty = false;
+      renderStatus();
+      showToast('Livestream details saved.');
+    } catch (err) {
+      console.error('Failed to save livestream details:', err);
+      showToast("Couldn't save the livestream details.", true);
+    } finally {
+      saveBtn.disabled = false;
+    }
   });
 
   renderStatus();
-  renderHistory();
 });

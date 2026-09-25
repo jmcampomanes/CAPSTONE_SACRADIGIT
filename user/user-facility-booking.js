@@ -5,9 +5,16 @@
    requesterName === hardcoded demo name.
    Cancel deletes the booking (no "cancelled"
    status in the FacilityBooking schema).
+
+   Bookings are confirmed instantly: the hourly
+   slot picker already prevents double-booking, so
+   a new booking is saved as 'approved' with no
+   admin review. Dates covered by a "No Services
+   (Parish Closed)" special schedule can't be booked.
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { watchClosures, closureOn } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -24,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let myBookings = [];
 
   const badgeClass = { pending: 'badge-amber', approved: 'badge-green', declined: 'badge-red' };
-  const statusLabel = { pending: 'Pending', approved: 'Approved', declined: 'Rejected' };
+  const statusLabel = { pending: 'Pending', approved: 'Confirmed', declined: 'Cancelled' };
   const cancelableStatuses = ['pending', 'approved'];
 
   function renderFacilityGrid() {
@@ -194,9 +201,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let allBookingsForFacility = [];
   let allBookingsSub = null;
 
+  // Parish closures ("No Services" special schedules) block whole days
+  let closures = [];
+  watchClosures(client, (next) => { closures = next; renderBkCalendar(); renderBkTimeSlots(); });
+
   function getBookedHours(iso) {
     const blocked = new Set();
-    allBookingsForFacility.filter(b => b.date === iso).forEach(b => {
+    // Cancelled ('declined') bookings no longer hold their hours
+    allBookingsForFacility.filter(b => b.date === iso && b.status !== 'declined').forEach(b => {
       const startMin = parseTimeToMinutes(b.startTime);
       if (startMin === null) return;
       const endMin = b.endTime ? parseTimeToMinutes(b.endTime) : startMin + 60;
@@ -208,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function isDayFullyBooked(iso) {
+    if (closureOn(iso, closures)) return true;
     const blocked = getBookedHours(iso);
     for (let h = BOOKING_DAY_START; h < BOOKING_DAY_END; h++) {
       if (!blocked.has(h)) return false;
@@ -256,9 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const isToday = iso === todayISO;
       const isSelected = iso === bkSelectedDateIso;
       const full = facility ? isDayFullyBooked(iso) : false;
+      const closure = closureOn(iso, closures);
 
       html += `
-        <button type="button" class="bkcal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${facility ? (full ? 'full' : 'available') : ''}" data-date="${iso}" ${isTooSoon ? 'disabled' : ''}>${day}</button>
+        <button type="button" class="bkcal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${facility ? (full ? 'full' : 'available') : ''}" data-date="${iso}" ${isTooSoon || closure ? 'disabled' : ''}${closure ? ` title="Parish closed: ${escapeHtml(closure.name)}"` : ''}>${day}</button>
       `;
     }
 
@@ -283,6 +297,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!facility || !bkSelectedDateIso) {
       bkTimeSlots.innerHTML = '';
       bkTimeHint.textContent = 'Select a facility and date to see available times.';
+      bkTimeHint.classList.remove('hidden');
+      return;
+    }
+
+    const closure = closureOn(bkSelectedDateIso, closures);
+    if (closure) {
+      bkTimeSlots.innerHTML = '';
+      bkTimeHint.textContent = `The parish is closed on this date (${closure.name}). Please pick another date.`;
       bkTimeHint.classList.remove('hidden');
       return;
     }
@@ -558,12 +580,12 @@ document.addEventListener('DOMContentLoaded', () => {
         purpose,
         attendees: attendeesInput.value ? parseInt(attendeesInput.value, 10) : undefined,
         notes: notesInput.value.trim() || undefined,
-        status: 'pending',
+        status: 'approved', // confirmed instantly — the slot picker already rules out conflicts
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal();
-      window.showToast(`Booking request submitted for ${facility} on ${formatShortDate(bkSelectedDateIso)}.`);
+      window.showToast(`${facility} is booked for ${formatShortDate(bkSelectedDateIso)}, ${formatTime12(startTime24)}–${formatTime12(endTime24)}.`);
     } catch (err) {
       console.error('Failed to submit booking:', err);
       window.showToast(err.message || "Couldn't submit the booking.", true);

@@ -52,12 +52,12 @@ const HELP_CONTENT = {
   },
   'user-facility-booking.html': {
     title: 'Facility Booking',
-    intro: 'Browse available parish facilities and submit a booking request.',
+    intro: 'Browse parish facilities and book an open time slot. Bookings are confirmed right away.',
     steps: [
       'Browse Available Facilities and pick the one you need.',
-      'Click a facility to start booking, then fill in your event date and details.',
-      'Use Back and Next to move through the booking steps, then submit.',
-      'Check My Bookings to see the status of a request, or cancel one you no longer need.',
+      'Choose how long you need it, then an open date and start time. Booked hours and parish closure days are greyed out.',
+      'Use Back and Next to move through the booking steps, then confirm.',
+      'Check My Bookings to see your confirmed bookings, or cancel one you no longer need.',
     ],
   },
   'user-mass-intentions.html': {
@@ -86,7 +86,7 @@ const HELP_CONTENT = {
     steps: [
       'Browse your submitted certificate requests and their current status.',
       'Open a request to see its full details.',
-      'Cancel a request you no longer need with the cancel option.',
+      'Cancel a booking you no longer need. Its slot is released for other parishioners.',
       'Head to “Request a Certificate” if you need to submit a new one.',
     ],
   },
@@ -116,8 +116,8 @@ const HELP_CONTENT = {
     intro: 'Request a sacrament, blessing, or special Mass — grouped by category so it’s easy to find what you need.',
     steps: [
       'Browse the three rows — Blessings, Sacraments, and Special Masses — and pick the service you need.',
-      'Fill in your preferred date and, if it matters, a preferred time.',
-      'Submit your request, then track its status from “Requested Services.”',
+      'Each service shows its fixed schedule. Pick an open date, then an open time slot (full slots are greyed out).',
+      'Submit to book the slot right away. No waiting for approval. You’ll find it under “Requested Services.”',
     ],
   },
   'user-requested-services.html': {
@@ -126,7 +126,7 @@ const HELP_CONTENT = {
     steps: [
       'Browse My Requested Services to see each request and its current status.',
       'Open a request to see its full details, including any confirmed date, time, and officiant.',
-      'Cancel a request you no longer need with the cancel option.',
+      'Cancel a booking you no longer need. Its slot is released for other parishioners.',
     ],
   },
 };

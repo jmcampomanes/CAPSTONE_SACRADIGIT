@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
     upcoming:  { statusLabel: 'Scheduled', dateLabel: 'Date & Time', list: () => upcoming },
     requests:  { statusLabel: 'Pending Approval', dateLabel: 'Preferred Date', list: () => requests },
     completed: { statusLabel: 'Completed', dateLabel: 'Date Completed', list: () => completed },
-    declined:  { statusLabel: 'Declined', dateLabel: 'Preferred Date', list: () => declined },
+    declined:  { statusLabel: 'Cancelled by the parish', dateLabel: 'Date', list: () => declined },
   };
 
   function openDetailsModal(section, id) {
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let dateValue;
     if (section === 'upcoming') dateValue = `${formatLongDate(record.date)}${record.time ? ` · ${record.time}` : ''}`;
     else if (section === 'completed') dateValue = formatLongDate(record.date);
-    else dateValue = formatLongDate(record.preferredDate);
+    else dateValue = formatLongDate(record.date || record.preferredDate);
 
     const extraRows = record.location
       ? `<div><p class="so-detail-label">Location</p><p class="so-detail-value">${escapeHtml(record.location)}</p></div>`
@@ -411,9 +411,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ${declineRow}
       </div>
     `;
-    // Only a pending request can still be managed (cancelled) elsewhere —
-    // scheduled/completed/declined records have nothing left to manage.
-    detailsManageLink.classList.toggle('hidden', section !== 'requests');
+    // Pending requests and booked (upcoming) slots can still be cancelled
+    // on Requested Services — completed/cancelled ones have nothing left to manage.
+    detailsManageLink.classList.toggle('hidden', section !== 'requests' && section !== 'upcoming');
 
     openModal(detailsModal);
   }

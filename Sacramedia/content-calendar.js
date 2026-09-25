@@ -13,6 +13,8 @@
    ============================================ */
 
 const STORAGE_KEY = 'sacradigit_media_calendar';
+// Read by Sacradigit/announcements.js to prefill (and schedule) a new post
+const ANNOUNCEMENT_PREFILL_KEY = 'sacradigit_announcement_prefill';
 
 function readEntries() {
   try {
@@ -101,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${escapeHtml(e.platform)}</td>
         <td><span class="badge badge-${e.type}">${capitalize(e.type)}</span></td>
         <td class="text-right whitespace-nowrap">
+          ${e.type !== 'published' ? `<button type="button" class="row-action" data-announce="${e.id}" title="Open the announcement composer with this entry, scheduled for its date">Schedule as Announcement</button>` : ''}
           <button type="button" class="row-action" data-edit="${e.id}">Edit</button>
           <button type="button" class="row-action row-action-danger" data-delete="${e.id}">Delete</button>
         </td>
@@ -189,7 +192,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   tbody.addEventListener('click', (e) => {
+    const announceId = e.target.closest('[data-announce]')?.dataset.announce;
     const editId = e.target.closest('[data-edit]')?.dataset.edit;
+
+    // Hands the entry to the announcement composer. With a future date,
+    // "Schedule Post" there makes it go live automatically on that day.
+    if (announceId) {
+      const entry = readEntries().find(x => x.id === announceId);
+      if (!entry) return;
+      try {
+        sessionStorage.setItem(ANNOUNCEMENT_PREFILL_KEY, JSON.stringify({
+          title: entry.title,
+          body: entry.notes || '',
+          startDate: entry.date,
+        }));
+      } catch {
+        showToast("Couldn't hand the entry over — your browser is blocking storage.", true);
+        return;
+      }
+      window.location.href = 'announcements.html';
+      return;
+    }
     const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
 
     if (editId) {

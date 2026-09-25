@@ -20,9 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
     { name: 'Death Records',        key: 'death' },
     { name: 'Parish Announcements', key: 'announcements' },
     { name: 'Financial Documents',  key: 'financial' },
+    { name: 'Media Library',        key: 'media' },
   ];
 
-  const actionTagClass = { 'View': 'action-view', 'Download': 'action-download', 'Edit': 'action-edit' };
+  const actionTagClass = { 'View': 'action-view', 'Download': 'action-download', 'Edit': 'action-edit', 'Cancel': 'action-cancel', 'Decline': 'action-cancel' };
 
   const services = [
     { name: 'DynamoDB',  status: 'ok', label: 'Operational', meta: 'Live — reachable' },
