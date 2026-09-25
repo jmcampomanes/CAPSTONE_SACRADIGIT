@@ -1,7 +1,5 @@
-// amplify-init.js — place at project root, next to amplify_outputs.json
-import { Amplify } from 'aws-amplify';
-import { generateClient } from 'aws-amplify/data';
-import outputs from './amplify_outputs.json';
-
-Amplify.configure(outputs);
-export const client = generateClient();
+// amplify-init.js (Sacradigit copy) — used by seed-mock-data.js and
+// seed-mock-masses-schedules.js. Re-exports the project-root client so
+// there is only ONE amplify_outputs.json (at the project root) to keep
+// up to date after each backend deploy.
+export { client } from '../amplify-init.js';
