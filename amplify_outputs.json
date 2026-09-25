@@ -39,7 +39,7 @@
   "data": {
     "url": "https://gjak4qfjzzehpkxn44kudxkgga.appsync-api.ap-southeast-1.amazonaws.com/graphql",
     "aws_region": "ap-southeast-1",
-    "api_key": "da2-yovp25ycazctllewnpallsmudi",
+    "api_key": "da2-sd6g2gampza3hbzjgvoxmvkdvm",
     "default_authorization_type": "API_KEY",
     "authorization_types": [
       "AMAZON_COGNITO_USER_POOLS",
@@ -2066,7 +2066,79 @@
           ]
         }
       },
-      "nonModels": {},
+      "nonModels": {
+        "TakenSlot": {
+          "name": "TakenSlot",
+          "fields": {
+            "name": {
+              "name": "name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "date": {
+              "name": "date",
+              "isArray": false,
+              "type": "AWSDate",
+              "isRequired": false,
+              "attributes": []
+            },
+            "time": {
+              "name": "time",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "endTime": {
+              "name": "endTime",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "status": {
+              "name": "status",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            }
+          }
+        }
+      },
+      "queries": {
+        "takenSlots": {
+          "name": "takenSlots",
+          "isArray": true,
+          "type": {
+            "nonModel": "TakenSlot"
+          },
+          "isRequired": false,
+          "isArrayNullable": true,
+          "arguments": {
+            "kind": {
+              "name": "kind",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "from": {
+              "name": "from",
+              "isArray": false,
+              "type": "AWSDate",
+              "isRequired": true
+            },
+            "to": {
+              "name": "to",
+              "isArray": false,
+              "type": "AWSDate",
+              "isRequired": true
+            }
+          }
+        }
+      },
       "mutations": {
         "sendBookingEmail": {
           "name": "sendBookingEmail",
