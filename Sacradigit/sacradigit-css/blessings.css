@@ -194,6 +194,22 @@
   color: #8f1414;
 }
 
+/* Reschedule — replaced Approve / Decline on pending requests */
+.req-reschedule {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #5b5fa8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.req-reschedule:hover { color: #1e2a4a; }
+
 /* ---------- Completed blessing rows ---------- */
 .completed-row {
   display: flex;

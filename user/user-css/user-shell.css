@@ -644,6 +644,26 @@ a:focus-visible, button:focus-visible {
   .sacred-art-layer .sacred-kb-group { animation: none; }
 }
 
+/* ---------- Sacred art on page headers (.req-hero) ----------
+   user-shell.js prepends an art frame + a navy tint to every navy page
+   header, like the Dashboard greeting banner. Layering, bottom to top:
+   header background → art (z 0) → tint (z 0) → the header's gold/lavender
+   corner glows (::after) → the header's own content (z 2). */
+.req-hero > .req-hero-tint {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 96% -30%, rgba(201, 168, 76, 0.28), transparent 45%),
+    linear-gradient(135deg, rgba(30, 42, 74, 0.86) 0%, rgba(42, 58, 92, 0.8) 100%);
+}
+
+.req-hero > *:not(.sacred-art-frame):not(.req-hero-tint) {
+  position: relative;
+  z-index: 2;
+}
+
 .user-menu-divider {
   height: 1px;
   background-color: #f0f1f4;

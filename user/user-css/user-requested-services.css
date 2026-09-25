@@ -269,3 +269,6 @@
 .btn-danger:hover {
   background-color: #991616;
 }
+/* "Open in Google Maps" link for a House Blessing map pin */
+.map-pin-link { color: #5b5fa8; font-weight: 600; text-decoration: none; }
+.map-pin-link:hover { color: #1e2a4a; text-decoration: underline; }

@@ -4,6 +4,29 @@
    ============================================ */
 
 import { initPageHelp } from '../help-tutorial.js';
+import { initSacredArt } from './sacred-art.js';
+
+/* ------------------------------------------
+   Sacred art on every page's navy header
+   (.req-hero), same rotating artwork as the
+   Dashboard greeting banner. Each header gets
+   the art frame plus a navy tint (so the white
+   text stays readable) as its first children;
+   see "Sacred art on page headers" in
+   user-shell.css for the layering.
+   ------------------------------------------ */
+function addSacredArtToHeaders() {
+  document.querySelectorAll('.req-hero').forEach((hero) => {
+    if (hero.querySelector(':scope > .sacred-art-frame')) return;
+    const tint = document.createElement('div');
+    tint.className = 'req-hero-tint';
+    tint.setAttribute('aria-hidden', 'true');
+    const frame = document.createElement('div');
+    frame.setAttribute('aria-hidden', 'true');
+    hero.prepend(frame, tint);
+    initSacredArt(frame);
+  });
+}
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -132,6 +155,8 @@ const HELP_CONTENT = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  addSacredArtToHeaders();
 
   /* ------------------------------------------
      1. USER PROFILE — populate name & initials

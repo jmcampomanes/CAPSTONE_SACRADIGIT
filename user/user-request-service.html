@@ -163,57 +163,64 @@
 
         </div>
 
-        <!-- ===== FORM VIEW: shown after a service is selected ===== -->
-        <div id="form-view" class="hidden">
+      </main>
 
-          <!-- Back button -->
-          <button type="button" id="btn-back-to-menu" class="back-btn">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            Back to Services
+      <!-- ===== REQUEST SCREEN: full-screen form beside the sidebar, shown after a service is selected ===== -->
+      <section id="form-view" class="req-screen hidden" role="dialog" aria-modal="true" aria-labelledby="form-view-title">
+
+        <header class="req-screen-bar">
+          <button type="button" id="btn-back-to-menu" class="req-screen-back">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Back
           </button>
+          <div id="form-view-icon" class="svc-icon req-screen-icon"></div>
+          <div class="req-screen-heading">
+            <h2 class="req-screen-title" id="form-view-title">Request a Service</h2>
+            <p class="req-screen-sub" id="form-view-sub"></p>
+          </div>
+        </header>
 
-          <div class="panel req-form-panel">
-            <div class="panel-header req-form-panel-header">
-              <h2 class="panel-title req-form-panel-title" id="form-view-title">Request a Service</h2>
-            </div>
-            <div class="p-6 space-y-4">
+        <div class="req-screen-body" id="req-screen-body">
+          <div class="req-screen-cols">
 
+            <!-- Left: who / what the request is for -->
+            <div class="req-screen-col space-y-4">
+              <h3 class="req-screen-col-title">Details</h3>
               <div id="svc-dynamic-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="sm:col-span-2">
-                  <p class="form-label">Choose a Schedule <span class="text-red-500">*</span></p>
-                  <div id="svc-slot-picker" class="slot-picker"></div>
-                  <p id="svc-slot-summary" class="slot-summary hidden"></p>
-                </div>
-                <div class="sm:col-span-2">
-                  <label class="form-label" for="svc-contact">Contact Number</label>
-                  <input type="text" id="svc-contact" class="form-input" placeholder="e.g. 0917 123 4567" />
-                </div>
-                <div class="sm:col-span-2">
-                  <label class="form-label" for="svc-notes">Additional Notes (optional)</label>
-                  <textarea id="svc-notes" class="form-input" rows="2" placeholder="Any other details the parish office should know…"></textarea>
-                </div>
+              <div>
+                <label class="form-label" for="svc-contact">Contact Number <span class="text-red-500">*</span></label>
+                <input type="text" id="svc-contact" class="form-input" placeholder="e.g. 0917 123 4567" />
               </div>
-
+              <div>
+                <label class="form-label" for="svc-notes">Additional Notes (optional)</label>
+                <textarea id="svc-notes" class="form-input" rows="3" placeholder="Any other details the parish office should know…"></textarea>
+              </div>
               <div class="req-info-note">
                 <svg class="w-4 h-4 shrink-0 mt-0.5 text-lavender" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <p class="text-xs text-gray-600 leading-relaxed">These are the parish's fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "Requested Services."</p>
               </div>
+            </div>
 
-              <!-- Submit -->
-              <div class="flex justify-end pt-2">
-                <button type="button" id="svc-submit" class="btn-lavender req-submit-btn">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  Submit Request
-                </button>
+            <!-- Right: when -->
+            <div class="req-screen-col space-y-4">
+              <h3 class="req-screen-col-title">Choose a Schedule <span class="text-red-500">*</span></h3>
+              <div>
+                <div id="svc-slot-picker" class="slot-picker"></div>
+                <p id="svc-slot-summary" class="slot-summary hidden"></p>
               </div>
             </div>
-          </div>
 
+          </div>
         </div>
 
-      </main>
+        <footer class="req-screen-footer">
+          <button type="button" id="btn-cancel-request" class="btn-secondary">Cancel</button>
+          <button type="button" id="svc-submit" class="btn-lavender req-submit-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Submit Request
+          </button>
+        </footer>
+      </section>
     </div>
   </div>
 

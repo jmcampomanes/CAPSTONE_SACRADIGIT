@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activity Logs – Sacra ITech</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { DEFAULT: '#1e2a4a', dark: '#16213a', light: '#2a3a5c' },
+            gold: '#c9a84c',
+            teal: { DEFAULT: '#0e7490', dark: '#155e75' },
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+
+  <!-- Shared admin design tokens + Sacra ITech styles -->
+  <link rel="stylesheet" href="../Sacradigit/sacradigit-css/admin-shell.css" />
+  <link rel="stylesheet" href="itech-css/itech-shell.css" />
+  <link rel="stylesheet" href="itech-css/itech.css" />
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="admin-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="../sacradigit-images/scaradigit-logo.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">Sacra ITech</p>
+          <p class="text-gray-400 text-xs">IT Team</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="ITech navigation">
+
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="itech-dashboard.html" data-nav="itech-dashboard" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+              System Overview
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Access</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="itech-roles.html" data-nav="itech-roles" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              Roles &amp; Access
+            </a>
+          </li>
+          <li>
+            <a href="itech-logs.html" data-nav="itech-logs" class="sidebar-link active">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+              Activity Logs
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Data</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="itech-cloud.html" data-nav="itech-cloud" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
+              Cloud Access
+            </a>
+          </li>
+          <li>
+            <a href="itech-storage.html" data-nav="itech-storage" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+              Storage
+            </a>
+          </li>
+          <li>
+            <a href="itech-backup.html" data-nav="itech-backup" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Data Backup
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
+          <div class="w-9 h-9 rounded-full bg-teal flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs">IT</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate">IT Team</p>
+            <p class="text-gray-400 text-xs truncate">System Administrator</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#0e7490;border-bottom-width:3px;">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(14,116,144,0.12);color:#0e7490;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Activity Logs</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-6">
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Audit Trail</h2>
+            <button type="button" id="btn-export-logs" class="btn-teal btn-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Export CSV
+            </button>
+          </div>
+          <div class="filter-bar">
+            <input type="search" id="log-search" class="form-input filter-search" placeholder="Search user or details…" aria-label="Search logs" />
+            <select id="log-action" class="form-input" aria-label="Filter by action"><option value="">All actions</option></select>
+            <label class="text-xs text-gray-500 flex items-center gap-1.5">From <input type="date" id="log-from" class="form-input" /></label>
+            <label class="text-xs text-gray-500 flex items-center gap-1.5">To <input type="date" id="log-to" class="form-input" /></label>
+            <button type="button" id="log-clear" class="btn-filter btn-sm">Clear</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="records-table">
+              <thead><tr><th>When</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+              <tbody id="log-tbody"><tr><td colspan="4" class="empty-state">Loading…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="log-count"></span>
+            <div class="flex items-center gap-2">
+              <button type="button" id="log-prev" class="btn-filter btn-sm">‹ Prev</button>
+              <span id="log-page"></span>
+              <button type="button" id="log-next" class="btn-filter btn-sm">Next ›</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script type="module" src="itech-shell.js"></script>
+  <script type="module" src="itech-logs.js"></script>
+</body>
+</html>

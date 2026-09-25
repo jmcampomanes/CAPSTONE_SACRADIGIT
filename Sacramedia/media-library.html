@@ -173,7 +173,7 @@
           </div>
           <p class="text-xs text-gray-400 px-5 pt-3">
             Parish photos and videos, stored in the SacraDigit cloud bucket. Uploads are shared with
-            the whole media team and also appear to the Admin under Cloud Access → Media Library.
+            the whole media team and also appear to the IT team under Sacra ITech → Cloud Access → Media Library.
           </p>
           <div class="p-4">
             <div id="library-grid" class="card-grid">
@@ -181,11 +181,11 @@
           </div>
         </div>
 
-        <!-- Add modal -->
+        <!-- Add / Edit modal -->
         <div id="media-modal" class="modal-overlay hidden">
           <div class="modal-card">
             <div class="modal-header">
-              <p class="modal-title">Add Media Item</p>
+              <p class="modal-title" id="media-modal-title">Add Media Item</p>
               <button type="button" class="modal-close" data-close-modal aria-label="Close">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
@@ -200,7 +200,7 @@
                 <input type="text" id="media-tag" class="form-input" placeholder="e.g. Event, Homily, Youth Ministry" />
               </div>
               <div>
-                <label class="form-label" for="media-file">File</label>
+                <label class="form-label" for="media-file" id="media-file-label">File</label>
                 <label for="media-file" class="media-file-picker">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                   <span id="media-file-name">No file chosen</span>

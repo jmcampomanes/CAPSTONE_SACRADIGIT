@@ -12,8 +12,9 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, watchClosures } from '../service-schedule.js';
+import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, watchClosures, MAP_PIN_LABEL } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
+import { createPinMap, formatLatLng } from '../pin-map.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -96,6 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
       iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
       icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`,
       fields: [
+        // Saved as "lat, lng" under this label; the admin Blessings page
+        // and Requested Services show it as a Google Maps link.
+        { id: 'map-pin', label: MAP_PIN_LABEL, kind: 'map', addressField: 'address', required: false, span2: true },
         { id: 'address', label: 'Complete Address', placeholder: 'e.g. 12 Mabini St., Cubao', required: true, span2: true },
         { id: 'household', label: 'Household / Owner Name', placeholder: 'e.g. Santos Family', required: true },
       ] },
@@ -139,8 +143,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ] },
   ];
 
-  const menuView      = document.getElementById('menu-view');
   const formView       = document.getElementById('form-view');
+  const formViewIcon   = document.getElementById('form-view-icon');
+  const formViewSub    = document.getElementById('form-view-sub');
   const svcDynamicFields      = document.getElementById('svc-dynamic-fields');
   const slotPickerEl             = document.getElementById('svc-slot-picker');
   const slotSummaryEl            = document.getElementById('svc-slot-summary');
@@ -152,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let selectedTypeId = null;
   let slotPicker = null;
+  let pinMap = null; // House Blessing's location map, while the form is open
   let allBookings = []; // every Blessing record, kept live so full slots show as taken
 
   client.models.Blessing.observeQuery().subscribe({
@@ -237,6 +243,10 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedTypeId = id;
 
     formViewTitle.textContent = `Request — ${svc.name}`;
+    formViewSub.textContent = svc.desc;
+    formViewIcon.style.backgroundColor = svc.iconBg;
+    formViewIcon.style.color = svc.iconColor;
+    formViewIcon.innerHTML = svc.icon;
     svcContactInput.value = '';
     svcNotesInput.value = '';
     clearFieldError(svcContactInput);
@@ -245,11 +255,14 @@ document.addEventListener('DOMContentLoaded', () => {
       type: svc.name,
       records: allBookings,
       closures,
+      layout: 'calendar',
       onChange: renderSlotSummary,
     });
 
+    destroyPinMap();
     svcDynamicFields.innerHTML = svc.fields.map(f => {
       if (f.kind === 'name') return nameFieldsHtml(f.id, escapeHtml(f.label), { required: f.required, spanFull: !!f.span2 });
+      if (f.kind === 'map') return pinMapFieldHtml(f);
       return `
       <div class="${f.span2 ? 'sm:col-span-2' : ''}">
         <label class="form-label" for="${f.id}">${escapeHtml(f.label)}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
@@ -257,20 +270,94 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>`;
     }).join('');
 
-    menuView.classList.add('hidden');
-    formView.classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // The form is a full-screen view beside the sidebar that fits in one
+    // screen and locks the services list behind it.
+    formView.classList.remove('hidden', 'is-closing');
+    document.body.classList.add('req-screen-open');
+    document.getElementById('req-screen-body').scrollTop = 0;
+    formView.querySelectorAll('.req-screen-col').forEach(col => { col.scrollTop = 0; });
+    const mapField = svc.fields.find(f => f.kind === 'map');
+    formView.classList.toggle('svc-has-map', !!mapField);
+    if (mapField) initPinMap(mapField);
+    else svcDynamicFields.querySelector('input')?.focus({ preventScroll: true });
+  }
+
+  /* --- Pin location map (House Blessing) --- */
+  function pinMapFieldHtml(f) {
+    return `
+      <div class="sm:col-span-2 pin-map-field" id="q-${f.id}">
+        <p class="form-label">Pin Your Exact Location <span class="pin-map-optional">(recommended)</span></p>
+        <div class="pin-map-wrap">
+          <div id="${f.id}" class="pin-map" role="application" aria-label="Map — tap to place a pin on your house"></div>
+          <div class="pin-map-actions">
+            <button type="button" class="pin-map-btn" data-pin-action="locate">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="7" stroke-width="1.6"/></svg>
+              Use my current location
+            </button>
+            <button type="button" class="pin-map-btn" data-pin-action="find">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+              Find my address
+            </button>
+            <span id="${f.id}-status" class="pin-map-status">Tap the map to drop a pin on your house.</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function initPinMap(field) {
+    const statusEl = document.getElementById(`${field.id}-status`);
+    const setStatus = (text, state = '') => { statusEl.textContent = text; statusEl.dataset.state = state; };
+
+    pinMap = createPinMap(document.getElementById(field.id), {
+      onChange: (latlng) => { if (latlng) setStatus(`Pinned: ${formatLatLng(latlng)} — drag the pin to adjust.`, 'ok'); },
+    });
+    // The screen slides in; re-measure once it has settled so tiles fill the box
+    setTimeout(() => pinMap?.resize(), 300);
+
+    document.getElementById(`q-${field.id}`).addEventListener('click', async (e) => {
+      const action = e.target.closest('[data-pin-action]')?.dataset.pinAction;
+      if (!action || !pinMap) return;
+      const btn = e.target.closest('[data-pin-action]');
+      btn.disabled = true;
+      try {
+        if (action === 'locate') {
+          setStatus('Getting your location…');
+          await pinMap.locateMe();
+        } else {
+          const address = document.getElementById(field.addressField)?.value.trim();
+          if (!address) { setStatus('Type your Complete Address below first, then tap "Find my address."', 'error'); return; }
+          setStatus('Looking up your address…');
+          await pinMap.findAddress(address);
+        }
+      } catch (err) {
+        setStatus(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  function destroyPinMap() {
+    if (pinMap) { pinMap.destroy(); pinMap = null; }
   }
 
   function goToMenu() {
+    if (formView.classList.contains('hidden')) return;
     selectedTypeId = null;
     slotPicker = null;
-    formView.classList.add('hidden');
-    menuView.classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.classList.remove('req-screen-open');
+    const finish = () => { formView.classList.add('hidden'); destroyPinMap(); };
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+    formView.classList.add('is-closing');
+    formView.addEventListener('animationend', () => {
+      formView.classList.remove('is-closing');
+      // Another service was picked mid-animation: keep it open
+      if (!document.body.classList.contains('req-screen-open')) finish();
+    }, { once: true });
   }
 
   document.getElementById('btn-back-to-menu').addEventListener('click', goToMenu);
+  document.getElementById('btn-cancel-request').addEventListener('click', goToMenu);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !formView.classList.contains('hidden')) goToMenu();
@@ -283,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const svc = serviceTypes.find(s => s.id === selectedTypeId);
 
     let hasError = false;
-    svc.fields.filter(f => f.required).forEach(f => {
+    svc.fields.filter(f => f.required && f.kind !== 'map').forEach(f => {
       if (f.kind === 'name') {
         const firstEl = document.getElementById(`${f.id}-first`);
         const lastEl = document.getElementById(`${f.id}-last`);
@@ -309,6 +396,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const details = {};
     svc.fields.forEach(f => {
+      if (f.kind === 'map') {
+        const pin = pinMap?.getValue();
+        if (pin) details[f.label] = formatLatLng(pin);
+        return;
+      }
       if (f.kind === 'name') {
         const nameVal = readNameFields(f.id);
         if (!isNameEmpty(nameVal)) details[f.label] = nameVal;

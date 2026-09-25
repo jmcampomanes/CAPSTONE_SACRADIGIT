@@ -86,12 +86,6 @@
               Record Requests
             </a>
           </li>
-          <li>
-            <a href="cloud-access.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
-              Cloud Access
-            </a>
-          </li>
         </ul>
 
         <p class="sidebar-label">Operations</p>
@@ -403,6 +397,24 @@
               <p class="slot-empty">Choose a blessing type first.</p>
             </div>
           </div>
+          <!-- House Blessing only: pin the exact house on a map (see ../pin-map.js) -->
+          <div class="col-span-2 hidden" id="schedule-pin-field">
+            <p class="form-label">Pin the Exact Location <span class="pin-map-optional">(recommended)</span></p>
+            <div class="pin-map-wrap">
+              <div id="schedule-pin-map" class="pin-map" role="application" aria-label="Map — click to place a pin on the house"></div>
+              <div class="pin-map-actions">
+                <button type="button" class="pin-map-btn" data-pin-action="locate">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="7" stroke-width="1.6"/></svg>
+                  Use my current location
+                </button>
+                <button type="button" class="pin-map-btn" data-pin-action="find">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+                  Find the address
+                </button>
+                <span id="schedule-pin-status" class="pin-map-status">Click the map to drop a pin on the house.</span>
+              </div>
+            </div>
+          </div>
           <div class="col-span-2">
             <label class="form-label" for="schedule-location">Location / Address</label>
             <input type="text" id="schedule-location" class="form-input" placeholder="e.g. 42 Maligaya St., Cubao" />
@@ -451,10 +463,63 @@
       </div>
       <div class="modal-footer">
         <button type="button" id="details-cancel-booking" class="btn-danger hidden">Cancel Booking</button>
+        <button type="button" id="details-reschedule" class="btn-lavender hidden">Reschedule</button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>
   </div>
+
+  <!-- ========== RESCHEDULE SCREEN (full-screen beside the sidebar) ========== -->
+  <section id="reschedule-screen" class="svc-screen hidden" role="dialog" aria-modal="true" aria-labelledby="reschedule-title">
+    <header class="svc-screen-bar">
+      <button type="button" id="reschedule-back" class="svc-screen-back">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Blessings
+      </button>
+      <div class="svc-screen-heading">
+        <h2 class="svc-screen-title" id="reschedule-title">Reschedule</h2>
+        <p class="svc-screen-sub" id="reschedule-sub"></p>
+      </div>
+    </header>
+
+    <div class="svc-screen-body" id="reschedule-body">
+      <div class="svc-screen-cols">
+        <!-- Left: the booking as it stands -->
+        <div class="svc-screen-col">
+          <h3 class="svc-screen-col-title">Current Booking</h3>
+          <div class="svc-screen-current">
+            <p class="svc-screen-fact-label" id="reschedule-current-label">Current schedule</p>
+            <p class="svc-screen-fact-value" id="reschedule-current"></p>
+          </div>
+          <div id="reschedule-facts" class="svc-screen-facts mt-4"></div>
+          <div class="reschedule-reason" id="reschedule-reason-wrap">
+            <label class="form-label" for="reschedule-reason">Reason for Rescheduling <span class="text-red-500">*</span></label>
+            <div class="reason-chips" role="group" aria-label="Common reasons">
+              <button type="button" class="reason-chip" data-reason="Priest is sick">Priest is sick</button>
+              <button type="button" class="reason-chip" data-reason="Priest unavailable">Priest unavailable</button>
+              <button type="button" class="reason-chip" data-reason="Parish event conflict">Parish event conflict</button>
+              <button type="button" class="reason-chip" data-reason="Requested by parishioner">Requested by parishioner</button>
+              <button type="button" class="reason-chip" data-reason="Bad weather">Bad weather</button>
+            </div>
+            <textarea id="reschedule-reason" class="form-input" rows="2" placeholder="e.g. Fr. Santos is sick — moving to the next open Saturday"></textarea>
+          </div>
+          <p class="svc-screen-note">Saving books the blessing at the new time and frees the old slot. The office can book any open slot, including same-day.</p>
+        </div>
+
+        <!-- Right: pick the new slot -->
+        <div class="svc-screen-col">
+          <h3 class="svc-screen-col-title">Pick a New Schedule <span class="text-red-500">*</span></h3>
+          <div id="reschedule-slot-picker" class="slot-picker"></div>
+          <p id="reschedule-summary" class="slot-summary hidden"></p>
+        </div>
+      </div>
+    </div>
+
+    <footer class="svc-screen-footer">
+      <button type="button" id="reschedule-cancel" class="btn-secondary">Cancel</button>
+      <button type="button" id="reschedule-submit" class="btn-lavender">Save New Schedule</button>
+    </footer>
+  </section>
 
   <!-- ========== DAY PLAN MODAL (calendar view) ========== -->
   <div id="day-plan-modal" class="modal-overlay hidden">

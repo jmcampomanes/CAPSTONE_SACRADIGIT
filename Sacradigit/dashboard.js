@@ -54,16 +54,6 @@ const HELP_CONTENT = {
       'Click “Upload” to attach a supporting document to a request.',
     ],
   },
-  'cloud-access.html': {
-    title: 'Cloud Access',
-    intro: 'Manage cloud storage, access control, and backups for parish files.',
-    steps: [
-      'Browse Storage Folders to see how files are organized.',
-      'Click “Upload” to add a new file to cloud storage.',
-      'Check the Recent Access Log to see who accessed or changed a file, and when.',
-      'Review Access Roles & Permissions to see who has access to what.',
-    ],
-  },
   'schedule-offers.html': {
     title: 'Schedule Offers',
     intro: 'Every parishioner service booking. Parishioners pick one of the parish’s fixed schedule slots, so bookings arrive already scheduled — no approval needed.',

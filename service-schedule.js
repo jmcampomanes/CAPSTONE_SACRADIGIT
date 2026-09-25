@@ -176,6 +176,57 @@ export function slotHasRoom(type, records, date, time, { excludeId, closures = [
 }
 
 /** Where the service takes place, using the requester's own address field when the service goes to them. */
+/** Request-details key for a House Blessing map pin, stored as "lat, lng". */
+export const MAP_PIN_LABEL = 'Map Pin';
+
+/** Google Maps link for a stored "lat, lng" pin. */
+export function googleMapsUrl(latLngText) {
+  return `https://www.google.com/maps?q=${encodeURIComponent(latLngText)}`;
+}
+
+/**
+ * Request-details key for the latest reschedule reason. There is no
+ * reschedule column on the Blessing model, so the reason is kept in the
+ * `details` JSON (shown on admin Details / user View like other details),
+ * e.g. "Priest is sick — by Parish Office on Sep 25, 2026".
+ */
+export const RESCHEDULE_REASON_LABEL = 'Reschedule Reason';
+
+/** Returns the record's `details` JSON string with the reschedule reason set. */
+export function detailsWithRescheduleReason(detailsJson, reason, byWho) {
+  let details = {};
+  try { details = (typeof detailsJson === 'string' ? JSON.parse(detailsJson) : detailsJson) || {}; } catch { details = {}; }
+  const on = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  details[RESCHEDULE_REASON_LABEL] = `${reason} — by ${byWho} on ${on}`;
+  return JSON.stringify(details);
+}
+
+/**
+ * Wires the "Reason for Rescheduling" field: quick-pick chips fill the
+ * textarea (still editable). Returns { value(), reset(), showError() }.
+ */
+export function createReasonField(wrap) {
+  const textarea = wrap.querySelector('textarea');
+  const chips = [...wrap.querySelectorAll('.reason-chip')];
+  const markChips = () => chips.forEach(c => c.classList.toggle('selected', c.dataset.reason === textarea.value.trim()));
+
+  wrap.addEventListener('click', (e) => {
+    const chip = e.target.closest('.reason-chip');
+    if (!chip) return;
+    textarea.value = chip.dataset.reason;
+    wrap.classList.remove('has-error');
+    markChips();
+    textarea.focus();
+  });
+  textarea.addEventListener('input', () => { wrap.classList.remove('has-error'); markChips(); });
+
+  return {
+    value: () => textarea.value.trim(),
+    reset() { textarea.value = ''; wrap.classList.remove('has-error'); markChips(); },
+    showError() { wrap.classList.add('has-error'); textarea.focus(); },
+  };
+}
+
 export function locationFor(type, details = {}) {
   const s = scheduleFor(type);
   if (s.locationField && details[s.locationField]) return details[s.locationField];
@@ -184,8 +235,8 @@ export function locationFor(type, details = {}) {
 
 /**
  * Audit trail: records an admin booking action (e.g. 'Cancel') in the
- * existing AccessLog model, which shows on Cloud Access → Recent Access
- * Log and the admin's Profile → Activity Log. Never throws — a failed
+ * existing AccessLog model, which shows on Sacra ITech → Activity Logs
+ * and the admin's Profile → Activity Log. Never throws — a failed
  * log entry must not undo or block the action itself.
  */
 export async function logBookingAction(client, { action, record, reason = '', userName = 'Parish Admin' }) {
@@ -260,10 +311,16 @@ export function timeToMinutes(time12) {
  * page can re-render it on live data updates without losing the
  * current selection unless that slot just filled up.
  */
-export function createSlotPicker(container, { type, records = [], closures = [], excludeId, ignoreLead = false, onChange = () => {} }) {
+/**
+ * layout: 'strip' (default) shows a horizontal row of upcoming dates;
+ * 'calendar' shows a month grid (like Facility Booking) with the chosen
+ * day's times listed below it.
+ */
+export function createSlotPicker(container, { type, records = [], closures = [], excludeId, ignoreLead = false, layout = 'strip', onChange = () => {} }) {
   let current = null;
   let days = [];
   let activeDate = null;
+  let calMonth = null; // calendar layout: first day of the month on screen
   let latestRecords = records;
   let latestClosures = closures;
 
@@ -296,6 +353,8 @@ export function createSlotPicker(container, { type, records = [], closures = [],
     }
     const active = days.find(d => d.date === activeDate);
 
+    if (layout === 'calendar') { renderCalendar(active); return; }
+
     container.innerHTML = `
       <p class="slot-hint">${describeSchedule(type)}</p>
       <div class="slot-days" role="listbox" aria-label="Available dates">
@@ -309,22 +368,81 @@ export function createSlotPicker(container, { type, records = [], closures = [],
           </button>`;
         }).join('')}
       </div>
-      <div class="slot-times" role="listbox" aria-label="Available times">
-        ${active.slots.map(sl => {
-          const selected = current && current.date === active.date && current.time === sl.time;
-          const left = sl.capacity > 1 ? `${sl.remaining} of ${sl.capacity} left` : (sl.remaining ? 'Open' : 'Booked');
-          return `<button type="button" class="slot-time${selected ? ' selected' : ''}" data-time="${sl.time}" ${sl.remaining === 0 ? 'disabled' : ''} aria-selected="${!!selected}">
-            <span class="slot-time-label">${sl.time}</span>
-            <span class="slot-time-left">${sl.remaining === 0 ? 'Full' : left}</span>
-          </button>`;
-        }).join('')}
+      <div class="slot-times" role="listbox" aria-label="Available times">${timesHtml(active)}</div>
+    `;
+  }
+
+  function timesHtml(active) {
+    return active.slots.map(sl => {
+      const selected = current && current.date === active.date && current.time === sl.time;
+      const left = sl.capacity > 1 ? `${sl.remaining} of ${sl.capacity} left` : (sl.remaining ? 'Open' : 'Booked');
+      return `<button type="button" class="slot-time${selected ? ' selected' : ''}" data-time="${sl.time}" ${sl.remaining === 0 ? 'disabled' : ''} aria-selected="${!!selected}">
+        <span class="slot-time-label">${sl.time}</span>
+        <span class="slot-time-left">${sl.remaining === 0 ? 'Full' : left}</span>
+      </button>`;
+    }).join('');
+  }
+
+  // Month grid: schedule days are green (open) or red (full); days the
+  // service doesn't run, closures, and dates outside the booking window
+  // are greyed out. Navigation is limited to months that have schedule days.
+  function renderCalendar(active) {
+    const monthStart = iso => { const d = new Date(iso + 'T00:00:00'); return new Date(d.getFullYear(), d.getMonth(), 1); };
+    const firstMonth = monthStart(days[0].date);
+    const lastMonth = monthStart(days[days.length - 1].date);
+    if (!calMonth || calMonth < firstMonth || calMonth > lastMonth) calMonth = monthStart(activeDate);
+
+    const byDate = new Map(days.map(d => [d.date, d]));
+    const year = calMonth.getFullYear();
+    const month = calMonth.getMonth();
+    const todayIso = toLocalISODate();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let cells = '';
+    for (let i = 0; i < calMonth.getDay(); i++) cells += '<span class="slot-cal-day empty"></span>';
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = toLocalISODate(new Date(year, month, day));
+      const d = byDate.get(iso);
+      const state = !d ? 'off' : d.closed ? 'closed' : d.full ? 'full' : 'open';
+      const title = d && d.closed ? ` title="Parish closed: ${d.closed.replace(/"/g, '&quot;')}"` : d && d.full ? ' title="Fully booked"' : '';
+      cells += `<button type="button" class="slot-cal-day ${state}${iso === activeDate ? ' active' : ''}${iso === todayIso ? ' today' : ''}" data-date="${iso}" ${state === 'open' ? '' : 'disabled'} aria-pressed="${iso === activeDate}"${title}>${day}</button>`;
+    }
+
+    const activeLabel = new Date(active.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    container.innerHTML = `
+      <p class="slot-hint">${describeSchedule(type)}</p>
+      <div class="slot-cal">
+        <div class="slot-cal-nav">
+          <button type="button" class="slot-cal-nav-btn" data-cal-step="-1" aria-label="Previous month" ${calMonth <= firstMonth ? 'disabled' : ''}>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <span class="slot-cal-month">${calMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+          <button type="button" class="slot-cal-nav-btn" data-cal-step="1" aria-label="Next month" ${calMonth >= lastMonth ? 'disabled' : ''}>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+        <div class="slot-cal-weekdays"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+        <div class="slot-cal-grid">${cells}</div>
+        <div class="slot-cal-legend">
+          <span class="slot-cal-legend-item"><span class="slot-cal-dot open"></span>Available</span>
+          <span class="slot-cal-legend-item"><span class="slot-cal-dot full"></span>Fully Booked</span>
+        </div>
       </div>
+      <p class="slot-times-heading">Times on ${activeLabel}</p>
+      <div class="slot-times" role="listbox" aria-label="Available times">${timesHtml(active)}</div>
     `;
   }
 
   container.addEventListener('click', (e) => {
-    const dayBtn = e.target.closest('.slot-day');
-    if (dayBtn && !dayBtn.disabled) {
+    const navBtn = e.target.closest('[data-cal-step]');
+    if (navBtn && !navBtn.disabled) {
+      calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + Number(navBtn.dataset.calStep), 1);
+      render();
+      return;
+    }
+    const dayBtn = e.target.closest('.slot-day, .slot-cal-day');
+    if (dayBtn && !dayBtn.disabled && dayBtn.dataset.date) {
       activeDate = dayBtn.dataset.date;
       render();
       return;

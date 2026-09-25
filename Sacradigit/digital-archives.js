@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* --- Upload modal — real S3 upload via Amplify Storage, same pattern
-     as cloud-access.js. Stored under cloudFiles/parishRecords/ so it
+     as the Cloud Access upload (now in Sacra ITech). Stored under cloudFiles/parishRecords/ so it
      reuses the 'cloudFiles/*' path already allowed in storage/resource.ts
      (guest read/write/delete) rather than needing a new backend deploy. --- */
   const dropzone       = document.getElementById('upload-dropzone');

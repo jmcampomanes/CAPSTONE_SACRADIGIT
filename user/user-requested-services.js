@@ -17,7 +17,7 @@
 
 import { client } from '../amplify-init.js';
 import { formatFullName, isNameEmpty } from '../name-utils.js';
-import { downloadBookingIcs } from '../service-schedule.js';
+import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -92,6 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelRequestModal = document.getElementById('cancel-request-modal');
   const cancelRequestTypeEl = document.getElementById('cancel-request-type');
   const cancelRequestConfirm = document.getElementById('cancel-request-confirm');
+  const modalRescheduleBtn = document.getElementById('modal-reschedule');
+  const rescheduleScreen   = document.getElementById('reschedule-screen');
 
   let currentDetailId = null;
 
@@ -176,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancellable = r.status === 'pending' || (r.status === 'scheduled' && (r.date || '') >= todayISO);
     modalCancelBtn.classList.toggle('hidden', !cancellable);
     modalCalendarBtn.classList.toggle('hidden', !(r.status === 'scheduled' && r.date && r.time && r.date >= todayISO));
+    modalRescheduleBtn.classList.toggle('hidden', !cancellable); // same rule: pending, or booked and still upcoming
 
     document.getElementById('detail-modal-title').textContent = `${svc.name} Request`;
     modalStatusBadge.textContent = statusLabel[r.status] || r.status;
@@ -185,7 +188,13 @@ document.addEventListener('DOMContentLoaded', () => {
     modalDetails.innerHTML = Object.entries(details)
       .map(([label, value]) => [label, formatDetailValue(value)])
       .filter(([, value]) => value)
-      .map(([label, value]) => `
+      .map(([label, value]) => label === MAP_PIN_LABEL
+        ? `
+        <div><p class="modal-detail-item-label">Pinned Location</p><p class="modal-detail-item-value"><a href="${escapeHtml(googleMapsUrl(value))}" target="_blank" rel="noopener" class="map-pin-link">Open in Google Maps ↗</a></p></div>`
+        : label === RESCHEDULE_REASON_LABEL
+        ? `
+        <div style="grid-column: 1 / -1;"><p class="modal-detail-item-label">Rescheduled</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`
+        : `
         <div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('') + `
       ${r.date ? '' : `<div><p class="modal-detail-item-label">Preferred Date</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate)}</p></div>`}
       <div><p class="modal-detail-item-label">Contact</p><p class="modal-detail-item-value">${escapeHtml(r.contact)}</p></div>`;
@@ -212,7 +221,144 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => { closeModal(detailModal); closeModal(cancelRequestModal); });
   });
   [detailModal, cancelRequestModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(detailModal); closeModal(cancelRequestModal); } });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    // A dialog open on top closes first; with none open, leave the Reschedule screen.
+    const dialogs = [detailModal, cancelRequestModal].filter(m => !m.classList.contains('hidden'));
+    if (dialogs.length) dialogs.forEach(closeModal);
+    else closeRescheduleScreen();
+  });
+
+  /* --- Reschedule screen ---
+     Moves a pending or upcoming booking to another open fixed slot, on a
+     full-screen view beside the sidebar (current booking on the left, the
+     same calendar picker as Request a Service on the right). Saving books
+     it ('scheduled') at the new date/time and frees the old slot. The
+     picker needs every parish booking — not just this parishioner's — to
+     know which slots are full, so that's watched here too, along with
+     parish closures. */
+  const reschedulePickerEl  = document.getElementById('reschedule-slot-picker');
+  const rescheduleSummary   = document.getElementById('reschedule-summary');
+  const rescheduleSubmitBtn = document.getElementById('reschedule-submit');
+  let allBookings = [];
+  let closures = [];
+  let reschedulePicker = null;
+  let rescheduleTargetId = null;
+  const rescheduleReason = createReasonField(document.getElementById('reschedule-reason-wrap'));
+
+  client.models.Blessing.observeQuery().subscribe({
+    next: ({ items }) => { allBookings = items; if (reschedulePicker) reschedulePicker.refresh(allBookings); },
+    error: (err) => console.error('Failed to load parish bookings:', err),
+  });
+  watchClosures(client, (next) => { closures = next; if (reschedulePicker) reschedulePicker.setClosures(closures); });
+
+  function fmtLongDate(iso) {
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  modalRescheduleBtn.addEventListener('click', () => {
+    const r = myRequests.find(x => x.id === currentDetailId);
+    if (!r) return;
+    rescheduleTargetId = r.id;
+    const svcName = serviceByName(r.type)?.name || r.type;
+    const booked = r.status === 'scheduled';
+    document.getElementById('reschedule-title').textContent = `Reschedule — ${svcName}`;
+    document.getElementById('reschedule-sub').textContent = 'Pick any open date and time; your booking moves there as soon as you save.';
+    document.getElementById('reschedule-current-label').textContent = booked ? 'Currently booked' : 'Requested (not yet booked)';
+    document.getElementById('reschedule-current').textContent = booked
+      ? `${fmtLongDate(r.date)} at ${r.time}`
+      : fmtLongDate(r.preferredDate);
+    // Same label/value rows as the View window, plus contact and location
+    const fact = (label, valueHtml) => `<div><p class="svc-screen-fact-label">${escapeHtml(label)}</p><p class="svc-screen-fact-value">${valueHtml}</p></div>`;
+    document.getElementById('reschedule-facts').innerHTML = [
+      ...Object.entries(getDetails(r))
+        .map(([label, value]) => [label, formatDetailValue(value)])
+        .filter(([, value]) => value)
+        .map(([label, value]) => label === MAP_PIN_LABEL
+          ? fact('Pinned Location', `<a href="${escapeHtml(googleMapsUrl(value))}" target="_blank" rel="noopener" class="map-pin-link">Open in Google Maps ↗</a>`)
+          : fact(label === RESCHEDULE_REASON_LABEL ? 'Last Rescheduled' : label, escapeHtml(value))),
+      ...(r.location ? [fact('Location', escapeHtml(r.location))] : []),
+      ...(r.contact ? [fact('Contact', escapeHtml(r.contact))] : []),
+    ].join('');
+    rescheduleReason.reset();
+    rescheduleSummary.classList.add('hidden');
+    reschedulePickerEl.classList.remove('has-error');
+    reschedulePicker = createSlotPicker(reschedulePickerEl, {
+      type: r.type,
+      records: allBookings,
+      closures,
+      excludeId: r.id,
+      layout: 'calendar',
+      onChange: (slot) => {
+        reschedulePickerEl.classList.remove('has-error');
+        rescheduleSummary.classList.toggle('hidden', !slot);
+        if (slot) rescheduleSummary.textContent = `New schedule: ${fmtLongDate(slot.date)} at ${slot.time}`;
+      },
+    });
+    closeModal(detailModal);
+    rescheduleScreen.classList.remove('hidden', 'is-closing');
+    document.body.classList.add('svc-screen-open');
+    document.getElementById('reschedule-body').scrollTop = 0;
+  });
+
+  function closeRescheduleScreen() {
+    if (rescheduleScreen.classList.contains('hidden')) return;
+    reschedulePicker = null;
+    rescheduleTargetId = null;
+    document.body.classList.remove('svc-screen-open');
+    const finish = () => rescheduleScreen.classList.add('hidden');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+    rescheduleScreen.classList.add('is-closing');
+    rescheduleScreen.addEventListener('animationend', () => {
+      rescheduleScreen.classList.remove('is-closing');
+      if (!document.body.classList.contains('svc-screen-open')) finish(); // reopened mid-animation
+    }, { once: true });
+  }
+
+  document.getElementById('reschedule-back').addEventListener('click', closeRescheduleScreen);
+  document.getElementById('reschedule-cancel').addEventListener('click', closeRescheduleScreen);
+
+  rescheduleSubmitBtn.addEventListener('click', async () => {
+    const r = myRequests.find(x => x.id === rescheduleTargetId);
+    const slot = reschedulePicker && reschedulePicker.getValue();
+    const reason = rescheduleReason.value();
+    if (!r) return;
+    if (!reason) { rescheduleReason.showError(); window.showToast('Please tell the parish why you need to reschedule.', true); return; }
+    if (!slot) { reschedulePickerEl.classList.add('has-error'); window.showToast('Please pick a new date and time.', true); return; }
+    if (r.status === 'scheduled' && slot.date === r.date && slot.time === r.time) {
+      window.showToast('That is your current schedule — pick a different slot.', true);
+      return;
+    }
+
+    rescheduleSubmitBtn.disabled = true;
+    try {
+      // Last check against the freshest data so two people can't grab the
+      // final place in a slot at the same moment.
+      const { data: latest } = await client.models.Blessing.list({ limit: 1000 });
+      if (!slotHasRoom(r.type, latest || allBookings, slot.date, slot.time, { excludeId: r.id, closures })) {
+        reschedulePicker.refresh(latest || allBookings);
+        throw new Error('Sorry, that slot was just taken. Please pick another time.');
+      }
+      const result = await client.models.Blessing.update({
+        id: r.id,
+        status: 'scheduled',
+        preferredDate: slot.date,
+        date: slot.date,
+        time: slot.time,
+        details: detailsWithRescheduleReason(r.details, reason, r.requesterName || 'Parishioner'),
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeRescheduleScreen();
+      reschedulePicker = null;
+      rescheduleTargetId = null;
+      window.showToast(`${serviceByName(r.type)?.name || r.type} moved to ${fmtLongDate(slot.date)} at ${slot.time}.`);
+    } catch (err) {
+      console.error('Failed to reschedule:', err);
+      window.showToast(err.message || "Couldn't reschedule.", true);
+    } finally {
+      rescheduleSubmitBtn.disabled = false;
+    }
+  });
 
   modalCalendarBtn.addEventListener('click', () => {
     const r = myRequests.find(x => x.id === currentDetailId);

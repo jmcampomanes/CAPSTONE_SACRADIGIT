@@ -92,10 +92,6 @@ body {
 .sidebar-link[data-nav="record-requests"].active { background-color: rgba(91,95,168,0.14); color: #5b5fa8; }
 .sidebar-link[data-nav="record-requests"].active svg { color: #5b5fa8; }
 
-.sidebar-link[data-nav="cloud-access"] svg,
-.sidebar-link[data-nav="cloud-access"]:hover svg { color: #1590a8; }
-.sidebar-link[data-nav="cloud-access"].active { background-color: rgba(21,144,168,0.12); color: #1590a8; }
-.sidebar-link[data-nav="cloud-access"].active svg { color: #1590a8; }
 
 .sidebar-link[data-nav="schedule-offers"] svg,
 .sidebar-link[data-nav="schedule-offers"]:hover svg { color: #7a4ea8; }

@@ -1,0 +1,274 @@
+/* ============================================
+   Sacra ITech — IT Portal Shell Styles
+   Shared across ALL Sacra ITech pages.
+   Reuses the admin shell's design tokens
+   (Sacradigit/sacradigit-css/admin-shell.css, linked in
+   each page's <head>: sidebar, panels, stat cards, tables)
+   and adds the pieces the IT portal needs — buttons,
+   modals, forms, toast — with a teal accent so it's
+   obvious at a glance which portal you're in.
+   ============================================ */
+
+:root {
+  --itech: #0e7490;        /* teal — primary accent */
+  --itech-dark: #155e75;
+  --itech-soft: rgba(14, 116, 144, 0.1);
+  --itech-ring: rgba(14, 116, 144, 0.18);
+}
+
+/* ---------- Sidebar: teal accent everywhere ---------- */
+nav[aria-label="ITech navigation"] .sidebar-link svg { color: var(--itech); }
+nav[aria-label="ITech navigation"] .sidebar-link:hover { background-color: var(--itech-soft); color: #1e2a4a; }
+nav[aria-label="ITech navigation"] .sidebar-link:hover svg { color: var(--itech-dark); }
+nav[aria-label="ITech navigation"] .sidebar-link.active {
+  background-color: rgba(14, 116, 144, 0.14);
+  color: #1e2a4a;
+  font-weight: 600;
+}
+nav[aria-label="ITech navigation"] .sidebar-link.active svg { color: var(--itech-dark); }
+
+.stat-icon.itech { background-color: var(--itech-soft); color: var(--itech); }
+
+.panel-link { color: var(--itech); }
+.panel-link:hover { color: #1e2a4a; }
+
+a:focus-visible,
+button:focus-visible { outline-color: var(--itech); }
+
+/* ---------- Badges ---------- */
+.badge-red  { background-color: #fef2f2; color: #b91c1c; }
+.badge-teal { background-color: var(--itech-soft); color: var(--itech-dark); }
+.badge-blue { background-color: #eff6ff; color: #1d4ed8; }
+
+/* ---------- Empty state ---------- */
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #9ca3af;
+  font-size: 0.8125rem;
+}
+
+/* ---------- Buttons ---------- */
+.btn-teal,
+.btn-secondary,
+.btn-filter,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-teal { background-color: var(--itech); color: #ffffff; }
+.btn-teal:hover { background-color: var(--itech-dark); }
+
+.btn-secondary { background-color: #f3f4f6; color: #374151; }
+.btn-secondary:hover { background-color: #e5e7eb; }
+
+.btn-filter { background-color: #ffffff; color: #4b5563; border: 1px solid #d1d5db; }
+.btn-filter:hover { background-color: #f9fafb; border-color: #9ca3af; }
+
+.btn-danger { background-color: #fef2f2; color: #dc2626; }
+.btn-danger:hover { background-color: #fee2e2; }
+
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+
+.btn-teal:disabled,
+.btn-secondary:disabled,
+.btn-filter:disabled,
+.btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--itech);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-link:hover { color: #1e2a4a; text-decoration: underline; }
+.btn-link.danger { color: #dc2626; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background-color: #1e2a4a;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.7rem 0.75rem 0.7rem 1.25rem;
+  border-radius: 0.6rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(90vw, 440px);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.hidden { display: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast-message { flex: 1; min-width: 0; }
+
+.toast-dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toast-dismiss:hover { background: rgba(255, 255, 255, 0.28); }
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 100;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  animation: modalIn 0.18s ease;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.125rem 1.375rem;
+  border-bottom: 1px solid #f1f2f5;
+}
+
+.modal-title { font-size: 0.9375rem; font-weight: 700; color: #111827; }
+
+.modal-close {
+  color: #9ca3af;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.4rem;
+}
+
+.modal-close:hover { background-color: #f3f4f6; color: #374151; }
+
+.modal-body { padding: 1.375rem; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 1rem 1.375rem;
+  border-top: 1px solid #f1f2f5;
+}
+
+/* ---------- Forms ---------- */
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.3rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  color: #111827;
+  background-color: #ffffff;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input::placeholder { color: #9ca3af; }
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--itech);
+  box-shadow: 0 0 0 3px var(--itech-ring);
+}
+
+.form-input.has-error { border-color: #dc2626; }
+
+.form-hint { font-size: 0.6875rem; color: #9ca3af; margin-top: 0.3rem; }
+
+/* ---------- Filter bar ---------- */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid #f1f2f5;
+}
+
+.filter-bar .form-input { width: auto; }
+.filter-bar .filter-search { flex: 1 1 14rem; }
+
+/* ---------- Tables: allow long text to wrap where marked ---------- */
+.records-table td.wrap { white-space: normal; overflow-wrap: anywhere; }
+
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid #f1f2f5;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* ---------- Page intro line under a panel header ---------- */
+.panel-intro {
+  padding: 0.75rem 1.25rem 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}

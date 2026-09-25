@@ -47,7 +47,11 @@
 .media-card-actions {
   margin-top: auto;
   padding-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
+
+.media-card-actions > button { flex: 1; }
 
 .media-card-thumb {
   width: 100%;

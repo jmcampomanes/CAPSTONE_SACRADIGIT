@@ -25,6 +25,7 @@
     "vite": "^8.2.1"
   },
   "dependencies": {
-    "aws-amplify": "^6.20.0"
+    "aws-amplify": "^6.20.0",
+    "leaflet": "^1.9.4"
   }
 }

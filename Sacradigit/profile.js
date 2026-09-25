@@ -11,8 +11,8 @@
 
    The Activity Log tab IS wired to real data: the
    AccessLog model (userName, fileName, action,
-   createdAt), the same model Cloud Access reads for
-   its "Recent Access Log" panel. It's file/access
+   createdAt), the same model Sacra ITech reads for
+   its Activity Logs page. It's file/access
    activity, not per-admin login history — there's no
    Cognito-backed login flow to log yet.
    ============================================ */

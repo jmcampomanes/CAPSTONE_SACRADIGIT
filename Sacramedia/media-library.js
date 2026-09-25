@@ -4,7 +4,7 @@
    cloudFiles/media/{tag}/{timestamp}_{filename} and are
    tracked with the existing CloudFile model
    (folder: 'media'), the same pattern Cloud Access
-   uses on the admin side — so the Admin also sees
+   uses in Sacra ITech — so the IT team also sees
    these under Cloud Access → "Media Library".
 
    CloudFile has no tag/type columns, so:
@@ -15,7 +15,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { uploadData, getUrl, remove } from 'aws-amplify/storage';
+import { uploadData, getUrl, remove, copy } from 'aws-amplify/storage';
 
 const FOLDER = 'media';
 const VIDEO_EXT = /\.(mp4|webm|mov|m4v|avi|mkv)$/i;
@@ -140,7 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="media-card-meta">${escapeHtml(external ? 'External link' : meta)}</p>
           ${href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener" class="media-card-link">Open ${external ? 'link' : 'file'} ↗</a>` : '<p class="media-card-meta">File unavailable</p>'}
           <div class="media-card-actions">
-            <button type="button" class="btn-danger" data-delete="${m.id}" style="width:100%;">Remove</button>
+            <button type="button" class="btn-secondary" data-edit="${m.id}">Edit</button>
+            <button type="button" class="btn-danger" data-delete="${m.id}">Remove</button>
           </div>
         </div>
       `;
@@ -164,14 +165,26 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
   });
 
-  function openModal() {
-    titleField.value = '';
-    tagField.value = '';
+  const modalTitleEl = document.getElementById('media-modal-title');
+  const fileLabelEl = document.getElementById('media-file-label');
+  let editing = null; // the CloudFile item being edited, or null when adding
+
+  function saveLabel() {
+    return editing ? 'Save Changes' : 'Add to Library';
+  }
+
+  function openModal(item = null) {
+    editing = item;
+    const external = item && isExternal(item.url);
+    titleField.value = item ? item.name || '' : '';
+    tagField.value = item && !external ? tagFromPath(item.url) : '';
     fileField.value = '';
-    fileNameEl.textContent = 'No file chosen';
-    urlField.value = '';
+    fileNameEl.textContent = item ? 'Keep current file' : 'No file chosen';
+    urlField.value = external ? item.url : '';
+    modalTitleEl.textContent = item ? 'Edit Media Item' : 'Add Media Item';
+    fileLabelEl.textContent = item ? 'Replace file (optional)' : 'File';
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Add to Library';
+    saveBtn.textContent = saveLabel();
     modal.classList.remove('hidden');
   }
 
@@ -179,11 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.add('hidden');
   }
 
-  addBtn.addEventListener('click', openModal);
+  addBtn.addEventListener('click', () => openModal());
 
   fileField.addEventListener('change', () => {
     const file = fileField.files[0];
-    fileNameEl.textContent = file ? `${file.name} (${formatBytes(file.size)})` : 'No file chosen';
+    fileNameEl.textContent = file ? `${file.name} (${formatBytes(file.size)})` : (editing ? 'Keep current file' : 'No file chosen');
     if (file && !titleField.value.trim()) titleField.value = file.name.replace(/\.[^.]+$/, '');
   });
 
@@ -205,17 +218,58 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Please give this item a title.', true);
       return;
     }
-    if (!file && !link) {
+    // When editing an uploaded file, leaving both file and link empty keeps it.
+    const keepStoredFile = editing && !isExternal(editing.url) && !file && !link;
+    if (!file && !link && !keepStoredFile) {
       showToast('Choose a file to upload or paste a link.', true);
       return;
     }
-    if (!file && !isExternal(link)) {
+    if (!file && link && !isExternal(link)) {
       showToast('Links must start with http:// or https://', true);
       return;
     }
 
     saveBtn.disabled = true;
     saveBtn.textContent = file ? 'Uploading…' : 'Saving…';
+
+    if (editing) {
+      const old = editing;
+      const oldStored = !isExternal(old.url);
+      try {
+        let url = old.url;
+        let bytes = old.bytes || 0;
+        if (file) {
+          url = `cloudFiles/${FOLDER}/${encodeURIComponent(tag)}/${Date.now()}_${file.name}`;
+          await uploadData({ path: url, data: file, options: { contentType: file.type } }).result;
+          bytes = file.size;
+        } else if (link && link !== old.url) {
+          url = link;
+          bytes = 0;
+        } else if (keepStoredFile && tag !== tagFromPath(old.url)) {
+          // The tag lives in the S3 path, so re-tagging means moving the object.
+          const fileName = old.url.split('/').pop();
+          url = `cloudFiles/${FOLDER}/${encodeURIComponent(tag)}/${fileName}`;
+          await copy({ source: { path: old.url }, destination: { path: url } });
+        }
+
+        const { errors } = await client.models.CloudFile.update({ id: old.id, name: title, url, bytes });
+        if (errors?.length) throw new Error(errors[0].message);
+
+        if (oldStored && url !== old.url) {
+          urlCache.delete(old.url);
+          remove({ path: old.url }).catch(err => console.warn('Old S3 object not removed:', err));
+        }
+
+        closeModal();
+        showToast(`"${title}" updated.`);
+      } catch (err) {
+        console.error('Media update failed:', err);
+        showToast('Update failed. Please try again.', true);
+        saveBtn.disabled = false;
+        saveBtn.textContent = saveLabel();
+      }
+      return;
+    }
 
     try {
       let url = link;
@@ -240,6 +294,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   grid.addEventListener('click', async (e) => {
+    const editId = e.target.closest('[data-edit]')?.dataset.edit;
+    if (editId) {
+      const item = items.find(x => x.id === editId);
+      if (item) openModal(item);
+      return;
+    }
+
     const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
     if (!deleteId) return;
 

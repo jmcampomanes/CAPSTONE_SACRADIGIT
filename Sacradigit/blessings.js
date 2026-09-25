@@ -7,13 +7,15 @@
 
    Parishioners now book fixed schedule slots
    (../service-schedule.js) and land here already
-   'scheduled'. Approve/Decline only remains for
-   older 'pending' requests; the admin can cancel a
-   booking from its Details modal instead.
+   'scheduled'. Older 'pending' requests are handled
+   with Reschedule (pick a fixed slot, which books
+   them); booked blessings can be rescheduled or
+   cancelled from their Details modal.
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction } from '../service-schedule.js';
+import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField } from '../service-schedule.js';
+import { createPinMap, formatLatLng } from '../pin-map.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -86,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     next: ({ items }) => {
       allRecords = items;
       if (schedulePicker) schedulePicker.refresh(allRecords);
+      if (reschedulePicker) reschedulePicker.refresh(allRecords);
       upcoming = [];
       requests = [];
       completed = [];
@@ -230,8 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="request-actions">
             <div class="request-action-row">
-              <button type="button" class="req-approve" data-id="${r.id}">Approve</button>
-              <button type="button" class="req-decline" data-id="${r.id}">Decline</button>
+              <button type="button" class="req-reschedule" data-id="${r.id}">Reschedule</button>
             </div>
             <button type="button" class="blessing-details-btn" data-section="requests" data-id="${r.id}">Details ›</button>
           </div>
@@ -242,33 +244,12 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPaginationBar(requestsPagination, filtered.length, requestsPage, totalPages, startIdx, pageItems.length);
   }
 
+  // Pending requests are handled by rescheduling them into a fixed slot
+  // (which books them) — this replaced the old Approve / Decline actions.
   requestsList.addEventListener('click', (e) => {
-    const approveBtn = e.target.closest('.req-approve');
-    const declineBtn = e.target.closest('.req-decline');
-
-    if (approveBtn) approveRequest(approveBtn.dataset.id);
-    if (declineBtn) openDeclineModal(declineBtn.dataset.id);
+    const rescheduleBtn = e.target.closest('.req-reschedule');
+    if (rescheduleBtn) openRescheduleScreen(rescheduleBtn.dataset.id);
   });
-
-  async function approveRequest(id) {
-    const r = requests.find(x => x.id === id);
-    if (!r) return;
-
-    try {
-      const result = await client.models.Blessing.update({
-        id,
-        status: 'scheduled',
-        date: r.preferredDate,
-        time: r.time || '09:00 AM',
-        location: r.location || 'To be confirmed',
-      });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-      showToast(`Request approved — ${r.requesterName} added to the schedule.`);
-    } catch (err) {
-      console.error('Failed to approve request:', err);
-      showToast(err.message || "Couldn't approve request.", true);
-    }
-  }
 
 
   function renderCompleted() {
@@ -632,9 +613,61 @@ document.addEventListener('DOMContentLoaded', () => {
     schedulePickerEl.innerHTML = '<p class="slot-empty">Choose a blessing type first.</p>';
   }
 
+  /* House Blessing: pin the exact house on a map, same as the parishioner
+     form. Saved in `details` under MAP_PIN_LABEL so the Details modal shows
+     an "Open in Google Maps" link. The map is only built while visible. */
+  const schedulePinField  = document.getElementById('schedule-pin-field');
+  const schedulePinStatus = document.getElementById('schedule-pin-status');
+  const PIN_HINT = 'Click the map to drop a pin on the house.';
+  let schedulePinMap = null;
+
+  function setPinStatus(text, state = '') {
+    schedulePinStatus.textContent = text;
+    schedulePinStatus.dataset.state = state;
+  }
+
+  function syncSchedulePinMap() {
+    const wantMap = scheduleTypeSelect.value === 'House Blessing';
+    schedulePinField.classList.toggle('hidden', !wantMap);
+    if (wantMap && !schedulePinMap) {
+      setPinStatus(PIN_HINT);
+      schedulePinMap = createPinMap(document.getElementById('schedule-pin-map'), {
+        onChange: (latlng) => { if (latlng) setPinStatus(`Pinned: ${formatLatLng(latlng)} — drag the pin to adjust.`, 'ok'); },
+      });
+    } else if (!wantMap) {
+      destroySchedulePinMap();
+    }
+  }
+
+  function destroySchedulePinMap() {
+    if (schedulePinMap) { schedulePinMap.destroy(); schedulePinMap = null; }
+  }
+
+  schedulePinField.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-pin-action]');
+    if (!btn || !schedulePinMap) return;
+    btn.disabled = true;
+    try {
+      if (btn.dataset.pinAction === 'locate') {
+        setPinStatus('Getting your location…');
+        await schedulePinMap.locateMe();
+      } else {
+        const address = document.getElementById('schedule-location').value.trim();
+        if (!address) { setPinStatus('Type the Location / Address below first, then click "Find the address."', 'error'); return; }
+        setPinStatus('Looking up the address…');
+        await schedulePinMap.findAddress(address);
+      }
+    } catch (err) {
+      setPinStatus(err.message, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   // Walk-in / phone bookings use the same fixed slots as parishioners,
   // minus the lead-time rule (the office can book same-day).
   scheduleTypeSelect.addEventListener('change', () => {
+    syncSchedulePinMap();
     if (!scheduleTypeSelect.value) { resetSchedulePicker(); return; }
     schedulePickerEl.classList.remove('has-error');
     schedulePicker = createSlotPicker(schedulePickerEl, {
@@ -648,6 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-schedule-blessing').addEventListener('click', () => {
     openModal(scheduleModal);
+    syncSchedulePinMap(); // House Blessing may still be selected from last time
   });
 
   document.getElementById('schedule-submit').addEventListener('click', async () => {
@@ -671,10 +705,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('schedule-submit');
     submitBtn.disabled = true;
 
+    const pin = type === 'House Blessing' && schedulePinMap?.getValue();
+
     try {
       const result = await client.models.Blessing.create({
         requesterName,
         type,
+        ...(pin ? { details: JSON.stringify({ [MAP_PIN_LABEL]: formatLatLng(pin) }) } : {}),
         location: location || locationFor(type),
         preferredDate: slot.date,
         date: slot.date,
@@ -689,6 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
       scheduleTypeSelect.value = '';
       document.getElementById('schedule-location').value = '';
       resetSchedulePicker();
+      syncSchedulePinMap(); // type was cleared, so this removes the map
     } catch (err) {
       console.error('Failed to schedule blessing:', err);
       showToast("Couldn't save the blessing.", true);
@@ -764,6 +802,135 @@ document.addEventListener('DOMContentLoaded', () => {
     openDeclineModal(detailsTargetId, { cancelBooking: true });
   });
 
+  /* --- Reschedule Screen ---
+     Moves a pending request or a booked blessing to another fixed slot,
+     on a full-screen view beside the sidebar (current booking on the
+     left, calendar on the right). Saving books it ('scheduled') at the
+     new date/time. The record's own current slot counts as free
+     (excludeId), and the office isn't bound by the parishioner lead-time
+     rule (ignoreLead). */
+  const rescheduleScreen    = document.getElementById('reschedule-screen');
+  const reschedulePickerEl  = document.getElementById('reschedule-slot-picker');
+  const rescheduleSummary   = document.getElementById('reschedule-summary');
+  const rescheduleSubmitBtn = document.getElementById('reschedule-submit');
+  const detailsRescheduleBtn = document.getElementById('details-reschedule');
+  let rescheduleTargetId = null;
+  let reschedulePicker = null;
+  const rescheduleReason = createReasonField(document.getElementById('reschedule-reason-wrap'));
+
+  function rescheduleFactsHtml(r) {
+    const fact = (label, valueHtml) => `<div><p class="svc-screen-fact-label">${label}</p><p class="svc-screen-fact-value">${valueHtml}</p></div>`;
+    const details = detailsOf(r);
+    const pin = details[MAP_PIN_LABEL];
+    const extra = Object.entries(details)
+      .filter(([k]) => k !== MAP_PIN_LABEL)
+      .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
+      .map(([k, v]) => fact(escapeHtml(k === RESCHEDULE_REASON_LABEL ? 'Last Rescheduled' : k), escapeHtml(v)));
+    return [
+      fact('Requester', escapeHtml(r.requesterName)),
+      fact('Location', escapeHtml(r.location || locationFor(r.type))),
+      ...(r.contact ? [fact('Contact', escapeHtml(r.contact))] : []),
+      ...extra,
+      ...(pin ? [fact('Pinned Location', `<a href="${escapeHtml(googleMapsUrl(pin))}" target="_blank" rel="noopener" class="map-pin-link">Open in Google Maps ↗</a>`)] : []),
+    ].join('');
+  }
+
+  function openRescheduleScreen(id) {
+    const r = allRecords.find(x => x.id === id);
+    if (!r) return;
+    rescheduleTargetId = id;
+    document.getElementById('reschedule-title').textContent = `Reschedule — ${r.type}`;
+    document.getElementById('reschedule-sub').textContent = `For ${r.requesterName}`;
+    const booked = r.status === 'scheduled';
+    document.getElementById('reschedule-current-label').textContent = booked ? 'Currently booked' : 'Requested (not yet booked)';
+    document.getElementById('reschedule-current').textContent = booked
+      ? `${formatLongDate(r.date)} at ${r.time}`
+      : `${formatLongDate(r.preferredDate)}${r.time ? ` at ${r.time}` : ''}`;
+    document.getElementById('reschedule-facts').innerHTML = rescheduleFactsHtml(r);
+    rescheduleReason.reset();
+    rescheduleSummary.classList.add('hidden');
+    reschedulePickerEl.classList.remove('has-error');
+    reschedulePicker = createSlotPicker(reschedulePickerEl, {
+      type: r.type,
+      records: allRecords,
+      closures,
+      excludeId: id,
+      ignoreLead: true,
+      layout: 'calendar',
+      onChange: (slot) => {
+        reschedulePickerEl.classList.remove('has-error');
+        rescheduleSummary.classList.toggle('hidden', !slot);
+        if (slot) rescheduleSummary.textContent = `New schedule: ${formatLongDate(slot.date)} at ${slot.time}`;
+      },
+    });
+    rescheduleScreen.classList.remove('hidden', 'is-closing');
+    document.body.classList.add('svc-screen-open');
+    document.getElementById('reschedule-body').scrollTop = 0;
+  }
+
+  function closeRescheduleScreen() {
+    if (rescheduleScreen.classList.contains('hidden')) return;
+    rescheduleTargetId = null;
+    reschedulePicker = null;
+    document.body.classList.remove('svc-screen-open');
+    const finish = () => rescheduleScreen.classList.add('hidden');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+    rescheduleScreen.classList.add('is-closing');
+    rescheduleScreen.addEventListener('animationend', () => {
+      rescheduleScreen.classList.remove('is-closing');
+      if (!document.body.classList.contains('svc-screen-open')) finish(); // reopened mid-animation
+    }, { once: true });
+  }
+
+  document.getElementById('reschedule-back').addEventListener('click', closeRescheduleScreen);
+  document.getElementById('reschedule-cancel').addEventListener('click', closeRescheduleScreen);
+
+  detailsRescheduleBtn.addEventListener('click', () => {
+    if (!detailsTargetId) return;
+    closeModal(detailsModal);
+    openRescheduleScreen(detailsTargetId);
+  });
+
+  rescheduleSubmitBtn.addEventListener('click', async () => {
+    const r = allRecords.find(x => x.id === rescheduleTargetId);
+    const slot = reschedulePicker && reschedulePicker.getValue();
+    const reason = rescheduleReason.value();
+    if (!r) return;
+    if (!reason) { rescheduleReason.showError(); showToast('Please give a reason for rescheduling.', true); return; }
+    if (!slot) { reschedulePickerEl.classList.add('has-error'); showToast('Please pick a new date and time.', true); return; }
+    if (r.status === 'scheduled' && slot.date === r.date && slot.time === r.time) {
+      showToast('That is the current schedule — pick a different slot.', true);
+      return;
+    }
+    if (!slotHasRoom(r.type, allRecords, slot.date, slot.time, { excludeId: r.id, closures })) {
+      showToast('That slot was just taken. Please pick another.', true);
+      reschedulePicker.refresh(allRecords);
+      return;
+    }
+
+    rescheduleSubmitBtn.disabled = true;
+    try {
+      const result = await client.models.Blessing.update({
+        id: r.id,
+        status: 'scheduled',
+        date: slot.date,
+        time: slot.time,
+        location: r.location || locationFor(r.type),
+        details: detailsWithRescheduleReason(r.details, reason, 'Parish Office'),
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      const from = r.status === 'scheduled' ? `${formatLongDate(r.date)} ${r.time}` : 'pending request';
+      logBookingAction(client, { action: 'Reschedule', record: { ...r, date: slot.date, time: slot.time }, reason: `${reason} (from ${from})` });
+      closeRescheduleScreen();
+      showToast(`${r.type} for ${r.requesterName} moved to ${formatLongDate(slot.date)} at ${slot.time}.`);
+    } catch (err) {
+      console.error('Failed to reschedule blessing:', err);
+      showToast(err.message || "Couldn't reschedule the blessing.", true);
+    } finally {
+      rescheduleSubmitBtn.disabled = false;
+    }
+  });
+
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
       closeModal(scheduleModal);
@@ -778,7 +945,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeModal(scheduleModal); closeModal(declineModal); closeModal(detailsModal); closeModal(dayPlanModal); }
+    if (e.key !== 'Escape') return;
+    // A dialog open on top closes first; with none open, leave the Reschedule screen.
+    const dialogs = [scheduleModal, declineModal, detailsModal, dayPlanModal].filter(m => !m.classList.contains('hidden'));
+    if (dialogs.length) dialogs.forEach(closeModal);
+    else closeRescheduleScreen();
   });
 
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
@@ -810,8 +981,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!record) return;
 
+    // House Blessing requests can carry the exact spot the parishioner pinned
+    const pin = detailsOf(record)[MAP_PIN_LABEL];
+    if (pin) extraRows += `<div><p class="so-detail-label">Pinned Location</p><p class="so-detail-value"><a href="${escapeHtml(googleMapsUrl(pin))}" target="_blank" rel="noopener" class="map-pin-link">Open in Google Maps ↗</a></p></div>`;
+    const rescheduled = detailsOf(record)[RESCHEDULE_REASON_LABEL];
+    if (rescheduled) extraRows += `<div style="grid-column: 1 / -1;"><p class="so-detail-label">Rescheduled</p><p class="so-detail-value">${escapeHtml(rescheduled)}</p></div>`;
+
     detailsTargetId = id;
     detailsCancelBtn.classList.toggle('hidden', !(section === 'upcoming' && (record.date || '') >= todayISO));
+    detailsRescheduleBtn.classList.toggle('hidden', !(section === 'requests' || (section === 'upcoming' && (record.date || '') >= todayISO)));
 
     detailsBody.innerHTML = `
       <div class="so-detail-grid">

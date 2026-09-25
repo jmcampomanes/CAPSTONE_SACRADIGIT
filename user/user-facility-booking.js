@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="facility-card-footer"><button type="button" class="btn-book-this" data-facility-id="${f.id}">Book This Facility</button></div>
       </div>`).join('');
 
-    grid.querySelectorAll('.btn-book-this').forEach(btn => btn.addEventListener('click', () => openModal(btn.dataset.facilityId)));
+    grid.querySelectorAll('.btn-book-this').forEach(btn => btn.addEventListener('click', () => openBookingPage(btn.dataset.facilityId)));
   }
 
   function escapeHtml(str) {
@@ -76,15 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-scroll helpers for the booking wizard — once a question is
   // answered, bring the next one into view so the parishioner doesn't
-  // have to scroll the modal manually. block:'start' is relative to the
-  // modal card itself, since that's the nearest scrollable ancestor.
+  // have to scroll the booking page manually.
   function scrollToQuestion(id) {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function scrollToBookingFooter() {
-    const footer = document.getElementById('booking-modal').querySelector('.modal-footer');
+    const footer = document.getElementById('booking-view').querySelector('.booking-fullscreen-footer');
     if (footer) footer.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 
@@ -135,7 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderFacilityGrid();
 
-  const modal          = document.getElementById('booking-modal');
+  const bookingView    = document.getElementById('booking-view');
+  const bookingBody    = document.getElementById('booking-fullscreen-body');
+  const facilitySummary = document.getElementById('booking-facility-summary');
   const facilitySelect  = document.getElementById('book-facility');
   const purposeInput       = document.getElementById('book-purpose');
   const attendeesInput      = document.getElementById('book-attendees');
@@ -363,7 +364,26 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('bkcal-prev').addEventListener('click', () => { bkCalDate.setMonth(bkCalDate.getMonth() - 1); renderBkCalendar(); });
   document.getElementById('bkcal-next').addEventListener('click', () => { bkCalDate.setMonth(bkCalDate.getMonth() + 1); renderBkCalendar(); });
 
+  // Step 1's left column: a short card about the chosen facility, so the
+  // space beside the calendar isn't just a dropdown.
+  function renderFacilitySummary() {
+    const f = facilities.find(x => x.name === facilitySelect.value);
+    facilitySummary.classList.toggle('hidden', !f);
+    if (!f) { facilitySummary.innerHTML = ''; return; }
+    facilitySummary.innerHTML = `
+      <div class="booking-facility-summary-bar" style="background-color:${f.barColor};"></div>
+      <div class="booking-facility-summary-body">
+        <p class="facility-name">${escapeHtml(f.name)}</p>
+        <p class="facility-desc">${escapeHtml(f.desc)}</p>
+        <div class="facility-meta">
+          <span class="facility-capacity">Up to ${f.capacity} pax</span>
+          <span class="facility-avail-badge ${f.availability}">${f.availability === 'available' ? 'Available' : 'Limited Slots'}</span>
+        </div>
+      </div>`;
+  }
+
   facilitySelect.addEventListener('change', () => {
+    renderFacilitySummary();
     bkSelectedStartHour = null;
     watchFacilityAvailability(facilitySelect.value);
     scrollToQuestion('q-date');
@@ -394,10 +414,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bookingBackBtn.textContent = step === 1 ? 'Cancel' : 'Back';
     bookingNextBtn.textContent = step === 3 ? 'Submit Booking' : 'Next';
     if (step === 3) renderBookingConfirmation();
-    // Start each step scrolled to the top, so the first question of the
-    // new step is visible instead of wherever the previous step left off.
-    const card = modal.querySelector('.modal-card');
-    if (card) card.scrollTop = 0;
+    // On small screens the middle area scrolls — start each step at its top.
+    bookingBody.scrollTop = 0;
   }
 
   function renderBookingConfirmation() {
@@ -420,7 +438,58 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
-  function openModal(preSelectFacilityId = null) {
+  /* --- Booking screen ---
+     The booking wizard is a full-screen overlay that fits in one screen
+     and locks the page behind it. Opening it pushes a #book history
+     entry, so the browser's Back button (and the "Back" link) close it. */
+  const BOOKING_HASH = '#book';
+
+  function showBookingScreen() {
+    bookingView.classList.remove('hidden', 'is-closing');
+    document.body.classList.add('booking-screen-open');
+    facilitySelect.focus({ preventScroll: true });
+  }
+
+  function hideBookingScreen() {
+    if (bookingView.classList.contains('hidden')) return;
+    document.body.classList.remove('booking-screen-open');
+    const finish = () => bookingView.classList.add('hidden');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+    bookingView.classList.add('is-closing');
+    bookingView.addEventListener('animationend', () => {
+      bookingView.classList.remove('is-closing');
+      // Reopened mid-animation: keep it open
+      if (!document.body.classList.contains('booking-screen-open')) finish();
+    }, { once: true });
+  }
+
+  function openBookingPage(preSelectFacilityId = null) {
+    resetBookingForm(preSelectFacilityId);
+    if (location.hash !== BOOKING_HASH) history.pushState({ bookingPage: true }, '', BOOKING_HASH);
+    showBookingScreen();
+  }
+
+  // Leave via history when we pushed the #book entry, so Back/Forward
+  // stay in sync; popstate then swaps the view.
+  function closeBookingPage() {
+    if (history.state?.bookingPage) history.back();
+    else hideBookingPage();
+  }
+
+  function hideBookingPage() {
+    if (allBookingsSub) { allBookingsSub.unsubscribe(); allBookingsSub = null; }
+    hideBookingScreen();
+  }
+
+  window.addEventListener('popstate', () => {
+    if (location.hash === BOOKING_HASH) {
+      if (bookingView.classList.contains('hidden')) { resetBookingForm(); showBookingScreen(); }
+    } else {
+      hideBookingPage();
+    }
+  });
+
+  function resetBookingForm(preSelectFacilityId = null) {
     facilitySelect.value = '';
     purposeInput.value = '';
     attendeesInput.value = '';
@@ -437,19 +506,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const f = facilities.find(f => f.id === preSelectFacilityId);
       if (f) facilitySelect.value = f.name;
     }
+    renderFacilitySummary();
     watchFacilityAvailability(facilitySelect.value);
     goToStep(1);
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
   }
 
+  // Closes the detail / cancel dialogs (the booking wizard is a page now).
   function closeModal() {
-    modal.classList.add('hidden');
     bookingDetailModal.classList.add('hidden');
     cancelModal.classList.add('hidden');
     document.body.style.overflow = '';
     cancelTargetId = null;
-    if (allBookingsSub) { allBookingsSub.unsubscribe(); allBookingsSub = null; }
   }
 
   function openDetailModal(id) {
@@ -478,8 +545,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow = 'hidden';
   }
 
-  document.getElementById('btn-book').addEventListener('click', () => openModal());
-  document.getElementById('btn-empty-book')?.addEventListener('click', () => openModal());
+  document.getElementById('btn-book').addEventListener('click', () => openBookingPage());
+  document.getElementById('btn-empty-book')?.addEventListener('click', () => openBookingPage());
+  document.getElementById('booking-page-back').addEventListener('click', closeBookingPage);
+
+  // Landing on the page with #book (e.g. a refresh mid-booking) opens
+  // the booking view, with a list entry underneath it to go back to.
+  if (location.hash === BOOKING_HASH) {
+    history.replaceState(null, '', location.pathname + location.search);
+    openBookingPage();
+  }
 
   // Purpose → Attendees → Notes → footer: each optional/required text
   // field chains to the next one once the parishioner has answered it.
@@ -494,12 +569,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   bookingBackBtn.addEventListener('click', () => {
-    if (bookingStep === 1) { closeModal(); return; }
+    if (bookingStep === 1) { closeBookingPage(); return; }
     goToStep(bookingStep - 1);
   });
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeModal));
-  [modal, bookingDetailModal, cancelModal].forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(); }));
+  [bookingDetailModal, cancelModal].forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(); }));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
   document.getElementById('cancel-confirm-submit').addEventListener('click', async () => {
@@ -556,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const endTime24            = `${String(bkSelectedStartHour + duration).padStart(2, '0')}:00`;
 
     // Guard against a race — someone else could have booked this exact
-    // slot while this modal was open (the selection above can go stale
+    // slot while the booking page was open (the selection above can go stale
     // if that happens right at submit time, before the live re-render).
     const blockedNow = getBookedHours(bkSelectedDateIso);
     for (let h = bkSelectedStartHour; h < bkSelectedStartHour + duration; h++) {
@@ -584,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
-      closeModal();
+      closeBookingPage();
       window.showToast(`${facility} is booked for ${formatShortDate(bkSelectedDateIso)}, ${formatTime12(startTime24)}–${formatTime12(endTime24)}.`);
     } catch (err) {
       console.error('Failed to submit booking:', err);

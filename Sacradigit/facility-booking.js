@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function scrollToBookingFooter() {
-    const footer = bookingModal.querySelector('.modal-footer');
+    const footer = bookingModal.querySelector('.booking-fullscreen-footer');
     if (footer) footer.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 
@@ -601,10 +601,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bookingBackBtn.textContent = step === 1 ? 'Cancel' : 'Back';
     bookingNextBtn.textContent = step === 3 ? 'Save Booking' : 'Next';
     if (step === 3) renderBookingConfirmation();
-    // Start each step scrolled to the top, so the first question of the
-    // new step is visible instead of wherever the previous step left off.
-    const card = bookingModal.querySelector('.modal-card');
-    if (card) card.scrollTop = 0;
+    // On small screens the middle area scrolls — start each step at its top.
+    document.getElementById('booking-fullscreen-body').scrollTop = 0;
   }
 
   function renderBookingConfirmation() {
@@ -635,20 +633,51 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBkCalendar();
     renderBkTimeSlots();
     goToStep(1);
-    openModal(bookingModal);
+    openBookingScreen();
   });
 
+  /* The new-booking wizard is a full-screen view beside the sidebar
+     (not a modal): it fits in one screen and locks the page behind it. */
+  function openBookingScreen() {
+    bookingModal.classList.remove('hidden', 'is-closing');
+    document.body.classList.add('booking-screen-open');
+    bookingFacilitySelect.focus({ preventScroll: true });
+  }
+
+  function closeBookingScreen() {
+    if (bookingModal.classList.contains('hidden')) return;
+    document.body.classList.remove('booking-screen-open');
+    const finish = () => bookingModal.classList.add('hidden');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+    bookingModal.classList.add('is-closing');
+    bookingModal.addEventListener('animationend', () => {
+      bookingModal.classList.remove('is-closing');
+      // Reopened mid-animation: keep it open
+      if (!document.body.classList.contains('booking-screen-open')) finish();
+    }, { once: true });
+  }
+
+  document.getElementById('booking-page-back').addEventListener('click', closeBookingScreen);
+
   bookingBackBtn.addEventListener('click', () => {
-    if (bookingStep === 1) { closeModal(bookingModal); return; }
+    if (bookingStep === 1) { closeBookingScreen(); return; }
     goToStep(bookingStep - 1);
   });
 
+  const dialogModals = [cancelModal, detailsModal, dayPlanModal];
+
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { closeModal(bookingModal); closeModal(cancelModal); closeModal(detailsModal); closeModal(dayPlanModal); });
+    btn.addEventListener('click', () => dialogModals.forEach(closeModal));
   });
 
-  [bookingModal, cancelModal, detailsModal, dayPlanModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(bookingModal); closeModal(cancelModal); closeModal(detailsModal); closeModal(dayPlanModal); } });
+  dialogModals.forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
+  // Escape closes an open dialog first; with none open, it leaves the booking screen.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const openDialogs = dialogModals.filter(m => !m.classList.contains('hidden'));
+    if (openDialogs.length) openDialogs.forEach(closeModal);
+    else closeBookingScreen();
+  });
 
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
@@ -722,7 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
-      closeModal(bookingModal);
+      closeBookingScreen();
       showToast(`${facility} booked for ${formatShortDate(bkSelectedDateIso)}.`);
       bookingPurposeInput.value = '';
       bkSelectedStartHour = null;
