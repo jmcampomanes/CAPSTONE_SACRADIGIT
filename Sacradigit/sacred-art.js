@@ -29,27 +29,27 @@ export const SACRED_ART = [
   {
     id: 'christ-pantocrator',
     title: 'Christ Pantocrator with the Virgin Mary and John the Baptist — Deësis mosaic, Hagia Sophia (13th century)',
-    src: '../sacradigit-images/sacred-art/christ-pantocrator (1).jpg',
+    src: new URL('../sacradigit-images/sacred-art/christ-pantocrator (1).jpg', import.meta.url).href,
   },
   {
     id: 'theotokos',
     title: 'Theotokos of Vladimir (12th century icon)',
-    src: '../sacradigit-images/sacred-art/theotokos (1).jpg',
+    src: new URL('../sacradigit-images/sacred-art/theotokos (1).jpg', import.meta.url).href,
   },
   {
     id: 'good-shepherd',
     title: 'The Good Shepherd — mosaic, Mausoleum of Galla Placidia (5th century)',
-    src: '../sacradigit-images/sacred-art/good-shepherd.jpg',
+    src: new URL('../sacradigit-images/sacred-art/good-shepherd.jpg', import.meta.url).href,
   },
   {
     id: 'st-michael',
     title: 'Saint Michael the Archangel — The Fall of the Rebel Angels, Pieter Bruegel the Elder (1562)',
-    src: '../sacradigit-images/sacred-art/st-michael (1).jpg',
+    src: new URL('../sacradigit-images/sacred-art/st-michael (1).jpg', import.meta.url).href,
   },
   {
     id: 'last-supper',
     title: 'The Last Supper — Leonardo da Vinci (1495–1498)',
-    src: '../sacradigit-images/sacred-art/last-supper.jpg',
+    src: new URL('../sacradigit-images/sacred-art/last-supper.jpg', import.meta.url).href,
   },
 ];
 
