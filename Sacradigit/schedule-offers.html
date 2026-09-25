@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="sacradigit-css/digital-archives.css" />
   <link rel="stylesheet" href="sacradigit-css/record-requests.css" />
   <link rel="stylesheet" href="sacradigit-css/schedule-offers.css" />
+  <link rel="stylesheet" href="../service-schedule.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -240,39 +241,57 @@
     </div>
   </div>
 
-  <!-- ========== ASSIGN DATE MODAL ========== -->
-  <div id="assign-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">Approve &amp; Assign Date</h3>
-        <button class="modal-close" data-close-modal aria-label="Close">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
+  <!-- ========== RESCHEDULE SCREEN (full-screen beside the sidebar) ========== -->
+  <section id="reschedule-screen" class="svc-screen hidden" role="dialog" aria-modal="true" aria-labelledby="reschedule-title">
+    <header class="svc-screen-bar">
+      <button type="button" id="reschedule-back" class="svc-screen-back">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Schedule Requests
+      </button>
+      <div class="svc-screen-heading">
+        <h2 class="svc-screen-title" id="reschedule-title">Reschedule</h2>
+        <p class="svc-screen-sub" id="reschedule-sub"></p>
       </div>
-      <div class="modal-body space-y-3">
-        <p class="text-sm text-gray-600">Assigning schedule for <span id="assign-name" class="font-semibold text-gray-900"></span> — <span id="assign-service" class="text-lavender font-semibold"></span>.</p>
-        <div class="so-detail-grid" id="assign-detail-grid"></div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="form-label" for="assign-date">Confirmed Date <span class="text-red-500">*</span></label>
-            <input type="date" id="assign-date" class="form-input" />
+    </header>
+
+    <div class="svc-screen-body" id="reschedule-body">
+      <div class="svc-screen-cols">
+        <!-- Left: the request as it stands -->
+        <div class="svc-screen-col">
+          <h3 class="svc-screen-col-title">Current Request</h3>
+          <div class="svc-screen-current">
+            <p class="svc-screen-fact-label" id="reschedule-current-label">Requested (not yet booked)</p>
+            <p class="svc-screen-fact-value" id="reschedule-current"></p>
           </div>
-          <div>
-            <label class="form-label" for="assign-time">Confirmed Time <span class="text-red-500">*</span></label>
-            <input type="time" id="assign-time" class="form-input" />
+          <div id="reschedule-facts" class="svc-screen-facts mt-4"></div>
+          <div class="reschedule-reason" id="reschedule-reason-wrap">
+            <label class="form-label" for="reschedule-reason">Reason for Rescheduling <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(shown to the parishioner)</span></label>
+            <div class="reason-chips" role="group" aria-label="Common reasons">
+              <button type="button" class="reason-chip" data-reason="Priest is sick">Priest is sick</button>
+              <button type="button" class="reason-chip" data-reason="Priest unavailable">Priest unavailable</button>
+              <button type="button" class="reason-chip" data-reason="Parish event conflict">Parish event conflict</button>
+              <button type="button" class="reason-chip" data-reason="Requested date is fully booked">Requested date is fully booked</button>
+              <button type="button" class="reason-chip" data-reason="Bad weather">Bad weather</button>
+            </div>
+            <textarea id="reschedule-reason" class="form-input" rows="2" placeholder="e.g. Fr. Santos is unavailable on your preferred date"></textarea>
           </div>
+          <p class="svc-screen-note">Saving books the request at the new time. The office can book any open slot, including same-day.</p>
         </div>
-        <div>
-          <label class="form-label" for="assign-note">Note to Parishioner (optional)</label>
-          <textarea id="assign-note" class="form-input" rows="2" placeholder="e.g. Please arrive 30 minutes before the scheduled time."></textarea>
+
+        <!-- Right: pick the new slot -->
+        <div class="svc-screen-col">
+          <h3 class="svc-screen-col-title">Pick a New Schedule <span class="text-red-500">*</span></h3>
+          <div id="reschedule-slot-picker" class="slot-picker"></div>
+          <p id="reschedule-summary" class="slot-summary hidden"></p>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="assign-submit" class="btn-lavender">Confirm Schedule</button>
       </div>
     </div>
-  </div>
+
+    <footer class="svc-screen-footer">
+      <button type="button" id="reschedule-cancel" class="btn-secondary">Cancel</button>
+      <button type="button" id="reschedule-submit" class="btn-lavender">Save New Schedule</button>
+    </footer>
+  </section>
 
   <!-- ========== REJECT MODAL ========== -->
   <div id="reject-modal" class="modal-overlay hidden">
@@ -297,34 +316,31 @@
 
   <!-- ========== VIEW REQUEST DETAILS MODAL ========== -->
   <div id="view-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">Request Details</h3>
-        <button class="modal-close" data-close-modal aria-label="Close">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="modal-body space-y-3">
-        <div class="flex items-center justify-between">
-          <p class="text-sm font-semibold text-gray-900" id="view-name"></p>
+    <div class="modal-card vd-card" role="dialog" aria-modal="true" aria-labelledby="view-type">
+      <div class="vd-head">
+        <div class="vd-head-text">
+          <p class="vd-eyebrow">Request Details</p>
+          <h3 class="vd-title" id="view-type"></h3>
+          <p class="vd-sub">Requested by <span id="view-name" class="font-semibold text-gray-900"></span></p>
+        </div>
+        <div class="vd-head-side">
           <span id="view-status-badge" class="badge"></span>
-        </div>
-        <div class="so-detail-grid" id="view-detail-grid"></div>
-        <div id="view-schedule-wrap" class="hidden">
-          <p class="so-detail-label mb-1">Confirmed Schedule</p>
-          <span class="confirmed-chip" id="view-schedule-value"></span>
-        </div>
-        <div id="view-decline-wrap" class="hidden">
-          <p class="so-detail-label mb-1">Cancellation / Decline Reason</p>
-          <p class="reason-callout" id="view-decline-reason"></p>
-        </div>
-        <div id="view-notes-wrap" class="hidden">
-          <p class="so-detail-label mb-1">Note to Parishioner</p>
-          <p class="reason-callout reason-callout-neutral" id="view-notes"></p>
+          <button class="modal-close" data-close-modal aria-label="Close">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
       </div>
+
+      <div class="modal-body vd-body">
+        <div class="vd-table-wrap">
+          <table class="vd-table" id="view-table"></table>
+        </div>
+      </div>
+
       <div class="modal-footer">
+        <button type="button" id="view-cancel-booking" class="btn-danger-outline hidden">Cancel Booking</button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
+        <button type="button" id="view-reschedule" class="btn-lavender hidden">Reschedule</button>
       </div>
     </div>
   </div>

@@ -12,18 +12,25 @@
    pending -> Pending.
 
    Parishioners now book fixed slots (../service-schedule.js), so new
-   records arrive already 'scheduled'. Approve/Decline only shows for
-   older 'pending' rows; upcoming bookings get a Cancel action instead.
+   records arrive already 'scheduled'. Reschedule only shows for older
+   'pending' rows (it books them at a new date/time with a reason);
+   upcoming bookings get a Cancel action instead.
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { logBookingAction } from '../service-schedule.js';
+import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
   let offers = []; // kept in sync via observeQuery, each has .id
+  let closures = []; // 'No Services (Parish Closed)' date ranges from Special Schedules
+
+  watchClosures(client, (next) => {
+    closures = next;
+    if (reschedulePicker) reschedulePicker.setClosures(closures);
+  });
 
   const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
   const badgeClass = { Pending: 'badge-amber', Scheduled: 'badge-green', Cancelled: 'badge-red', Completed: 'badge-blue' };
@@ -101,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTypeFilterOptions();
       renderStats();
       renderTable();
+      if (reschedulePicker) reschedulePicker.refresh(offers);
     },
     error: (err) => {
       console.error('Failed to load schedule requests:', err);
@@ -227,8 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (o.status === 'pending') {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="row-approve" data-id="${o.id}">Approve</button>
-            <button type="button" class="row-reject"  data-id="${o.id}">Decline</button>
+            <button type="button" class="row-view" data-id="${o.id}">View ›</button>
+            <button type="button" class="row-reschedule" data-id="${o.id}">Reschedule</button>
           </div>`;
       } else if (o.status === 'scheduled' && (o.date || '') >= todayISO) {
         actionsHtml = `
@@ -275,107 +283,132 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Delegate row actions
   tbody.addEventListener('click', e => {
-    const approveBtn = e.target.closest('.row-approve');
+    const rescheduleBtn = e.target.closest('.row-reschedule');
     const rejectBtn   = e.target.closest('.row-reject');
     const viewBtn      = e.target.closest('.row-view');
 
-    if (approveBtn) openAssignModal(approveBtn.dataset.id);
+    if (rescheduleBtn) openRescheduleScreen(rescheduleBtn.dataset.id);
     if (rejectBtn)  openRejectModal(rejectBtn.dataset.id, { cancelBooking: rejectBtn.classList.contains('row-cancel') });
     if (viewBtn)    openViewModal(viewBtn.dataset.id);
   });
 
 
   /* ------------------------------------------
-     3. ASSIGN (APPROVE) MODAL
+     3. RESCHEDULE SCREEN
+     Books a pending request at another fixed
+     slot, on a full-screen view beside the
+     sidebar (request on the left, calendar on
+     the right) — same as the Blessings page.
+     The office isn't bound by the parishioner
+     lead-time rule (ignoreLead).
   ------------------------------------------ */
-  const assignModal     = document.getElementById('assign-modal');
-  const assignName       = document.getElementById('assign-name');
-  const assignService     = document.getElementById('assign-service');
-  const assignDetailGrid  = document.getElementById('assign-detail-grid');
-  const assignDateInput    = document.getElementById('assign-date');
-  const assignTimeInput     = document.getElementById('assign-time');
-  const assignNoteInput      = document.getElementById('assign-note');
+  const rescheduleScreen    = document.getElementById('reschedule-screen');
+  const reschedulePickerEl  = document.getElementById('reschedule-slot-picker');
+  const rescheduleSummary   = document.getElementById('reschedule-summary');
+  const rescheduleSubmitBtn = document.getElementById('reschedule-submit');
+  const rescheduleReason    = createReasonField(document.getElementById('reschedule-reason-wrap'));
 
-  let assignTargetId = null;
+  let rescheduleTargetId = null;
+  let reschedulePicker = null;
 
-  function openAssignModal(id) {
-    const o = offers.find(x => x.id === id);
-    if (!o) return;
-    assignTargetId = id;
-
-    assignName.textContent    = o.requesterName;
-    assignService.textContent  = o.type;
-    assignDateInput.value      = o.preferredDate || '';
-    assignTimeInput.value       = '';
-    assignNoteInput.value         = o.notes || '';
-    [assignDateInput, assignTimeInput].forEach(clearFieldError);
-
-    const details = parseDetails(o);
-    assignDetailGrid.innerHTML = Object.entries(details).map(([label, value]) => `
-      <div>
-        <p class="so-detail-label">${escapeHtml(label)}</p>
-        <p class="so-detail-value">${escapeHtml(formatDetailValue(value))}</p>
-      </div>
-    `).join('') + `
-      <div>
-        <p class="so-detail-label">Preferred Date</p>
-        <p class="so-detail-value">${fmtDate(o.preferredDate)}</p>
-      </div>
-      <div>
-        <p class="so-detail-label">Contact</p>
-        <p class="so-detail-value">${escapeHtml(o.contact) || '—'}</p>
-      </div>
-    `;
-
-    openModal(assignModal);
+  function rescheduleFactsHtml(o) {
+    const fact = (label, value) => `<div><p class="svc-screen-fact-label">${escapeHtml(label)}</p><p class="svc-screen-fact-value">${escapeHtml(value)}</p></div>`;
+    const extra = Object.entries(parseDetails(o))
+      .map(([k, v]) => [k === RESCHEDULE_REASON_LABEL ? 'Last Rescheduled' : k, formatDetailValue(v)])
+      .filter(([, v]) => v)
+      .map(([k, v]) => fact(k, v));
+    return [
+      fact('Requester', o.requesterName),
+      fact('Location', o.location || locationFor(o.type, parseDetails(o))),
+      ...(o.contact ? [fact('Contact', o.contact)] : []),
+      fact('Submitted', fmtDateTime(o.createdAt)),
+      ...extra,
+    ].join('');
   }
 
-  [assignDateInput, assignTimeInput].forEach(input => {
-    input.addEventListener('input', () => clearFieldError(input));
-    input.addEventListener('change', () => clearFieldError(input));
-  });
+  function openRescheduleScreen(id) {
+    const o = offers.find(x => x.id === id);
+    if (!o) return;
+    rescheduleTargetId = id;
 
-  document.getElementById('assign-submit').addEventListener('click', async () => {
-    if (assignTargetId === null) return;
+    document.getElementById('reschedule-title').textContent = `Reschedule — ${o.type}`;
+    document.getElementById('reschedule-sub').textContent = `For ${o.requesterName}`;
+    document.getElementById('reschedule-current').textContent =
+      `${fmtDate(o.preferredDate || o.date)}${o.time ? ` at ${o.time}` : ''}`;
+    document.getElementById('reschedule-facts').innerHTML = rescheduleFactsHtml(o);
 
-    const date      = assignDateInput.value;
-    const time24     = assignTimeInput.value;
-    const note         = assignNoteInput.value.trim();
+    rescheduleReason.reset();
+    rescheduleSummary.classList.add('hidden');
+    reschedulePickerEl.classList.remove('has-error');
+    reschedulePicker = createSlotPicker(reschedulePickerEl, {
+      type: o.type,
+      records: offers,
+      closures,
+      excludeId: id,
+      ignoreLead: true,
+      layout: 'calendar',
+      onChange: (slot) => {
+        reschedulePickerEl.classList.remove('has-error');
+        rescheduleSummary.classList.toggle('hidden', !slot);
+        if (slot) rescheduleSummary.textContent = `New schedule: ${fmtDate(slot.date)} at ${slot.time}`;
+      },
+    });
 
-    [assignDateInput, assignTimeInput].forEach(clearFieldError);
+    rescheduleScreen.classList.remove('hidden', 'is-closing');
+    document.body.classList.add('svc-screen-open');
+    document.getElementById('reschedule-body').scrollTop = 0;
+  }
 
-    let hasError = false;
-    if (!date)   { setFieldError(assignDateInput, 'Confirmed date is required.'); hasError = true; }
-    if (!time24) { setFieldError(assignTimeInput, 'Confirmed time is required.'); hasError = true; }
+  function closeRescheduleScreen() {
+    if (rescheduleScreen.classList.contains('hidden')) return;
+    rescheduleTargetId = null;
+    reschedulePicker = null;
+    document.body.classList.remove('svc-screen-open');
+    const finish = () => rescheduleScreen.classList.add('hidden');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+    rescheduleScreen.classList.add('is-closing');
+    rescheduleScreen.addEventListener('animationend', () => {
+      rescheduleScreen.classList.remove('is-closing');
+      if (!document.body.classList.contains('svc-screen-open')) finish(); // reopened mid-animation
+    }, { once: true });
+  }
 
-    if (hasError) {
-      showToast('Please fix the highlighted fields.', true);
+  document.getElementById('reschedule-back').addEventListener('click', closeRescheduleScreen);
+  document.getElementById('reschedule-cancel').addEventListener('click', closeRescheduleScreen);
+
+  rescheduleSubmitBtn.addEventListener('click', async () => {
+    const o = offers.find(x => x.id === rescheduleTargetId);
+    const slot = reschedulePicker && reschedulePicker.getValue();
+    const reason = rescheduleReason.value();
+    if (!o) return;
+    if (!reason) { rescheduleReason.showError(); showToast('Please give a reason for rescheduling.', true); return; }
+    if (!slot) { reschedulePickerEl.classList.add('has-error'); showToast('Please pick a new date and time.', true); return; }
+    if (!slotHasRoom(o.type, offers, slot.date, slot.time, { excludeId: o.id, closures })) {
+      showToast('That slot was just taken. Please pick another.', true);
+      reschedulePicker.refresh(offers);
       return;
     }
 
-    const o = offers.find(x => x.id === assignTargetId);
-    const submitBtn = document.getElementById('assign-submit');
-    submitBtn.disabled = true;
-
+    rescheduleSubmitBtn.disabled = true;
     try {
-      const confirmedTime = formatTime12(time24);
       const result = await client.models.Blessing.update({
-        id: assignTargetId,
+        id: o.id,
         status: 'scheduled',
-        date,
-        time: confirmedTime,
-        notes: note || undefined,
+        date: slot.date,
+        time: slot.time,
+        location: o.location || locationFor(o.type, parseDetails(o)),
+        details: detailsWithRescheduleReason(o.details, reason, 'Parish Office'),
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
-      closeModal(assignModal);
-      showToast(`${o ? o.type : 'Request'} for ${o ? o.requesterName : 'requester'} approved — ${fmtDate(date)} at ${confirmedTime}.`);
-      assignTargetId = null;
+      logBookingAction(client, { action: 'Reschedule', record: { ...o, date: slot.date, time: slot.time }, reason: `${reason} (from pending request)` });
+      closeRescheduleScreen();
+      showToast(`${o.type} for ${o.requesterName} rescheduled to ${fmtDate(slot.date)} at ${slot.time}.`);
     } catch (err) {
-      console.error('Failed to approve request:', err);
-      showToast(err.message || "Couldn't approve request.", true);
+      console.error('Failed to reschedule request:', err);
+      showToast(err.message || "Couldn't reschedule request.", true);
     } finally {
-      submitBtn.disabled = false;
+      rescheduleSubmitBtn.disabled = false;
     }
   });
 
@@ -450,76 +483,114 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     5. VIEW DETAILS MODAL (non-pending rows)
+     5. VIEW DETAILS MODAL
+     One label/value table, grouped into
+     Schedule, Requester, Request Information,
+     and Reasons & Notes (each group only when
+     it has rows). The footer offers the same
+     action as the row (Reschedule for pending,
+     Cancel Booking for upcoming).
   ------------------------------------------ */
-  const viewModal          = document.getElementById('view-modal');
-  const viewName             = document.getElementById('view-name');
+  const viewModal            = document.getElementById('view-modal');
+  const viewType              = document.getElementById('view-type');
+  const viewName              = document.getElementById('view-name');
   const viewStatusBadge       = document.getElementById('view-status-badge');
-  const viewDetailGrid          = document.getElementById('view-detail-grid');
-  const viewScheduleWrap           = document.getElementById('view-schedule-wrap');
-  const viewScheduleValue             = document.getElementById('view-schedule-value');
-  const viewDeclineWrap                = document.getElementById('view-decline-wrap');
-  const viewDeclineReason                = document.getElementById('view-decline-reason');
-  const viewNotesWrap                       = document.getElementById('view-notes-wrap');
-  const viewNotes                              = document.getElementById('view-notes');
+  const viewTable             = document.getElementById('view-table');
+  const viewRescheduleBtn     = document.getElementById('view-reschedule');
+  const viewCancelBookingBtn  = document.getElementById('view-cancel-booking');
+  let viewTargetId = null;
+
+  const hasValue = (v) => v !== undefined && v !== null && String(v).trim() !== '';
+
+  /** One <tbody> per group: a header row, then label/value rows.
+      rows: [label, valueHtml, extraClass?] — valueHtml must already be escaped. */
+  function tableGroupHtml(title, rows) {
+    if (!rows.length) return '';
+    return `
+      <tbody>
+        <tr class="vd-group"><th colspan="2" scope="colgroup">${escapeHtml(title)}</th></tr>
+        ${rows.map(([label, valueHtml, cls]) => `
+          <tr${cls ? ` class="${cls}"` : ''}>
+            <th scope="row">${escapeHtml(label)}</th>
+            <td>${valueHtml}</td>
+          </tr>`).join('')}
+      </tbody>`;
+  }
 
   function openViewModal(id) {
     const o = offers.find(x => x.id === id);
     if (!o) return;
+    viewTargetId = id;
 
     const label = statusLabel[o.status] || o.status;
-    viewName.textContent = o.requesterName;
+    const details = parseDetails(o);
+
+    viewType.textContent = o.type || 'Service Request';
+    viewName.textContent = o.requesterName || '—';
     viewStatusBadge.textContent = label;
     viewStatusBadge.className = `badge ${badgeClass[label] || 'badge-gray'}`;
 
-    const details = parseDetails(o);
-    viewDetailGrid.innerHTML = Object.entries(details).map(([l, value]) => `
-      <div>
-        <p class="so-detail-label">${escapeHtml(l)}</p>
-        <p class="so-detail-value">${escapeHtml(formatDetailValue(value))}</p>
-      </div>
-    `).join('') + `
-      <div>
-        <p class="so-detail-label">Service Type</p>
-        <p class="so-detail-value">${escapeHtml(o.type)}</p>
-      </div>
-      <div>
-        <p class="so-detail-label">Preferred Date</p>
-        <p class="so-detail-value">${fmtDate(o.preferredDate)}</p>
-      </div>
-      <div>
-        <p class="so-detail-label">Submitted</p>
-        <p class="so-detail-value">${fmtDateTime(o.createdAt)}</p>
-      </div>
-      <div>
-        <p class="so-detail-label">Contact</p>
-        <p class="so-detail-value">${escapeHtml(o.contact) || '—'}</p>
-      </div>
-    `;
+    const longDate = (iso) => new Date(iso + 'T00:00:00')
+      .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
+    const scheduleRows = [];
     if (o.date) {
-      viewScheduleValue.textContent = `${fmtDate(o.date)}${o.time ? ` at ${o.time}` : ''}`;
-      viewScheduleWrap.classList.remove('hidden');
-    } else {
-      viewScheduleWrap.classList.add('hidden');
+      scheduleRows.push([o.status === 'declined' ? 'Was Scheduled For' : 'Confirmed Date', escapeHtml(longDate(o.date))]);
+    }
+    if (o.time) scheduleRows.push(['Time', escapeHtml(o.time)]);
+    if (o.preferredDate && o.preferredDate !== o.date) {
+      scheduleRows.push([o.date ? 'Originally Preferred' : 'Preferred Date (not yet booked)', escapeHtml(longDate(o.preferredDate))]);
+    }
+    const location = o.location || (o.date ? locationFor(o.type, details) : '');
+    if (location) scheduleRows.push(['Location', escapeHtml(location)]);
+    if (!scheduleRows.length) scheduleRows.push(['Date', 'No date yet']);
+
+    const requesterRows = [
+      ['Name', escapeHtml(o.requesterName) || '—'],
+      ['Contact', escapeHtml(o.contact) || '—'],
+      ['Submitted', fmtDateTime(o.createdAt)],
+    ];
+
+    const infoRows = Object.entries(details)
+      .filter(([k]) => k !== RESCHEDULE_REASON_LABEL && k !== MAP_PIN_LABEL)
+      .map(([k, v]) => [k, formatDetailValue(v)])
+      .filter(([, v]) => hasValue(v))
+      .map(([k, v]) => [k, escapeHtml(v)]);
+    const pin = details[MAP_PIN_LABEL];
+    if (pin) {
+      infoRows.push(['Pinned Location',
+        `<a href="${escapeHtml(googleMapsUrl(pin))}" target="_blank" rel="noopener" class="map-pin-link">Open in Google Maps ↗</a>`]);
     }
 
-    if (o.status === 'declined' && o.declineReason) {
-      viewDeclineReason.textContent = o.declineReason;
-      viewDeclineWrap.classList.remove('hidden');
-    } else {
-      viewDeclineWrap.classList.add('hidden');
-    }
+    const noteRows = [];
+    if (o.status === 'declined') noteRows.push(['Cancellation Reason', escapeHtml(o.declineReason || 'No reason given'), 'vd-row-red']);
+    const rescheduled = formatDetailValue(details[RESCHEDULE_REASON_LABEL]);
+    if (hasValue(rescheduled)) noteRows.push(['Last Rescheduled', escapeHtml(rescheduled), 'vd-row-lavender']);
+    if (hasValue(o.notes)) noteRows.push(['Notes', escapeHtml(o.notes)]);
 
-    if (o.notes) {
-      viewNotes.textContent = o.notes;
-      viewNotesWrap.classList.remove('hidden');
-    } else {
-      viewNotesWrap.classList.add('hidden');
-    }
+    viewTable.innerHTML =
+      tableGroupHtml('Schedule', scheduleRows) +
+      tableGroupHtml('Requester', requesterRows) +
+      tableGroupHtml('Request Information', infoRows) +
+      tableGroupHtml('Reasons & Notes', noteRows);
+
+    viewRescheduleBtn.classList.toggle('hidden', o.status !== 'pending');
+    viewCancelBookingBtn.classList.toggle('hidden', !(o.status === 'scheduled' && (o.date || '') >= todayISO));
 
     openModal(viewModal);
   }
+
+  viewRescheduleBtn.addEventListener('click', () => {
+    if (!viewTargetId) return;
+    closeModal(viewModal);
+    openRescheduleScreen(viewTargetId);
+  });
+
+  viewCancelBookingBtn.addEventListener('click', () => {
+    if (!viewTargetId) return;
+    closeModal(viewModal);
+    openRejectModal(viewTargetId, { cancelBooking: true });
+  });
 
 
   /* ------------------------------------------
@@ -527,21 +598,20 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
-      closeModal(assignModal);
       closeModal(rejectModal);
       closeModal(viewModal);
     });
   });
 
-  [assignModal, rejectModal, viewModal].forEach(m => {
+  [rejectModal, viewModal].forEach(m => {
     m.addEventListener('click', e => { if (e.target === m) closeModal(m); });
   });
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      closeModal(assignModal);
       closeModal(rejectModal);
       closeModal(viewModal);
+      closeRescheduleScreen();
     }
   });
 
@@ -554,13 +624,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (m.classList.contains('hidden')) return;
     m.classList.add('hidden');
     document.body.style.overflow = '';
-  }
-
-  function formatTime12(t24) {
-    let [h, m] = t24.split(':').map(Number);
-    const mer = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${mer}`;
   }
 
 

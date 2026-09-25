@@ -103,7 +103,7 @@ const HELP_CONTENT = {
   },
   'user-request-certificate.html': {
     title: 'Request a Certificate',
-    intro: 'Submit a request for a Baptismal, Confirmation, Marriage, First Communion, or Death certificate.',
+    intro: 'Submit a request for a Baptismal, Confirmation, Marriage, or First Communion certificate.',
     steps: [
       'Choose the certificate type you need.',
       'Fill in the required fields — anything marked with an asterisk (*) must be completed before you can submit.',
