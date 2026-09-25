@@ -8,8 +8,11 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { mountFaithfulGivers } from './faith-journey-widgets.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  mountFaithfulGivers(document.getElementById('fj-faithful-givers'));
 
   const DONOR_NAME = 'Maria P. Santos';
   const monthPrefix = new Date().toISOString().slice(0, 7);

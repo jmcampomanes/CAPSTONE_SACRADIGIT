@@ -10,10 +10,32 @@
 import { client } from '../amplify-init.js';
 import { massTypeInfo, massTypeBadgeHtml, massTypeLegendHtml } from '../mass-types.js';
 import { mergeWeeklySchedule, recurringMassesForDate } from '../weekly-mass-schedule.js';
+import { checkInReady } from '../mass-checkin.js';
+import { isoDate } from '../badges.js';
+import { initCheckInDisplay } from './mass-checkin-display.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  // Mass check-in (QR) — see mass-checkin-display.js. showToast is a
+  // function declaration further down, so it's available here.
+  const checkInDisplay = initCheckInDisplay({ showToast });
+  let openCheckIns = []; // MassCheckInSession rows that are open right now
+  // Subscribed after the rest of this setup has run (queueMicrotask), since
+  // the first update re-renders Date's Schedule, which needs the page ready.
+  if (checkInReady()) queueMicrotask(() => {
+    client.models.MassCheckInSession.observeQuery({ filter: { status: { eq: 'open' } } }).subscribe({
+      next: ({ items }) => {
+        const now = new Date().toISOString();
+        openCheckIns = items.filter(s => s.closesAt > now);
+        renderDateSchedule();
+      },
+      error: (err) => console.error('Failed to load check-in sessions:', err),
+    });
+  });
+
+  // Local date — toISOString() is UTC, which in the Philippines (UTC+8)
+  // is still "yesterday" before 8 AM.
+  const todayISO = isoDate(new Date());
 
   const massTypeLegendEl = document.getElementById('mass-type-legend');
   if (massTypeLegendEl) massTypeLegendEl.innerHTML = massTypeLegendHtml();
@@ -123,7 +145,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentDateMasses = masses.slice().sort((a, b) => to24h(a.time) - to24h(b.time));
 
+    // Check-in is offered for today's Masses (local date, not UTC).
+    const isToday = iso === isoDate(new Date());
+
     currentDateMasses.forEach((m, idx) => {
+      const open = openCheckIns.find(s => s.massDate === m.date && s.massTime === m.time) ||
+        openCheckIns.find(s => s.massDate === iso && s.massTime === m.time);
+      const checkInBtn = !isToday ? '' : open
+        ? `<button type="button" class="schedule-checkin-btn is-open" data-index="${idx}" data-session="${open.id}">● Check-in open</button>`
+        : `<button type="button" class="schedule-checkin-btn" data-index="${idx}">Start Check-in</button>`;
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="schedule-row">
@@ -133,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${m.note && m.title !== m.note ? `<p class="schedule-note">${escapeHtml(m.note)}</p>` : ''}
           </div>
           ${massTypeBadgeHtml(m.type)}
+          ${checkInBtn}
           <button type="button" class="schedule-details-btn" data-index="${idx}">See Full Details ›</button>
         </div>
       `;
@@ -142,7 +173,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   datePicker.addEventListener('change', renderDateSchedule);
 
-  dateScheduleList.addEventListener('click', (e) => {
+  dateScheduleList.addEventListener('click', async (e) => {
+    const ciBtn = e.target.closest('.schedule-checkin-btn');
+    if (ciBtn) {
+      const m = currentDateMasses[parseInt(ciBtn.dataset.index, 10)];
+      if (!m) return;
+      const open = ciBtn.dataset.session && openCheckIns.find(s => s.id === ciBtn.dataset.session);
+      if (open && await checkInDisplay.resume(open)) return;
+      if (open) return; // started elsewhere — resume() already explained
+      ciBtn.disabled = true;
+      await checkInDisplay.start({
+        id: m.id,
+        date: m.date || datePicker.value,
+        time: m.time,
+        title: m.title || massTypeInfo(m.type)?.label || 'Holy Mass',
+      });
+      ciBtn.disabled = false;
+      return;
+    }
     const btn = e.target.closest('.schedule-details-btn');
     if (!btn) return;
     openMassDetailsModal(parseInt(btn.dataset.index, 10));
@@ -181,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const weekStart = new Date(todayISO + 'T00:00:00');
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
-    const weekEndISO = weekEnd.toISOString().slice(0, 10);
+    const weekEndISO = isoDate(weekEnd);
 
     const thisWeek = allMasses.filter(m => m.date >= todayISO && m.date < weekEndISO);
 

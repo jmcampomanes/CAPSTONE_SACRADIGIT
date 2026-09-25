@@ -5,6 +5,9 @@
    user menu dropdown, toast dismiss wiring)
    ============================================ */
 
+// Adds the rotating sacred art to every navy page header (see sacred-art.js).
+import '../Sacradigit/sacred-art.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------

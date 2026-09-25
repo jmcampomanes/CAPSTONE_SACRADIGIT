@@ -26,6 +26,9 @@
   },
   "dependencies": {
     "aws-amplify": "^6.20.0",
-    "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4",
+    "pdfjs-dist": "^6.3.289",
+    "qrcode": "^1.5.4",
+    "tesseract.js": "^7.0.0"
   }
 }

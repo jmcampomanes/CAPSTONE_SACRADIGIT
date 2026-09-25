@@ -6,6 +6,7 @@
 import { client } from '../amplify-init.js';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../name-utils.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
+import { initScanScreen, SCAN_SUFFIX } from './scanner/scan-screen.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -192,6 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewRecordBody   = document.getElementById('view-record-body');
 
   document.getElementById('btn-upload').addEventListener('click', () => openModal(uploadModal));
+
+  // Scan Document — OCR screen (see scanner/scan-screen.js). showToast is a
+  // function declaration further down, so it's already available here.
+  const scanScreen = initScanScreen({ showToast });
+  document.getElementById('btn-scan').addEventListener('click', () => scanScreen.open());
   document.getElementById('btn-new-record').addEventListener('click', () => openModal(newRecordModal));
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
@@ -208,6 +214,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
+
+  async function loadTranscript(fileURL) {
+    try {
+      const url = await resolveFileUrl(fileURL + SCAN_SUFFIX);
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  function transcriptHtml(t) {
+    const fields = Object.entries(t.fields || {});
+    return `
+      <div class="mt-4">
+        <p class="so-detail-label">Scanned Text${t.documentType ? ` · ${escapeHtml(t.documentType)}` : ''}${t.confidence ? ` · ${t.confidence}% read clearly` : ''}</p>
+        ${fields.length ? `<div class="so-detail-grid mt-2">${fields.map(([k, v]) => `
+          <div><p class="so-detail-label">${escapeHtml(k)}</p><p class="so-detail-value">${escapeHtml(v)}</p></div>`).join('')}</div>` : ''}
+        ${t.text ? `<pre class="scan-record-text">${escapeHtml(t.text)}</pre>` : ''}
+      </div>`;
+  }
 
   async function openViewModal(id) {
     const r = records.find(x => x.id === id);
@@ -238,11 +266,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Guard against the modal having moved on to a different record
         // (or closed) while the signed URL was resolving.
         if (viewRecordModal.classList.contains('hidden')) return;
-        viewRecordBody.innerHTML = detailGridHtml + `
+        const fileLinkHtml = `
           <div class="mt-3"><a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="certificate-chip">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4"/></svg>
             View scanned file
           </a></div>`;
+        viewRecordBody.innerHTML = detailGridHtml + fileLinkHtml;
+
+        // Records made with Scan Document also have the read text stored
+        // beside the file; older uploads don't, so a miss is silent.
+        const transcript = await loadTranscript(r.fileURL);
+        if (transcript && !viewRecordModal.classList.contains('hidden')) {
+          viewRecordBody.innerHTML = detailGridHtml + fileLinkHtml + transcriptHtml(transcript);
+        }
       } catch (err) {
         console.error('Failed to resolve scanned file URL:', err);
         viewRecordBody.innerHTML = detailGridHtml + `<p class="text-xs text-red-500 mt-3">Couldn't load the scanned file.</p>`;

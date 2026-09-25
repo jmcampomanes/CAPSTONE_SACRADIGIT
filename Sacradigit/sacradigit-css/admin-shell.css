@@ -428,3 +428,32 @@ button:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .sacred-art-layer .sacred-kb-group { animation: none; }
 }
+
+/* ---------- Sacred art on navy page headers ----------
+   sacred-art.js prepends an art frame + a navy tint to every navy
+   header (.ann-hero, [data-sacred-header]). Layering, bottom to top:
+   header background → art (z 0) → tint (z 0) → the header's own
+   gold/lavender glows (::before/::after, z 1) → its content (z 2). */
+.sacred-header {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.sacred-header > .sacred-header-tint {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(30, 42, 74, 0.86) 0%, rgba(42, 58, 92, 0.8) 100%);
+}
+
+.sacred-header::before,
+.sacred-header::after {
+  z-index: 1;
+}
+
+.sacred-header > *:not(.sacred-art-frame):not(.sacred-header-tint) {
+  position: relative;
+  z-index: 2;
+}

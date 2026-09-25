@@ -39,6 +39,7 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="sacradigit-css/admin-shell.css" />
   <link rel="stylesheet" href="sacradigit-css/digital-archives.css" />
+  <link rel="stylesheet" href="sacradigit-css/document-scanner.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -186,6 +187,10 @@
             <p class="text-gray-500 text-sm mt-1">Browse, search, and manage all digitized sacramental records.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btn-scan" type="button" class="btn-lavender">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2M7 12h10"/></svg>
+              Scan Document
+            </button>
             <button id="btn-upload" type="button" class="btn-gold">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0-9l-3 3m3-3l3 3"/></svg>
               Upload
@@ -427,6 +432,161 @@
       </div>
     </div>
   </div>
+
+  <!-- ========== SCAN DOCUMENT SCREEN (full-screen beside the sidebar) ========== -->
+  <section id="scan-screen" class="scan-screen hidden" role="dialog" aria-modal="true" aria-labelledby="scan-title">
+    <header class="scan-bar">
+      <button type="button" id="scan-back" class="scan-back">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Digital Archives
+      </button>
+      <div class="scan-heading">
+        <h2 class="scan-title" id="scan-title">Scan Document</h2>
+        <p class="scan-sub">Reads the page left to right, row by row. Check every field before saving.</p>
+      </div>
+    </header>
+
+    <div class="scan-body">
+      <div class="scan-cols">
+
+        <!-- Left: the document -->
+        <div class="scan-col scan-col-doc">
+          <div class="scan-col-head">
+            <h3 class="scan-col-title">Document</h3>
+            <div class="scan-tools hidden" id="scan-tools">
+              <div class="scan-pager hidden" id="scan-pager">
+                <button type="button" class="scan-tool" id="scan-prev-page" aria-label="Previous page">‹</button>
+                <span id="scan-page-label">Page 1 of 1</span>
+                <button type="button" class="scan-tool" id="scan-next-page" aria-label="Next page">›</button>
+              </div>
+              <button type="button" class="scan-tool" id="scan-rotate-left" title="Rotate left" aria-label="Rotate left">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a6 6 0 016 6v2M3 10l5-5M3 10l5 5"/></svg>
+              </button>
+              <button type="button" class="scan-tool" id="scan-rotate-right" title="Rotate right" aria-label="Rotate right">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10H11a6 6 0 00-6 6v2M21 10l-5-5M21 10l-5 5"/></svg>
+              </button>
+              <button type="button" class="scan-tool" id="scan-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+              <button type="button" class="scan-tool" id="scan-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+              <button type="button" class="scan-tool scan-tool-text" id="scan-replace">Replace file</button>
+            </div>
+          </div>
+
+          <label class="scan-dropzone" id="scan-dropzone">
+            <svg class="w-9 h-9 text-lavender mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2M7 12h10"/></svg>
+            <p class="text-sm font-semibold text-gray-700">Drop a photo or scan here, or <span class="text-lavender underline">browse</span></p>
+            <p class="text-xs text-gray-400 mt-1">JPG, PNG or PDF · Max 20 MB</p>
+            <ul class="scan-tips">
+              <li>Lay the page flat in good, even light — no flash glare.</li>
+              <li>Fill the frame with the page and keep the phone straight above it.</li>
+              <li>Scanner at 300 dpi gives the best results.</li>
+            </ul>
+            <input type="file" id="scan-file" class="hidden" accept="image/*,.pdf,application/pdf" />
+          </label>
+
+          <div class="scan-stage hidden" id="scan-stage">
+            <div class="scan-stage-inner" id="scan-stage-inner">
+              <canvas id="scan-canvas"></canvas>
+              <svg id="scan-overlay" class="scan-overlay" preserveAspectRatio="none" aria-hidden="true"></svg>
+            </div>
+          </div>
+
+          <div class="scan-doc-foot hidden" id="scan-doc-foot">
+            <label class="scan-check"><input type="checkbox" id="scan-threshold" /> Boost faint ink / shadows</label>
+            <label class="scan-check"><input type="checkbox" id="scan-show-boxes" checked /> Show detected words</label>
+            <span class="scan-legend"><i class="scan-legend-ok"></i> Read clearly <i class="scan-legend-low"></i> Please check</span>
+          </div>
+        </div>
+
+        <!-- Right: what was read -->
+        <div class="scan-col scan-col-results">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="form-label" for="scan-doc-type">Document Type</label>
+              <select id="scan-doc-type" class="form-input"></select>
+            </div>
+            <div>
+              <label class="form-label" for="scan-record-type">Save As Record Type <span class="text-red-500">*</span></label>
+              <select id="scan-record-type" class="form-input">
+                <option value="">Select type</option>
+                <option value="baptism">Baptismal</option>
+                <option value="confirmation">Confirmation</option>
+                <option value="marriage">Marriage</option>
+                <option value="death">Death</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="button" id="scan-run" class="btn-lavender scan-run" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2M7 12h10"/></svg>
+            <span id="scan-run-label">Scan Document</span>
+          </button>
+
+          <div class="scan-progress hidden" id="scan-progress" role="status" aria-live="polite">
+            <div class="scan-progress-track"><span id="scan-progress-bar"></span></div>
+            <p id="scan-progress-text">Preparing…</p>
+          </div>
+
+          <p class="scan-empty" id="scan-empty">Add a document, pick its type, then press <strong>Scan Document</strong>. The first scan takes a little longer while the text reader downloads.</p>
+
+          <div class="scan-results hidden" id="scan-results">
+            <div class="scan-summary" id="scan-summary"></div>
+
+            <section class="scan-section">
+              <h4 class="scan-section-title">Archive Record</h4>
+              <div class="name-field-group">
+                <label class="form-label" id="scan-name-label">Record Name <span class="text-red-500">*</span></label>
+                <div class="name-field-row">
+                  <input type="text" id="scan-name-first" class="form-input" placeholder="First Name" />
+                  <input type="text" id="scan-name-middle" class="form-input" placeholder="Middle Name" />
+                  <input type="text" id="scan-name-last" class="form-input" placeholder="Last Name" />
+                  <input type="text" id="scan-name-ext" class="form-input name-ext-input" placeholder="Ext." />
+                </div>
+              </div>
+              <div class="name-field-group mt-3 hidden" id="scan-spouse-group">
+                <label class="form-label">Bride / Wife</label>
+                <div class="name-field-row">
+                  <input type="text" id="scan-spouse-first" class="form-input" placeholder="First Name" />
+                  <input type="text" id="scan-spouse-middle" class="form-input" placeholder="Middle Name" />
+                  <input type="text" id="scan-spouse-last" class="form-input" placeholder="Last Name" />
+                  <input type="text" id="scan-spouse-ext" class="form-input name-ext-input" placeholder="Ext." />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label class="form-label" for="scan-date">Date of Event</label>
+                  <input type="date" id="scan-date" class="form-input" />
+                </div>
+                <div>
+                  <label class="form-label" for="scan-officiant">Officiant / Recorded By</label>
+                  <input type="text" id="scan-officiant" class="form-input" />
+                </div>
+              </div>
+            </section>
+
+            <section class="scan-section" id="scan-fields-section">
+              <h4 class="scan-section-title">Details Read From the Document</h4>
+              <div class="scan-fields" id="scan-fields"></div>
+            </section>
+
+            <section class="scan-section">
+              <div class="scan-section-head">
+                <h4 class="scan-section-title">Full Text <span class="scan-section-note">left to right · “|” separates boxes on the same line</span></h4>
+                <button type="button" class="scan-copy" id="scan-copy">Copy</button>
+              </div>
+              <textarea id="scan-text" class="form-input scan-text" rows="12" spellcheck="false"></textarea>
+            </section>
+
+            <p class="scan-tip">Tip: click in any box above, then click a word on the document to copy it in.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="scan-footer">
+      <button type="button" id="scan-cancel" class="btn-secondary">Cancel</button>
+      <button type="button" id="scan-save" class="btn-gold" disabled>Save to Archive</button>
+    </footer>
+  </section>
 
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>

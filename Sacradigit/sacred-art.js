@@ -21,10 +21,9 @@
    visitor — sees the same artwork change together.
    ============================================ */
 
-// Image paths are relative to the page that loads this script — both
-// Sacradigit/*.html and user/*.html sit one level below the project
-// root, so "../sacradigit-images/..." resolves correctly from either
-// side (matching how the site logo is already referenced).
+// Image paths resolve relative to this script (import.meta.url), so the
+// art loads correctly from any page that imports it — admin, media, or
+// user side.
 export const SACRED_ART = [
   {
     id: 'christ-pantocrator',
@@ -107,6 +106,29 @@ export function initSacredArt(container) {
   setInterval(paint, CHECK_MS);
 }
 
+/* ---------- Navy page headers ----------
+   Every navy header on the admin / media side (.ann-hero, or any element
+   marked [data-sacred-header]) gets the same rotating art as the
+   Dashboard banner: an art frame plus a navy tint (so the white text
+   stays readable) are prepended as its first children. See "Sacred art
+   on navy page headers" in admin-shell.css for the layering. */
+const SACRED_HEADER_SELECTOR = '.ann-hero, [data-sacred-header]';
+
+export function addSacredArtToHeaders(root = document) {
+  root.querySelectorAll(SACRED_HEADER_SELECTOR).forEach((header) => {
+    if (header.querySelector(':scope > .sacred-art-frame')) return;
+    header.classList.add('sacred-header');
+    const tint = document.createElement('div');
+    tint.className = 'sacred-header-tint';
+    tint.setAttribute('aria-hidden', 'true');
+    const frame = document.createElement('div');
+    frame.setAttribute('aria-hidden', 'true');
+    header.prepend(frame, tint);
+    initSacredArt(frame);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-sacred-art]').forEach((el) => initSacredArt(el));
+  addSacredArtToHeaders();
 });

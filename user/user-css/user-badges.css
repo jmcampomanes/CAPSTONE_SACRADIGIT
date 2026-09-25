@@ -1,0 +1,352 @@
+/* ============================================
+   SacraDigit — My Badges (Faith Journey) Styles
+   Extends user-shell.css
+   ============================================ */
+
+/* ---------- Hero banner ---------- */
+.req-hero {
+  background: linear-gradient(135deg, #1e2a4a 0%, #2a3a5c 55%, #3d3f7a 100%);
+  border-radius: 1.25rem;
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(30, 42, 74, 0.22);
+}
+
+.req-hero::before {
+  content: '';
+  position: absolute;
+  top: -45%;
+  right: -8%;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.28), transparent 70%);
+  pointer-events: none;
+}
+
+.req-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -60%;
+  left: 8%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 143, 199, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.req-hero-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #c9a84c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-sub {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.68);
+  margin-top: 0.25rem;
+  max-width: 34rem;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+.req-hero-with-cta { flex-wrap: wrap; }
+
+.req-hero-cta {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.req-hero-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+}
+
+@media (max-width: 640px) {
+  .req-hero { padding: 1.375rem 1.25rem; }
+  .req-hero-with-cta { align-items: flex-start; }
+  .req-hero-cta { width: 100%; justify-content: center; }
+}
+
+
+/* ---------- Check-in ---------- */
+.fj-code-input {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fj-code-input::placeholder {
+  font-family: inherit;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.fj-note {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.6;
+  background-color: #f7f8fa;
+  border-radius: 0.625rem;
+  padding: 0.75rem 0.875rem;
+}
+
+.fj-note.hidden, .fj-result.hidden, .fj-toggle.hidden { display: none; }
+
+.fj-result {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1.125rem;
+  border-radius: 0.875rem;
+  border: 1px solid;
+}
+
+.fj-result.is-ok    { background-color: #ecfdf3; border-color: #bbf7d0; color: #14532d; }
+.fj-result.is-error { background-color: #fef2f2; border-color: #fecaca; color: #7f1d1d; }
+
+.fj-result-icon {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.fj-result.is-ok .fj-result-icon    { background-color: #16a34a; }
+.fj-result.is-error .fj-result-icon { background-color: #dc2626; }
+.fj-result-title { font-size: 0.875rem; font-weight: 700; }
+.fj-result-sub   { font-size: 0.75rem; opacity: 0.8; margin-top: 0.125rem; }
+
+/* ---------- At a glance ---------- */
+.fj-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 1.25rem 1.25rem 0.5rem;
+}
+
+.fj-stat {
+  text-align: center;
+  padding: 0.875rem 0.5rem;
+  border-radius: 0.75rem;
+  background-color: #f7f8fa;
+}
+
+.fj-stat-value { font-size: 1.5rem; font-weight: 800; color: #1e2a4a; line-height: 1.1; }
+.fj-stat-label { margin-top: 0.25rem; font-size: 0.6875rem; color: #6b7280; }
+
+.fj-next {
+  margin: 0.5rem 1.25rem 1.25rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.625rem;
+  background-color: rgba(201, 168, 76, 0.12);
+  font-size: 0.8125rem;
+  color: #5c4a14;
+}
+
+.fj-next-label { font-weight: 700; color: #8a6d1f; }
+
+/* ---------- Tabs ---------- */
+.fj-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+
+.fj-tab {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.fj-tab:hover  { color: #1e2a4a; background-color: #f3f4f6; }
+.fj-tab.active { color: #ffffff; background-color: #1e2a4a; }
+
+/* ---------- Badge grid ---------- */
+.fj-badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.fj-badge {
+  display: flex;
+  gap: 0.875rem;
+  align-items: flex-start;
+  padding: 0.875rem;
+  border-radius: 0.875rem;
+  border: 1px solid #eceef3;
+  background-color: #ffffff;
+}
+
+.fj-badge.is-earned { border-color: rgba(201, 168, 76, 0.45); background: linear-gradient(180deg, #fffdf6, #ffffff); }
+
+/* Medal colours by tier; locked badges are shown in grey */
+.fj-medal {
+  width: 3.25rem;
+  height: 3.25rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.15), 0 3px 8px rgba(30, 42, 74, 0.18);
+}
+
+.tier-bronze .fj-medal, .fj-medal.tier-bronze { background: linear-gradient(145deg, #d99a6c, #9a5a2c); }
+.tier-silver .fj-medal, .fj-medal.tier-silver { background: linear-gradient(145deg, #a9b3c7, #5d6a86); }
+.tier-gold   .fj-medal, .fj-medal.tier-gold   { background: linear-gradient(145deg, #e8c96a, #a8801f); }
+
+.fj-badge.is-locked .fj-medal {
+  background: #eceef3;
+  color: #9ca3af;
+  box-shadow: inset 0 0 0 2px #e0e3ea;
+}
+
+.fj-badge-body { min-width: 0; flex: 1; }
+.fj-badge-name { font-size: 0.875rem; font-weight: 700; color: #111827; }
+.fj-badge.is-locked .fj-badge-name { color: #4b5563; }
+.fj-badge-desc { margin-top: 0.125rem; font-size: 0.75rem; color: #6b7280; line-height: 1.45; }
+.fj-badge-earned { margin-top: 0.375rem; font-size: 0.6875rem; font-weight: 700; color: #8a6d1f; }
+
+.fj-progress {
+  margin-top: 0.5rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background-color: #eceef3;
+  overflow: hidden;
+}
+
+.fj-progress span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8b8fc7, #5b5fa8);
+}
+
+.fj-progress-text { margin-top: 0.25rem; font-size: 0.6875rem; color: #9ca3af; }
+
+.fj-grid-note {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: #6b7280;
+  background-color: #f7f8fa;
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.875rem;
+}
+
+/* ---------- Faithful Givers ---------- */
+.fj-quote { font-style: italic; line-height: 1.6; }
+
+.fj-givers {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+.fj-giver {
+  display: flex;
+  flex-direction: column;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.625rem;
+  background-color: #f7f8fa;
+  border-left: 3px solid #c9a84c;
+}
+
+.fj-giver.is-me { background-color: rgba(201, 168, 76, 0.12); }
+.fj-giver-name { font-size: 0.8125rem; font-weight: 700; color: #111827; }
+.fj-giver-streak { font-size: 0.6875rem; color: #6b7280; margin-top: 0.125rem; }
+
+.fj-you {
+  margin-left: 0.25rem;
+  padding: 0 0.375rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #c9a84c;
+  vertical-align: middle;
+}
+
+.fj-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.fj-toggle input { accent-color: #5b5fa8; width: 1rem; height: 1rem; }
+
+/* ---------- New badge celebration ---------- */
+.fj-celebrate {
+  max-width: 380px;
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.fj-celebrate-medals { display: flex; justify-content: center; gap: 0.75rem; }
+
+.fj-medal-lg {
+  width: 4.5rem;
+  height: 4.5rem;
+  animation: fjPop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.fj-celebrate-title { margin-top: 1rem; font-size: 1.125rem; font-weight: 800; color: #1e2a4a; }
+.fj-celebrate-text  { margin-top: 0.375rem; font-size: 0.8125rem; color: #6b7280; line-height: 1.5; }
+
+@keyframes fjPop {
+  from { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fj-medal-lg { animation: none; }
+}
+
+@media (max-width: 640px) {
+  .fj-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

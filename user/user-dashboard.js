@@ -9,8 +9,11 @@
 import { client } from '../amplify-init.js';
 import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../weekly-mass-schedule.js';
 import { watchLivestream } from '../livestream-status.js';
+import { mountBadgeStrip } from './faith-journey-widgets.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  mountBadgeStrip(document.getElementById('fj-badge-strip'));
 
   const todayISO = new Date().toISOString().slice(0, 10);
 

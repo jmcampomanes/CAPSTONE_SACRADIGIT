@@ -1,0 +1,416 @@
+/* ============================================
+   SacraDigit Admin — Scan Document screen
+   (Digital Archives). Full-screen view beside
+   the 264px sidebar, same pattern as the
+   Reschedule screen in service-schedule.css.
+   ============================================ */
+
+.scan-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: #f9fafb;
+  animation: scanScreenIn 0.24s ease;
+}
+
+.scan-screen.hidden { display: none; }
+.scan-screen.is-closing { animation: scanScreenOut 0.18s ease forwards; }
+
+@media (min-width: 768px) {
+  .scan-screen { left: 264px; }
+}
+
+@keyframes scanScreenIn  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scanScreenOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(16px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-screen, .scan-screen.is-closing { animation: none; }
+}
+
+body.scan-screen-open { overflow: hidden; }
+
+/* ---------- Top bar ---------- */
+.scan-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #eceef3;
+}
+
+.scan-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #5b5fa8;
+  background: none;
+  border: 1px solid #d9dbee;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.scan-back:hover { background-color: rgba(139, 143, 199, 0.12); color: #1e2a4a; }
+
+.scan-heading { min-width: 0; }
+.scan-title { font-size: 1.125rem; font-weight: 700; color: #111827; }
+.scan-sub   { margin-top: 0.125rem; font-size: 0.75rem; color: #6b7280; }
+
+/* ---------- Body: two cards ---------- */
+.scan-body {
+  flex: 1;
+  min-height: 0;
+  padding: 1rem 1.5rem;
+  overflow: hidden;
+}
+
+.scan-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1rem;
+  height: 100%;
+}
+
+.scan-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: #ffffff;
+  border: 1px solid #eceef3;
+  border-radius: 1rem;
+  padding: 1rem 1.125rem;
+}
+
+.scan-col-results { overflow-y: auto; }
+
+.scan-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.scan-col-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+/* ---------- Document tools ---------- */
+.scan-tools { display: flex; align-items: center; gap: 0.375rem; flex-wrap: wrap; }
+.scan-tools.hidden, .scan-pager.hidden { display: none; }
+
+.scan-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-right: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.scan-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #374151;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.scan-tool:hover:not(:disabled) { background-color: #f3f4f6; border-color: #d1d5db; }
+.scan-tool:disabled { opacity: 0.4; cursor: not-allowed; }
+.scan-tool-text { font-size: 0.75rem; }
+
+/* ---------- Drop zone ---------- */
+.scan-dropzone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border: 2px dashed #d9dbee;
+  border-radius: 0.875rem;
+  background-color: #fafbff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.scan-dropzone:hover, .scan-dropzone.dragover { background-color: rgba(139, 143, 199, 0.1); border-color: #8b8fc7; }
+.scan-dropzone.hidden { display: none; }
+
+.scan-tips {
+  margin-top: 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  color: #6b7280;
+  list-style: disc;
+  padding-left: 1.1rem;
+  line-height: 1.6;
+}
+
+/* ---------- Page preview + word boxes ---------- */
+.scan-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border-radius: 0.75rem;
+  background-color: #eef0f4;
+  padding: 0.5rem;
+}
+
+.scan-stage.hidden { display: none; }
+
+.scan-stage-inner {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+#scan-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+}
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.scan-overlay.hidden { display: none; }
+
+.scan-word {
+  fill: rgba(139, 143, 199, 0.08);
+  stroke: rgba(91, 95, 168, 0.55);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  transition: fill 0.12s ease;
+}
+
+.scan-word.low { fill: rgba(245, 158, 11, 0.16); stroke: rgba(217, 119, 6, 0.85); }
+.scan-word:hover { fill: rgba(91, 95, 168, 0.28); }
+.scan-word.low:hover { fill: rgba(245, 158, 11, 0.35); }
+.scan-word.used { fill: rgba(22, 163, 74, 0.2); stroke: rgba(22, 163, 74, 0.8); }
+
+.scan-doc-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+.scan-doc-foot.hidden { display: none; }
+
+.scan-check { display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer; }
+.scan-check input { accent-color: #5b5fa8; }
+
+.scan-legend { display: inline-flex; align-items: center; gap: 0.375rem; margin-left: auto; color: #6b7280; }
+.scan-legend i { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 0.2rem; }
+.scan-legend-ok  { background: rgba(139, 143, 199, 0.2); border: 1.5px solid #5b5fa8; }
+.scan-legend-low { background: rgba(245, 158, 11, 0.2); border: 1.5px solid #d97706; margin-left: 0.5rem; }
+
+/* ---------- Results column ---------- */
+.scan-run { width: 100%; justify-content: center; margin-top: 0.875rem; }
+.scan-run:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.scan-progress { margin-top: 0.875rem; }
+.scan-progress.hidden { display: none; }
+
+.scan-progress-track {
+  height: 0.375rem;
+  border-radius: 999px;
+  background-color: #eceef3;
+  overflow: hidden;
+}
+
+.scan-progress-track span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8b8fc7, #5b5fa8);
+  transition: width 0.25s ease;
+}
+
+#scan-progress-text { margin-top: 0.375rem; font-size: 0.75rem; color: #6b7280; }
+
+.scan-empty {
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.scan-empty.hidden, .scan-results.hidden { display: none; }
+
+.scan-results { margin-top: 1rem; }
+
+.scan-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.625rem;
+  background-color: #f7f8fa;
+  font-size: 0.75rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.scan-chip {
+  flex-shrink: 0;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.scan-chip-good { background-color: #ecfdf3; color: #15803d; }
+.scan-chip-fair { background-color: #fffbeb; color: #b45309; }
+.scan-chip-poor { background-color: #fef2f2; color: #b91c1c; }
+
+.scan-section { margin-top: 1.125rem; }
+.scan-section.hidden { display: none; }
+
+.scan-section-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+
+.scan-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #111827;
+  padding-bottom: 0.375rem;
+  margin-bottom: 0.625rem;
+  border-bottom: 1px solid #f1f2f5;
+  flex: 1;
+}
+
+.scan-section-note { font-weight: 500; color: #9ca3af; margin-left: 0.25rem; }
+
+.scan-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.625rem 0.875rem;
+}
+
+.scan-field-conf {
+  margin-left: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.scan-field.is-low .scan-field-conf { color: #b45309; }
+
+.scan-field.is-low .form-input,
+.form-input.scan-input-low {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.scan-text {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+  resize: vertical;
+}
+
+.scan-copy {
+  flex-shrink: 0;
+  margin-bottom: 0.625rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #5b5fa8;
+  background: none;
+  border: 1px solid #d9dbee;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.scan-copy:hover { background-color: rgba(139, 143, 199, 0.12); }
+
+.scan-tip { margin-top: 0.75rem; font-size: 0.75rem; color: #9ca3af; }
+
+/* ---------- Footer ---------- */
+.scan-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #ffffff;
+  border-top: 1px solid #eceef3;
+}
+
+.scan-footer .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- Scanned text in the Record Details modal ---------- */
+.scan-record-text {
+  margin-top: 0.5rem;
+  max-height: 16rem;
+  overflow: auto;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  background-color: #f7f8fa;
+  border: 1px solid #eceef3;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  white-space: pre;
+  color: #374151;
+}
+
+/* ---------- Small screens: stack the two cards and let the page scroll ---------- */
+@media (max-width: 1023px) {
+  .scan-body { overflow-y: auto; }
+  .scan-cols { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .scan-stage { max-height: 70vh; min-height: 18rem; }
+  .scan-col-results { overflow: visible; }
+}
+
+@media (max-width: 480px) {
+  .scan-bar, .scan-body, .scan-footer { padding-left: 1rem; padding-right: 1rem; }
+  .scan-fields { grid-template-columns: minmax(0, 1fr); }
+  .scan-sub { display: none; }
+}

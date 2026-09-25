@@ -1,0 +1,161 @@
+/* ============================================
+   SacraDigit Admin — Mass check-in display
+   (mass-checkin-display.js). Full screen, meant
+   to be shown on a projector/TV at church, so
+   everything is big and high-contrast.
+   ============================================ */
+
+.ci-display {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 85% 10%, rgba(201, 168, 76, 0.22), transparent 40%),
+    linear-gradient(135deg, #16213a 0%, #1e2a4a 55%, #2f3470 100%);
+  overflow: auto;
+}
+
+.ci-display.hidden { display: none; }
+body.ci-open { overflow: hidden; }
+
+.ci-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+.ci-top-actions { display: flex; gap: 0.5rem; }
+
+.ci-btn {
+  padding: 0.5rem 0.95rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease;
+}
+
+.ci-btn-ghost  { color: #ffffff; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.18); }
+.ci-btn-ghost:hover { background: rgba(255, 255, 255, 0.16); }
+.ci-btn-danger { color: #ffffff; background: #b91c1c; }
+.ci-btn-danger:hover { background: #991b1b; }
+
+.ci-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3rem;
+  padding: 1rem clamp(1.5rem, 5vw, 5rem);
+}
+
+.ci-eyebrow {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c9a84c;
+}
+
+.ci-title { margin-top: 0.5rem; font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 800; line-height: 1.1; }
+.ci-sub   { margin-top: 0.5rem; font-size: clamp(1rem, 1.6vw, 1.375rem); color: rgba(255, 255, 255, 0.72); }
+
+.ci-steps {
+  margin-top: 2rem;
+  padding-left: 1.5rem;
+  font-size: clamp(1rem, 1.6vw, 1.375rem);
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.9);
+  list-style: decimal;
+}
+
+.ci-or { margin-top: 1.75rem; font-size: 1rem; color: rgba(255, 255, 255, 0.7); }
+
+.ci-code {
+  margin-top: 0.5rem;
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: clamp(2rem, 4.5vw, 3.75rem);
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #ffffff;
+}
+
+.ci-right { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+
+.ci-qr {
+  width: min(42vh, 30rem);
+  aspect-ratio: 1;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.ci-qr svg { display: block; width: 100%; height: 100%; }
+
+.ci-count { font-size: 1.25rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
+.ci-count span { font-size: 2.25rem; font-weight: 800; color: #c9a84c; margin-right: 0.25rem; }
+.ci-closes { font-size: 0.8125rem; color: rgba(255, 255, 255, 0.55); }
+
+.ci-recent {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 3.5rem;
+  padding: 1rem clamp(1.5rem, 5vw, 5rem) 1.5rem;
+}
+
+.ci-recent-label { font-size: 0.9375rem; color: rgba(255, 255, 255, 0.6); margin-right: 0.25rem; }
+
+.ci-chip {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.2);
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  animation: ciChipIn 0.35s ease both;
+}
+
+@keyframes ciChipIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) { .ci-chip { animation: none; } }
+
+@media (max-width: 860px) {
+  .ci-body { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; text-align: center; }
+  .ci-steps { display: inline-block; text-align: left; }
+  .ci-qr { width: min(70vw, 22rem); }
+}
+
+/* ---------- "Check-in" button on the Masses page ---------- */
+.schedule-checkin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  margin-right: 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #5b5fa8;
+  background: rgba(139, 143, 199, 0.12);
+  border: 1px solid rgba(139, 143, 199, 0.35);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.schedule-checkin-btn:hover { background: rgba(139, 143, 199, 0.22); }
+
+.schedule-checkin-btn.is-open { color: #15803d; background: #ecfdf3; border-color: #bbf7d0; }

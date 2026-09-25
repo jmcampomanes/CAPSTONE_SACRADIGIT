@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Badges – SacraDigit</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { DEFAULT: '#1e2a4a', dark: '#16213a', light: '#2a3a5c' },
+            gold: '#c9a84c', lavender: '#8b8fc7', 'lavender-light': '#a8acda',
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" href="user-css/user-shell.css" />
+  <link rel="stylesheet" href="user-css/user-badges.css" />
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="user-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="../sacradigit-images/scaradigit-logo.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Parish Portal</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="User navigation">
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li><a href="user-dashboard.html" data-nav="dashboard" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Dashboard</a></li>
+        </ul>
+        <p class="sidebar-label">Parish</p>
+        <ul class="space-y-0.5 mb-5">
+          <li><a href="user-mass-schedule.html" data-nav="mass-schedule" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Mass Schedule</a></li>
+          <li><a href="user-announcements.html" data-nav="announcements" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+            Announcements</a></li>
+        </ul>
+        <p class="sidebar-label">Services</p>
+        <ul class="space-y-0.5 mb-5">
+          <li><a href="user-request-certificate.html" data-nav="request-certificate" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Request Certificate</a></li>
+          <li><a href="user-my-requests.html" data-nav="my-requests" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+            My Requests</a></li>
+          <li><a href="user-request-service.html" data-nav="request-service" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            Request a Service</a></li>
+          <li><a href="user-requested-services.html" data-nav="requested-services" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            Requested Services</a></li>
+          <li><a href="user-blessings.html" data-nav="blessings" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            Blessings</a></li>
+          <li><a href="user-mass-intentions.html" data-nav="mass-intentions" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Mass Intentions</a></li>
+          <li><a href="user-facility-booking.html" data-nav="facility-booking" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Facility Booking</a></li>
+        </ul>
+        <p class="sidebar-label">Finance</p>
+        <ul class="space-y-0.5">
+          <li><a href="user-donations.html" data-nav="donations" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            Donations</a></li>
+        </ul>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left">
+          <div class="w-9 h-9 rounded-full bg-lavender flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs" id="avatar-initials">MP</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate" id="sidebar-user-name">Maria P. Santos</p>
+            <p class="text-gray-400 text-xs truncate">Parishioner</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#c2701c;border-bottom-width:3px;">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(201,168,76,0.16);color:#b5943e;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg></div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">My Badges</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
+
+        <!-- Hero -->
+        <div class="req-hero">
+          <div class="req-hero-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 15a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg>
+          </div>
+          <div>
+            <h2 class="req-hero-title">My Faith Journey</h2>
+            <p class="req-hero-sub">Badges for coming to Mass, giving, and parish life. Every badge celebrates faithfulness — never how much.</p>
+          </div>
+        </div>
+
+        <!-- Check-in result (after scanning a QR code or entering a code) -->
+        <div id="checkin-result" class="fj-result hidden" role="status" aria-live="polite"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          <!-- Check in at Mass -->
+          <div class="panel fj-checkin lg:col-span-1">
+            <div class="panel-header">
+              <h3 class="panel-title">Check In at Mass</h3>
+            </div>
+            <div class="p-5">
+              <div id="checkin-ready">
+                <p class="text-sm text-gray-600">At church, scan the QR code on the screen with your phone camera — or type the code shown under it.</p>
+                <form id="checkin-form" class="mt-4 flex gap-2" autocomplete="off">
+                  <label for="checkin-code" class="sr-only">Check-in code</label>
+                  <input id="checkin-code" class="form-input fj-code-input" placeholder="e.g. K7P-Q2M" maxlength="9" inputmode="text" autocapitalize="characters" spellcheck="false" />
+                  <button type="submit" id="checkin-submit" class="btn-lavender shrink-0">Check In</button>
+                </form>
+                <p class="text-xs text-gray-400 mt-2">Checking in as <span class="font-semibold text-gray-600" id="checkin-name"></span></p>
+              </div>
+              <p id="checkin-not-ready" class="fj-note hidden">Mass check-in isn’t set up yet. Your giving and parish badges already count — Mass badges will light up once the parish turns on check-in.</p>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="panel lg:col-span-2">
+            <div class="panel-header">
+              <h3 class="panel-title">At a Glance</h3>
+            </div>
+            <div class="fj-stats">
+              <div class="fj-stat">
+                <p class="fj-stat-value" id="stat-badges">–</p>
+                <p class="fj-stat-label">badges earned</p>
+              </div>
+              <div class="fj-stat">
+                <p class="fj-stat-value" id="stat-sunday-streak">–</p>
+                <p class="fj-stat-label">Sundays in a row</p>
+              </div>
+              <div class="fj-stat">
+                <p class="fj-stat-value" id="stat-masses-year">–</p>
+                <p class="fj-stat-label">Masses this year</p>
+              </div>
+              <div class="fj-stat">
+                <p class="fj-stat-value" id="stat-giving-streak">–</p>
+                <p class="fj-stat-label">months of giving in a row</p>
+              </div>
+            </div>
+            <p class="fj-next" id="fj-next"></p>
+          </div>
+        </div>
+
+        <!-- Badge collection -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">My Badges</h3>
+            <div class="fj-tabs" role="tablist" aria-label="Badge groups">
+              <button type="button" class="fj-tab active" data-group="" role="tab" aria-selected="true">All</button>
+              <button type="button" class="fj-tab" data-group="mass" role="tab" aria-selected="false">Mass</button>
+              <button type="button" class="fj-tab" data-group="giving" role="tab" aria-selected="false">Giving</button>
+              <button type="button" class="fj-tab" data-group="community" role="tab" aria-selected="false">Community</button>
+            </div>
+          </div>
+          <div class="fj-badge-grid" id="badge-grid">
+            <p class="text-sm text-gray-400 p-5">Loading your badges…</p>
+          </div>
+        </div>
+
+        <!-- Faithful Givers -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">Faithful Givers</h3>
+            <span class="text-xs text-gray-400">Given every month for 3+ months · amounts are never shown</span>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-gray-600 fj-quote">“Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver.” <span class="text-gray-400">— 2 Corinthians 9:7</span></p>
+            <ol class="fj-givers" id="givers-list"></ol>
+            <p class="text-sm text-gray-400 hidden" id="givers-empty">No one has reached 3 months in a row yet — be the first!</p>
+            <label class="fj-toggle hidden" id="honor-toggle-wrap">
+              <input type="checkbox" id="honor-toggle" checked />
+              <span>Show my name on the Faithful Givers list</span>
+            </label>
+            <p class="text-xs text-gray-400 mt-2">Anonymous gifts never appear here.</p>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- New badge celebration -->
+  <div id="badge-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="badge-modal-title">
+    <div class="modal-card fj-celebrate">
+      <div class="fj-celebrate-medals" id="badge-modal-medals"></div>
+      <h3 class="fj-celebrate-title" id="badge-modal-title">New badge earned!</h3>
+      <p class="fj-celebrate-text" id="badge-modal-text"></p>
+      <button type="button" class="btn-lavender mt-5" data-close-badge-modal>Amen!</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+  <script type="module" src="user-shell.js"></script>
+  <script type="module" src="user-badges.js"></script>
+</body>
+</html>

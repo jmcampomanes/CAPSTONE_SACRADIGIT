@@ -3,6 +3,8 @@
    ============================================ */
 
 import { initPageHelp } from '../help-tutorial.js';
+// Adds the rotating sacred art to every navy page header (see sacred-art.js).
+import './sacred-art.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -37,8 +39,10 @@ const HELP_CONTENT = {
     intro: 'Browse, search, and manage every digitized sacramental record on file.',
     steps: [
       'Search by name, record type, or reference number to find a specific record.',
+      'Click “Scan Document” to read a birth, baptismal, confirmation, marriage, or death certificate: add a photo or PDF, pick the document type, and press Scan. The text is read left to right, row by row.',
+      'Check every filled-in box before saving — words in amber were hard to read. Click a box, then click words on the document to copy them in.',
       'Click “New Record” to digitize and add a record manually.',
-      'Click “Upload” to attach a scanned document to a record.',
+      'Click “Upload” to attach a scanned document to a record without reading it.',
       'Open any row in All Records to view or edit its details.',
       'Use “Clear Filters” to reset your search and see the full list again.',
     ],
@@ -106,6 +110,7 @@ const HELP_CONTENT = {
       'Click “Schedule Mass” to add a new mass — choose its type and, optionally, a title/intention.',
       'Review the Regular Weekly Mass Schedule table for the recurring pattern that applies every week.',
       'Click “See Full Details” on any mass for its complete information.',
+      'For today’s masses, click “Start Check-in” to show a QR code on the church screen or projector. Parishioners scan it (or type the code under it) to check in and earn Faith Journey badges. Check-in closes by itself 90 minutes after the mass starts, or click “Close Check-in”.',
     ],
   },
   'donations.html': {

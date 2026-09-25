@@ -36,6 +36,16 @@ function addSacredArtToHeaders() {
    help-tutorial.js for how it's rendered.
 ------------------------------------------ */
 const HELP_CONTENT = {
+  'user-badges.html': {
+    title: 'My Badges',
+    intro: 'Your Faith Journey — badges for coming to Mass, giving, and parish life.',
+    steps: [
+      'At Mass, scan the QR code on the church screen with your phone camera, or type the code shown under it in “Check In at Mass”.',
+      'Each check-in counts toward badges like Faithful Month, Steadfast (Sundays in a row), Simbang Gabi, and Holy Week Pilgrim. Saturday evening Mass counts for Sunday.',
+      'Giving badges count how regularly you give — any amount. Amounts are never shown to anyone.',
+      'Faithful Givers lists parishioners who have given every month for 3 months or more. Anonymous gifts never appear, and you can hide your name with the switch below the list.',
+    ],
+  },
   'user-dashboard.html': {
     title: 'Dashboard',
     intro: 'Your at-a-glance overview of parish life and your own requests.',
@@ -178,6 +188,26 @@ document.addEventListener('DOMContentLoaded', () => {
   if (avatarInitials) {
     const initials = (USER.firstName[0] + USER.lastName[0]).toUpperCase();
     avatarInitials.textContent = initials;
+  }
+
+
+  /* ------------------------------------------
+     1b. "Faith Journey → My Badges" nav section
+     Added here (not in each page's HTML) so every
+     user page gets it from one place.
+  ------------------------------------------ */
+  const sidebarNav = document.querySelector('#sidebar nav') || document.querySelector('nav');
+  if (sidebarNav && !sidebarNav.querySelector('[data-nav="badges"]')) {
+    sidebarNav.insertAdjacentHTML('beforeend', `
+        <p class="sidebar-label mt-5">Faith Journey</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="user-badges.html" data-nav="badges" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg>
+              My Badges
+            </a>
+          </li>
+        </ul>`);
   }
 
 
