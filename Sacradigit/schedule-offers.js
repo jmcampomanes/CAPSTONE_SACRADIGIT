@@ -19,6 +19,7 @@
 
 import { client } from '../amplify-init.js';
 import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl } from '../service-schedule.js';
+import { initWalkInService } from './walk-in-service.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -27,9 +28,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let offers = []; // kept in sync via observeQuery, each has .id
   let closures = []; // 'No Services (Parish Closed)' date ranges from Special Schedules
 
+  // "+ Service" — book a walk-in parishioner (see walk-in-service.js).
+  // showToast is a function declaration further down, so it's available here.
+  const walkIn = initWalkInService({
+    showToast,
+    getRecords: () => offers,
+    getClosures: () => closures,
+    backLabel: 'Back to Schedule Offers',
+  });
+  document.getElementById('btn-add-service').addEventListener('click', () => walkIn.open());
+
   watchClosures(client, (next) => {
     closures = next;
     if (reschedulePicker) reschedulePicker.setClosures(closures);
+    walkIn.refresh();
   });
 
   const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
@@ -109,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderStats();
       renderTable();
       if (reschedulePicker) reschedulePicker.refresh(offers);
+      walkIn.refresh();
     },
     error: (err) => {
       console.error('Failed to load schedule requests:', err);

@@ -7,8 +7,11 @@
 
 // Adds the rotating sacred art to every navy page header (see sacred-art.js).
 import '../Sacradigit/sacred-art.js';
+import { initUiPrefs } from '../ui-prefs.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
 
   /* ------------------------------------------
      1. ACTIVE SIDEBAR LINK

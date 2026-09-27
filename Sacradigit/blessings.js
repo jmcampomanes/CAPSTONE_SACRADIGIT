@@ -15,7 +15,7 @@
 
 import { client } from '../amplify-init.js';
 import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField } from '../service-schedule.js';
-import { createPinMap, formatLatLng } from '../pin-map.js';
+import { initWalkInService } from './walk-in-service.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -25,12 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let requests = [];
   let completed = [];
   let allRecords = []; // every Blessing record — used to show which fixed slots are taken
-  let schedulePicker = null; // fixed-slot picker in the Schedule modal (set once a type is chosen)
+  let walkIn = null;         // "+ Service" walk-in booking screen (see walk-in-service.js)
   let closures = [];         // 'No Services (Parish Closed)' date ranges from Special Schedules
 
   watchClosures(client, (next) => {
     closures = next;
-    if (schedulePicker) schedulePicker.setClosures(closures);
+    if (walkIn) walkIn.refresh();
   });
 
   const upcomingList   = document.getElementById('upcoming-list');
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
   client.models.Blessing.observeQuery().subscribe({
     next: ({ items }) => {
       allRecords = items;
-      if (schedulePicker) schedulePicker.refresh(allRecords);
+      if (walkIn) walkIn.refresh();
       if (reschedulePicker) reschedulePicker.refresh(allRecords);
       upcoming = [];
       requests = [];
@@ -601,139 +601,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  /* --- Schedule Blessing Modal --- */
-  const scheduleModal = document.getElementById('schedule-modal');
-
-  const scheduleTypeSelect = document.getElementById('schedule-type');
-  const schedulePickerEl   = document.getElementById('schedule-slot-picker');
-
-  function resetSchedulePicker() {
-    schedulePicker = null;
-    schedulePickerEl.classList.remove('has-error');
-    schedulePickerEl.innerHTML = '<p class="slot-empty">Choose a blessing type first.</p>';
-  }
-
-  /* House Blessing: pin the exact house on a map, same as the parishioner
-     form. Saved in `details` under MAP_PIN_LABEL so the Details modal shows
-     an "Open in Google Maps" link. The map is only built while visible. */
-  const schedulePinField  = document.getElementById('schedule-pin-field');
-  const schedulePinStatus = document.getElementById('schedule-pin-status');
-  const PIN_HINT = 'Click the map to drop a pin on the house.';
-  let schedulePinMap = null;
-
-  function setPinStatus(text, state = '') {
-    schedulePinStatus.textContent = text;
-    schedulePinStatus.dataset.state = state;
-  }
-
-  function syncSchedulePinMap() {
-    const wantMap = scheduleTypeSelect.value === 'House Blessing';
-    schedulePinField.classList.toggle('hidden', !wantMap);
-    if (wantMap && !schedulePinMap) {
-      setPinStatus(PIN_HINT);
-      schedulePinMap = createPinMap(document.getElementById('schedule-pin-map'), {
-        onChange: (latlng) => { if (latlng) setPinStatus(`Pinned: ${formatLatLng(latlng)} — drag the pin to adjust.`, 'ok'); },
-      });
-    } else if (!wantMap) {
-      destroySchedulePinMap();
-    }
-  }
-
-  function destroySchedulePinMap() {
-    if (schedulePinMap) { schedulePinMap.destroy(); schedulePinMap = null; }
-  }
-
-  schedulePinField.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-pin-action]');
-    if (!btn || !schedulePinMap) return;
-    btn.disabled = true;
-    try {
-      if (btn.dataset.pinAction === 'locate') {
-        setPinStatus('Getting your location…');
-        await schedulePinMap.locateMe();
-      } else {
-        const address = document.getElementById('schedule-location').value.trim();
-        if (!address) { setPinStatus('Type the Location / Address below first, then click "Find the address."', 'error'); return; }
-        setPinStatus('Looking up the address…');
-        await schedulePinMap.findAddress(address);
-      }
-    } catch (err) {
-      setPinStatus(err.message, 'error');
-    } finally {
-      btn.disabled = false;
-    }
+  /* --- "+ Service" — book a walk-in parishioner (any service, including
+     blessings; House Blessing can still pin the exact house on a map).
+     Replaces the old blessings-only "Schedule a Blessing" modal. --- */
+  walkIn = initWalkInService({
+    showToast,
+    getRecords: () => allRecords,
+    getClosures: () => closures,
+    backLabel: 'Back to Blessings',
   });
-
-  // Walk-in / phone bookings use the same fixed slots as parishioners,
-  // minus the lead-time rule (the office can book same-day).
-  scheduleTypeSelect.addEventListener('change', () => {
-    syncSchedulePinMap();
-    if (!scheduleTypeSelect.value) { resetSchedulePicker(); return; }
-    schedulePickerEl.classList.remove('has-error');
-    schedulePicker = createSlotPicker(schedulePickerEl, {
-      type: scheduleTypeSelect.value,
-      records: allRecords,
-      closures,
-      ignoreLead: true,
-      onChange: () => schedulePickerEl.classList.remove('has-error'),
-    });
-  });
-
-  document.getElementById('btn-schedule-blessing').addEventListener('click', () => {
-    openModal(scheduleModal);
-    syncSchedulePinMap(); // House Blessing may still be selected from last time
-  });
-
-  document.getElementById('schedule-submit').addEventListener('click', async () => {
-    const requesterName = document.getElementById('schedule-requester').value.trim();
-    const type        = scheduleTypeSelect.value;
-    const location     = document.getElementById('schedule-location').value.trim();
-    const slot         = schedulePicker && schedulePicker.getValue();
-
-    if (!requesterName || !type || !slot) {
-      if (type && !slot) schedulePickerEl.classList.add('has-error');
-      showToast('Please fill in requester, blessing type, and pick a schedule slot.', true);
-      return;
-    }
-
-    if (!slotHasRoom(type, allRecords, slot.date, slot.time, { closures })) {
-      showToast('That slot is already full. Please pick another.', true);
-      schedulePicker.refresh(allRecords);
-      return;
-    }
-
-    const submitBtn = document.getElementById('schedule-submit');
-    submitBtn.disabled = true;
-
-    const pin = type === 'House Blessing' && schedulePinMap?.getValue();
-
-    try {
-      const result = await client.models.Blessing.create({
-        requesterName,
-        type,
-        ...(pin ? { details: JSON.stringify({ [MAP_PIN_LABEL]: formatLatLng(pin) }) } : {}),
-        location: location || locationFor(type),
-        preferredDate: slot.date,
-        date: slot.date,
-        time: slot.time,
-        status: 'scheduled',
-      });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-
-      closeModal(scheduleModal);
-      showToast(`${type} scheduled for ${requesterName} on ${formatLongDate(slot.date)} at ${slot.time}.`);
-      document.getElementById('schedule-requester').value = '';
-      scheduleTypeSelect.value = '';
-      document.getElementById('schedule-location').value = '';
-      resetSchedulePicker();
-      syncSchedulePinMap(); // type was cleared, so this removes the map
-    } catch (err) {
-      console.error('Failed to schedule blessing:', err);
-      showToast("Couldn't save the blessing.", true);
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
+  document.getElementById('btn-add-service').addEventListener('click', () => walkIn.open());
 
 
 
@@ -933,21 +810,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
-      closeModal(scheduleModal);
       closeModal(declineModal);
       closeModal(detailsModal);
       closeModal(dayPlanModal);
     });
   });
 
-  [scheduleModal, declineModal, detailsModal, dayPlanModal].forEach(modal => {
+  [declineModal, detailsModal, dayPlanModal].forEach(modal => {
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
   });
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     // A dialog open on top closes first; with none open, leave the Reschedule screen.
-    const dialogs = [scheduleModal, declineModal, detailsModal, dayPlanModal].filter(m => !m.classList.contains('hidden'));
+    const dialogs = [declineModal, detailsModal, dayPlanModal].filter(m => !m.classList.contains('hidden'));
     if (dialogs.length) dialogs.forEach(closeModal);
     else closeRescheduleScreen();
   });

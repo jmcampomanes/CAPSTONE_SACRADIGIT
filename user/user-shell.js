@@ -4,6 +4,7 @@
    ============================================ */
 
 import { initPageHelp } from '../help-tutorial.js';
+import { initUiPrefs } from '../ui-prefs.js';
 import { initSacredArt } from './sacred-art.js';
 
 /* ------------------------------------------
@@ -233,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
      widget itself is shared (help-tutorial.js).
   ------------------------------------------ */
   initPageHelp(HELP_CONTENT[currentPage]);
+  initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
 
 
   /* ------------------------------------------

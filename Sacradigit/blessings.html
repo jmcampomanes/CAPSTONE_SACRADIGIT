@@ -42,6 +42,9 @@
   <link rel="stylesheet" href="sacradigit-css/masses.css" />
   <link rel="stylesheet" href="sacradigit-css/blessings.css" />
   <link rel="stylesheet" href="../service-schedule.css" />
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <link rel="stylesheet" href="../theme-dark.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -183,7 +186,7 @@
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
         <!-- Page heading + actions -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="admin-hero" data-sacred-header>
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Blessings</h2>
             <p class="text-gray-500 text-sm mt-1">Manage house blessings, business dedications, and special blessing requests.</p>
@@ -197,9 +200,9 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               Print Today
             </button>
-            <button id="btn-schedule-blessing" type="button" class="btn-lavender">
+            <button id="btn-add-service" type="button" class="btn-lavender" title="Book a service for a walk-in parishioner">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              Blessing Schedule
+              Service
             </button>
           </div>
         </div>
@@ -363,68 +366,6 @@
         </div>
 
       </main>
-    </div>
-  </div>
-
-  <!-- ========== SCHEDULE BLESSING MODAL ========== -->
-  <div id="schedule-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">Schedule a Blessing</h3>
-        <button class="modal-close" data-close-modal aria-label="Close">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="schedule-requester">Requester Name</label>
-            <input type="text" id="schedule-requester" class="form-input" placeholder="e.g. Santos Family" />
-          </div>
-          <div class="col-span-2">
-            <label class="form-label" for="schedule-type">Blessing Type</label>
-            <select id="schedule-type" class="form-input">
-              <option value="">Select type</option>
-              <option value="House Blessing">House Blessing</option>
-              <option value="Business Dedication">Business Dedication</option>
-              <option value="Vehicle / Item Blessing">Vehicle / Item Blessing</option>
-              <option value="Pet Blessing">Pet Blessing</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <p class="form-label">Schedule</p>
-            <div id="schedule-slot-picker" class="slot-picker">
-              <p class="slot-empty">Choose a blessing type first.</p>
-            </div>
-          </div>
-          <!-- House Blessing only: pin the exact house on a map (see ../pin-map.js) -->
-          <div class="col-span-2 hidden" id="schedule-pin-field">
-            <p class="form-label">Pin the Exact Location <span class="pin-map-optional">(recommended)</span></p>
-            <div class="pin-map-wrap">
-              <div id="schedule-pin-map" class="pin-map" role="application" aria-label="Map — click to place a pin on the house"></div>
-              <div class="pin-map-actions">
-                <button type="button" class="pin-map-btn" data-pin-action="locate">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="7" stroke-width="1.6"/></svg>
-                  Use my current location
-                </button>
-                <button type="button" class="pin-map-btn" data-pin-action="find">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-                  Find the address
-                </button>
-                <span id="schedule-pin-status" class="pin-map-status">Click the map to drop a pin on the house.</span>
-              </div>
-            </div>
-          </div>
-          <div class="col-span-2">
-            <label class="form-label" for="schedule-location">Location / Address</label>
-            <input type="text" id="schedule-location" class="form-input" placeholder="e.g. 42 Maligaya St., Cubao" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="schedule-submit" class="btn-lavender">Save Blessing</button>
-      </div>
     </div>
   </div>
 

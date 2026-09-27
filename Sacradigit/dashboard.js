@@ -3,6 +3,7 @@
    ============================================ */
 
 import { initPageHelp } from '../help-tutorial.js';
+import { initUiPrefs } from '../ui-prefs.js';
 // Adds the rotating sacred art to every navy page header (see sacred-art.js).
 import './sacred-art.js';
 
@@ -65,7 +66,8 @@ const HELP_CONTENT = {
       'Search by name or service type to find a specific booking.',
       'Click “View” to see the requester’s details and booked date and time.',
       'Click “Cancel” on an upcoming booking if the parish can’t honour it. Give a reason; the parishioner sees it and the slot opens up again.',
-      'Older requests from before fixed schedules still show Approve / Decline.',
+      'Older requests from before fixed schedules show Reschedule — pick a new slot and give a reason.',
+      'Click “+ Service” when a parishioner asks at the office (walk-in or phone call): choose the service, fill in their details, and book one of the same fixed slots for them — same-day is allowed.',
       'Use “Clear Filters” to reset the list.',
     ],
   },
@@ -76,7 +78,7 @@ const HELP_CONTENT = {
       'Switch between List View and Calendar View with the toggle at the top.',
       'Parishioner requests book a fixed schedule slot and appear under Upcoming automatically.',
       'Open an upcoming booking’s Details to cancel it if the parish can’t make it. The slot opens up again.',
-      'Click “Blessing Schedule” to book a walk-in or phone request into one of the same fixed slots.',
+      'Click “+ Service” to book a walk-in or phone request (any service, not just blessings) into one of the same fixed slots. For a House Blessing you can pin the house on the map.',
       'Use “Clear Filters” to reset your search.',
     ],
   },
@@ -169,11 +171,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
+     1a. NAVY PAGE HEADER ICON
+     Each page's navy header (.admin-hero) gets
+     the same icon as its sidebar tab, like the
+     parishioner pages' headers. The rotating
+     sacred art itself is added by sacred-art.js.
+  ------------------------------------------ */
+  const hero = document.querySelector('.admin-hero');
+  const activeIcon = document.querySelector('.sidebar-link.active svg');
+  if (hero && !hero.querySelector('.admin-hero-lead')) {
+    const text = hero.querySelector(':scope > div:not(.sacred-art-frame):not(.sacred-header-tint)');
+    if (text) {
+      const lead = document.createElement('div');
+      lead.className = 'admin-hero-lead';
+      if (activeIcon) {
+        const icon = document.createElement('div');
+        icon.className = 'admin-hero-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        const svg = activeIcon.cloneNode(true);
+        svg.setAttribute('class', 'w-6 h-6');
+        icon.appendChild(svg);
+        lead.appendChild(icon);
+      }
+      text.replaceWith(lead);
+      lead.appendChild(text);
+    }
+  }
+
+
+  /* ------------------------------------------
      1b. PAGE HELP — "?" icon + tutorial modal
      Content lives in HELP_CONTENT above; the
      widget itself is shared (help-tutorial.js).
   ------------------------------------------ */
   initPageHelp(HELP_CONTENT[currentPage]);
+  initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
 
 
   /* ------------------------------------------

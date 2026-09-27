@@ -9,6 +9,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { initUiPrefs } from '../ui-prefs.js';
 
 export const ITECH_USER = 'Sacra ITech';
 
@@ -193,6 +194,8 @@ export function wireModals(...modals) {
 /* ---------- Shell chrome ---------- */
 
 function initShell() {
+  initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
+
   // 1. Active sidebar link — matches the current page filename
   const currentPage = window.location.pathname.split('/').pop() || 'itech-dashboard.html';
   const sidebarLinks = document.querySelectorAll('.sidebar-link');
