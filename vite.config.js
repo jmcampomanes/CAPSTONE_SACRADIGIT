@@ -11,7 +11,7 @@ function findHtmlFiles(dir, base = dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = resolve(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.git') continue;
+      if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.git' || entry.name === 'public') continue;
       results = { ...results, ...findHtmlFiles(fullPath, base) };
     } else if (entry.name.endsWith('.html') && !DEV_ONLY.some(re => re.test(entry.name))) {
       const relative = fullPath.slice(base.length + 1).replace(/\.html$/, '');

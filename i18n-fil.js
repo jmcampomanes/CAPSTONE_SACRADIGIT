@@ -1806,6 +1806,11 @@ export const FIL = {
   // ---- Sign in / accounts ----
   "Sign In – SacraDigit": "Mag-sign In – SacraDigit",
   "Sign In": "Mag-sign In",
+  "Get the SacraDigit app": "Kunin ang SacraDigit app",
+  "Install it on your phone for one-tap access to Mass times, requests and your badges.": "I-install ito sa iyong telepono para madaling makita ang oras ng Misa, mga request, at iyong mga badge.",
+  "Tap the Share button, then “Add to Home Screen”.": "I-tap ang Share, pagkatapos ang “Add to Home Screen”.",
+  "Install": "I-install",
+  "You’re offline — showing what’s saved on this device": "Offline ka — ipinapakita ang naka-save sa device na ito",
   "Create Account": "Gumawa ng Account",
   "Welcome back": "Maligayang pagbabalik",
   "Sign in to your SacraDigit account.": "Mag-sign in sa iyong SacraDigit account.",

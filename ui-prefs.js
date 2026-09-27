@@ -19,6 +19,8 @@
                   dictionary), applied by translatePage()
    ============================================ */
 
+import './pwa.js'; // installable app: service worker + "Install app" banner
+
 const THEME_KEY = 'sacradigit_theme';
 const LANG_KEY = 'sacradigit_lang';
 

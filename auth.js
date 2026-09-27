@@ -105,6 +105,15 @@ export function hasRole(user, ...roles) {
 
 /** Reads the account from Cognito and refreshes the cache. Null when not signed in. */
 export async function loadUser() {
+  // Offline (e.g. the installed app with no signal): keep the last signed-in
+  // person so cached pages still open. Nothing is exposed by this — every data
+  // call still needs the network and a valid Cognito session.
+  // Staff still lose their session when the browser closes (see setStaffSession).
+  const offlineUser = () => {
+    const u = !navigator.onLine && currentUser();
+    return u && (u.role === 'parishioner' || hasStaffSession()) ? u : null;
+  };
+  if (offlineUser()) return offlineUser();
   try {
     const session = await fetchAuthSession();
     if (!session.tokens) { clearCache(); return null; }
@@ -135,7 +144,10 @@ export async function loadUser() {
     }
     localStorage.setItem(CACHE_KEY, JSON.stringify(user));
     return user;
-  } catch {
+  } catch (err) {
+    // The connection dropped mid-check: same as offline, don't sign them out.
+    const cached = currentUser();
+    if (err?.name === 'NetworkError' && cached && (cached.role === 'parishioner' || hasStaffSession())) return cached;
     clearCache();
     return null;
   }
