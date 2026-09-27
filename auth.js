@@ -22,6 +22,13 @@
    right away (currentUser()); guardPage() refreshes
    it from Cognito on every page load, and signOut()
    clears it.
+
+   Staying signed in: parishioners stay signed in
+   on this device until they log out (or the 30-day
+   Cognito refresh token runs out). Admin, staff,
+   ITech and media sessions last only until the
+   browser is closed — a session cookie marks them,
+   and a staff login found without it is signed out.
    ============================================ */
 
 import './amplify-init.js'; // makes sure Amplify is configured first
@@ -32,6 +39,8 @@ import {
 } from 'aws-amplify/auth';
 
 const CACHE_KEY = 'sacradigit_user';
+const STAFF_SESSION_COOKIE = 'sacradigit_staff_session';
+let justSignedIn = false; // set by signIn()/setNewPassword() on this page load
 
 export const ROLES = {
   admin:       { label: 'Administrator',     home: 'Sacradigit/dashboard.html' },
@@ -109,6 +118,15 @@ export async function loadUser() {
       groups,
       role: roleFromGroups(groups),
     };
+    if (user.role !== 'parishioner') {
+      if (justSignedIn) setStaffSession();
+      else if (!hasStaffSession()) {
+        // Staff login left over from an earlier browser session — make them sign in again.
+        clearCache();
+        try { await cognitoSignOut(); } catch { /* already signed out */ }
+        return null;
+      }
+    }
     localStorage.setItem(CACHE_KEY, JSON.stringify(user));
     return user;
   } catch {
@@ -119,6 +137,16 @@ export async function loadUser() {
 
 function clearCache() {
   try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+  document.cookie = `${STAFF_SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+// No expiry → the browser drops it when it closes.
+function setStaffSession() {
+  document.cookie = `${STAFF_SESSION_COOKIE}=1; path=/; SameSite=Lax`;
+}
+
+function hasStaffSession() {
+  return document.cookie.split('; ').some(c => c.startsWith(`${STAFF_SESSION_COOKIE}=`));
 }
 
 /**
@@ -170,12 +198,14 @@ document.addEventListener('click', (e) => {
 
 export async function signIn(email, password) {
   const res = await cognitoSignIn({ username: email.trim().toLowerCase(), password });
+  if (res.isSignedIn) justSignedIn = true;
   return res.nextStep?.signInStep || (res.isSignedIn ? 'DONE' : 'UNKNOWN');
 }
 
 /** For accounts ITech created with a temporary password. */
 export async function setNewPassword(newPassword) {
   const res = await confirmSignIn({ challengeResponse: newPassword });
+  if (res.isSignedIn) justSignedIn = true;
   return res.nextStep?.signInStep || (res.isSignedIn ? 'DONE' : 'UNKNOWN');
 }
 

@@ -36,13 +36,26 @@
     };
   </script>
 
-  <!-- Custom CSS -->
-  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-mass-intentions-BUHOGX2t.js"></script>
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-DgBa3hMn.js">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-mass-intentions-ai7iZZSG.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-D_w9YR9n.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DA8PqxjR.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/record-requests-VJrvwtHw.css">
+  <!-- Custom CSS -->
+  <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
+  <style>.auth-pending body{visibility:hidden}</style>
+  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-mass-intentions-DHSws3Ck.js"></script>
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/modulepreload-polyfill-BlJ-Wce8.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-BILvbBLA.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-XD7v8qxr.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-Nb2B84W7.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/sacred-art-CX8iKl1T.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/help-tutorial-AsEf9ZJl.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-s6XzQn55.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/name-utils-B7bUvTns.js">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-mass-intentions-DfmIbnDQ.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/admin-shell-CYPiIeSr.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DM1GQ3uw.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/theme-dark-CeuQIlPL.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/record-requests-DpnCu2Cj.css">
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -52,8 +65,8 @@
     <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
 
       <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
-          <span class="text-white font-bold text-xs">SD</span>
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="/CAPSTONE_SACRADIGIT/assets/scaradigit-logo-DcoYgr71.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
         </div>
         <div class="leading-tight">
           <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
@@ -87,12 +100,6 @@
               Record Requests
             </a>
           </li>
-          <li>
-            <a href="cloud-access.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
-              Cloud Access
-            </a>
-          </li>
         </ul>
 
         <p class="sidebar-label">Operations</p>
@@ -120,7 +127,7 @@
         <p class="sidebar-label">Finance</p>
         <ul class="space-y-0.5 mb-5">
           <li>
-            <a href="mass-intentions.html" class="sidebar-link active">
+            <a href="mass-intentions.html" data-nav="mass-intentions" class="sidebar-link active">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
               Mass Intentions
             </a>
@@ -175,12 +182,13 @@
     <div class="flex-1 min-w-0 flex flex-col">
 
       <!-- Top bar -->
-      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#b5943e;border-bottom-width:3px;">
         <div class="flex items-center gap-3">
           <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Mass Intentions</h1>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(201,168,76,0.16);color:#b5943e;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Mass Intentions</h1>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
       </header>
@@ -189,7 +197,7 @@
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
         <!-- Page heading + actions -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="admin-hero" data-sacred-header>
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Mass Intentions</h2>
             <p class="text-gray-500 text-sm mt-1">Manage donor-submitted mass intentions and offerings.</p>
@@ -206,100 +214,207 @@
           </div>
         </div>
 
-        <!-- Stat boxes -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-          <div class="stat-card">
-            <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Total Intentions This Week</p>
-              <div class="stat-icon">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-              </div>
-            </div>
-            <p class="stat-value" id="stat-total-week">0</p>
-            <p class="stat-sub">submitted by donors</p>
-          </div>
-
-          <div class="stat-card">
-            <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Pending Mass Assignment</p>
-              <div class="stat-icon stat-icon-amber">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-            </div>
-            <p class="stat-value" id="stat-pending">0</p>
-            <p class="stat-sub">awaiting a mass date</p>
-          </div>
-
-          <div class="stat-card">
-            <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Total Offerings</p>
-              <div class="stat-icon stat-icon-green">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-            </div>
-            <p class="stat-value" id="stat-offerings">₱0</p>
-            <p class="stat-sub">this week's total</p>
-          </div>
+        <!-- View tabs -->
+        <div class="mi-tabs no-print" role="tablist">
+          <button class="mi-tab active" data-tab="log" role="tab" aria-selected="true">Intentions Log</button>
+          <button class="mi-tab" data-tab="sheet" role="tab" aria-selected="false">Reader's Sheet</button>
         </div>
 
-        <!-- Filter bar -->
-        <div class="filter-bar">
-          <div class="search-wrap">
-            <svg class="w-4 h-4 search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-            <input id="search-input" type="text" placeholder="Search by donor or name(s)" class="search-input" />
-          </div>
-          <select id="type-filter" class="filter-select">
-            <option value="">All Types</option>
-            <option value="For the Soul of...">For the Soul of...</option>
-            <option value="Thanksgiving">Thanksgiving</option>
-            <option value="Healing">Healing</option>
-            <option value="Birthday Blessing">Birthday Blessing</option>
-            <option value="Special Intention">Special Intention</option>
-          </select>
-          <select id="status-filter" class="filter-select">
-            <option value="">All Statuses</option>
-            <option value="Scheduled">Scheduled</option>
-            <option value="Completed">Completed</option>
-          </select>
-          <button id="btn-clear-filters" type="button" class="btn-filter">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
-            Clear
-          </button>
-        </div>
+        <!-- ========== LOG TAB ========== -->
+        <div id="panel-log" class="mi-panel active space-y-5">
 
-        <!-- Mass Intentions Log -->
-        <div class="panel" id="intentions-print-area">
-          <div class="print-only-header">
-            <h1>SacraDigit — Mass Intentions Log</h1>
-            <p>Our Lady of Fatima Parish · Diocese of Cubao</p>
-            <p id="print-date-value"></p>
-          </div>
-          <div class="panel-header">
-            <h2 class="panel-title">Mass Intentions Log</h2>
-            <p id="log-count" class="text-xs text-gray-400 font-medium"></p>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="records-table">
-              <thead>
-                <tr>
-                  <th>Donor</th>
-                  <th>Intention Type</th>
-                  <th>Mass Date Assigned</th>
-                  <th>Offering</th>
-                  <th>Status</th>
-                  <th class="text-right no-print">Action</th>
-                </tr>
-              </thead>
-              <tbody id="intentions-tbody">
-                <!-- Rows injected by mass-intentions.js -->
-              </tbody>
-            </table>
-            <div id="intentions-empty" class="empty-state hidden">
-              <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-              <p class="text-sm font-medium text-gray-600">No intentions logged yet</p>
+          <!-- Stat boxes -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+            <div class="stat-card">
+              <div class="flex items-start justify-between mb-3">
+                <p class="stat-label">Total Intentions This Week</p>
+                <div class="stat-icon">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+              </div>
+              <p class="stat-value" id="stat-total-week">0</p>
+              <p class="stat-sub">submitted by donors</p>
+            </div>
+
+            <div class="stat-card">
+              <div class="flex items-start justify-between mb-3">
+                <p class="stat-label">Pending Mass Assignment</p>
+                <div class="stat-icon stat-icon-amber">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+              </div>
+              <p class="stat-value" id="stat-pending">0</p>
+              <p class="stat-sub">awaiting a mass date</p>
+            </div>
+
+            <div class="stat-card">
+              <div class="flex items-start justify-between mb-3">
+                <p class="stat-label">Total Offerings</p>
+                <div class="stat-icon stat-icon-green">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+              </div>
+              <p class="stat-value" id="stat-offerings">₱0</p>
+              <p class="stat-sub">this week's total</p>
             </div>
           </div>
+
+          <!-- Filter bar -->
+          <div class="filter-bar">
+            <div class="search-wrap">
+              <svg class="w-4 h-4 search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+              <input id="search-input" type="text" placeholder="Search by donor or name(s)" class="search-input" />
+            </div>
+            <select id="type-filter" class="filter-select">
+              <option value="">All Types</option>
+              <option value="For the Soul of...">For the Soul of...</option>
+              <option value="Thanksgiving">Thanksgiving</option>
+              <option value="Healing">Healing</option>
+              <option value="Birthday Blessing">Birthday Blessing</option>
+              <option value="Special Intention">Special Intention</option>
+            </select>
+            <select id="status-filter" class="filter-select">
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="completed">Completed</option>
+            </select>
+            <button id="btn-clear-filters" type="button" class="btn-filter">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
+              Clear
+            </button>
+          </div>
+
+          <!-- Mass Intentions Log -->
+          <div class="panel" id="intentions-print-area">
+            <div class="print-only-header">
+              <h1>SacraDigit — Mass Intentions Log</h1>
+              <p>Our Lady of Fatima Parish · Diocese of Cubao</p>
+              <p id="print-date-value"></p>
+            </div>
+            <div class="panel-header">
+              <h2 class="panel-title">Mass Intentions Log</h2>
+              <p id="log-count" class="text-xs text-gray-400 font-medium"></p>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="records-table">
+                <thead>
+                  <tr>
+                    <th>Donor</th>
+                    <th>Intention Type</th>
+                    <th>Mass Date Assigned</th>
+                    <th>Offering</th>
+                    <th>Status</th>
+                    <th class="text-right no-print">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="intentions-tbody">
+                  <!-- Rows injected by mass-intentions.js -->
+                </tbody>
+              </table>
+              <div id="intentions-empty" class="empty-state hidden">
+                <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                <p class="text-sm font-medium text-gray-600">No intentions logged yet</p>
+              </div>
+            </div>
+            <div id="intentions-pagination" class="pagination-bar no-print">
+              <!-- Injected by mass-intentions.js -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ========== READER'S SHEET TAB ========== -->
+        <div id="panel-sheet" class="mi-panel space-y-5">
+
+          <!-- Mass picker -->
+          <div class="sheet-toolbar no-print">
+            <div class="sheet-picker-wrap">
+              <label class="form-label" for="sheet-mass-select">Select Mass</label>
+              <select id="sheet-mass-select" class="form-input sheet-mass-select">
+                <option value="">Choose a mass date &amp; time…</option>
+              </select>
+            </div>
+
+            <!-- Find a name -->
+            <div class="sheet-find-bar">
+              <div class="sheet-find-input-wrap">
+                <svg class="sheet-find-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+                <input type="text" id="sheet-find-input" class="sheet-find-input" placeholder="Find a name…" autocomplete="off" />
+                <button type="button" id="sheet-find-clear" class="sheet-find-clear hidden" aria-label="Clear search">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <span id="sheet-find-count" class="sheet-find-count hidden">0 of 0</span>
+              <button type="button" id="sheet-find-prev" class="sheet-find-nav-btn" aria-label="Previous match" disabled>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <button type="button" id="sheet-find-next" class="sheet-find-nav-btn" aria-label="Next match" disabled>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+
+            <button id="btn-print-sheet" type="button" class="btn-gold shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-12 0v4h12v-4m-12 0h12"/></svg>
+              Print Sheet
+            </button>
+            <p class="sheet-picker-note">Only masses with at least one assigned intention appear here. Assign a mass date to an intention from the Log tab first.</p>
+          </div>
+
+          <!-- Reader's sheet -->
+          <div class="panel sheet-panel" id="sheet-print-area">
+
+            <div id="sheet-empty" class="empty-state">
+              <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <p class="text-sm font-medium text-gray-600">Select a mass above to view its reader's sheet</p>
+            </div>
+
+            <div id="sheet-body" class="hidden">
+              <div class="sheet-header">
+                <p class="sheet-parish-name">Our Lady of Fatima Parish</p>
+                <p class="sheet-parish-address">57 L. Castillo St., Don Manuel, Quezon City, Metro Manila</p>
+                <p class="sheet-doc-title">Mass Intentions</p>
+                <p class="sheet-mass-range" id="sheet-mass-range">—</p>
+              </div>
+
+              <!-- View: all categories, or one at a time -->
+              <div class="sheet-category-filter no-print" role="group" aria-label="Filter by category">
+                <button type="button" class="sheet-cat-btn active" data-cat="all">All</button>
+                <button type="button" class="sheet-cat-btn" data-cat="thanksgiving">Thanksgiving &amp; Birthdays</button>
+                <button type="button" class="sheet-cat-btn" data-cat="special">Special Intentions</button>
+                <button type="button" class="sheet-cat-btn" data-cat="souls">Souls</button>
+              </div>
+
+              <div class="sheet-group" data-cat="thanksgiving">
+                <h3 class="sheet-group-title">Thanksgiving &amp; (Birthdays):</h3>
+                <p class="sheet-flow" id="sheet-list-thanksgiving"></p>
+                <p class="sheet-group-empty hidden">No intentions in this category.</p>
+              </div>
+
+              <p class="sheet-boilerplate">All Donors of Fatima Builders</p>
+
+              <div class="sheet-group" data-cat="special">
+                <h3 class="sheet-group-title">Special Intentions:</h3>
+                <p class="sheet-flow" id="sheet-list-special"></p>
+                <p class="sheet-group-empty hidden">No intentions in this category.</p>
+              </div>
+
+              <div class="sheet-group" data-cat="souls">
+                <h3 class="sheet-group-title">Souls:</h3>
+                <p class="sheet-flow" id="sheet-list-souls"></p>
+                <p class="sheet-group-empty hidden">No intentions in this category.</p>
+              </div>
+
+              <div class="sheet-closing">
+                <p class="sheet-closing-line"><span class="sheet-closing-mark">***</span> All Mass Card Intentions</p>
+                <p class="sheet-closing-line"><span class="sheet-closing-mark">***</span> All Souls in Purgatory</p>
+              </div>
+
+              <p class="sheet-print-stamp" id="sheet-print-date-value"></p>
+            </div>
+          </div>
+
         </div>
 
       </main>
@@ -308,7 +423,7 @@
 
   <!-- ========== ADD / EDIT INTENTION MODAL ========== -->
   <div id="add-modal" class="modal-overlay hidden">
-    <div class="modal-card">
+    <div class="modal-card modal-card-wide">
       <div class="modal-header">
         <h3 class="modal-title" id="add-modal-title">Add Mass Intention</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
@@ -322,33 +437,22 @@
             <input type="text" id="add-donor" class="form-input" placeholder="e.g. Santos Family" />
           </div>
           <div class="col-span-2">
-            <label class="form-label" for="add-type">Intention Type</label>
-            <select id="add-type" class="form-input">
-              <option value="">Select type</option>
-              <option value="For the Soul of...">For the Soul of...</option>
-              <option value="Thanksgiving">Thanksgiving</option>
-              <option value="Healing">Healing</option>
-              <option value="Birthday Blessing">Birthday Blessing</option>
-              <option value="Special Intention">Special Intention</option>
-            </select>
+            <label class="form-label">Select Intention Category</label>
+            <div class="intention-type-grid" id="add-type-grid">
+              <!-- Injected by JS -->
+            </div>
           </div>
           <div class="col-span-2">
-            <label class="form-label" for="add-name-input">
-              Name(s) <span class="text-red-500">*</span><span id="add-name-count" class="name-count-label hidden">0</span>
+            <label class="form-label">
+              Name<span id="add-name-label-suffix"></span> <span class="text-red-500">*</span>
             </label>
-            <div class="name-chip-input-row">
-              <input type="text" id="add-name-input" class="form-input" placeholder="Type a name, then press Enter or Add" />
-              <button type="button" id="add-add-name" class="btn-secondary shrink-0">Add</button>
-            </div>
-            <div id="add-name-chips" class="name-chip-list"></div>
+            <input type="text" id="add-name-full" class="form-input" placeholder="e.g. Juan M. Santos Jr." />
+            <button type="button" id="add-add-name" class="btn-secondary mt-2">Add Name</button>
+            <p class="text-xs text-gray-400 mt-1">Each name is tagged with the category currently selected above.</p>
           </div>
-          <div>
-            <label class="form-label" for="add-start-time">Start Time</label>
-            <input type="time" id="add-start-time" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label" for="add-end-time">End Time</label>
-            <input type="time" id="add-end-time" class="form-input" />
+          <div class="col-span-2 hidden" id="add-added-section">
+            <p class="form-label" id="add-added-heading">Added Intentions (0)</p>
+            <div id="add-name-chips" class="mi-added-list"></div>
           </div>
           <div>
             <label class="form-label" for="add-offering">Offering (₱)</label>
@@ -362,9 +466,35 @@
               <option value="completed">Completed</option>
             </select>
           </div>
-          <div>
-            <label class="form-label" for="add-mass-date">Mass Date Assigned</label>
-            <input type="date" id="add-mass-date" class="form-input" />
+          <div class="col-span-2">
+            <label class="form-label" for="add-mass-date-trigger">Mass Date Assigned</label>
+            <div class="mi-datepicker">
+              <button type="button" id="add-mass-date-trigger" class="form-input mi-date-trigger" aria-haspopup="dialog" aria-expanded="false">
+                <span id="add-mass-date-display" class="mi-date-display mi-date-placeholder">Select a date</span>
+                <svg class="w-4 h-4 mi-date-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </button>
+              <input type="hidden" id="add-mass-date" value="" />
+
+              <div id="add-mass-date-panel" class="mi-date-panel hidden" role="dialog" aria-label="Choose the mass date">
+                <div class="mi-date-panel-header">
+                  <button type="button" id="add-mass-date-prev" class="mi-date-nav-btn" aria-label="Previous month">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
+                  </button>
+                  <span id="add-mass-date-month-label" class="mi-date-month-label"></span>
+                  <button type="button" id="add-mass-date-next" class="mi-date-nav-btn" aria-label="Next month">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+                <div class="mi-date-weekday-row">
+                  <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                </div>
+                <div id="add-mass-date-grid" class="mi-date-grid"></div>
+                <div class="mi-date-panel-footer">
+                  <button type="button" id="add-mass-date-clear" class="mi-date-clear-btn">Clear</button>
+                  <p class="mi-date-note">Only Saturdays and Sundays are selectable</p>
+                </div>
+              </div>
+            </div>
           </div>
           <div>
             <label class="form-label" for="add-mass-time">Mass Time Assigned</label>
@@ -419,7 +549,6 @@
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- Scripts -->
-  <script src="dashboard.js"></script>
+  <!-- Scripts -->
 </body>
 </html>

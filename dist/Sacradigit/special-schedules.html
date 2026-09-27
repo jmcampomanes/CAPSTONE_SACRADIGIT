@@ -36,13 +36,24 @@
     };
   </script>
 
-  <!-- Custom CSS -->
-  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-special-schedules-CNkxsMiL.js"></script>
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-DgBa3hMn.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-C6eKpHew.js">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-special-schedules-CSFtysn-.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-D_w9YR9n.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DA8PqxjR.css">
+  <!-- Custom CSS -->
+  <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
+  <style>.auth-pending body{visibility:hidden}</style>
+  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-special-schedules-DQUv1AsX.js"></script>
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/modulepreload-polyfill-BlJ-Wce8.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-BILvbBLA.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-XD7v8qxr.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-Nb2B84W7.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/sacred-art-CX8iKl1T.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/help-tutorial-AsEf9ZJl.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-s6XzQn55.js">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-special-schedules-BY3AdFl0.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/admin-shell-CYPiIeSr.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DM1GQ3uw.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/theme-dark-CeuQIlPL.css">
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -52,8 +63,8 @@
     <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
 
       <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
-          <span class="text-white font-bold text-xs">SD</span>
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="/CAPSTONE_SACRADIGIT/assets/scaradigit-logo-DcoYgr71.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
         </div>
         <div class="leading-tight">
           <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
@@ -85,12 +96,6 @@
             <a href="record-requests.html" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               Record Requests
-            </a>
-          </li>
-          <li>
-            <a href="cloud-access.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
-              Cloud Access
             </a>
           </li>
         </ul>
@@ -142,7 +147,7 @@
             </a>
           </li>
           <li>
-            <a href="special-schedules.html" class="sidebar-link active">
+            <a href="special-schedules.html" data-nav="special-schedules" class="sidebar-link active">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
               Special Schedules
             </a>
@@ -175,12 +180,13 @@
     <div class="flex-1 min-w-0 flex flex-col">
 
       <!-- Top bar -->
-      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#6b7a2e;border-bottom-width:3px;">
         <div class="flex items-center gap-3">
           <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Special Schedules</h1>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(107,122,46,0.12);color:#6b7a2e;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg></div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Special Schedules</h1>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
       </header>
@@ -189,12 +195,16 @@
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
         <!-- Page heading + actions -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="admin-hero" data-sacred-header>
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Special Schedules</h2>
             <p class="text-gray-500 text-sm mt-1">Manage seasonal and special liturgical schedules.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btn-calendar-view" type="button" class="btn-gold" aria-pressed="false">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span id="calendar-toggle-label">Calendar View</span>
+            </button>
             <button id="btn-add-schedule" type="button" class="btn-lavender">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
               Add Schedule
@@ -202,11 +212,17 @@
           </div>
         </div>
 
+        <!-- List view (card grid) -->
+        <div id="list-view-panel">
+
         <!-- Upcoming Special Schedules panel -->
         <div class="panel">
           <div class="panel-header">
-            <h2 class="panel-title">Upcoming Special Schedules</h2>
-            <p id="schedules-count" class="text-xs text-gray-400 font-medium"></p>
+            <h2 id="schedules-panel-title" class="panel-title">Upcoming Special Schedules</h2>
+            <div class="flex items-center gap-3">
+              <p id="schedules-count" class="text-xs text-gray-400 font-medium"></p>
+              <button type="button" id="btn-view-all-schedules" class="schedules-view-all-btn">View All</button>
+            </div>
           </div>
           <div id="schedules-grid" class="schedules-grid">
             <!-- Cards injected by special-schedules.js -->
@@ -214,6 +230,40 @@
           <div id="schedules-empty" class="empty-state hidden">
             <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <p class="text-sm font-medium text-gray-600">No upcoming special schedules</p>
+          </div>
+        </div>
+
+        </div>
+        <!-- /#list-view-panel -->
+
+        <!-- Calendar view -->
+        <div class="panel hidden" id="calendar-view-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Special Schedules Calendar</h2>
+            <div class="calendar-nav">
+              <button type="button" id="cal-prev" class="calendar-nav-btn" aria-label="Previous month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span id="cal-month-label" class="calendar-month-label"></span>
+              <button type="button" id="cal-next" class="calendar-nav-btn" aria-label="Next month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="calendar-wrap">
+            <div class="calendar-weekdays">
+              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div id="calendar-grid" class="calendar-grid">
+              <!-- Cells injected by special-schedules.js -->
+            </div>
+          </div>
+          <div class="calendar-legend">
+            <span class="calendar-legend-item"><span class="calendar-legend-dot liturgical"></span>Liturgical Season</span>
+            <span class="calendar-legend-item"><span class="calendar-legend-dot novena"></span>Novena</span>
+            <span class="calendar-legend-item"><span class="calendar-legend-dot feast"></span>Feast Day Series</span>
+            <span class="calendar-legend-item"><span class="calendar-legend-dot special"></span>Special Event</span>
+            <span class="calendar-legend-item"><span class="calendar-legend-dot closure"></span>No Services</span>
           </div>
         </div>
 
@@ -243,7 +293,9 @@
               <option value="Novena">Novena</option>
               <option value="Feast Day Series">Feast Day Series</option>
               <option value="Special Event">Special Event</option>
+              <option value="No Services (Parish Closed)">No Services (Parish Closed)</option>
             </select>
+            <p class="text-xs text-gray-400 mt-1">"No Services" blocks every service booking slot between the start and end dates.</p>
           </div>
           <div>
             <label class="form-label" for="sched-status">Status</label>
@@ -292,9 +344,33 @@
     </div>
   </div>
 
+  <!-- ========== DAY PLAN MODAL (calendar view) ========== -->
+  <div id="day-plan-modal" class="modal-overlay hidden">
+    <div class="modal-card day-plan-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="day-plan-title">Day Plan</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="day-plan-list" class="day-plan-list">
+          <!-- Full day's active schedules injected by special-schedules.js -->
+        </div>
+        <div id="day-plan-empty" class="empty-state hidden">
+          <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <p class="text-sm font-medium text-gray-600">No active schedules on this date</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- Scripts -->
+  <!-- Scripts -->
 </body>
 </html>

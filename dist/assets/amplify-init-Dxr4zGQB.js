@@ -1,0 +1,1 @@
+import{n as e}from"./modulepreload-polyfill-BlJ-Wce8.js";import{n as t}from"./amplify-init-BILvbBLA.js";var n=e((()=>{t()}));export{n as t};

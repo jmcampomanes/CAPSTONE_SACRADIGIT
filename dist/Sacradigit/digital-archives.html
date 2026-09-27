@@ -36,12 +36,26 @@
     };
   </script>
 
-  <!-- Custom CSS -->
-  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-digital-archives-C76wQfHr.js"></script>
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-DgBa3hMn.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-C6eKpHew.js">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-D_w9YR9n.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DA8PqxjR.css">
+  <!-- Custom CSS -->
+  <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
+  <style>.auth-pending body{visibility:hidden}</style>
+  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-digital-archives-DdrY77Lu.js"></script>
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/modulepreload-polyfill-BlJ-Wce8.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-BILvbBLA.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-XD7v8qxr.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-Nb2B84W7.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/sacred-art-CX8iKl1T.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/help-tutorial-AsEf9ZJl.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-s6XzQn55.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/storage-BmOuKYko.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/name-utils-B7bUvTns.js">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-digital-archives-w1NAavvO.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/admin-shell-CYPiIeSr.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DM1GQ3uw.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/theme-dark-CeuQIlPL.css">
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -51,8 +65,8 @@
     <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
 
       <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
-          <span class="text-white font-bold text-xs">SD</span>
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="/CAPSTONE_SACRADIGIT/assets/scaradigit-logo-DcoYgr71.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
         </div>
         <div class="leading-tight">
           <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
@@ -75,7 +89,7 @@
         <p class="sidebar-label">Records</p>
         <ul class="space-y-0.5 mb-5">
           <li>
-            <a href="digital-archives.html" class="sidebar-link active">
+            <a href="digital-archives.html" data-nav="digital-archives" class="sidebar-link active">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
               Digital Archives
             </a>
@@ -84,12 +98,6 @@
             <a href="record-requests.html" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               Record Requests
-            </a>
-          </li>
-          <li>
-            <a href="cloud-access.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
-              Cloud Access
             </a>
           </li>
         </ul>
@@ -174,12 +182,13 @@
     <div class="flex-1 min-w-0 flex flex-col">
 
       <!-- Top bar -->
-      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#4a5a72;border-bottom-width:3px;">
         <div class="flex items-center gap-3">
           <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Digital Archives</h1>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(74,90,114,0.12);color:#4a5a72;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg></div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Digital Archives</h1>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
       </header>
@@ -188,12 +197,16 @@
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
         <!-- Page heading + actions -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="admin-hero" data-sacred-header>
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Digital Archives</h2>
             <p class="text-gray-500 text-sm mt-1">Browse, search, and manage all digitized sacramental records.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btn-scan" type="button" class="btn-lavender">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2M7 12h10"/></svg>
+              Scan Document
+            </button>
             <button id="btn-upload" type="button" class="btn-gold">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0-9l-3 3m3-3l3 3"/></svg>
               Upload
@@ -215,7 +228,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
               </div>
             </div>
-            <p class="stat-value">1,284</p>
+            <p class="stat-value" id="stat-total">0</p>
             <p class="stat-sub">across all record types</p>
           </div>
 
@@ -226,8 +239,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>
               </div>
             </div>
-            <p class="stat-value">1,196</p>
-            <p class="stat-sub">93% of total archive</p>
+            <p class="stat-value" id="stat-digitized">0</p>
+            <p class="stat-sub" id="stat-digitized-sub">of total archive</p>
           </div>
 
           <div class="stat-card">
@@ -237,8 +250,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
             </div>
-            <p class="stat-value">88</p>
-            <p class="stat-sub">awaiting digitization</p>
+            <p class="stat-value" id="stat-pending">0</p>
+            <p class="stat-sub">processing + queued</p>
           </div>
 
           <div class="stat-card">
@@ -263,7 +276,7 @@
           <div class="relative shrink-0">
             <select id="type-filter" class="filter-select">
               <option value="">Type Filter</option>
-              <option value="Baptismal">Baptismal</option>
+              <option value="Baptism">Baptismal</option>
               <option value="Confirmation">Confirmation</option>
               <option value="Marriage">Marriage</option>
               <option value="Death">Death</option>
@@ -330,7 +343,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <label for="upload-dropzone" class="dropzone" id="upload-dropzone">
+        <label class="dropzone" id="upload-dropzone">
           <svg class="w-8 h-8 text-lavender mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0-9l-3 3m3-3l3 3"/></svg>
           <p class="text-sm font-medium text-gray-700">Drag &amp; drop a file, or <span class="text-lavender underline">browse</span></p>
           <p class="text-xs text-gray-400 mt-1">Supports PDF, JPG, PNG · Max 20 MB</p>
@@ -343,15 +356,20 @@
             <label class="form-label" for="upload-type">Record Type</label>
             <select id="upload-type" class="form-input">
               <option value="">Select type</option>
-              <option value="Baptismal">Baptismal</option>
+              <option value="Baptism">Baptismal</option>
               <option value="Confirmation">Confirmation</option>
               <option value="Marriage">Marriage</option>
               <option value="Death">Death</option>
             </select>
           </div>
-          <div>
-            <label class="form-label" for="upload-name">Record Name</label>
-            <input type="text" id="upload-name" class="form-input" placeholder="e.g. Santos, Maria T." />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Record Name</label>
+            <div class="name-field-row">
+              <input type="text" id="upload-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="upload-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="upload-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="upload-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
         </div>
       </div>
@@ -373,15 +391,20 @@
       </div>
       <div class="modal-body">
         <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="new-name">Full Name</label>
-            <input type="text" id="new-name" class="form-input" placeholder="e.g. Dela Cruz, Juan P." />
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Full Name</label>
+            <div class="name-field-row">
+              <input type="text" id="new-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="new-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="new-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="new-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
           </div>
           <div>
             <label class="form-label" for="new-type">Record Type</label>
             <select id="new-type" class="form-input">
               <option value="">Select type</option>
-              <option value="Baptismal">Baptismal</option>
+              <option value="Baptism">Baptismal</option>
               <option value="Confirmation">Confirmation</option>
               <option value="Marriage">Marriage</option>
               <option value="Death">Death</option>
@@ -408,9 +431,182 @@
     </div>
   </div>
 
+  <!-- ========== VIEW RECORD MODAL ========== -->
+  <div id="view-record-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Details</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="view-record-body">
+        <!-- Injected by digital-archives.js -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCAN DOCUMENT SCREEN (full-screen beside the sidebar) ========== -->
+  <section id="scan-screen" class="scan-screen hidden" role="dialog" aria-modal="true" aria-labelledby="scan-title">
+    <header class="scan-bar">
+      <button type="button" id="scan-back" class="scan-back">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Digital Archives
+      </button>
+      <div class="scan-heading">
+        <h2 class="scan-title" id="scan-title">Scan Document</h2>
+        <p class="scan-sub">Reads the page left to right, row by row. Check every field before saving.</p>
+      </div>
+    </header>
+
+    <div class="scan-body">
+      <div class="scan-cols">
+
+        <!-- Left: the document -->
+        <div class="scan-col scan-col-doc">
+          <div class="scan-col-head">
+            <h3 class="scan-col-title">Document</h3>
+            <div class="scan-tools hidden" id="scan-tools">
+              <div class="scan-pager hidden" id="scan-pager">
+                <button type="button" class="scan-tool" id="scan-prev-page" aria-label="Previous page">‹</button>
+                <span id="scan-page-label">Page 1 of 1</span>
+                <button type="button" class="scan-tool" id="scan-next-page" aria-label="Next page">›</button>
+              </div>
+              <button type="button" class="scan-tool" id="scan-rotate-left" title="Rotate left" aria-label="Rotate left">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a6 6 0 016 6v2M3 10l5-5M3 10l5 5"/></svg>
+              </button>
+              <button type="button" class="scan-tool" id="scan-rotate-right" title="Rotate right" aria-label="Rotate right">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10H11a6 6 0 00-6 6v2M21 10l-5-5M21 10l-5 5"/></svg>
+              </button>
+              <button type="button" class="scan-tool" id="scan-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+              <button type="button" class="scan-tool" id="scan-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+              <button type="button" class="scan-tool scan-tool-text" id="scan-replace">Replace file</button>
+            </div>
+          </div>
+
+          <label class="scan-dropzone" id="scan-dropzone">
+            <svg class="w-9 h-9 text-lavender mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2M7 12h10"/></svg>
+            <p class="text-sm font-semibold text-gray-700">Drop a photo or scan here, or <span class="text-lavender underline">browse</span></p>
+            <p class="text-xs text-gray-400 mt-1">JPG, PNG or PDF · Max 20 MB</p>
+            <ul class="scan-tips">
+              <li>Lay the page flat in good, even light — no flash glare.</li>
+              <li>Fill the frame with the page and keep the phone straight above it.</li>
+              <li>Scanner at 300 dpi gives the best results.</li>
+            </ul>
+            <input type="file" id="scan-file" class="hidden" accept="image/*,.pdf,application/pdf" />
+          </label>
+
+          <div class="scan-stage hidden" id="scan-stage">
+            <div class="scan-stage-inner" id="scan-stage-inner">
+              <canvas id="scan-canvas"></canvas>
+              <svg id="scan-overlay" class="scan-overlay" preserveAspectRatio="none" aria-hidden="true"></svg>
+            </div>
+          </div>
+
+          <div class="scan-doc-foot hidden" id="scan-doc-foot">
+            <label class="scan-check"><input type="checkbox" id="scan-threshold" /> Boost faint ink / shadows</label>
+            <label class="scan-check"><input type="checkbox" id="scan-show-boxes" checked /> Show detected words</label>
+            <span class="scan-legend"><i class="scan-legend-ok"></i> Read clearly <i class="scan-legend-low"></i> Please check</span>
+          </div>
+        </div>
+
+        <!-- Right: what was read -->
+        <div class="scan-col scan-col-results">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="form-label" for="scan-doc-type">Document Type</label>
+              <select id="scan-doc-type" class="form-input"></select>
+            </div>
+            <div>
+              <label class="form-label" for="scan-record-type">Save As Record Type <span class="text-red-500">*</span></label>
+              <select id="scan-record-type" class="form-input">
+                <option value="">Select type</option>
+                <option value="baptism">Baptismal</option>
+                <option value="confirmation">Confirmation</option>
+                <option value="marriage">Marriage</option>
+                <option value="death">Death</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="button" id="scan-run" class="btn-lavender scan-run" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2M7 12h10"/></svg>
+            <span id="scan-run-label">Scan Document</span>
+          </button>
+
+          <div class="scan-progress hidden" id="scan-progress" role="status" aria-live="polite">
+            <div class="scan-progress-track"><span id="scan-progress-bar"></span></div>
+            <p id="scan-progress-text">Preparing…</p>
+          </div>
+
+          <p class="scan-empty" id="scan-empty">Add a document, pick its type, then press <strong>Scan Document</strong>. The first scan takes a little longer while the text reader downloads.</p>
+
+          <div class="scan-results hidden" id="scan-results">
+            <div class="scan-summary" id="scan-summary"></div>
+
+            <section class="scan-section">
+              <h4 class="scan-section-title">Archive Record</h4>
+              <div class="name-field-group">
+                <label class="form-label" id="scan-name-label">Record Name <span class="text-red-500">*</span></label>
+                <div class="name-field-row">
+                  <input type="text" id="scan-name-first" class="form-input" placeholder="First Name" />
+                  <input type="text" id="scan-name-middle" class="form-input" placeholder="Middle Name" />
+                  <input type="text" id="scan-name-last" class="form-input" placeholder="Last Name" />
+                  <input type="text" id="scan-name-ext" class="form-input name-ext-input" placeholder="Ext." />
+                </div>
+              </div>
+              <div class="name-field-group mt-3 hidden" id="scan-spouse-group">
+                <label class="form-label">Bride / Wife</label>
+                <div class="name-field-row">
+                  <input type="text" id="scan-spouse-first" class="form-input" placeholder="First Name" />
+                  <input type="text" id="scan-spouse-middle" class="form-input" placeholder="Middle Name" />
+                  <input type="text" id="scan-spouse-last" class="form-input" placeholder="Last Name" />
+                  <input type="text" id="scan-spouse-ext" class="form-input name-ext-input" placeholder="Ext." />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label class="form-label" for="scan-date">Date of Event</label>
+                  <input type="date" id="scan-date" class="form-input" />
+                </div>
+                <div>
+                  <label class="form-label" for="scan-officiant">Officiant / Recorded By</label>
+                  <input type="text" id="scan-officiant" class="form-input" />
+                </div>
+              </div>
+            </section>
+
+            <section class="scan-section" id="scan-fields-section">
+              <h4 class="scan-section-title">Details Read From the Document</h4>
+              <div class="scan-fields" id="scan-fields"></div>
+            </section>
+
+            <section class="scan-section">
+              <div class="scan-section-head">
+                <h4 class="scan-section-title">Full Text <span class="scan-section-note">left to right · “|” separates boxes on the same line</span></h4>
+                <button type="button" class="scan-copy" id="scan-copy">Copy</button>
+              </div>
+              <textarea id="scan-text" class="form-input scan-text" rows="12" spellcheck="false"></textarea>
+            </section>
+
+            <p class="scan-tip">Tip: click in any box above, then click a word on the document to copy it in.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="scan-footer">
+      <button type="button" id="scan-cancel" class="btn-secondary">Cancel</button>
+      <button type="button" id="scan-save" class="btn-gold" disabled>Save to Archive</button>
+    </footer>
+  </section>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- Scripts -->
+  <!-- Scripts -->
 </body>
 </html>

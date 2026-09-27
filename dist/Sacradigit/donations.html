@@ -36,13 +36,24 @@
     };
   </script>
 
-  <!-- Custom CSS -->
-  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-donations-CddcJMNu.js"></script>
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-DgBa3hMn.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-C6eKpHew.js">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-donations-BCxVcv3B.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-D_w9YR9n.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DA8PqxjR.css">
+  <!-- Custom CSS -->
+  <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
+  <style>.auth-pending body{visibility:hidden}</style>
+  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-donations-BcuhgEEu.js"></script>
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/modulepreload-polyfill-BlJ-Wce8.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-BILvbBLA.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-XD7v8qxr.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-Nb2B84W7.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/sacred-art-CX8iKl1T.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/help-tutorial-AsEf9ZJl.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-s6XzQn55.js">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-donations-x47WyJGH.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/admin-shell-CYPiIeSr.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DM1GQ3uw.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/theme-dark-CeuQIlPL.css">
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -52,8 +63,8 @@
     <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
 
       <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
-          <span class="text-white font-bold text-xs">SD</span>
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="/CAPSTONE_SACRADIGIT/assets/scaradigit-logo-DcoYgr71.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
         </div>
         <div class="leading-tight">
           <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
@@ -85,12 +96,6 @@
             <a href="record-requests.html" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               Record Requests
-            </a>
-          </li>
-          <li>
-            <a href="cloud-access.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
-              Cloud Access
             </a>
           </li>
         </ul>
@@ -126,7 +131,7 @@
             </a>
           </li>
           <li>
-            <a href="donations.html" class="sidebar-link active">
+            <a href="donations.html" data-nav="donations" class="sidebar-link active">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               Donations
             </a>
@@ -175,12 +180,13 @@
     <div class="flex-1 min-w-0 flex flex-col">
 
       <!-- Top bar -->
-      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#15803d;border-bottom-width:3px;">
         <div class="flex items-center gap-3">
           <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Donations</h1>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(21,128,61,0.12);color:#15803d;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Donations</h1>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
       </header>
@@ -189,16 +195,36 @@
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
         <!-- Page heading + actions -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="admin-hero" data-sacred-header>
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Donations</h2>
             <p class="text-gray-500 text-sm mt-1">Track parish donations, collections, and financial contributions.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btn-add-goal" type="button" class="btn-gold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              New Goal
+            </button>
             <button id="btn-export" type="button" class="btn-lavender">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
               Export Report
             </button>
+          </div>
+        </div>
+
+        <!-- Fundraising Goals -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Fundraising Goals</h2>
+            <p id="goals-count" class="text-xs text-gray-400 font-medium"></p>
+          </div>
+          <div id="goals-grid" class="goals-grid">
+            <!-- Cards injected by donations.js -->
+          </div>
+          <div id="goals-empty" class="empty-state hidden">
+            <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p class="text-sm font-medium text-gray-600">No fundraising goals yet</p>
+            <p class="text-xs text-gray-400 mt-1">Create one to start tracking progress toward a specific need — like a new bell or a roof repair.</p>
           </div>
         </div>
 
@@ -284,6 +310,7 @@
                   <th>Payment Method</th>
                   <th>Fund / Purpose</th>
                   <th>Date</th>
+                  <th class="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody id="donations-tbody">
@@ -323,9 +350,86 @@
     </div>
   </div>
 
+  <!-- ========== DONATION DETAIL MODAL ========== -->
+  <div id="donation-detail-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Donation Details</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="donation-detail-body"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ADD / EDIT GOAL MODAL ========== -->
+  <div id="goal-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="goal-modal-title">New Fundraising Goal</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="goal-name">Goal Name</label>
+            <input type="text" id="goal-name" class="form-input" placeholder="e.g. New Church Bell" />
+          </div>
+          <div>
+            <label class="form-label" for="goal-target">Target Amount (₱)</label>
+            <input type="number" id="goal-target" class="form-input" placeholder="e.g. 10000" min="1" step="1" />
+          </div>
+          <div>
+            <label class="form-label" for="goal-deadline">Target Date (optional)</label>
+            <input type="date" id="goal-deadline" class="form-input" />
+          </div>
+          <div class="col-span-2">
+            <label class="form-label" for="goal-description">Description (optional)</label>
+            <textarea id="goal-description" class="form-input" rows="2" placeholder="e.g. Replacing the cracked bell in the belfry."></textarea>
+          </div>
+          <div class="col-span-2 flex items-center gap-2.5">
+            <input type="checkbox" id="goal-active" class="checkbox-input" checked />
+            <label for="goal-active" class="text-sm text-gray-600 font-medium cursor-pointer">Active — show this goal to parishioners</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="goal-submit" class="btn-lavender">Save Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DELETE GOAL CONFIRMATION MODAL ========== -->
+  <div id="goal-delete-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete Fundraising Goal</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-gray-600">Remove <span id="goal-delete-target-name" class="font-semibold text-gray-900"></span> from fundraising goals? Donations already recorded under it are kept — only the goal tracker is removed. This can't be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="goal-delete-confirm-submit" class="btn-danger">Delete Goal</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- Scripts -->
+  <!-- Scripts -->
 </body>
 </html>

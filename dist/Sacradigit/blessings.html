@@ -36,14 +36,31 @@
     };
   </script>
 
-  <!-- Custom CSS -->
-  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-blessings-QYtai8ET.js"></script>
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-DgBa3hMn.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-C6eKpHew.js">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-blessings-CSQARonR.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-D_w9YR9n.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DA8PqxjR.css">
-  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/masses-BLXFwgf9.css">
+  <!-- Custom CSS -->
+  <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
+  <style>.auth-pending body{visibility:hidden}</style>
+  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-blessings-ahWTNwKz.js"></script>
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/modulepreload-polyfill-BlJ-Wce8.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-BILvbBLA.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-XD7v8qxr.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-Nb2B84W7.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/sacred-art-CX8iKl1T.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/help-tutorial-AsEf9ZJl.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-s6XzQn55.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/service-schedule-D_2dIfmW.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/name-utils-B7bUvTns.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/pin-map-CIA1NT7Z.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/walk-in-service-Dm2-kaCU.js">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/pin-map-vh-t_kPv.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-blessings-zsY2kbki.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/admin-shell-CYPiIeSr.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DM1GQ3uw.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/theme-dark-CeuQIlPL.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/masses-CfaEgt22.css">
+  <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/service-schedule-CwOe77Li.css">
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -53,8 +70,8 @@
     <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
 
       <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0">
-          <span class="text-white font-bold text-xs">SD</span>
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="/CAPSTONE_SACRADIGIT/assets/scaradigit-logo-DcoYgr71.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
         </div>
         <div class="leading-tight">
           <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
@@ -88,12 +105,6 @@
               Record Requests
             </a>
           </li>
-          <li>
-            <a href="cloud-access.html" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
-              Cloud Access
-            </a>
-          </li>
         </ul>
 
         <p class="sidebar-label">Operations</p>
@@ -105,7 +116,7 @@
             </a>
           </li>
           <li>
-            <a href="blessings.html" class="sidebar-link active">
+            <a href="blessings.html" data-nav="blessings" class="sidebar-link active">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
               Blessings
             </a>
@@ -176,12 +187,13 @@
     <div class="flex-1 min-w-0 flex flex-col">
 
       <!-- Top bar -->
-      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#b5476e;border-bottom-width:3px;">
         <div class="flex items-center gap-3">
           <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Blessings</h1>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(181,71,110,0.12);color:#b5476e;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Blessings</h1>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
       </header>
@@ -190,15 +202,23 @@
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
         <!-- Page heading + actions -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="admin-hero" data-sacred-header>
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Blessings</h2>
             <p class="text-gray-500 text-sm mt-1">Manage house blessings, business dedications, and special blessing requests.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
-            <button id="btn-schedule-blessing" type="button" class="btn-lavender">
+            <button id="btn-calendar-view" type="button" class="btn-gold" aria-pressed="false">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span id="calendar-toggle-label">Calendar View</span>
+            </button>
+            <button id="btn-print-today" type="button" class="btn-secondary" title="Print today's service schedule">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Print Today
+            </button>
+            <button id="btn-add-service" type="button" class="btn-lavender" title="Book a service for a walk-in parishioner">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              Blessing Schedule
+              Service
             </button>
           </div>
         </div>
@@ -219,13 +239,13 @@
 
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Pending Requests</p>
+              <p class="stat-label">Older Requests</p>
               <div class="stat-icon stat-icon-amber">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
             </div>
             <p class="stat-value" id="stat-pending">0</p>
-            <p class="stat-sub">awaiting approval</p>
+            <p class="stat-sub">from before fixed schedules</p>
           </div>
 
           <div class="stat-card">
@@ -263,8 +283,8 @@
               <option value="">Type Filter</option>
               <option value="House Blessing">House Blessing</option>
               <option value="Business Dedication">Business Dedication</option>
-              <option value="Vehicle Blessing">Vehicle Blessing</option>
-              <option value="Other">Other</option>
+              <option value="Vehicle / Item Blessing">Vehicle / Item Blessing</option>
+              <option value="Pet Blessing">Pet Blessing</option>
             </select>
           </div>
 
@@ -274,96 +294,94 @@
           </button>
         </div>
 
-        <!-- Upcoming Blessings + New Blessing Requests -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- List view (table-style panels) -->
+        <div id="list-view-panel">
 
-          <div class="panel">
-            <div class="panel-header">
-              <h2 class="panel-title">Upcoming Blessings</h2>
-              <p id="upcoming-count" class="text-xs text-gray-400 font-medium"></p>
+          <!-- Upcoming Blessings + New Blessing Requests -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+            <div class="panel" id="upcoming-panel">
+              <div class="panel-header">
+                <h2 class="panel-title">Upcoming Blessings</h2>
+                <p id="upcoming-count" class="text-xs text-gray-400 font-medium"></p>
+              </div>
+              <ul id="upcoming-list" class="divide-y divide-gray-100">
+                <!-- Rows injected by blessings.js -->
+              </ul>
+              <div id="upcoming-empty" class="empty-state hidden">
+                <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <p class="text-sm font-medium text-gray-600">No upcoming blessings scheduled</p>
+              </div>
+              <div id="upcoming-pagination" class="pagination-bar">
+                <!-- Injected by blessings.js -->
+              </div>
             </div>
-            <ul id="upcoming-list" class="divide-y divide-gray-100">
-              <!-- Rows injected by blessings.js -->
-            </ul>
-            <div id="upcoming-empty" class="empty-state hidden">
-              <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <p class="text-sm font-medium text-gray-600">No upcoming blessings scheduled</p>
+
+            <div class="panel" id="requests-panel">
+              <div class="panel-header">
+                <h2 class="panel-title">Older Requests Awaiting Review</h2>
+                <p id="requests-count" class="text-xs text-gray-400 font-medium"></p>
+              </div>
+              <ul id="requests-list" class="divide-y divide-gray-100">
+                <!-- Rows injected by blessings.js -->
+              </ul>
+              <div id="requests-empty" class="empty-state hidden">
+                <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
+                <p class="text-sm font-medium text-gray-600">Nothing to review</p>
+                <p class="text-xs text-gray-400 mt-1">New requests pick a fixed schedule slot and are booked automatically.</p>
+              </div>
+              <div id="requests-pagination" class="pagination-bar">
+                <!-- Injected by blessings.js -->
+              </div>
             </div>
           </div>
 
+          <!-- Completed Blessings -->
           <div class="panel">
             <div class="panel-header">
-              <h2 class="panel-title">New Blessing Requests</h2>
-              <p id="requests-count" class="text-xs text-gray-400 font-medium"></p>
+              <h2 class="panel-title">Completed Blessings — May 2026</h2>
+              <p id="completed-count" class="text-xs text-gray-400 font-medium"></p>
             </div>
-            <ul id="requests-list" class="divide-y divide-gray-100">
+            <ul id="completed-list" class="divide-y divide-gray-100">
               <!-- Rows injected by blessings.js -->
             </ul>
-            <div id="requests-empty" class="empty-state hidden">
-              <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
-              <p class="text-sm font-medium text-gray-600">No new blessing requests</p>
+            <div id="completed-pagination" class="pagination-bar">
+              <!-- Injected by blessings.js -->
             </div>
           </div>
+
         </div>
 
-        <!-- Completed Blessings -->
-        <div class="panel">
+        <!-- Calendar view (hidden by default) -->
+        <div class="panel hidden" id="calendar-view-panel">
           <div class="panel-header">
-            <h2 class="panel-title">Completed Blessings — May 2026</h2>
-            <p id="completed-count" class="text-xs text-gray-400 font-medium"></p>
+            <h2 class="panel-title">Blessings Calendar</h2>
+            <div class="calendar-nav">
+              <button type="button" id="cal-prev" class="calendar-nav-btn" aria-label="Previous month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span id="cal-month-label" class="calendar-month-label"></span>
+              <button type="button" id="cal-next" class="calendar-nav-btn" aria-label="Next month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
           </div>
-          <ul id="completed-list" class="divide-y divide-gray-100">
-            <!-- Rows injected by blessings.js -->
-          </ul>
+          <div class="calendar-wrap">
+            <div class="calendar-weekdays">
+              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div id="calendar-grid" class="calendar-grid">
+              <!-- Cells injected by blessings.js -->
+            </div>
+          </div>
+          <div class="calendar-legend">
+            <span class="calendar-legend-item"><span class="calendar-legend-dot scheduled"></span>Scheduled</span>
+            <span class="calendar-legend-item"><span class="calendar-legend-dot pending"></span>Pending</span>
+            <span class="calendar-legend-item"><span class="calendar-legend-dot completed"></span>Completed</span>
+          </div>
         </div>
 
       </main>
-    </div>
-  </div>
-
-  <!-- ========== SCHEDULE BLESSING MODAL ========== -->
-  <div id="schedule-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">Schedule a Blessing</h3>
-        <button class="modal-close" data-close-modal aria-label="Close">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="schedule-requester">Requester Name</label>
-            <input type="text" id="schedule-requester" class="form-input" placeholder="e.g. Santos Family" />
-          </div>
-          <div>
-            <label class="form-label" for="schedule-date">Date</label>
-            <input type="date" id="schedule-date" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label" for="schedule-time">Time</label>
-            <input type="time" id="schedule-time" class="form-input" />
-          </div>
-          <div class="col-span-2">
-            <label class="form-label" for="schedule-type">Blessing Type</label>
-            <select id="schedule-type" class="form-input">
-              <option value="">Select type</option>
-              <option value="House Blessing">House Blessing</option>
-              <option value="Business Dedication">Business Dedication</option>
-              <option value="Vehicle Blessing">Vehicle Blessing</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <label class="form-label" for="schedule-location">Location / Address</label>
-            <input type="text" id="schedule-location" class="form-input" placeholder="e.g. 42 Maligaya St., Cubao" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="schedule-submit" class="btn-lavender">Save Blessing</button>
-      </div>
     </div>
   </div>
 
@@ -371,15 +389,15 @@
   <div id="decline-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Decline Blessing Request</h3>
+        <h3 class="modal-title" id="decline-modal-title">Decline Blessing Request</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <p class="text-sm text-gray-600 mb-3">Declining request from <span id="decline-target-name" class="font-semibold text-gray-900"></span>.</p>
+        <p class="text-sm text-gray-600 mb-3"><span id="decline-verb">Declining request from</span> <span id="decline-target-name" class="font-semibold text-gray-900"></span>.</p>
         <label class="form-label" for="decline-reason">Reason (optional)</label>
-        <textarea id="decline-reason" class="form-input" rows="3" placeholder="e.g. Requested date unavailable"></textarea>
+        <textarea id="decline-reason" class="form-input" rows="3" placeholder="e.g. Priest unavailable on this date"></textarea>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
@@ -401,6 +419,88 @@
         <!-- Injected by blessings.js -->
       </div>
       <div class="modal-footer">
+        <button type="button" id="details-cancel-booking" class="btn-danger hidden">Cancel Booking</button>
+        <button type="button" id="details-reschedule" class="btn-lavender hidden">Reschedule</button>
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== RESCHEDULE SCREEN (full-screen beside the sidebar) ========== -->
+  <section id="reschedule-screen" class="svc-screen hidden" role="dialog" aria-modal="true" aria-labelledby="reschedule-title">
+    <header class="svc-screen-bar">
+      <button type="button" id="reschedule-back" class="svc-screen-back">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Blessings
+      </button>
+      <div class="svc-screen-heading">
+        <h2 class="svc-screen-title" id="reschedule-title">Reschedule</h2>
+        <p class="svc-screen-sub" id="reschedule-sub"></p>
+      </div>
+    </header>
+
+    <div class="svc-screen-body" id="reschedule-body">
+      <div class="svc-screen-cols">
+        <!-- Left: the booking as it stands -->
+        <div class="svc-screen-col">
+          <h3 class="svc-screen-col-title">Current Booking</h3>
+          <div class="svc-screen-current">
+            <p class="svc-screen-fact-label" id="reschedule-current-label">Current schedule</p>
+            <p class="svc-screen-fact-value" id="reschedule-current"></p>
+          </div>
+          <div id="reschedule-facts" class="svc-screen-facts mt-4"></div>
+          <div class="reschedule-reason" id="reschedule-reason-wrap">
+            <label class="form-label" for="reschedule-reason">Reason for Rescheduling <span class="text-red-500">*</span></label>
+            <div class="reason-chips" role="group" aria-label="Common reasons">
+              <button type="button" class="reason-chip" data-reason="Priest is sick">Priest is sick</button>
+              <button type="button" class="reason-chip" data-reason="Priest unavailable">Priest unavailable</button>
+              <button type="button" class="reason-chip" data-reason="Parish event conflict">Parish event conflict</button>
+              <button type="button" class="reason-chip" data-reason="Requested by parishioner">Requested by parishioner</button>
+              <button type="button" class="reason-chip" data-reason="Bad weather">Bad weather</button>
+            </div>
+            <textarea id="reschedule-reason" class="form-input" rows="2" placeholder="e.g. Fr. Santos is sick — moving to the next open Saturday"></textarea>
+          </div>
+          <p class="svc-screen-note">Saving books the blessing at the new time and frees the old slot. The office can book any open slot, including same-day.</p>
+        </div>
+
+        <!-- Right: pick the new slot -->
+        <div class="svc-screen-col">
+          <h3 class="svc-screen-col-title">Pick a New Schedule <span class="text-red-500">*</span></h3>
+          <div id="reschedule-slot-picker" class="slot-picker"></div>
+          <p id="reschedule-summary" class="slot-summary hidden"></p>
+        </div>
+      </div>
+    </div>
+
+    <footer class="svc-screen-footer">
+      <button type="button" id="reschedule-cancel" class="btn-secondary">Cancel</button>
+      <button type="button" id="reschedule-submit" class="btn-lavender">Save New Schedule</button>
+    </footer>
+  </section>
+
+  <!-- ========== DAY PLAN MODAL (calendar view) ========== -->
+  <div id="day-plan-modal" class="modal-overlay hidden">
+    <div class="modal-card day-plan-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="day-plan-title">Day Plan</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="day-plan-list" class="day-plan-list">
+          <!-- Full day's blessings injected by blessings.js -->
+        </div>
+        <div id="day-plan-empty" class="empty-state hidden">
+          <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <p class="text-sm font-medium text-gray-600">No blessings on this date.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="day-plan-print" class="btn-secondary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print Day Schedule
+        </button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>
@@ -409,6 +509,6 @@
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- Scripts -->
+  <!-- Scripts -->
 </body>
 </html>
