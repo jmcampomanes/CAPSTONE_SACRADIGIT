@@ -466,3 +466,13 @@
   font-weight: 600;
   color: #111827;
 }
+
+/* Phones: time + Mass name on the first line; badge and actions below. */
+@media (max-width: 640px) {
+  .schedule-row { gap: 0.375rem 0.75rem; padding: 0.875rem 1rem; }
+  .schedule-time { width: 4.25rem; flex-shrink: 0; }
+  .schedule-info { flex: 1 1 calc(100% - 5rem); min-width: 0; }
+  .schedule-row > .mass-type-badge { margin-left: 5rem; }
+  .schedule-row > .schedule-details-btn { margin-left: auto; }
+}
+

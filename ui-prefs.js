@@ -200,6 +200,35 @@ const STYLE = `
   :root[data-theme="dark"] .ui-prefs-btn, :root[data-theme="dark"] .ui-prefs-lang { background: #1a2131; border-color: #3a4459; color: #b6bdca; }
   :root[data-theme="dark"] .ui-prefs-btn:hover, :root[data-theme="dark"] .ui-prefs-lang:hover { background: #242c3e; color: #f1f3f7; }
   .ui-prefs-standalone { position: fixed; top: 0.75rem; right: 0.75rem; z-index: 60; }
+
+  /* Phones: every portal's top bar keeps menu · title · these buttons on one row.
+     (body header.bg-white outranks the Tailwind utility classes in the markup.) */
+  @media (max-width: 640px) {
+  /* Top bar: menu · title · theme/language/help — all on one row. */
+  body header.bg-white {
+    padding: 0.625rem 0.875rem;
+    gap: 0.5rem;
+  }
+  body header.bg-white > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 0.5rem;
+  }
+  body header.bg-white > div:first-child > div.w-9 { display: none; } /* page icon */
+  body header.bg-white h1 {
+    font-size: 1.0625rem;
+    line-height: 1.25;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  body header.bg-white .help-date-wrap { flex-shrink: 0; gap: 0.375rem; }
+  }
+  @media (max-width: 360px) {
+    body header.bg-white h1 { font-size: 1rem; }
+  }
 `;
 
 const MOON = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>';

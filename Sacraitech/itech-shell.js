@@ -42,9 +42,10 @@ export const DATA_MODULES = [
 
 /* ---------- Cloud storage folders ----------
    CloudFile.folder keys used by uploads (Cloud Access, Media Library).
-   The livestream feature also keeps its status/history as CloudFile
-   records (see ../livestream-status.js) — those aren't files, so every
-   storage view hides SYSTEM_FOLDERS and must never delete them. */
+   The livestream feature used to keep its status/history as CloudFile
+   records in SYSTEM_FOLDERS; it now has its own models (see
+   ../livestream-status.js), but storage views still hide those folders
+   in case old records exist. */
 export const STORAGE_FOLDERS = [
   { key: 'baptism',       name: 'Baptismal Records' },
   { key: 'confirmation',  name: 'Confirmation Records' },

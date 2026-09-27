@@ -384,4 +384,5 @@
   .mass-row > .mass-type-badge { margin-left: 5rem; }
   .mass-row > .btn-reminder { margin-left: auto; }
   .weekly-table tbody td { white-space: normal; }
+  .weekly-table .time-pill { white-space: nowrap; }
 }
