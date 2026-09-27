@@ -272,3 +272,35 @@ button:focus-visible { outline-color: var(--itech); }
   font-size: 0.75rem;
   color: #6b7280;
 }
+
+/* ---------- Accounts (itech-accounts.js) ---------- */
+.acct-search { width: 14rem; padding-top: 0.4rem; padding-bottom: 0.4rem; font-size: 0.8125rem; }
+.acct-note {
+  margin: 0 1.25rem 1.25rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.625rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.acct-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.acct-table th {
+  text-align: left;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+  border-bottom: 1px solid #eef0f4;
+}
+.acct-table td { padding: 0.6rem 1.25rem; border-bottom: 1px solid #f3f4f6; color: #111827; vertical-align: middle; }
+.acct-role-select { padding-top: 0.35rem; padding-bottom: 0.35rem; font-size: 0.8125rem; min-width: 11rem; }
+.acct-status { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.6875rem; font-weight: 700; }
+.acct-ok { background: #ecfdf3; color: #15803d; }
+.acct-warn { background: #fffbeb; color: #b45309; }
+.acct-off { background: #f3f4f6; color: #6b7280; }
+.acct-you { margin-left: 0.3rem; padding: 0 0.4rem; border-radius: 999px; background: #0e7490; color: #ffffff; font-size: 0.625rem; font-weight: 700; }
+@media (max-width: 640px) { .acct-search { width: 100%; } }

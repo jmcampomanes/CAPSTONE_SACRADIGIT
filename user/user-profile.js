@@ -19,13 +19,14 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { currentUserName } from '../auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
      0. SESSION-LOCAL ACCOUNT DATA (no backend model)
   ------------------------------------------ */
-  const DONOR_NAME = 'Maria P. Santos'; // same hardcoded identity used across the user portal
+  const DONOR_NAME = currentUserName(); // the signed-in parishioner (auth.js)
   const STORED_PASSWORD = 'parish123'; // demo-only "current" password
 
   const notifTypes = [

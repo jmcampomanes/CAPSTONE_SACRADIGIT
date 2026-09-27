@@ -16,6 +16,8 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
+import { currentUserName } from '../auth.js';
 import { formatFullName, isNameEmpty } from '../name-utils.js';
 import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField } from '../service-schedule.js';
 
@@ -36,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return value === null || value === undefined || value === '' ? null : String(value);
   }
 
-  const REQUESTER_NAME = 'Maria P. Santos';
+  const REQUESTER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
 
   const serviceTypes = [
     { id: 'baptism', name: 'Baptism',
@@ -246,10 +248,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let rescheduleTargetId = null;
   const rescheduleReason = createReasonField(document.getElementById('reschedule-reason-wrap'));
 
-  client.models.Blessing.observeQuery().subscribe({
-    next: ({ items }) => { allBookings = items; if (reschedulePicker) reschedulePicker.refresh(allBookings); },
-    error: (err) => console.error('Failed to load parish bookings:', err),
-  });
+  // Every booked slot parish-wide (no names — see public-data.js).
+  watchTakenSlots('blessing', (rows) => { allBookings = rows; if (reschedulePicker) reschedulePicker.refresh(allBookings); });
+
+  /** Taken slots without the one this request itself holds (it's moving away from it). */
+  function withoutOwnSlot(rows, r) {
+    const i = rows.findIndex(x => x.type === r.type && x.date === (r.date || r.preferredDate) && x.time === r.time);
+    return i < 0 ? rows : rows.filter((_, j) => j !== i);
+  }
   watchClosures(client, (next) => { closures = next; if (reschedulePicker) reschedulePicker.setClosures(closures); });
 
   function fmtLongDate(iso) {
@@ -334,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       // Last check against the freshest data so two people can't grab the
       // final place in a slot at the same moment.
-      const { data: latest } = await client.models.Blessing.list({ limit: 1000 });
+      const latest = withoutOwnSlot(await fetchTakenSlots('blessing'), r);
       if (!slotHasRoom(r.type, latest || allBookings, slot.date, slot.time, { excludeId: r.id, closures })) {
         reschedulePicker.refresh(latest || allBookings);
         throw new Error('Sorry, that slot was just taken. Please pick another time.');

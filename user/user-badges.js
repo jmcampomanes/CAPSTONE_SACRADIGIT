@@ -15,17 +15,21 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { computeBadges, faithfulGivers, badgeIconSvg, BADGES, parishionerKey, monthStreak, streakLabel } from '../badges.js';
+import { loadFaithfulGivers } from '../public-data.js';
+import { currentUserName } from '../auth.js';
+import { computeBadges, badgeIconSvg, BADGES, parishionerKey, monthStreak, streakLabel } from '../badges.js';
 import { checkInReady, preferencesReady, submitCheckIn, listCheckInsFor, optedOutKeys, getPreference, setShowOnHonorRoll, formatCode, normalizeCode } from '../mass-checkin.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const PARISHIONER_NAME = 'Maria P. Santos'; // same hardcoded identity used across the user portal
+  const PARISHIONER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
   const MY_KEY = parishionerKey(PARISHIONER_NAME);
 
   const data = { checkIns: [], donations: [], intentions: [], blessings: [] };
   let allDonations = [];
   let optedOut = new Set();
+  let giversList = []; // Faithful Givers, from public-data.js (no amounts)
+  loadFaithfulGivers().then(list => { giversList = list; render(); }).catch(err => console.error('Failed to load Faithful Givers:', err));
   let activeGroup = '';
   let loaded = { donations: false, intentions: false, blessings: false, checkIns: false };
 
@@ -142,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderGivers() {
-    const givers = faithfulGivers(allDonations, { optedOut });
+    const givers = giversList.filter(g => !optedOut.has(g.key));
     $('givers-list').innerHTML = givers.slice(0, 30).map(g => `
       <li class="fj-giver${g.key === MY_KEY ? ' is-me' : ''}">
         <span class="fj-giver-name">${escapeHtml(g.name)}${g.key === MY_KEY ? ' <span class="fj-you">You</span>' : ''}</span>

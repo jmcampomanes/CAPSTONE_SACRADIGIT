@@ -12,6 +12,7 @@
    ============================================ */
 
 import { client } from '../../amplify-init.js';
+import { currentUserName } from '../../auth.js';
 import { uploadData } from 'aws-amplify/storage';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../../name-utils.js';
 import { DOC_TYPES, extractFields } from './scan-engine.js';
@@ -412,7 +413,7 @@ export function initScanScreen({ showToast }) {
         type,
         dateOfEvent: date || undefined,
         officiant: officiant || undefined,
-        addedByName: 'Admin User', // TODO: pull from signed-in Cognito user once auth UI exists
+        addedByName: currentUserName() || 'Parish Office',
         status: 'digitized',
         fileURL: path,
       });

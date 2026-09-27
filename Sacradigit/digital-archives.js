@@ -4,6 +4,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { currentUserName } from '../auth.js';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../name-utils.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { initScanScreen, SCAN_SUFFIX } from './scanner/scan-screen.js';
@@ -334,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await client.models.ParishRecord.create({
         fullName,
         type: type.toLowerCase(),
-        addedByName: 'Admin User', // TODO: pull from signed-in Cognito user once auth UI exists
+        addedByName: currentUserName() || 'Parish Office',
         status: 'processing',
         fileURL: path, // bare S3 path — resolved to a signed URL on demand, see resolveFileUrl()
       });
@@ -373,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         type: type.toLowerCase(),
         dateOfEvent: date,
         officiant: officiant || undefined,
-        addedByName: 'Admin User',
+        addedByName: currentUserName() || 'Parish Office',
         status: 'digitized',
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));

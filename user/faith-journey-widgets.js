@@ -8,10 +8,12 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { computeBadges, faithfulGivers, badgeIconSvg, parishionerKey, streakLabel } from '../badges.js';
+import { loadFaithfulGivers } from '../public-data.js';
+import { currentUserName } from '../auth.js';
+import { computeBadges, badgeIconSvg, parishionerKey, streakLabel } from '../badges.js';
 import { checkInReady, listCheckInsFor, optedOutKeys } from '../mass-checkin.js';
 
-const PARISHIONER_NAME = 'Maria P. Santos'; // same hardcoded identity used across the user portal
+const PARISHIONER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
 const MY_KEY = parishionerKey(PARISHIONER_NAME);
 
 const escapeHtml = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
@@ -65,30 +67,28 @@ export function mountBadgeStrip(el) {
 /** Faithful Givers list (names + months in a row, never amounts). */
 export function mountFaithfulGivers(el, { limit = 12 } = {}) {
   if (!el) return;
-  let donations = [];
   let optedOut = new Set();
   let ready = false;
 
   const render = () => {
     if (!ready) return;
-    const givers = faithfulGivers(donations, { optedOut });
-    const mine = givers.find(g => g.key === MY_KEY);
-    el.innerHTML = givers.length ? `
+    const shown = givers.filter(g => !optedOut.has(g.key));
+    const mine = shown.find(g => g.key === MY_KEY);
+    el.innerHTML = shown.length ? `
       <ol class="fjw-givers">
-        ${givers.slice(0, limit).map(g => `
+        ${shown.slice(0, limit).map(g => `
           <li class="fjw-giver${g.key === MY_KEY ? ' is-me' : ''}">
             <span class="fjw-giver-name">${escapeHtml(g.name)}${g.key === MY_KEY ? ' <span class="fjw-you">You</span>' : ''}</span>
             <span class="fjw-giver-streak">${escapeHtml(streakLabel(g.streak))}</span>
           </li>`).join('')}
       </ol>
-      ${givers.length > limit ? `<p class="fjw-caption">and ${givers.length - limit} more faithful givers — thank you!</p>` : ''}
+      ${shown.length > limit ? `<p class="fjw-caption">and ${shown.length - limit} more faithful givers — thank you!</p>` : ''}
       ${mine ? '' : '<p class="fjw-caption">Give any amount 3 months in a row to join this list.</p>'}`
       : '<p class="fjw-caption">No one has given 3 months in a row yet — be the first!</p>';
   };
 
-  client.models.Donation.observeQuery().subscribe({
-    next: ({ items }) => { donations = items; render(); },
-    error: (err) => console.error('Failed to load donations:', err),
-  });
-  optedOutKeys().catch(() => new Set()).then(keys => { optedOut = keys; ready = true; render(); });
+  let givers = [];
+  Promise.all([loadFaithfulGivers(), optedOutKeys().catch(() => new Set())])
+    .then(([list, keys]) => { givers = list; optedOut = keys; ready = true; render(); })
+    .catch(err => console.error('Failed to load Faithful Givers:', err));
 }

@@ -6,6 +6,10 @@
    ============================================ */
 
 // Adds the rotating sacred art to every navy page header (see sacred-art.js).
+import { guardPage } from '../auth.js';
+
+// Only signed-in people with the right role get past this (see auth.js).
+guardPage('media');
 import '../Sacradigit/sacred-art.js';
 import { initUiPrefs } from '../ui-prefs.js';
 

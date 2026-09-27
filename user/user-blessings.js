@@ -13,10 +13,11 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { currentUserName } from '../auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const REQUESTER_NAME = 'Maria P. Santos';
+  const REQUESTER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
   function toLocalISODate(d = new Date()) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');

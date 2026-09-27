@@ -3773,6 +3773,31 @@
 :root[data-theme="dark"] .panel-intro {
     color: #a0a8b6
 }
+:root[data-theme="dark"] .acct-note {
+    background: #3f3718;
+    border: 1px solid #6b5f2e;
+    color: #eeb18b
+}
+:root[data-theme="dark"] .acct-table th {
+    color: #a0a8b6;
+    border-bottom: 1px solid #434956
+}
+:root[data-theme="dark"] .acct-table td {
+    border-bottom: 1px solid #2c3548;
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .acct-ok {
+    background: #1a3d28;
+    color: #8decb1
+}
+:root[data-theme="dark"] .acct-warn {
+    background: #3f3718;
+    color: #eeb68b
+}
+:root[data-theme="dark"] .acct-off {
+    background: #242c3e;
+    color: #a0a8b6
+}
 /*  from Sacraitech/itech-css/itech.css  */
 :root[data-theme="dark"] .health-card {
     border-right: 1px solid #454954;

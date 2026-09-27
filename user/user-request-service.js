@@ -12,6 +12,8 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
+import { currentUserName } from '../auth.js';
 import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, watchClosures } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
 import { createPinMap, formatLatLng } from '../pin-map.js';
@@ -19,7 +21,7 @@ import { SERVICE_CATEGORIES, SERVICE_TYPES } from '../service-catalog.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const REQUESTER_NAME = 'Maria P. Santos';
+  const REQUESTER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
 
   const serviceTypes = SERVICE_TYPES;
 
@@ -38,14 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedTypeId = null;
   let slotPicker = null;
   let pinMap = null; // House Blessing's location map, while the form is open
-  let allBookings = []; // every Blessing record, kept live so full slots show as taken
+  let allBookings = []; // every booked slot parish-wide (no names — see public-data.js)
 
-  client.models.Blessing.observeQuery().subscribe({
-    next: ({ items }) => {
-      allBookings = items;
-      if (slotPicker) slotPicker.refresh(allBookings);
-    },
-    error: (err) => console.error('Failed to load existing bookings:', err),
+  watchTakenSlots('blessing', (rows) => {
+    allBookings = rows;
+    if (slotPicker) slotPicker.refresh(allBookings);
   });
 
   // "No Services (Parish Closed)" special schedules block those dates
@@ -295,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       // Last check against the freshest data so two people can't grab
       // the final place in a slot at the same moment.
-      const { data: latest } = await client.models.Blessing.list({ limit: 1000 });
+      const latest = await fetchTakenSlots('blessing');
       if (!slotHasRoom(svc.name, latest || allBookings, slot.date, slot.time, { closures })) {
         slotPicker.refresh(latest || allBookings);
         throw new Error('Sorry, that slot was just taken. Please pick another time.');

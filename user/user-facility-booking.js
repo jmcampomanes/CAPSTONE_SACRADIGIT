@@ -14,11 +14,13 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { watchTakenSlots } from '../public-data.js';
+import { currentUserName } from '../auth.js';
 import { watchClosures, closureOn } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const REQUESTER_NAME = 'Maria P. Santos';
+  const REQUESTER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
 
   const facilities = [
     { id: 'parish-hall', name: 'Parish Hall', desc: 'Large multi-purpose hall suitable for receptions, reunions, and parish events.', capacity: 200, availability: 'available', barColor: '#8b8fc7' },
@@ -351,14 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
     allBookingsForFacility = [];
     if (!facility) { renderBkCalendar(); renderBkTimeSlots(); return; }
 
-    allBookingsSub = client.models.FacilityBooking.observeQuery({ filter: { facilityName: { eq: facility } } }).subscribe({
-      next: ({ items }) => {
-        allBookingsForFacility = items;
-        renderBkCalendar();
-        renderBkTimeSlots();
-      },
-      error: (err) => console.error('Failed to load facility availability:', err),
+    // Booked hours parish-wide, without anyone's details (see public-data.js)
+    const watcher = watchTakenSlots('facility', (rows) => {
+      allBookingsForFacility = rows.filter(b => b.facilityName === facility);
+      renderBkCalendar();
+      renderBkTimeSlots();
     });
+    allBookingsSub = { unsubscribe: () => watcher.stop() };
   }
 
   document.getElementById('bkcal-prev').addEventListener('click', () => { bkCalDate.setMonth(bkCalDate.getMonth() - 1); renderBkCalendar(); });

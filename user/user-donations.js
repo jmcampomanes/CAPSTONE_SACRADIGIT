@@ -8,13 +8,15 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { loadDonationTotals } from '../public-data.js';
+import { currentUserName } from '../auth.js';
 import { mountFaithfulGivers } from './faith-journey-widgets.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   mountFaithfulGivers(document.getElementById('fj-faithful-givers'));
 
-  const DONOR_NAME = 'Maria P. Santos';
+  const DONOR_NAME = currentUserName(); // the signed-in parishioner (auth.js)
   const monthPrefix = new Date().toISOString().slice(0, 7);
 
   const fundDefs = [
@@ -33,6 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   let allDonations = [];
+  // Parish-wide totals per fund/goal, without names (see public-data.js)
+  let fundTotals = {};
+  const refreshTotals = () => loadDonationTotals()
+    .then(t => { fundTotals = t; renderFundGrid(); renderGoalGrid(); })
+    .catch(err => console.error('Failed to load fund totals:', err));
+  setTimeout(refreshTotals, 0);
+  setInterval(refreshTotals, 60000);
   let myDonations = [];
   let goals = []; // fundraising goals, kept in sync via observeQuery
 
@@ -69,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function fundTotal(fundName) {
-    return allDonations.filter(d => d.purpose === fundName).reduce((s, d) => s + (d.amount || 0), 0);
+    return fundTotals[fundName] || 0;
   }
 
 

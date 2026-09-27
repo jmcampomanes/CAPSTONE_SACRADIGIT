@@ -13,6 +13,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { currentUserName } from '../auth.js';
 import { uploadData } from 'aws-amplify/storage';
 import { formatFullName } from '../name-utils.js';
 
@@ -166,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         officiant: (data['marriage-cert-priest'] || '').trim() || undefined,
         status: 'digitized',
         fileURL: path,
-        addedByName: 'Admin User',
+        addedByName: currentUserName() || 'Parish Office',
       });
       if (recordResult.errors) throw new Error(recordResult.errors.map(e => e.message).join('; '));
 

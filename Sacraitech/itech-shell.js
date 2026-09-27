@@ -9,9 +9,13 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { guardPage, currentUserName } from '../auth.js';
+
+// Only signed-in IT team members get past this (see auth.js).
+guardPage('itech');
 import { initUiPrefs } from '../ui-prefs.js';
 
-export const ITECH_USER = 'Sacra ITech';
+export const ITECH_USER = 'Sacra ITech'; // fallback when the name isn't known
 
 /** Every data model in the app, grouped by the portal area that owns it. */
 export const DATA_MODULES = [
@@ -129,7 +133,7 @@ export function showToast(message, isError = false) {
  */
 export async function logItAction(action, detail) {
   try {
-    await client.models.AccessLog.create({ userName: ITECH_USER, fileName: detail, action });
+    await client.models.AccessLog.create({ userName: currentUserName() || ITECH_USER, fileName: detail, action });
   } catch (err) {
     console.warn('Could not write audit log entry:', err);
   }

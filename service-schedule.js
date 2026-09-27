@@ -1,3 +1,4 @@
+import { currentUserName } from './auth.js';
 /* ============================================
    SacraDigit — Fixed Service Schedules
    Shared by user/user-request-service.js (parishioner
@@ -239,7 +240,7 @@ export function locationFor(type, details = {}) {
  * and the admin's Profile → Activity Log. Never throws — a failed
  * log entry must not undo or block the action itself.
  */
-export async function logBookingAction(client, { action, record, reason = '', userName = 'Parish Admin' }) {
+export async function logBookingAction(client, { action, record, reason = '', userName = currentUserName() || 'Parish Office' }) {
   if (!client.models.AccessLog || !record) return;
   const when = [record.date || record.preferredDate, record.time].filter(Boolean).join(' ');
   const fileName = `Booking: ${record.type} — ${record.requesterName}${when ? ` (${when})` : ''}${reason ? ` · ${reason}` : ''}`;

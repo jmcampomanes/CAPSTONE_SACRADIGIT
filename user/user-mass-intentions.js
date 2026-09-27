@@ -7,6 +7,8 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { loadCommunityIntentions } from '../public-data.js';
+import { currentUserName } from '../auth.js';
 import { readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function nameDisplay(n) { return formatFullName(normalizeName(n)); }
 
-  const DONOR_NAME = 'Maria P. Santos';
+  const DONOR_NAME = currentUserName(); // the signed-in parishioner (auth.js)
 
   const intentionTypes = [
     { id: 'soul', label: 'For the Soul of...', iconBg: 'rgba(107,114,128,0.12)', iconColor: '#6b7280',
@@ -767,15 +769,12 @@ document.addEventListener('DOMContentLoaded', () => {
     findInput.focus();
   });
 
-  client.models.MassIntention.observeQuery().subscribe({
-    next: ({ items }) => {
-      allIntentions = items;
-      renderSheetOptions();
-    },
-    error: (err) => {
-      console.error('Failed to load community intentions:', err);
-    },
-  });
+  // Names prayed for at each Mass — no donor or offering (see public-data.js)
+  const refreshCommunity = () => loadCommunityIntentions()
+    .then(rows => { allIntentions = rows; renderSheetOptions(); })
+    .catch(err => console.error('Failed to load community intentions:', err));
+  refreshCommunity();
+  setInterval(refreshCommunity, 60000);
 
   function sheetKey(it) { return `${it.massDate}||${it.massTime || ''}`; }
 

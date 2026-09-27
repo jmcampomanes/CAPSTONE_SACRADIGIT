@@ -7,13 +7,14 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { currentUserName } from '../auth.js';
 import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled, formatFullName, isNameEmpty } from '../name-utils.js';
 import { regionOptionsHtml, cityOptionsHtml, OTHER_CITY_VALUE } from '../ph-locations.js';
 import { confirmationNameOptionsHtml, OTHER_NAME_VALUE as OTHER_SAINT_NAME_VALUE } from '../saint-names.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const REQUESTER_NAME = 'Maria P. Santos';
+  const REQUESTER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
   const PARISH_NAME = 'Our Lady of Fatima Parish';
 
   // Options for the Baptismal Certificate's "Add Guardian" relationship

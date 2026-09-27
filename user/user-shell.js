@@ -3,6 +3,10 @@
    Shared across ALL user pages (user-shell.js)
    ============================================ */
 
+import { guardPage, currentUser } from '../auth.js';
+
+// Only signed-in people with the right role get past this (see auth.js).
+guardPage('parishioner');
 import { initPageHelp } from '../help-tutorial.js';
 import { initUiPrefs } from '../ui-prefs.js';
 import { initSacredArt } from './sacred-art.js';
@@ -175,10 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
      Stored in sessionStorage so it persists
      across user pages in the same session.
   ------------------------------------------ */
+  const me = currentUser() || {};
   const USER = {
-    firstName: 'Maria',
-    lastName: 'Santos',
-    fullName: 'Maria P. Santos',
+    firstName: me.firstName || me.name || '?',
+    lastName: me.lastName || '',
+    fullName: me.name || '',
     role: 'Parishioner',
   };
 
@@ -187,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const avatarInitials = document.getElementById('avatar-initials');
   if (sidebarName) sidebarName.textContent = USER.fullName;
   if (avatarInitials) {
-    const initials = (USER.firstName[0] + USER.lastName[0]).toUpperCase();
+    const initials = ((USER.firstName[0] || '') + (USER.lastName[0] || '')).toUpperCase();
     avatarInitials.textContent = initials;
   }
 
