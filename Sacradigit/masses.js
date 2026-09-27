@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="day-cell">${escapeHtml(w.dayLabel)}</td>
         <td>${w.times.map(t => `<span class="time-pill">${escapeHtml(t)}</span>`).join('')}</td>
         <td>${escapeHtml(w.displayType)}</td>
-        <td class="text-right"><button type="button" class="row-action" data-day-index="${idx}">Edit ›</button></td>
+        <td class="text-right"><button type="button" class="row-action head-admin-only" data-day-index="${idx}">Edit ›</button></td>
       </tr>
     `).join('');
   }

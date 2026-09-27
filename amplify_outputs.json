@@ -154,14 +154,26 @@
                     "provider": "userPools",
                     "allow": "groups",
                     "groups": [
-                      "admin",
-                      "staff"
+                      "admin"
                     ],
                     "operations": [
                       "create",
                       "update",
                       "delete",
                       "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "read",
+                      "update"
+                    ],
+                    "groups": [
+                      "staff"
                     ]
                   },
                   {
@@ -298,14 +310,26 @@
                     "provider": "userPools",
                     "allow": "groups",
                     "groups": [
-                      "admin",
-                      "staff"
+                      "admin"
                     ],
                     "operations": [
                       "create",
                       "update",
                       "delete",
                       "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "read",
+                      "update"
+                    ],
+                    "groups": [
+                      "staff"
                     ]
                   },
                   {
@@ -443,14 +467,24 @@
                     "provider": "userPools",
                     "allow": "groups",
                     "groups": [
-                      "admin",
-                      "staff"
+                      "admin"
                     ],
                     "operations": [
                       "create",
                       "update",
                       "delete",
                       "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "read"
+                    ],
+                    "groups": [
+                      "staff"
                     ]
                   },
                   {
@@ -562,14 +596,24 @@
                     "provider": "userPools",
                     "allow": "groups",
                     "groups": [
-                      "admin",
-                      "staff"
+                      "admin"
                     ],
                     "operations": [
                       "create",
                       "update",
                       "delete",
                       "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "read"
+                    ],
+                    "groups": [
+                      "staff"
                     ]
                   },
                   {
@@ -999,14 +1043,25 @@
                     "provider": "userPools",
                     "allow": "groups",
                     "groups": [
-                      "admin",
-                      "staff"
+                      "admin"
                     ],
                     "operations": [
                       "create",
                       "update",
                       "delete",
                       "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "read"
+                    ],
+                    "groups": [
+                      "staff"
                     ]
                   },
                   {
@@ -1122,7 +1177,6 @@
                     "allow": "groups",
                     "groups": [
                       "admin",
-                      "staff",
                       "media"
                     ],
                     "operations": [
@@ -1130,6 +1184,19 @@
                       "update",
                       "delete",
                       "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "read",
+                      "update"
+                    ],
+                    "groups": [
+                      "staff"
                     ]
                   },
                   {
@@ -1516,14 +1583,24 @@
                     "provider": "userPools",
                     "allow": "groups",
                     "groups": [
-                      "admin",
-                      "staff"
+                      "admin"
                     ],
                     "operations": [
                       "create",
                       "update",
                       "delete",
                       "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "read"
+                    ],
+                    "groups": [
+                      "staff"
                     ]
                   },
                   {
@@ -2396,14 +2473,24 @@
                     "provider": "userPools",
                     "allow": "groups",
                     "groups": [
-                      "admin",
-                      "staff"
+                      "admin"
                     ],
                     "operations": [
                       "create",
                       "update",
                       "delete",
                       "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "read"
+                    ],
+                    "groups": [
+                      "staff"
                     ]
                   },
                   {
@@ -3235,8 +3322,7 @@
             "groupsstaff": [
               "get",
               "list",
-              "write",
-              "delete"
+              "write"
             ]
           }
         }

@@ -7,6 +7,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { isHeadAdmin } from '../auth.js';
 import { uploadData } from 'aws-amplify/storage';
 import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 
@@ -215,8 +216,8 @@ document.addEventListener('DOMContentLoaded', () => {
           actionsHtml = `
             <div class="row-actions">
               ${certBtn}
-              <button type="button" class="row-approve" data-id="${r.id}">Approve</button>
-              <button type="button" class="row-reject" data-id="${r.id}">Reject</button>
+              <button type="button" class="row-approve head-admin-only" data-id="${r.id}">Approve</button>
+              <button type="button" class="row-reject head-admin-only" data-id="${r.id}">Reject</button>
             </div>`;
         } else if (r.status === 'approved') {
           actionsHtml = `
@@ -267,6 +268,11 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (certBtn.dataset.certType === 'Marriage Certificate') openGenerateMarriageCertModal(certBtn.dataset.id);
       else if (certBtn.dataset.certType === 'Death Certificate') openGenerateDeathCertModal(certBtn.dataset.id);
       else openGenerateCertModal(certBtn.dataset.id);
+    }
+
+    // Approving/rejecting is the Head Admin's call; the Secretary releases approved ones.
+    if ((approveBtn && !approveBtn.dataset.release) || rejectBtn) {
+      if (!isHeadAdmin()) { showToast('Only the Head Admin can approve or reject requests.', true); return; }
     }
 
     if (approveBtn) {

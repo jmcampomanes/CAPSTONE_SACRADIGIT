@@ -232,8 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <div class="schedule-actions">
-              <button type="button" class="sched-edit" data-id="${s.id}">Edit</button>
-              <button type="button" class="sched-delete" data-id="${s.id}">Delete</button>
+              <button type="button" class="sched-edit head-admin-only" data-id="${s.id}">Edit</button>
+              <button type="button" class="sched-delete head-admin-only" data-id="${s.id}">Delete</button>
             </div>
           </div>
         </div>

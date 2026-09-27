@@ -28,18 +28,18 @@
     };
   </script>
 
-  <!-- Shared admin design tokens + Sacra ITech styles -->
+  <!-- Shared admin design tokens + Sacra ITech styles -->
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
-  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
-  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacraitech-itech-roles-DV4vXqgl.js"></script>
+  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacraitech-itech-roles-DVfPN-P4.js"></script>
   <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/modulepreload-polyfill-BlJ-Wce8.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-BILvbBLA.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-gatWNEhY.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-Nb2B84W7.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/itech-shell-sYiyhNl-.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-Vxc6pzhO.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-P9e2XfKm.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-D-UKTN3k.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/itech-shell-CldwA_TR.js">
   <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/itech-shell-CdLLB7eA.css">
   <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/admin-shell-CYPiIeSr.css">
   <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/theme-dark-CeuQIlPL.css">
@@ -154,7 +154,7 @@
               </button>
             </div>
           </div>
-          <p class="panel-intro">Everyone who can sign in. A person’s role decides which portal they can open: Administrator and Parish Staff → Admin portal, IT Team → Sacra ITech, Media Team → Media portal. Everyone can use the Parishioner portal. Parishioners create their own accounts; add staff here.</p>
+          <p class="panel-intro">Everyone who can sign in. A person’s role decides which portal they can open: Head Admin and Secretary → Admin portal (a Secretary can’t change schedules, approve certificate requests, or publish announcements), IT Team → Sacra ITech, Media Team → Media portal. Everyone can use the Parishioner portal. Parishioners create their own accounts; add staff here.</p>
           <div id="acct-not-ready" class="acct-note hidden">Account management isn’t set up on the backend yet. Deploy the sign-in update (listUsers, setUserRole, createStaffUser, setUserEnabled) to manage accounts here.</div>
           <div class="overflow-x-auto" id="acct-table-wrap">
             <table class="acct-table">
@@ -252,6 +252,6 @@
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
-
+
 </body>
 </html>

@@ -3,8 +3,11 @@
 
    Who you are comes from your Cognito account;
    what you can open comes from its group:
-     admin   → Admin portal (everything), Media portal
-     staff   → Admin portal (parish office)
+     admin   → Head Admin: Admin portal (everything), Media portal
+     staff   → Secretary: Admin portal, day-to-day work only —
+               no schedule changes, no approving certificate
+               requests, no publishing or deleting announcements
+               (controls marked .head-admin-only are hidden)
      itech   → Sacra ITech portal
      media   → Media portal
      (none)  → Parishioner — every signed-in person
@@ -43,8 +46,8 @@ const STAFF_SESSION_COOKIE = 'sacradigit_staff_session';
 let justSignedIn = false; // set by signIn()/setNewPassword() on this page load
 
 export const ROLES = {
-  admin:       { label: 'Administrator',     home: 'Sacradigit/dashboard.html' },
-  staff:       { label: 'Parish Staff',      home: 'Sacradigit/dashboard.html' },
+  admin:       { label: 'Head Admin',        home: 'Sacradigit/dashboard.html' },
+  staff:       { label: 'Secretary',         home: 'Sacradigit/dashboard.html' },
   itech:       { label: 'IT Team',           home: 'Sacraitech/itech-dashboard.html' },
   media:       { label: 'Media Team',        home: 'Sacramedia/media-dashboard.html' },
   parishioner: { label: 'Parishioner',       home: 'user/user-dashboard.html' },
@@ -92,6 +95,9 @@ export function currentUser() {
 
 /** Display name for the signed-in person ('' when not signed in). */
 export const currentUserName = () => currentUser()?.name || '';
+
+/** Head Admin only: approving requests, publishing, changing schedules. */
+export const isHeadAdmin = (user = currentUser()) => !!user && (user.groups || []).includes('admin');
 
 export function hasRole(user, ...roles) {
   return !!user && roles.some(r => r === 'parishioner' || (user.groups || []).includes(r));
@@ -161,11 +167,22 @@ export async function guardPage(portal) {
   if (!user) { goToLogin(); return new Promise(() => {}); }
   const ok = allowed.includes('parishioner') || allowed.some(r => user.groups.includes(r));
   if (!ok) { window.location.replace(homeFor(user.role)); return new Promise(() => {}); }
+  markRole(user);
   const paint = () => paintUserCard(user);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', paint); else paint();
   document.documentElement.classList.remove('auth-pending');
   document.dispatchEvent(new CustomEvent('sacradigit:user', { detail: user }));
   return user;
+}
+
+// <html data-role="…"> — a Secretary (staff without admin) doesn't see .head-admin-only controls.
+function markRole(user) {
+  document.documentElement.dataset.role = isHeadAdmin(user) ? 'admin' : user.role;
+  if (document.getElementById('role-style')) return;
+  const style = document.createElement('style');
+  style.id = 'role-style';
+  style.textContent = 'html[data-role="staff"] .head-admin-only { display: none !important; }';
+  document.head.appendChild(style);
 }
 
 /** The profile card at the bottom of every portal's sidebar: initials, name, role. */

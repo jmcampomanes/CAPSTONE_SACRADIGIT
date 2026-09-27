@@ -1874,6 +1874,8 @@ export const FIL = {
   "Something went wrong. Please try again.": "May nangyaring mali. Pakisubukang muli.",
   "Administrator": "Tagapangasiwa",
   "Parish Staff": "Kawani ng Parokya",
+  "Head Admin": "Punong Tagapangasiwa",
+  "Secretary": "Kalihim",
   "Accounts": "Mga Account",
   "Add Staff Account": "Magdagdag ng Account ng Kawani",
   "Search name or email…": "Maghanap ng pangalan o email…",

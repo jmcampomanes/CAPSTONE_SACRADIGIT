@@ -36,20 +36,20 @@
     };
   </script>
 
-  <!-- Custom CSS -->
+  <!-- Custom CSS -->
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
-  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
-  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-special-schedules-Dud3oPrt.js"></script>
+  <script type="module" crossorigin src="/CAPSTONE_SACRADIGIT/assets/Sacradigit-special-schedules-Y36a6a3A.js"></script>
   <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/modulepreload-polyfill-BlJ-Wce8.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-BILvbBLA.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-gatWNEhY.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-Nb2B84W7.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/amplify-init-Vxc6pzhO.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/auth-P9e2XfKm.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/ui-prefs-D-UKTN3k.js">
   <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/sacred-art-CX8iKl1T.js">
   <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/help-tutorial-AsEf9ZJl.js">
-  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-B4sD8Gx6.js">
+  <link rel="modulepreload" crossorigin href="/CAPSTONE_SACRADIGIT/assets/dashboard-BhQN30oq.js">
   <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/Sacradigit-special-schedules-BY3AdFl0.css">
   <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/admin-shell-CYPiIeSr.css">
   <link rel="stylesheet" crossorigin href="/CAPSTONE_SACRADIGIT/assets/digital-archives-DM1GQ3uw.css">
@@ -205,7 +205,7 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               <span id="calendar-toggle-label">Calendar View</span>
             </button>
-            <button id="btn-add-schedule" type="button" class="btn-lavender">
+            <button id="btn-add-schedule" type="button" class="btn-lavender head-admin-only">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
               Add Schedule
             </button>
@@ -371,6 +371,6 @@
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- Scripts -->
+  <!-- Scripts -->
 </body>
 </html>

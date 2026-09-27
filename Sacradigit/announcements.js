@@ -15,6 +15,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { isHeadAdmin } from '../auth.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -317,11 +318,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     grid.innerHTML = visible.map((a, i) => {
       const statusActions = a.published
-        ? `<button type="button" class="post-icon-btn ann-unpublish" data-id="${a.id}" title="Unpublish">
+        ? `<button type="button" class="post-icon-btn ann-unpublish head-admin-only" data-id="${a.id}" title="Unpublish">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/></svg>
             <span>Unpublish</span>
           </button>`
-        : `<button type="button" class="post-icon-btn ann-republish" data-id="${a.id}" title="Republish">
+        : `<button type="button" class="post-icon-btn ann-republish head-admin-only" data-id="${a.id}" title="Republish">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
             <span>Republish</span>
           </button>`;
@@ -376,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span>Edit</span>
             </button>
             ${statusActions}
-            <button type="button" class="post-icon-btn ann-delete" data-id="${a.id}" title="Delete">
+            <button type="button" class="post-icon-btn ann-delete head-admin-only" data-id="${a.id}" title="Delete">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
             </button>
           </div>
@@ -392,6 +393,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteBtn      = e.target.closest('.ann-delete');
 
     if (editBtn) { openEditModal(editBtn.dataset.id); return; }
+
+    if ((unpublishBtn || republishBtn || deleteBtn) && !isHeadAdmin()) return;
 
     if (unpublishBtn) { openUnpublishModal(unpublishBtn.dataset.id); return; }
 
@@ -582,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   detailUnpublishBtn.addEventListener('click', async () => {
-    if (!detailAnnId) return;
+    if (!detailAnnId || !isHeadAdmin()) return;
     const a = announcements.find(x => x.id === detailAnnId);
     if (!a) return;
     if (a.published) {
@@ -805,6 +808,8 @@ document.addEventListener('DOMContentLoaded', () => {
      getPostStatus() reports it as "scheduled" (shown in Draft) until
      that date arrives, then it moves to Active on its own. */
   async function saveAnnouncement(publishedFlag) {
+    // A Secretary saves drafts; the Head Admin publishes them.
+    if (publishedFlag && !isHeadAdmin()) { showToast('Only the Head Admin can publish. Save it as a draft instead.', true); return; }
     const title    = titleInput.value.trim();
     const body      = bodyInput.value.trim();
     const audience   = audienceSelect.value;
