@@ -1,1 +1,12 @@
 node_modules
+
+# Build output — GitHub Actions builds and deploys this on every push.
+dist
+
+# Scratch files, sample documents and drafts (kept locally, not in the repo).
+testing
+testung
+*-error.txt
+bc sample*
+*.docx
+ocr-result-*.md

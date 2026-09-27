@@ -192,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
           <div class="goal-card-footer">
-            <button type="button" class="goal-edit" data-id="${g.id}">Edit</button>
-            <button type="button" class="goal-delete" data-id="${g.id}">Delete</button>
+            <button type="button" class="goal-edit head-admin-only" data-id="${g.id}">Edit</button>
+            <button type="button" class="goal-delete head-admin-only" data-id="${g.id}">Delete</button>
           </div>
         </div>
       `;
