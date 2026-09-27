@@ -1893,6 +1893,25 @@ export const FIL = {
   "Enable": "I-enable",
   "They’ll get an email with a temporary password and will choose their own the first time they sign in.": "Makakatanggap sila ng email na may pansamantalang password at pipili sila ng sarili nila sa unang pag-sign in.",
   "e.g. secretary@olfp.parish": "hal. secretary@olfp.parish",
+
+  // ---- Printouts (print-report.js) ----
+  "Diocese of Cubao": "Diyosesis ng Cubao",
+  "Parish Management System": "Sistema ng Pamamahala ng Parokya",
+  "Service Schedule": "Iskedyul ng Serbisyo",
+  "Bookings:": "Mga Booking:",
+  "Services:": "Mga Serbisyo:",
+  "Masses that day:": "Mga Misa sa araw na iyon:",
+  "Intentions:": "Mga Intensyon:",
+  "Total offerings:": "Kabuuang alay:",
+  "Prepared by (Parish Office)": "Inihanda ni (Opisina ng Parokya)",
+  "Prepared by": "Inihanda ni",
+  "Parish Priest": "Kura Paroko",
+  "Intention": "Intensyon",
+  "Total": "Kabuuan",
+  "Not yet assigned": "Wala pang takdang misa",
+  "No intentions match the current filters.": "Walang intensyong tugma sa kasalukuyang mga filter.",
+  "No masses scheduled on this date.": "Walang naka-iskedyul na misa sa petsang ito.",
+  "Mass Intentions": "Mga Intensyon sa Misa",
 };
 
 import { t } from './ui-prefs.js';

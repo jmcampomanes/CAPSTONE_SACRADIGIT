@@ -8,6 +8,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { printReport, printReadersSheet, tableHtml, esc } from '../print-report.js';
 import { formatFullName } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1145,30 +1146,37 @@ document.addEventListener('DOMContentLoaded', () => {
      straight from the DOM would silently drop everything else.
      Swap in every filtered row just for the print, then restore
      the paginated view once the print dialog closes. */
+  /* Print: every intention matching the current filters (not just the
+     page on screen), with the offering total, on the parish letterhead. */
   document.getElementById('btn-print').addEventListener('click', () => {
-    const printDateEl = document.getElementById('print-date-value');
-    if (printDateEl) {
-      printDateEl.textContent = `Printed ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-    }
-
-    const filtered = getFilteredIntentions();
-    if (filtered.length > 0) tbody.innerHTML = filtered.map(intentionRowHtml).join('');
-
-    window.print();
+    const rows = getFilteredIntentions();
+    const total = rows.reduce((sum, it) => sum + (Number(it.offering) || 0), 0);
+    const tableRows = rows.map(it => {
+      const names = getNames(it).map(nameDisplay).join(', ');
+      return [
+        esc(it.donor),
+        `${esc(it.type)}${names ? `<div class="small">${esc(names)}</div>` : ''}`,
+        it.massDate ? esc(`${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}`) : '<span class="muted">Not yet assigned</span>',
+        esc(statusLabel[it.status] || it.status),
+        esc(formatPeso(it.offering)),
+      ];
+    });
+    const cols = [{ label: 'Donor' }, { label: 'Intention' }, { label: 'Mass' }, { label: 'Status' }, { label: 'Offering', cls: 'num' }];
+    printReport({
+      title: 'Mass Intentions Log',
+      subtitle: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      chips: [['Intentions', rows.length], ['Total offerings', formatPeso(total)]],
+      body: tableHtml(cols, tableRows, { empty: 'No intentions match the current filters.', foot: ['Total', '', '', '', esc(formatPeso(total))] }),
+      signatures: ['Prepared by', 'Parish Priest'],
+    });
   });
-
-  window.addEventListener('afterprint', renderTable);
 
   document.getElementById('btn-print-sheet').addEventListener('click', () => {
     if (!currentSheetKey) {
       showToast("Select a mass to print its reader's sheet.", true);
       return;
     }
-    const printDateEl = document.getElementById('sheet-print-date-value');
-    if (printDateEl) {
-      printDateEl.textContent = `Printed ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-    }
-    window.print();
+    printReadersSheet(); // large, easy-to-read sheet for the lector (../print-report.js)
   });
 
 

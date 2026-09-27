@@ -7,6 +7,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { printReadersSheet } from '../print-report.js';
 import { loadCommunityIntentions } from '../public-data.js';
 import { currentUserName } from '../auth.js';
 import { readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
@@ -878,11 +879,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.showToast("Select a mass to print its intentions.", true);
       return;
     }
-    const printDateEl = document.getElementById('sheet-print-date-value');
-    if (printDateEl) {
-      printDateEl.textContent = `Printed ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-    }
-    window.print();
+    printReadersSheet(); // on the parish letterhead (../print-report.js)
   });
 
 

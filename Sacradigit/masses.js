@@ -8,6 +8,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { printReport, tableHtml, esc } from '../print-report.js';
 import { massTypeInfo, massTypeBadgeHtml, massTypeLegendHtml } from '../mass-types.js';
 import { mergeWeeklySchedule, recurringMassesForDate } from '../weekly-mass-schedule.js';
 import { checkInReady } from '../mass-checkin.js';
@@ -417,7 +418,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* --- Print --- */
-  document.getElementById('btn-print').addEventListener('click', () => window.print());
+  // Print: the selected day's masses, the regular weekly schedule, and the
+  // upcoming special masses, on the parish letterhead (../print-report.js).
+  document.getElementById('btn-print').addEventListener('click', () => {
+    const iso = datePicker.value || todayISO;
+    const longDate = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const dayRows = currentDateMasses.map(m => [
+      `<b>${esc(m.time)}</b>`,
+      esc(m.title || massTypeInfo(m.type).label),
+      esc(massTypeInfo(m.type).label),
+      esc(m.officiant || '—'),
+      esc(m.note && m.note !== m.title ? m.note : ''),
+    ]);
+    const weeklyRows = weeklySchedule.map(w => [
+      `<b>${esc(w.dayLabel)}</b>`,
+      w.times.map(t => `<span class="pill">${esc(t)}</span>`).join('') || '<span class="muted">—</span>',
+      esc(w.displayType),
+    ]);
+    const special = allMasses
+      .filter(m => m.isSpecial && m.date >= todayISO)
+      .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')))
+      .slice(0, 12)
+      .map(m => [esc(longDate(m.date)), esc(m.time), esc(m.title || m.note || 'Special Mass'), esc(m.officiant || '—')]);
+    const body = `
+      <h2>${esc(longDate(iso))}</h2>
+      ${tableHtml([{ label: 'Time', cls: 'nowrap' }, { label: 'Mass' }, { label: 'Type' }, { label: 'Officiant' }, { label: 'Intention / Note' }], dayRows, { empty: 'No masses scheduled on this date.' })}
+      <h2>Regular Weekly Mass Schedule</h2>
+      ${tableHtml([{ label: 'Day' }, { label: 'Time(s)' }, { label: 'Mass Type' }], weeklyRows)}
+      <h2>Upcoming Special Masses</h2>
+      ${tableHtml([{ label: 'Date' }, { label: 'Time', cls: 'nowrap' }, { label: 'Mass' }, { label: 'Officiant' }], special, { empty: 'No upcoming special masses.' })}`;
+    printReport({ title: 'Mass Schedule', subtitle: longDate(iso), chips: [['Masses that day', dayRows.length]], body });
+  });
 
 
   /* --- Schedule Mass Modal --- */

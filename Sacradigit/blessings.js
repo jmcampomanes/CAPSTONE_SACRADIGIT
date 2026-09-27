@@ -14,6 +14,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { printReport, tableHtml, esc } from '../print-report.js';
 import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
 
@@ -490,59 +491,41 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(value ?? '');
   }
 
+  /* Printable service schedule for one day, on the parish letterhead
+     (see ../print-report.js). */
   function printDaySchedule(iso) {
     const rows = allRecords
       .filter(r => (r.status === 'scheduled' || r.status === 'completed') ? r.date === iso : (r.status === 'pending' && r.preferredDate === iso))
       .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
 
     const label = new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const body = rows.length === 0
-      ? '<p class="empty">No services booked for this day.</p>'
-      : `<table>
-          <thead><tr><th>Time</th><th>Service</th><th>Requester</th><th>Location</th><th>Contact</th><th>Details</th><th>Done</th></tr></thead>
-          <tbody>${rows.map(r => {
-            const details = Object.entries(detailsOf(r))
-              .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
-              .map(([k, v]) => `<div><b>${escapeHtml(k)}:</b> ${escapeHtml(v)}</div>`).join('');
-            return `<tr>
-              <td class="nowrap">${escapeHtml(r.time || '—')}</td>
-              <td>${escapeHtml(r.type)}${r.status === 'pending' ? ' <span class="tag">Pending review</span>' : ''}</td>
-              <td>${escapeHtml(r.requesterName)}</td>
-              <td>${escapeHtml(r.location || '—')}</td>
-              <td class="nowrap">${escapeHtml(r.contact || '—')}</td>
-              <td class="details">${details}${r.notes ? `<div><b>Notes:</b> ${escapeHtml(r.notes)}</div>` : ''}</td>
-              <td class="check"></td>
-            </tr>`;
-          }).join('')}</tbody>
-        </table>`;
-
-    const win = window.open('', '_blank');
-    if (!win) { showToast('Allow pop-ups for this site to print the schedule.', true); return; }
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
-      <title>Service Schedule — ${label}</title>
-      <style>
-        body { font-family: Inter, Arial, sans-serif; color: #111827; margin: 28px; }
-        h1 { font-size: 20px; margin: 0; }
-        .sub { color: #6b7280; font-size: 12px; margin: 4px 0 18px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { border: 1px solid #d1d5db; padding: 7px 8px; text-align: left; vertical-align: top; }
-        th { background: #f3f4f6; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
-        .nowrap { white-space: nowrap; }
-        .details div { margin-bottom: 2px; }
-        .check { width: 38px; }
-        .tag { display: inline-block; font-size: 10px; background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 9px; }
-        .empty { color: #6b7280; }
-        .foot { margin-top: 18px; font-size: 11px; color: #9ca3af; }
-        @page { size: A4 landscape; margin: 14mm; }
-        @media print { body { margin: 0; } }
-      </style></head><body>
-      <h1>Our Lady of Fatima Parish — Service Schedule</h1>
-      <p class="sub">${label} · ${rows.length} booking${rows.length === 1 ? '' : 's'}</p>
-      ${body}
-      <p class="foot">Printed ${new Date().toLocaleString('en-US')} from SacraDigit.</p>
-      <script>window.onload = () => { window.print(); };<\/script>
-      </body></html>`);
-    win.document.close();
+    const cols = [
+      { label: 'Time', cls: 'nowrap' }, { label: 'Service' }, { label: 'Requester' },
+      { label: 'Location' }, { label: 'Contact', cls: 'nowrap' }, { label: 'Details' }, { label: 'Done', cls: 'check' },
+    ];
+    const tableRows = rows.map(r => {
+      const details = Object.entries(detailsOf(r))
+        .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
+        .map(([k, v]) => `<div class="small"><b>${esc(k)}:</b> ${esc(v)}</div>`).join('');
+      return [
+        `<b>${esc(r.time || '—')}</b>`,
+        `${esc(r.type)}${r.status === 'pending' ? '<span class="tag">Pending review</span>' : ''}`,
+        esc(r.requesterName),
+        esc(r.location || '—'),
+        esc(r.contact || '—'),
+        details + (r.notes ? `<div class="small"><b>Notes:</b> ${esc(r.notes)}</div>` : ''),
+        '<span></span>',
+      ];
+    });
+    const services = new Set(rows.map(r => r.type)).size;
+    printReport({
+      title: 'Service Schedule',
+      subtitle: label,
+      chips: [['Bookings', rows.length], ['Services', services]],
+      body: tableHtml(cols, tableRows, { empty: 'No services booked for this day.' }),
+      orientation: 'landscape',
+      signatures: ['Prepared by (Parish Office)', 'Officiating Priest'],
+    });
   }
 
   document.getElementById('day-plan-print').addEventListener('click', () => {

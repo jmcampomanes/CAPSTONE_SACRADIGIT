@@ -82,6 +82,17 @@ function translateText(text) {
   return joined !== key ? joined : null;
 }
 
+/** Translates a detached element (e.g. a printout) when Filipino is on. */
+export async function translateElement(root) {
+  if (currentLang() !== 'fil') return;
+  if (!dict) {
+    const mod = await import('./i18n-fil.js');
+    dict = new Map(Object.entries(mod.FIL).map(([en, fil]) => [norm(en), fil]));
+    patterns = mod.FIL_PATTERNS || [];
+  }
+  translateTree(root);
+}
+
 /** Translate a piece of text (used by i18n-fil.js patterns for the parts they capture). */
 export const t = (s) => (dict && translateText(s)) || s;
 
