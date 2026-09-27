@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
       next: ({ items }) => {
         const sorted = items.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
         specialList.innerHTML = sorted.length === 0
-          ? `<li class="text-sm text-gray-400 py-4">No upcoming special masses.</li>`
+          ? `<li class="text-sm text-gray-400 px-5 py-4">No upcoming special masses.</li>`
           : sorted.map(s => `
               <li><div class="special-mass-row">
                 <div class="special-mass-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg></div>

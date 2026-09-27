@@ -324,3 +324,15 @@
   color: #dc2626;
   margin-top: 0.3rem;
 }
+
+/* Phones: tabs scroll sideways on one line instead of wrapping. */
+@media (max-width: 640px) {
+  .profile-tabs {
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+    /* fade the right edge so it's clear more tabs are there */
+    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+    mask-image: linear-gradient(to right, #000 85%, transparent);
+  }
+  .profile-tabs::-webkit-scrollbar { display: none; }
+  .profile-tab { flex-shrink: 0; padding: 0.65rem 0.75rem; }
+}

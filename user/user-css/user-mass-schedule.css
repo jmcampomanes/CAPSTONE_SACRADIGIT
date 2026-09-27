@@ -375,3 +375,13 @@
   color: #9ca3af;
   margin-top: 0.05rem;
 }
+
+/* Phones: time + Mass name on the first line, badge + reminder below. */
+@media (max-width: 640px) {
+  .mass-row { flex-wrap: wrap; gap: 0.375rem 0.75rem; padding: 0.875rem 1rem; }
+  .mass-time-col { width: 4.25rem; }
+  .mass-info { flex: 1 1 calc(100% - 5rem); }
+  .mass-row > .mass-type-badge { margin-left: 5rem; }
+  .mass-row > .btn-reminder { margin-left: auto; }
+  .weekly-table tbody td { white-space: normal; }
+}
