@@ -25,9 +25,13 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 const isInstalled = () =>
   window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-const isIos = () =>
-  /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+const isIpad = () =>
+  /ipad/i.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS reports as a Mac
+const isIos = () => /iphone|ipod/i.test(navigator.userAgent) || isIpad();
+
+// Safari's Share button: square with an up arrow.
+const SHARE_ICON = '<svg class="pwa-share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 00-1 1v8a1 1 0 001 1h14a1 1 0 001-1v-8a1 1 0 00-1-1h-1"/></svg>';
 
 function recentlyDismissed() {
   try {
@@ -58,13 +62,18 @@ const STYLE = `
     font-size: 1.25rem; line-height: 1; cursor: pointer; border-radius: 999px;
   }
   .pwa-banner-close:hover { background: #f3f4f6; color: #1e2a4a; }
+  /* Tablets and laptops: tuck it into the bottom-right corner, clear of the page's content. */
+  @media (min-width: 768px) {
+    .pwa-banner { left: auto; right: 1.25rem; bottom: calc(1.25rem + env(safe-area-inset-bottom)); width: 23rem; margin: 0; }
+  }
+  .pwa-share-icon { display: inline-block; width: 1rem; height: 1rem; vertical-align: -0.2em; margin: 0 0.1rem; color: #3b82f6; }
   :root[data-theme="dark"] .pwa-banner { background: #1a2131; color: #f1f3f7; border-color: #2c3547; }
   :root[data-theme="dark"] .pwa-banner-text span { color: #b6bdca; }
   :root[data-theme="dark"] .pwa-banner-install { background: #8b8fc7; color: #0f1420; }
   :root[data-theme="dark"] .pwa-banner-close:hover { background: #242c3e; color: #f1f3f7; }
 `;
 
-function showBanner({ text, onInstall }) {
+function showBanner({ text, icon = '', onInstall }) {
   // Installing needs a connection; the offline notice uses the same spot.
   if (document.querySelector('.pwa-banner') || !navigator.onLine) return;
   const st = document.createElement('style');
@@ -77,7 +86,7 @@ function showBanner({ text, onInstall }) {
   banner.setAttribute('aria-label', 'Install the SacraDigit app');
   banner.innerHTML = `
     <img src="${import.meta.env.BASE_URL}icons/icon-192.png" alt="" />
-    <div class="pwa-banner-text"><strong>Get the SacraDigit app</strong><span>${text}</span></div>
+    <div class="pwa-banner-text"><strong>Get the SacraDigit app</strong><span>${icon}${text}</span></div>
     ${onInstall ? '<button type="button" class="pwa-banner-install">Install</button>' : ''}
     <button type="button" class="pwa-banner-close" aria-label="Not now">×</button>`;
   document.body.appendChild(banner);
@@ -107,7 +116,11 @@ if (!isInstalled() && !recentlyDismissed()) {
 
   // iPhone / iPad Safari never fires that event — explain the manual steps instead.
   if (isIos()) {
-    const start = () => showBanner({ text: 'Tap the Share button, then “Add to Home Screen”.' });
+    // iPad Safari keeps Share at the top right; iPhone at the bottom of the screen.
+    const text = isIpad()
+      ? ' Tap Share (top right), then “Add to Home Screen”.'
+      : ' Tap Share (bottom of the screen), then “Add to Home Screen”.';
+    const start = () => showBanner({ text, icon: SHARE_ICON });
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   }
 }
