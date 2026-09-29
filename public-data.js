@@ -32,9 +32,12 @@ const hasQuery = (name) => !!(client.queries && client.queries[name]);
 const parseJson = (v) => (typeof v === 'string' ? JSON.parse(v) : v);
 const errorsOf = (res) => (res.errors && res.errors.length ? new Error(res.errors.map(e => e.message).join('; ')) : null);
 
+// The takenSlots function accepts at most 400 days from "from" to "to".
+// A week back (recent bookings) + 390 ahead stays inside that and still covers
+// the longest booking window (weddings, 365 days — see service-schedule.js).
 function window400() {
   const from = new Date(); from.setDate(from.getDate() - 7);
-  const to = new Date(); to.setDate(to.getDate() + 400);
+  const to = new Date(); to.setDate(to.getDate() + 390);
   return { from: isoDate(from), to: isoDate(to) };
 }
 

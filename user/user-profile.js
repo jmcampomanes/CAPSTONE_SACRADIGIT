@@ -20,6 +20,7 @@
 
 import { client } from '../amplify-init.js';
 import { currentUserName } from '../auth.js';
+import { NOTIF_TYPES, loadPrefs, savePrefs, enableDeviceAlerts } from '../notifications/parish-notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -29,15 +30,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const DONOR_NAME = currentUserName(); // the signed-in parishioner (auth.js)
   const STORED_PASSWORD = 'parish123'; // demo-only "current" password
 
-  const notifTypes = [
+  // Icons for the Notifications tab; the list itself and what's saved live in
+  // notifications/parish-notifications.js (the 🔔 bell reads the same settings).
+  const NOTIF_ICONS = [
+    { id: 'service-status', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>` },
+    { id: 'device', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>` },
     { id: 'mass-intentions-status', label: 'Mass Intention Status Updates', desc: 'Your submitted mass intention is confirmed or scheduled.', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`, enabled: true },
     { id: 'facility-booking-status', label: 'Facility Booking Updates', desc: 'Your facility booking request is approved or updated.', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`, enabled: true },
     { id: 'certificate-status', label: 'Certificate Request Updates', desc: 'Your certificate request is ready for pickup.', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`, enabled: true },
     { id: 'announcements', label: 'Parish Announcements', desc: 'New announcements are posted by the parish.', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>`, enabled: true },
     { id: 'mass-schedule-changes', label: 'Mass Schedule Changes', desc: 'Changes to the regular mass schedule.', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`, enabled: true },
     { id: 'donation-receipts', label: 'Donation Receipts', desc: 'A receipt is issued for your donation.', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`, enabled: false },
-    { id: 'weekly-bulletin', label: 'Weekly Parish Bulletin', desc: 'The parish bulletin every week, straight to your inbox.', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`, enabled: true },
   ];
+  const notifPrefs = loadPrefs();
+  const notifTypes = NOTIF_TYPES.map(t => ({
+    ...t,
+    icon: (NOTIF_ICONS.find(i => i.id === t.id) || NOTIF_ICONS[0]).icon,
+    enabled: notifPrefs[t.id],
+  }));
 
   let myIntentions = []; // kept in sync via observeQuery, each has .id
 
@@ -104,6 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
     });
   });
+  // e.g. the bell's "Notification settings" link → user-profile.html#notifications
+  document.querySelector(`.profile-tab[data-tab="${location.hash.slice(1)}"]`)?.click();
 
 
   /* ------------------------------------------
@@ -312,13 +324,20 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   `).join('');
 
-  notifList.addEventListener('change', (e) => {
+  notifList.addEventListener('change', async (e) => {
     const input = e.target.closest('input[type="checkbox"]');
     if (!input) return;
     const notif = notifTypes.find(n => n.id === input.dataset.id);
     if (!notif) return;
+    // Pop-ups need the browser's permission; if it's refused, leave the switch off.
+    if (notif.id === 'device' && input.checked && !(await enableDeviceAlerts())) {
+      input.checked = false;
+      showToast('Pop-up alerts are blocked in this browser. Allow notifications for this site in the browser settings, then try again.', true);
+      return;
+    }
     notif.enabled = input.checked;
-    showToast(`${notif.label} notifications ${input.checked ? 'enabled' : 'disabled'}.`);
+    savePrefs(Object.fromEntries(notifTypes.map(n => [n.id, n.enabled])));
+    showToast(`${notif.label} ${input.checked ? 'turned on' : 'turned off'}.`);
   });
 
 

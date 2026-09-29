@@ -9,6 +9,8 @@ import { guardPage, currentUser } from '../auth.js';
 guardPage('parishioner');
 import { initPageHelp } from '../help-tutorial.js';
 import { initUiPrefs } from '../ui-prefs.js';
+import { initParishAssistant } from '../assistant/parish-assistant.js';
+import { initNotifications } from '../notifications/parish-notifications.js';
 import { initSacredArt } from './sacred-art.js';
 
 /* ------------------------------------------
@@ -240,6 +242,8 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   initPageHelp(HELP_CONTENT[currentPage]);
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
+  initParishAssistant(); // floating "Ask" chat (assistant/)
+  initNotifications(); // 🔔 bell in the top bar (notifications/)
 
 
   /* ------------------------------------------

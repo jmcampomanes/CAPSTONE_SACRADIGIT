@@ -19,7 +19,7 @@
    Bump VERSION to drop every old cache on update.
    ============================================ */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `sacradigit-${VERSION}`;
 const BASE = new URL(self.registration.scope).pathname; // e.g. /CAPSTONE_SACRADIGIT/
 const OFFLINE_URL = `${BASE}offline.html`;
@@ -54,6 +54,19 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(staleWhileRevalidate(req, event));
   }
   // Anything else (parish data, sign-in, uploads) isn't touched.
+});
+
+// Tapping a pop-up from the 🔔 bell (notifications/parish-notifications.js):
+// focus an open SacraDigit window on that page, or open one.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || BASE;
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const win = wins.find(w => new URL(w.url).pathname.startsWith(BASE));
+    if (win) { await win.focus(); if ('navigate' in win) return win.navigate(url); return undefined; }
+    return self.clients.openWindow(url);
+  })());
 });
 
 async function networkFirst(req) {
