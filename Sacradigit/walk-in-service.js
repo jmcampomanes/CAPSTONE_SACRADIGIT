@@ -43,7 +43,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       </button>
       <div class="svc-screen-heading">
         <h2 class="svc-screen-title" id="walkin-title">New Service — Walk-in</h2>
-        <p class="svc-screen-sub">For parishioners who asked at the parish office. The office can book any open slot, including same-day.</p>
+        <p class="svc-screen-sub">For parishioners who asked at the parish office. The office can book any open slot from tomorrow onward.</p>
       </div>
     </header>
 
@@ -198,7 +198,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       type: svc.name,
       records: getRecords(),
       closures: getClosures(),
-      ignoreLead: true, // walk-ins can be booked same-day
+      ignoreLead: true, // walk-ins skip the service's lead time (earliest is still tomorrow)
       layout: 'calendar',
       onChange: (slot) => {
         pickerEl.classList.remove('has-error');

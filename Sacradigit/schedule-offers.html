@@ -149,7 +149,7 @@
         <div class="admin-hero" data-sacred-header>
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Schedule Offers</h2>
-            <p class="text-gray-500 text-sm mt-1">Parishioners book the parish's fixed schedule slots directly — bookings appear here already scheduled. Cancel one if the parish can't honour it.</p>
+            <p class="text-gray-500 text-sm mt-1">Parishioners book the parish's fixed schedule slots directly — bookings appear here already scheduled. Reschedule or cancel one if the parish can't honour it.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
             <button id="btn-add-service" type="button" class="btn-lavender" title="Book a service for a walk-in parishioner">
@@ -173,16 +173,6 @@
           </div>
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Older Pending</p>
-              <div class="stat-icon stat-icon-amber">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-            </div>
-            <p class="stat-value" id="stat-pending">0</p>
-            <p class="stat-sub">from before fixed schedules</p>
-          </div>
-          <div class="stat-card">
-            <div class="flex items-start justify-between mb-3">
               <p class="stat-label">Scheduled</p>
               <div class="stat-icon stat-icon-green">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>
@@ -190,6 +180,16 @@
             </div>
             <p class="stat-value" id="stat-approved">0</p>
             <p class="stat-sub">booked slots</p>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-start justify-between mb-3">
+              <p class="stat-label">Completed</p>
+              <div class="stat-icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <p class="stat-value" id="stat-completed">0</p>
+            <p class="stat-sub">services done</p>
           </div>
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
@@ -220,8 +220,6 @@
             <option value="Scheduled">Scheduled</option>
             <option value="Completed">Completed</option>
             <option value="Cancelled">Cancelled</option>
-            <option value="Pending">Pending (older)</option>
-            <option value="Completed">Completed</option>
           </select>
           <button id="btn-clear-filters" type="button" class="btn-filter">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -279,7 +277,7 @@
         <div class="svc-screen-col">
           <h3 class="svc-screen-col-title">Current Request</h3>
           <div class="svc-screen-current">
-            <p class="svc-screen-fact-label" id="reschedule-current-label">Requested (not yet booked)</p>
+            <p class="svc-screen-fact-label" id="reschedule-current-label">Currently Scheduled</p>
             <p class="svc-screen-fact-value" id="reschedule-current"></p>
           </div>
           <div id="reschedule-facts" class="svc-screen-facts mt-4"></div>
@@ -294,7 +292,7 @@
             </div>
             <textarea id="reschedule-reason" class="form-input" rows="2" placeholder="e.g. Fr. Santos is unavailable on your preferred date"></textarea>
           </div>
-          <p class="svc-screen-note">Saving books the request at the new time. The office can book any open slot, including same-day.</p>
+          <p class="svc-screen-note">Saving moves the booking to the new time and frees its old slot. The office can book any open slot from tomorrow onward.</p>
         </div>
 
         <!-- Right: pick the new slot -->

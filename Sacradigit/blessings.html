@@ -233,13 +233,13 @@
 
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Older Requests</p>
+              <p class="stat-label">Open for Reschedule</p>
               <div class="stat-icon stat-icon-amber">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
             </div>
             <p class="stat-value" id="stat-pending">0</p>
-            <p class="stat-sub">from before fixed schedules</p>
+            <p class="stat-sub">up to the day before</p>
           </div>
 
           <div class="stat-card">
@@ -313,7 +313,7 @@
 
             <div class="panel" id="requests-panel">
               <div class="panel-header">
-                <h2 class="panel-title">Older Requests Awaiting Review</h2>
+                <h2 class="panel-title">Schedules Open for Reschedule</h2>
                 <p id="requests-count" class="text-xs text-gray-400 font-medium"></p>
               </div>
               <ul id="requests-list" class="divide-y divide-gray-100">
@@ -321,8 +321,8 @@
               </ul>
               <div id="requests-empty" class="empty-state hidden">
                 <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
-                <p class="text-sm font-medium text-gray-600">Nothing to review</p>
-                <p class="text-xs text-gray-400 mt-1">New requests pick a fixed schedule slot and are booked automatically.</p>
+                <p class="text-sm font-medium text-gray-600">No schedules open for reschedule</p>
+                <p class="text-xs text-gray-400 mt-1">Bookings can be rescheduled up to the day before their date.</p>
               </div>
               <div id="requests-pagination" class="pagination-bar">
                 <!-- Injected by blessings.js -->
@@ -454,7 +454,7 @@
             </div>
             <textarea id="reschedule-reason" class="form-input" rows="2" placeholder="e.g. Fr. Santos is sick — moving to the next open Saturday"></textarea>
           </div>
-          <p class="svc-screen-note">Saving books the blessing at the new time and frees the old slot. The office can book any open slot, including same-day.</p>
+          <p class="svc-screen-note">Saving books the blessing at the new time and frees the old slot. The office can book any open slot from tomorrow onward.</p>
         </div>
 
         <!-- Right: pick the new slot -->
