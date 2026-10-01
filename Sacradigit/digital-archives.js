@@ -4,7 +4,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { currentUserName } from '../auth.js';
+import { currentUserName, isHeadAdmin } from '../auth.js';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../name-utils.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { initScanScreen, SCAN_SUFFIX } from './scanner/scan-screen.js';
@@ -19,7 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput    = document.getElementById('search-input');
   const typeFilter      = document.getElementById('type-filter');
   const dateFilter      = document.getElementById('date-filter');
-  const clearFiltersBtn = document.getElementById('btn-clear-filters');
+  const selectAll       = document.getElementById('select-all');
+  const bulkBar         = document.getElementById('bulk-bar');
+  const bulkCount       = document.getElementById('bulk-count');
+  const bulkDeleteBtn   = document.getElementById('bulk-delete');
+
+  // Ticked rows for batch delete (record ids). Head Admin only — the
+  // checkboxes are .head-admin-only, and the backend lets only admin delete.
+  const selected = new Set();
+  let visibleIds = []; // ids of the rows currently shown, for "select all"
 
   // Schema stores status as lowercase enum values; UI shows Title Case
   const statusLabel = { digitized: 'Digitized', processing: 'Processing', queued: 'Queued' };
@@ -58,12 +66,15 @@ document.addEventListener('DOMContentLoaded', () => {
   client.models.ParishRecord.observeQuery().subscribe({
     next: ({ items }) => {
       records = items;
+      // Drop ticks for records that no longer exist (deleted here or elsewhere)
+      const ids = new Set(items.map(r => r.id));
+      selected.forEach(id => { if (!ids.has(id)) selected.delete(id); });
       renderStats();
       renderRecords();
     },
     error: (err) => {
       console.error('Failed to load records:', err);
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Couldn't load records.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-red-500 text-sm py-8">Couldn't load records.</td></tr>`;
     },
   });
 
@@ -146,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     tbody.innerHTML = '';
+    visibleIds = filtered.map(r => r.id);
 
     if (filtered.length === 0) {
       emptyState.classList.remove('hidden');
@@ -154,37 +166,101 @@ document.addEventListener('DOMContentLoaded', () => {
       const sorted = filtered.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       sorted.forEach(r => {
         const tr = document.createElement('tr');
+        tr.classList.toggle('row-selected', selected.has(r.id));
         tr.innerHTML = `
+          <td class="col-select head-admin-only"><input type="checkbox" class="row-check row-select" data-id="${r.id}" aria-label="Select ${escapeHtml(r.fullName)}" ${selected.has(r.id) ? 'checked' : ''} /></td>
           <td class="font-medium text-gray-900">${escapeHtml(r.fullName)}</td>
           <td>${escapeHtml(r.type)}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td>${escapeHtml(r.addedByName)}</td>
           <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span></td>
-          <td class="text-right"><button type="button" class="row-action" data-id="${r.id}">View ›</button></td>
+          <td class="text-right whitespace-nowrap">
+            <button type="button" class="row-action row-view" data-id="${r.id}">View ›</button>
+            <button type="button" class="row-action row-edit head-admin-only" data-id="${r.id}">Edit</button>
+            <button type="button" class="row-action row-action-danger row-delete head-admin-only" data-id="${r.id}">Delete</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
     resultsCount.textContent = `${filtered.length} record${filtered.length === 1 ? '' : 's'}`;
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const n = selected.size;
+    bulkBar.classList.toggle('hidden', n === 0);
+    bulkCount.textContent = `${n} record${n === 1 ? '' : 's'} selected`;
+    const shownTicked = visibleIds.filter(id => selected.has(id)).length;
+    selectAll.checked = visibleIds.length > 0 && shownTicked === visibleIds.length;
+    selectAll.indeterminate = shownTicked > 0 && shownTicked < visibleIds.length;
   }
 
   searchInput.addEventListener('input', renderRecords);
   typeFilter.addEventListener('change', renderRecords);
   dateFilter.addEventListener('change', renderRecords);
 
-  clearFiltersBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    typeFilter.value = '';
-    dateFilter.value = '';
-    renderRecords();
-  });
-
   tbody.addEventListener('click', (e) => {
     const btn = e.target.closest('.row-action');
     if (!btn) return;
-    openViewModal(btn.dataset.id);
+    if (btn.classList.contains('row-edit')) openEditModal(btn.dataset.id);
+    else if (btn.classList.contains('row-delete')) deleteRecords([btn.dataset.id]);
+    else openViewModal(btn.dataset.id);
   });
+
+  /* --- Row selection + batch delete (Head Admin only) --- */
+  tbody.addEventListener('change', (e) => {
+    const box = e.target.closest('.row-select');
+    if (!box) return;
+    if (box.checked) selected.add(box.dataset.id); else selected.delete(box.dataset.id);
+    box.closest('tr').classList.toggle('row-selected', box.checked);
+    updateBulkBar();
+  });
+
+  // Ticks / unticks only the rows currently shown, so filters narrow what "all" means.
+  selectAll.addEventListener('change', () => {
+    visibleIds.forEach(id => { if (selectAll.checked) selected.add(id); else selected.delete(id); });
+    renderRecords();
+  });
+
+  document.getElementById('bulk-cancel').addEventListener('click', () => {
+    selected.clear();
+    renderRecords();
+  });
+
+  bulkDeleteBtn.addEventListener('click', () => deleteRecords([...selected]));
+
+  /* Deletes the archive entries only — the scanned files stay in storage,
+     since a certificate request may still point at the same file. */
+  async function deleteRecords(ids) {
+    if (!isHeadAdmin()) { showToast('Only the Head Admin can delete records.', true); return false; }
+    if (!ids.length) return false;
+    const first = records.find(r => r.id === ids[0]);
+    const what = ids.length === 1 ? `the record for "${first?.fullName || 'this person'}"` : `${ids.length} records`;
+    if (!confirm(`Delete ${what}? This can't be undone.`)) return false;
+
+    bulkDeleteBtn.disabled = true;
+    const results = await Promise.all(ids.map(async (id) => {
+      try {
+        const { errors } = await client.models.ParishRecord.delete({ id });
+        if (errors) throw new Error(errors.map(e => e.message).join('; '));
+        selected.delete(id);
+        return true;
+      } catch (err) {
+        console.error('Failed to delete record:', id, err);
+        return false;
+      }
+    }));
+    bulkDeleteBtn.disabled = false;
+
+    const done = results.filter(Boolean).length;
+    const failed = results.length - done;
+    if (failed) showToast(`${done} deleted, ${failed} couldn't be deleted. Please try again.`, true);
+    else showToast(done === 1 ? 'Record deleted.' : `${done} records deleted.`);
+    renderRecords();
+    return done > 0;
+  }
 
 
   /* --- Modals --- */
@@ -192,6 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const newRecordModal = document.getElementById('new-record-modal');
   const viewRecordModal = document.getElementById('view-record-modal');
   const viewRecordBody   = document.getElementById('view-record-body');
+  const editRecordModal  = document.getElementById('edit-record-modal');
+  const allModals = [uploadModal, newRecordModal, viewRecordModal, editRecordModal];
+  let viewingId = null; // record open in the View modal
+  let editingId = null; // record open in the Edit modal
 
   document.getElementById('btn-upload').addEventListener('click', () => openModal(uploadModal));
 
@@ -202,15 +282,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-new-record').addEventListener('click', () => openModal(newRecordModal));
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { closeModal(uploadModal); closeModal(newRecordModal); closeModal(viewRecordModal); });
+    btn.addEventListener('click', () => allModals.forEach(closeModal));
   });
 
-  [uploadModal, newRecordModal, viewRecordModal].forEach(modal => {
+  allModals.forEach(modal => {
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeModal(uploadModal); closeModal(newRecordModal); closeModal(viewRecordModal); }
+    if (e.key === 'Escape') allModals.forEach(closeModal);
   });
 
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
@@ -241,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function openViewModal(id) {
     const r = records.find(x => x.id === id);
     if (!r) return;
+    viewingId = id;
 
     const detailGridHtml = `
       <div class="so-detail-grid">
@@ -286,6 +367,71 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
+
+
+  /* --- Edit / delete a record (Head Admin only) --- */
+  document.getElementById('view-edit').addEventListener('click', () => {
+    closeModal(viewRecordModal);
+    openEditModal(viewingId);
+  });
+
+  document.getElementById('view-delete').addEventListener('click', async () => {
+    if (await deleteRecords([viewingId])) closeModal(viewRecordModal);
+  });
+
+  function openEditModal(id) {
+    if (!isHeadAdmin()) { showToast('Only the Head Admin can edit records.', true); return; }
+    const r = records.find(x => x.id === id);
+    if (!r) return;
+    editingId = id;
+
+    const typeSelect = document.getElementById('edit-type');
+    // Keep a type the dropdown doesn't list (e.g. from a printed certificate) instead of losing it
+    typeSelect.querySelectorAll('option[data-extra]').forEach(o => o.remove());
+    if (r.type && ![...typeSelect.options].some(o => o.value === r.type)) {
+      const opt = new Option(r.type, r.type);
+      opt.dataset.extra = '1';
+      typeSelect.add(opt);
+    }
+
+    document.getElementById('edit-name').value      = r.fullName || '';
+    typeSelect.value                                = r.type || '';
+    document.getElementById('edit-status').value    = r.status || 'digitized';
+    document.getElementById('edit-date').value      = r.dateOfEvent || '';
+    document.getElementById('edit-officiant').value = r.officiant || '';
+    openModal(editRecordModal);
+  }
+
+  document.getElementById('edit-record-submit').addEventListener('click', async () => {
+    if (!isHeadAdmin()) { showToast('Only the Head Admin can edit records.', true); return; }
+    const fullName  = document.getElementById('edit-name').value.trim();
+    const type      = document.getElementById('edit-type').value;
+    const officiant = document.getElementById('edit-officiant').value.trim();
+
+    if (!fullName || !type) { showToast('Please fill in name and type.', true); return; }
+
+    const submitBtn = document.getElementById('edit-record-submit');
+    submitBtn.disabled = true;
+    try {
+      const result = await client.models.ParishRecord.update({
+        id: editingId,
+        fullName,
+        type,
+        status: document.getElementById('edit-status').value,
+        dateOfEvent: document.getElementById('edit-date').value || null,
+        officiant: officiant || null,
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      closeModal(editRecordModal);
+      showToast(`Record for "${fullName}" updated.`);
+    } catch (err) {
+      console.error('Failed to update record:', err);
+      showToast(err.message || "Couldn't update the record.", true);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
 
 
   /* --- Upload modal — real S3 upload via Amplify Storage, same pattern

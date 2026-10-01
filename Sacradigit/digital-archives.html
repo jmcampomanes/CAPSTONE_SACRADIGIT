@@ -295,11 +295,6 @@
               <option value="all">All time</option>
             </select>
           </div>
-
-          <button id="btn-clear-filters" type="button" class="btn-filter">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 4h18M6 4v16a1 1 0 001 1h10a1 1 0 001-1V4M10 10v6m4-6v6"/></svg>
-            Clear
-          </button>
         </div>
 
         <!-- Records table -->
@@ -308,10 +303,22 @@
             <h2 class="panel-title">All Records</h2>
             <p id="results-count" class="text-xs text-gray-400 font-medium"></p>
           </div>
+          <!-- Batch actions — shown once at least one record is ticked (Head Admin only) -->
+          <div id="bulk-bar" class="bulk-bar head-admin-only hidden">
+            <p id="bulk-count" class="bulk-count"></p>
+            <div class="flex items-center gap-2">
+              <button type="button" id="bulk-cancel" class="btn-secondary">Cancel</button>
+              <button type="button" id="bulk-delete" class="btn-danger">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6m4 5v6m4-6v6"/></svg>
+                Delete Selected
+              </button>
+            </div>
+          </div>
           <div class="overflow-x-auto">
             <table class="records-table">
               <thead>
                 <tr>
+                  <th class="col-select head-admin-only"><input type="checkbox" id="select-all" class="row-check" aria-label="Select all records shown" /></th>
                   <th>Record Name</th>
                   <th>Type</th>
                   <th>Date Added</th>
@@ -327,7 +334,7 @@
             <div id="empty-state" class="empty-state hidden">
               <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
               <p class="text-sm font-medium text-gray-600">No records match your filters</p>
-              <p class="text-xs text-gray-400 mt-1">Try a different search term or clear your filters.</p>
+              <p class="text-xs text-gray-400 mt-1">Try a different search term or filter.</p>
             </div>
           </div>
         </div>
@@ -447,7 +454,58 @@
         <!-- Injected by digital-archives.js -->
       </div>
       <div class="modal-footer">
+        <button type="button" id="view-delete" class="btn-danger head-admin-only">Delete</button>
+        <button type="button" id="view-edit" class="btn-lavender head-admin-only">Edit</button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== EDIT RECORD MODAL (Head Admin only) ========== -->
+  <div id="edit-record-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Record</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="form-label" for="edit-name">Full Name</label>
+            <input type="text" id="edit-name" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="edit-type">Record Type</label>
+            <select id="edit-type" class="form-input">
+              <option value="baptism">Baptismal</option>
+              <option value="confirmation">Confirmation</option>
+              <option value="marriage">Marriage</option>
+              <option value="death">Death</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="edit-status">Status</label>
+            <select id="edit-status" class="form-input">
+              <option value="digitized">Digitized</option>
+              <option value="processing">Processing</option>
+              <option value="queued">Queued</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="edit-date">Date of Event</label>
+            <input type="date" id="edit-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="edit-officiant">Officiant / Recorded By</label>
+            <input type="text" id="edit-officiant" class="form-input" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="edit-record-submit" class="btn-lavender">Save Changes</button>
       </div>
     </div>
   </div>

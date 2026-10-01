@@ -490,24 +490,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
      12. REJECT CONFIRM MODAL
-         (the schema has no rejection-reason
-         field, so this is a plain confirm step —
-         not a form)
+         The reason is required and saved to
+         rejectionReason, which the requester
+         sees on their My Requests page.
   ------------------------------------------ */
+  const rejectReason = document.getElementById('reject-reason');
+
   function openRejectModal(id) {
     const r = requests.find(x => x.id === id);
     if (!r) return;
     rejectTargetId = id;
     rejectTargetName.textContent = r.requesterName;
+    rejectReason.value = '';
+    clearFieldError(rejectReason);
     openModal(rejectModal);
   }
+
+  rejectReason.addEventListener('input', () => clearFieldError(rejectReason));
 
   document.getElementById('reject-submit').addEventListener('click', async () => {
     if (rejectTargetId === null) return;
     const r = requests.find(x => x.id === rejectTargetId);
+    const reason = rejectReason.value.trim();
+    if (!reason) {
+      setFieldError(rejectReason, 'Please give a reason for rejecting this request.');
+      rejectReason.focus();
+      return;
+    }
 
     try {
-      const result = await client.models.CertificateRequest.update({ id: rejectTargetId, status: 'rejected' });
+      const result = await client.models.CertificateRequest.update({
+        id: rejectTargetId,
+        status: 'rejected',
+        rejectionReason: reason,
+      });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(rejectModal);
       showToast(`Request for ${r ? r.requesterName : 'requester'} rejected.`);
@@ -529,6 +545,10 @@ document.addEventListener('DOMContentLoaded', () => {
     viewType.textContent = r.certificateType;
     viewDate.textContent = formatDate(r.createdAt);
     viewPurpose.textContent = r.purpose || '—';
+
+    const showReason = r.status === 'rejected' && !!r.rejectionReason;
+    document.getElementById('view-rejection-wrap').classList.toggle('hidden', !showReason);
+    document.getElementById('view-rejection').textContent = showReason ? r.rejectionReason : '';
 
     viewStatusBadge.textContent = statusLabel[r.status] || r.status;
     viewStatusBadge.className = `badge ${badgeClass[r.status] || 'badge-gray'}`;

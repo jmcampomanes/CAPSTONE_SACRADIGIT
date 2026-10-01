@@ -22,6 +22,8 @@ import { client } from './amplify-init.js';
    capacity: bookings allowed per slot (e.g. group
              baptisms take many families at once)
    leadDays: earliest bookable day, counted from today
+             (never less than MIN_LEAD_DAYS — nothing is
+             booked or moved onto the same day)
    windowDays: how far ahead the picker shows
    location: where it happens; `locationField` means
              "use this detail the requester typed"
@@ -106,6 +108,10 @@ export const serviceSchedulesReady = listServiceSlots()
 // type), so the picker still works instead of breaking.
 const DEFAULT_SCHEDULE = { days: WEEKDAYS, times: ['09:00 AM', '02:00 PM'], capacity: 1, leadDays: 1, windowDays: 30, location: 'Main Church' };
 
+// Every booking — parishioner or office — is made at least this many days
+// ahead, and a booking can be rescheduled only until the day before it.
+export const MIN_LEAD_DAYS = 1;
+
 // Statuses that hold a slot. 'declined' (cancelled) frees it again.
 const ACTIVE_STATUSES = new Set(['scheduled', 'pending']);
 
@@ -137,6 +143,11 @@ export function watchClosures(client, onChange) {
 
 export function scheduleFor(type) {
   return SERVICE_SCHEDULES[type] || DEFAULT_SCHEDULE;
+}
+
+/** True while a booked slot can still be moved: up to the day before its date. */
+export function canReschedule(record, todayIso = toLocalISODate()) {
+  return !!record && record.status === 'scheduled' && !!record.date && record.date > todayIso;
 }
 
 export function toLocalISODate(d = new Date()) {
@@ -188,7 +199,8 @@ export function availableDays(type, records, { from = new Date(), excludeId, ign
 
   const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
   const nowMinutes = from.getHours() * 60 + from.getMinutes();
-  const firstOffset = ignoreLead ? 0 : s.leadDays;
+  // ignoreLead (the parish office) skips the service's own lead time, but not the one-day minimum
+  const firstOffset = ignoreLead ? MIN_LEAD_DAYS : Math.max(MIN_LEAD_DAYS, s.leadDays);
 
   for (let offset = firstOffset; offset <= s.windowDays; offset++) {
     const d = new Date(start);

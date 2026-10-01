@@ -423,6 +423,11 @@
       </div>
       <div class="modal-body">
         <p class="text-sm text-gray-600">Reject the certificate request from <span id="reject-target-name" class="font-semibold text-gray-900"></span>? This can't be undone — the requester will need to submit a new request if they still need this certificate.</p>
+        <div class="mt-4">
+          <label class="form-label" for="reject-reason">Reason for Rejection <span class="text-red-500">*</span></label>
+          <textarea id="reject-reason" class="form-input" rows="3" maxlength="500" placeholder="e.g. No matching baptismal record was found under this name."></textarea>
+          <p class="text-xs text-gray-400 mt-1">The requester sees this on their My Requests page.</p>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
@@ -904,6 +909,10 @@
           <div class="col-span-2" style="grid-column: 1 / -1;">
             <p class="so-detail-label">Purpose</p>
             <p class="so-detail-value" id="view-purpose"></p>
+          </div>
+          <div id="view-rejection-wrap" class="hidden" style="grid-column: 1 / -1;">
+            <p class="so-detail-label">Reason for Rejection</p>
+            <p class="so-detail-value" id="view-rejection"></p>
           </div>
         </div>
         <div id="view-linked-wrap" class="hidden">

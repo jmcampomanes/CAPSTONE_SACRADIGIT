@@ -804,6 +804,22 @@
 :root[data-theme="dark"] .records-table .row-action:hover {
     color: #a1b0d9
 }
+:root[data-theme="dark"] .records-table .row-action-danger {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .records-table .row-action-danger:hover {
+    color: #e69393
+}
+:root[data-theme="dark"] .records-table tr.row-selected td {
+    background-color: #121827
+}
+:root[data-theme="dark"] .bulk-bar {
+    background-color: #121827;
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .bulk-count {
+    color: #a1b0d9
+}
 :root[data-theme="dark"] .modal-card {
     background: #1a2131
 }

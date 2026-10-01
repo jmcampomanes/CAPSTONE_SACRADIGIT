@@ -167,6 +167,81 @@
   color: #1e2a4a;
 }
 
+.records-table .row-action + .row-action {
+  margin-left: 0.75rem;
+}
+
+.records-table .row-action-danger {
+  color: #b91c1c;
+}
+
+.records-table .row-action-danger:hover {
+  color: #7f1d1d;
+}
+
+/* ---------- Row selection + batch delete ---------- */
+.records-table .col-select {
+  width: 2.5rem;
+  padding-right: 0;
+}
+
+.row-check {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #6c6fb0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.records-table tr.row-selected td {
+  background-color: #f5f5fc;
+}
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 1.25rem;
+  background-color: #f5f5fc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bulk-bar.hidden {
+  display: none;
+}
+
+.bulk-count {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1e2a4a;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  background-color: #b91c1c;
+  color: #ffffff;
+  transition: background-color 0.15s ease;
+}
+
+.btn-danger:hover {
+  background-color: #991b1b;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ---------- Modal ---------- */
 .modal-overlay {
   position: fixed;

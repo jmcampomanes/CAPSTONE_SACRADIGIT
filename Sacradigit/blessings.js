@@ -7,15 +7,17 @@
 
    Parishioners now book fixed schedule slots
    (../service-schedule.js) and land here already
-   'scheduled'. Older 'pending' requests are handled
-   with Reschedule (pick a fixed slot, which books
-   them); booked blessings can be rescheduled or
-   cancelled from their Details modal.
+   'scheduled'. Booked blessings can be rescheduled
+   up to the day before their date (they're listed
+   under "Schedules Open for Reschedule") and
+   cancelled from their Details modal. A leftover
+   'pending' request from before fixed slots shows
+   in that list too — rescheduling books it.
    ============================================ */
 
 import { client } from '../amplify-init.js';
 import { printReport, tableHtml, esc } from '../print-report.js';
-import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField } from '../service-schedule.js';
+import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -117,15 +119,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
+  // Bookings that can still be moved (up to the day before their date),
+  // soonest first, after any leftover pending requests.
+  function reschedulable() {
+    const open = upcoming.filter(b => canReschedule(b)).sort((a, b) => new Date(a.date) - new Date(b.date));
+    return [...requests, ...open];
+  }
+
   function renderStats() {
     document.getElementById('stat-scheduled').textContent = upcoming.length;
-    document.getElementById('stat-pending').textContent   = requests.length;
+    document.getElementById('stat-pending').textContent   = reschedulable().length;
   }
 
 
   /* ------------------------------------------
      STAT CARDS AS QUICK NAVIGATION
-     "Scheduled This Week" and "Pending Requests"
+     "Scheduled This Week" and "Open for Reschedule"
      jump to and briefly highlight their matching
      panel below. "Avg. Per Week" and "Slots Open"
      are static placeholders with no backing panel,
@@ -204,9 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   function renderRequests() {
-    const filtered = requests.filter(matchesFilters);
+    const filtered = reschedulable().filter(matchesFilters);
 
-    requestsCount.textContent = `${filtered.length} pending`;
+    requestsCount.textContent = `${filtered.length} open`;
 
     if (filtered.length === 0) {
       requestsList.innerHTML = '';
@@ -230,13 +239,15 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="request-info">
             <p class="request-name">${escapeHtml(r.requesterName)}</p>
-            <p class="request-meta">${escapeHtml(r.type)} · requested for ${formatLongDate(r.preferredDate)}${r.time ? ` at ${escapeHtml(r.time)}` : ''}</p>
+            <p class="request-meta">${escapeHtml(r.type)} · ${r.status === 'pending'
+              ? `requested for ${formatLongDate(r.preferredDate)}${r.time ? ` at ${escapeHtml(r.time)}` : ''}`
+              : `${formatLongDate(r.date)} at ${escapeHtml(r.time)}`}</p>
           </div>
           <div class="request-actions">
             <div class="request-action-row">
               <button type="button" class="req-reschedule" data-id="${r.id}">Reschedule</button>
             </div>
-            <button type="button" class="blessing-details-btn" data-section="requests" data-id="${r.id}">Details ›</button>
+            <button type="button" class="blessing-details-btn" data-section="${r.status === 'pending' ? 'requests' : 'upcoming'}" data-id="${r.id}">Details ›</button>
           </div>
         </div>
       </li>
@@ -245,8 +256,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPaginationBar(requestsPagination, filtered.length, requestsPage, totalPages, startIdx, pageItems.length);
   }
 
-  // Pending requests are handled by rescheduling them into a fixed slot
-  // (which books them) — this replaced the old Approve / Decline actions.
+  // Reschedule moves the booking to another fixed slot (and books a
+  // leftover pending request) — this replaced the old Approve / Decline actions.
   requestsList.addEventListener('click', (e) => {
     const rescheduleBtn = e.target.closest('.req-reschedule');
     if (rescheduleBtn) openRescheduleScreen(rescheduleBtn.dataset.id);
@@ -848,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     detailsTargetId = id;
     detailsCancelBtn.classList.toggle('hidden', !(section === 'upcoming' && (record.date || '') >= todayISO));
-    detailsRescheduleBtn.classList.toggle('hidden', !(section === 'requests' || (section === 'upcoming' && (record.date || '') >= todayISO)));
+    detailsRescheduleBtn.classList.toggle('hidden', !(section === 'requests' || canReschedule(record)));
 
     detailsBody.innerHTML = `
       <div class="so-detail-grid">

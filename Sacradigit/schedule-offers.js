@@ -7,18 +7,19 @@
    as the general parishioner service-request record for everything in
    user-request-service.js's catalog (sacraments, special masses, and
    literal blessings alike), so this page reviews all of it, not just
-   blessings. Status mapping matches user-requested-services.js exactly:
-   scheduled -> Scheduled, completed -> Completed, declined -> Cancelled,
-   pending -> Pending.
+   blessings. Status mapping: scheduled -> Scheduled, completed -> Completed,
+   declined -> Cancelled.
 
-   Parishioners now book fixed slots (../service-schedule.js), so new
-   records arrive already 'scheduled'. Reschedule only shows for older
-   'pending' rows (it books them at a new date/time with a reason);
-   upcoming bookings get a Cancel action instead.
+   Parishioners book fixed slots (../service-schedule.js), which only
+   offers a slot that still has room, so records arrive already
+   'scheduled' — there is no Pending status on this page. (A leftover
+   'pending' row from before fixed slots is shown as Scheduled too.)
+   Upcoming bookings can be Cancelled, and Rescheduled (moved to another
+   open slot, with a reason) up to the day before their date.
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl } from '../service-schedule.js';
+import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl, canReschedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,8 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
     walkIn.refresh();
   });
 
-  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
-  const badgeClass = { Pending: 'badge-amber', Scheduled: 'badge-green', Cancelled: 'badge-red', Completed: 'badge-blue' };
+  const statusLabel = { pending: 'Scheduled', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+  const badgeClass = { Scheduled: 'badge-green', Cancelled: 'badge-red', Completed: 'badge-blue' };
+
+  // A booking the office can still cancel: scheduled and not yet past.
+  const isOpenBooking = (o) => o.status === 'pending' || (o.status === 'scheduled' && (o.date || '') >= todayISO);
+  // Rescheduling closes a day earlier — only up to the day before the booking.
+  const isReschedulable = (o) => o.status === 'pending' || canReschedule(o);
 
   const tbody       = document.getElementById('offers-tbody');
   const offersEmpty  = document.getElementById('offers-empty');
@@ -163,8 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }).length;
 
     document.getElementById('stat-total').textContent    = offers.length;
-    document.getElementById('stat-pending').textContent  = offers.filter(o => o.status === 'pending').length;
-    document.getElementById('stat-approved').textContent = offers.filter(o => o.status === 'scheduled').length;
+    document.getElementById('stat-approved').textContent  = offers.filter(o => statusLabel[o.status] === 'Scheduled').length;
+    document.getElementById('stat-completed').textContent = offers.filter(o => o.status === 'completed').length;
     document.getElementById('stat-week').textContent     = weekCount;
 
     updateActiveStatCard();
@@ -172,19 +178,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
      1b. STAT CARDS AS QUICK FILTERS
-     Total clears the status filter; Pending /
-     Approved set it and jump straight to the
+     Total clears the status filter; Scheduled /
+     Completed set it and jump straight to the
      matching rows. "This Week" isn't a status,
      so it stays informational only.
   ------------------------------------------ */
   const statCardTotal    = document.getElementById('stat-total').closest('.stat-card');
-  const statCardPending  = document.getElementById('stat-pending').closest('.stat-card');
-  const statCardApproved = document.getElementById('stat-approved').closest('.stat-card');
+  const statCardApproved  = document.getElementById('stat-approved').closest('.stat-card');
+  const statCardCompleted = document.getElementById('stat-completed').closest('.stat-card');
 
   const statCardsByStatus = [
-    { card: statCardTotal,    status: '' },
-    { card: statCardPending,  status: 'Pending' },
-    { card: statCardApproved, status: 'Scheduled' },
+    { card: statCardTotal,     status: '' },
+    { card: statCardApproved,  status: 'Scheduled' },
+    { card: statCardCompleted, status: 'Completed' },
   ];
 
   statCardsByStatus.forEach(({ card, status }) => {
@@ -245,16 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const label = statusLabel[o.status] || o.status;
 
       let actionsHtml = '';
-      if (o.status === 'pending') {
+      if (isOpenBooking(o)) {
         actionsHtml = `
           <div class="row-actions">
             <button type="button" class="row-view" data-id="${o.id}">View ›</button>
-            <button type="button" class="row-reschedule" data-id="${o.id}">Reschedule</button>
-          </div>`;
-      } else if (o.status === 'scheduled' && (o.date || '') >= todayISO) {
-        actionsHtml = `
-          <div class="row-actions">
-            <button type="button" class="row-view" data-id="${o.id}">View ›</button>
+            ${isReschedulable(o) ? `<button type="button" class="row-reschedule" data-id="${o.id}">Reschedule</button>` : ''}
             <button type="button" class="row-reject row-cancel" data-id="${o.id}">Cancel</button>
           </div>`;
       } else {
@@ -308,8 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
      3. RESCHEDULE SCREEN
-     Books a pending request at another fixed
-     slot, on a full-screen view beside the
+     Moves a booking to another fixed slot
+     (its old slot is freed), on a full-screen
+     view beside the
      sidebar (request on the left, calendar on
      the right) — same as the Blessings page.
      The office isn't bound by the parishioner
@@ -346,8 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('reschedule-title').textContent = `Reschedule — ${o.type}`;
     document.getElementById('reschedule-sub').textContent = `For ${o.requesterName}`;
+    document.getElementById('reschedule-current-label').textContent = o.date ? 'Currently Scheduled' : 'Requested (not yet booked)';
     document.getElementById('reschedule-current').textContent =
-      `${fmtDate(o.preferredDate || o.date)}${o.time ? ` at ${o.time}` : ''}`;
+      `${fmtDate(o.date || o.preferredDate)}${o.time ? ` at ${o.time}` : ''}`;
     document.getElementById('reschedule-facts').innerHTML = rescheduleFactsHtml(o);
 
     rescheduleReason.reset();
@@ -414,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
-      logBookingAction(client, { action: 'Reschedule', record: { ...o, date: slot.date, time: slot.time }, reason: `${reason} (from pending request)` });
+      logBookingAction(client, { action: 'Reschedule', record: { ...o, date: slot.date, time: slot.time }, reason });
       closeRescheduleScreen();
       showToast(`${o.type} for ${o.requesterName} rescheduled to ${fmtDate(slot.date)} at ${slot.time}.`);
     } catch (err) {
@@ -501,8 +504,8 @@ document.addEventListener('DOMContentLoaded', () => {
      Schedule, Requester, Request Information,
      and Reasons & Notes (each group only when
      it has rows). The footer offers the same
-     action as the row (Reschedule for pending,
-     Cancel Booking for upcoming).
+     actions as the row (Reschedule and Cancel
+     Booking for upcoming bookings).
   ------------------------------------------ */
   const viewModal            = document.getElementById('view-modal');
   const viewType              = document.getElementById('view-type');
@@ -587,8 +590,8 @@ document.addEventListener('DOMContentLoaded', () => {
       tableGroupHtml('Request Information', infoRows) +
       tableGroupHtml('Reasons & Notes', noteRows);
 
-    viewRescheduleBtn.classList.toggle('hidden', o.status !== 'pending');
-    viewCancelBookingBtn.classList.toggle('hidden', !(o.status === 'scheduled' && (o.date || '') >= todayISO));
+    viewRescheduleBtn.classList.toggle('hidden', !isReschedulable(o));
+    viewCancelBookingBtn.classList.toggle('hidden', !isOpenBooking(o));
 
     openModal(viewModal);
   }
