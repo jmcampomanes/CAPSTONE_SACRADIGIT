@@ -18,14 +18,18 @@
 
 import { client } from '../amplify-init.js';
 import { SERVICE_CATEGORIES, SERVICE_TYPES } from '../service-catalog.js';
-import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, logBookingAction } from '../service-schedule.js';
+import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, logBookingAction, MAP_PIN_LABEL, googleMapsUrl } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 import { createPinMap, formatLatLng } from '../pin-map.js';
+import { notifyServiceUpdate } from '../email-notify.js';
 
 // Added to every walk-in's details so staff can tell how it was booked.
 export const BOOKED_BY_LABEL = 'Booked By';
 
 const escapeHtml = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+const detailText = (v) => (v && typeof v === 'object')
+  ? [v.firstName, v.middleName, v.lastName, v.extension].filter(Boolean).join(' ')
+  : String(v ?? '');
 const fmtLongDate = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
 /**
@@ -320,6 +324,18 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       logBookingAction(client, { action: 'Walk-in', record: result.data });
+      if (email) {
+        const detailsLines = Object.entries(details)
+          .filter(([k]) => k !== BOOKED_BY_LABEL && k !== MAP_PIN_LABEL)
+          .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
+          .map(([k, v]) => `${k}: ${v}`)
+          .concat(details[MAP_PIN_LABEL] ? [`Pinned Location: ${googleMapsUrl(details[MAP_PIN_LABEL])}`] : []);
+        notifyServiceUpdate({
+          to: email, name: requesterName, serviceType: svc.name, status: 'scheduled',
+          date: fmtLongDate(slot.date), time: slot.time, location: locationFor(svc.name, details),
+          contact: $('walkin-contact').value.trim(), detailsLines,
+        });
+      }
       showToast(`${svc.name} booked for ${requesterName} — ${fmtLongDate(slot.date)} at ${slot.time}.`);
       close();
     } catch (err) {

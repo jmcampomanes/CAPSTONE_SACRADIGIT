@@ -11,6 +11,7 @@ import {
   setNewPassword, loadUser, homeFor, isSignedIn, friendlyAuthError, PORTAL_ACCESS,
 } from './auth.js';
 import { initUiPrefs } from './ui-prefs.js';
+import { notifySignupCode, notifyPasswordReset } from './email-notify.js';
 import './Sacradigit/sacred-art.js';
 
 const $ = (id) => document.getElementById(id);
@@ -117,7 +118,7 @@ form('signin').addEventListener('submit', (e) => {
     if (step === 'CONFIRM_SIGN_UP') {
       pendingEmail = email; pendingPassword = password;
       $('cf-email-label').textContent = email;
-      try { await resendCode(email); } catch { /* a code may already be on its way */ }
+      try { await resendCode(email); notifySignupCode(email); } catch { /* a code may already be on its way */ }
       show('confirm');
       setAlert('Please confirm your email first — we sent you a new code.', 'ok');
       return;
@@ -127,6 +128,7 @@ form('signin').addEventListener('submit', (e) => {
       pendingEmail = email;
       $('rp-email-label').textContent = email;
       await startPasswordReset(email);
+      notifyPasswordReset(email);
       show('reset');
       setAlert('Your password needs to be reset. We emailed you a code.', 'ok');
       return;
@@ -150,6 +152,7 @@ form('signup').addEventListener('submit', (e) => {
     pendingEmail = email; pendingPassword = password;
     if (step === 'CONFIRM_SIGN_UP') {
       $('cf-email-label').textContent = email;
+      notifySignupCode(email, firstName);
       show('confirm');
       setAlert('Account created. Enter the code we emailed you.', 'ok');
     } else {
@@ -176,7 +179,7 @@ form('confirm').addEventListener('submit', (e) => {
 });
 
 $('cf-resend').addEventListener('click', async () => {
-  try { await resendCode(pendingEmail); setAlert('A new code is on its way.', 'ok'); }
+  try { await resendCode(pendingEmail); notifySignupCode(pendingEmail); setAlert('A new code is on its way.', 'ok'); }
   catch (err) { setAlert(friendlyAuthError(err)); }
 });
 
@@ -186,6 +189,7 @@ form('forgot').addEventListener('submit', (e) => {
   if (!email) { setAlert('Please enter your email.'); return; }
   busy(e.target, async () => {
     await startPasswordReset(email);
+    notifyPasswordReset(email);
     pendingEmail = email;
     $('rp-email-label').textContent = email;
     show('reset');
