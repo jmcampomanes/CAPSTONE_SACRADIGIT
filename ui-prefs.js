@@ -19,7 +19,7 @@
                   dictionary), applied by translatePage()
    ============================================ */
 
-import './pwa.js'; // installable app: service worker + "Install app" banner
+import { installButton } from './pwa.js'; // installable app: service worker, banner, "Install app" button
 
 const THEME_KEY = 'sacradigit_theme';
 const LANG_KEY = 'sacradigit_lang';
@@ -190,6 +190,7 @@ const STYLE = `
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   }
   .ui-prefs-btn { width: 1.75rem; padding: 0; }
+  .ui-prefs-btn[hidden] { display: none; }
   .ui-prefs-btn svg { width: 0.95rem; height: 0.95rem; }
   .ui-prefs-lang { padding: 0 0.5rem 0 0.45rem; }
   .ui-prefs-lang svg { width: 0.85rem; height: 0.85rem; flex-shrink: 0; }
@@ -230,6 +231,8 @@ const STYLE = `
   }
   @media (max-width: 360px) {
     body header.bg-white h1 { font-size: 1rem; }
+    /* No room for the title otherwise — tiny phones install from the banner instead. */
+    body header.bg-white .pwa-install-btn { display: none; }
   }
 `;
 
@@ -259,6 +262,7 @@ export function initUiPrefs() {
     </label>`;
   // Never translate the picker itself.
   group.setAttribute('data-no-translate', '');
+  group.prepend(installButton());
 
   const themeBtn = group.querySelector('#ui-theme-btn');
   const paintThemeBtn = () => {

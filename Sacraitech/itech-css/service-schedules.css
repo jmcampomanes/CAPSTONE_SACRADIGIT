@@ -1,0 +1,102 @@
+/* ============================================
+   Sacra ITech — Service Schedules
+   ============================================ */
+
+.ss-intro {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid var(--itech, #0e7490);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1.125rem;
+  font-size: 0.8125rem;
+  color: #4b5563;
+}
+
+.ss-category {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.ss-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem;
+}
+
+.ss-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 1rem 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.ss-card-head { display: flex; align-items: center; gap: 0.625rem; }
+.ss-card-icon {
+  width: 2rem; height: 2rem; border-radius: 0.5rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.ss-card-title { flex: 1; min-width: 0; font-size: 0.9375rem; font-weight: 700; color: #111827; }
+
+.badge-teal { background-color: rgba(14, 116, 144, 0.12); color: #0e7490; }
+
+.ss-label { display: block; font-size: 0.6875rem; font-weight: 600; color: #6b7280; margin-bottom: 0.4rem; }
+
+.ss-days { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.ss-day {
+  min-width: 2.6rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #4b5563;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ss-day:hover { border-color: #9ca3af; }
+.ss-day.on { background: #0e7490; border-color: #0e7490; color: #ffffff; }
+
+.ss-times { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem; }
+.ss-time {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  padding: 0.25rem 0.35rem 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ss-time-remove {
+  width: 1.15rem; height: 1.15rem; border-radius: 999px; border: 0;
+  background: transparent; color: #9ca3af; font-size: 0.9rem; line-height: 1; cursor: pointer;
+}
+.ss-time-remove:hover { background: #fee2e2; color: #b91c1c; }
+.ss-empty { font-size: 0.75rem; color: #b91c1c; }
+
+.ss-add-time { display: flex; gap: 0.5rem; }
+.ss-add-time .form-input { flex: 1; min-width: 0; }
+
+.ss-capacity .form-input { width: 7rem; }
+
+.ss-card-foot {
+  display: flex; justify-content: flex-end; gap: 0.5rem;
+  padding-top: 0.75rem; border-top: 1px solid #f1f2f5; margin-top: auto;
+}
+.ss-card-foot button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Dark mode */
+:root[data-theme="dark"] .ss-intro,
+:root[data-theme="dark"] .ss-card { background: #1a2131; border-color: #2c3547; color: #b6bdca; }
+:root[data-theme="dark"] .ss-card-title { color: #f1f3f7; }
+:root[data-theme="dark"] .ss-day { background: #1a2131; border-color: #3a4459; color: #b6bdca; }
+:root[data-theme="dark"] .ss-day.on { background: #0e7490; border-color: #0e7490; color: #ffffff; }
+:root[data-theme="dark"] .ss-time { background: #242c3e; color: #e5e8ef; }
+:root[data-theme="dark"] .ss-card-foot { border-top-color: #2c3547; }

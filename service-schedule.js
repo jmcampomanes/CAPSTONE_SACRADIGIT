@@ -1,4 +1,5 @@
 import { currentUserName } from './auth.js';
+import { client } from './amplify-init.js';
 /* ============================================
    SacraDigit — Fixed Service Schedules
    Shared by user/user-request-service.js (parishioner
@@ -55,6 +56,51 @@ export const SERVICE_SCHEDULES = {
   'Business Dedication':         { days: WEEKDAYS,  times: ['09:00 AM', '02:00 PM'],                         capacity: 1,  leadDays: 3,  windowDays: 60,  locationField: 'Business Address' },
   'Pet Blessing':                { days: [6],       times: ['03:00 PM'],                                     capacity: 10, leadDays: 1,  windowDays: 45,  location: 'Church Grounds' },
 };
+
+/* ---------- Edits saved by ITech (ServiceSlot records) ----------
+   Sacra ITech → Service Schedules saves one ServiceSlot per changed
+   service (days, times, capacity). They're applied on top of the table
+   above as soon as they load, so every page — the parishioner cards and
+   slot picker, the admin booking pages, the assistant — uses them.
+   No record for a service = the defaults above. */
+
+/** The built-in defaults, before any edits (for "Reset to default"). */
+export const DEFAULT_SERVICE_SCHEDULES = JSON.parse(JSON.stringify(SERVICE_SCHEDULES));
+
+/** Applies ServiceSlot records to SERVICE_SCHEDULES (and undoes removed ones). */
+export function applyServiceSlots(slots = []) {
+  const byType = new Map(slots.filter(r => r?.serviceType).map(r => [r.serviceType, r]));
+  for (const [type, base] of Object.entries(DEFAULT_SERVICE_SCHEDULES)) {
+    const r = byType.get(type);
+    const days = (r?.days || []).filter(d => Number.isInteger(d) && d >= 0 && d <= 6);
+    const times = (r?.times || []).filter(Boolean);
+    SERVICE_SCHEDULES[type] = {
+      ...base,
+      ...(days.length ? { days: [...new Set(days)].sort((x, y) => x - y) } : {}),
+      ...(times.length ? { times: [...times].sort((x, y) => timeToMinutes(x) - timeToMinutes(y)) } : {}),
+      ...(r?.capacity > 0 ? { capacity: r.capacity } : {}),
+    };
+  }
+}
+
+/** All saved ServiceSlot records ([] if none or unreachable). */
+export async function listServiceSlots() {
+  if (!client.models.ServiceSlot) return [];
+  const items = [];
+  let nextToken;
+  do {
+    const res = await client.models.ServiceSlot.list({ limit: 1000, nextToken });
+    if (res.errors?.length) throw new Error(res.errors.map(e => e.message).join('; '));
+    items.push(...res.data);
+    nextToken = res.nextToken;
+  } while (nextToken);
+  return items;
+}
+
+/** Resolves once saved edits are applied (never rejects; defaults stay on error). */
+export const serviceSchedulesReady = listServiceSlots()
+  .then(applyServiceSlots)
+  .catch(err => console.warn('Service schedule edits unavailable, using defaults:', err));
 
 // Used for any type that isn't in the table above (e.g. an old record
 // type), so the picker still works instead of breaking.

@@ -1085,6 +1085,123 @@
             "sortKeyFieldNames": []
           }
         },
+        "ParishInfo": {
+          "name": "ParishInfo",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "officeHoursEn": {
+              "name": "officeHoursEn",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "officeHoursFil": {
+              "name": "officeHoursFil",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "phone": {
+              "name": "phone",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "email": {
+              "name": "email",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "facebook": {
+              "name": "facebook",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "updatedByName": {
+              "name": "updatedByName",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "ParishInfos",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "allow": "public",
+                    "provider": "apiKey",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "read",
+                      "update"
+                    ],
+                    "groups": [
+                      "admin",
+                      "itech"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
         "DonationGoal": {
           "name": "DonationGoal",
           "fields": {
@@ -2588,7 +2705,8 @@
                     "provider": "userPools",
                     "allow": "groups",
                     "groups": [
-                      "admin"
+                      "admin",
+                      "itech"
                     ],
                     "operations": [
                       "create",
@@ -2606,17 +2724,6 @@
                     ],
                     "groups": [
                       "staff"
-                    ]
-                  },
-                  {
-                    "groupClaim": "cognito:groups",
-                    "provider": "userPools",
-                    "allow": "groups",
-                    "operations": [
-                      "read"
-                    ],
-                    "groups": [
-                      "itech"
                     ]
                   }
                 ]

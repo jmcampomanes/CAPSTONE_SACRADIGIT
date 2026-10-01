@@ -14,7 +14,7 @@
 import { client } from '../amplify-init.js';
 import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
 import { currentUserName } from '../auth.js';
-import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, watchClosures } from '../service-schedule.js';
+import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, watchClosures, serviceSchedulesReady } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
 import { createPinMap, formatLatLng } from '../pin-map.js';
 import { SERVICE_CATEGORIES, SERVICE_TYPES } from '../service-catalog.js';
@@ -110,6 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="svc-type-row">${items.map(svcCardHtml).join('')}</div>
     </div>`;
   }).join('');
+
+  // Refresh the day/time line once any schedule edits saved by ITech have loaded.
+  serviceSchedulesReady.then(() => {
+    svcTypeGrid.querySelectorAll('.svc-type-card').forEach(card => {
+      const svc = serviceTypes.find(s => s.id === card.dataset.id);
+      const line = card.querySelector('.svc-type-sched');
+      if (svc && line) line.textContent = describeSchedule(svc.name);
+    });
+  });
 
   svcTypeGrid.addEventListener('click', (e) => {
     const card = e.target.closest('.svc-type-card');

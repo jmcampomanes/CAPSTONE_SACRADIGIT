@@ -18,6 +18,7 @@ import { mergeWeeklySchedule } from '../weekly-mass-schedule.js';
 import { closuresFrom } from '../service-schedule.js';
 import { answerQuestion, starterChips, toISO } from './assistant-brain.js';
 import { FACILITIES, FUNDS } from './assistant-knowledge.js';
+import { loadParishContact } from '../parish-info.js';
 
 /* ---------- live data (fetched on demand, reused for a minute) ---------- */
 
@@ -60,6 +61,7 @@ const data = {
   }),
   myCertificates: () => cached('certs', async () => mine(await listAll(client.models.CertificateRequest))),
   myServices: () => cached('services', async () => mine(await listAll(client.models.Blessing))),
+  contact: () => cached('contact', () => loadParishContact(client)),
   announcements: () => cached('announcements', () => listAll(client.models.Announcement, { filter: { published: { eq: true } } })),
 };
 
