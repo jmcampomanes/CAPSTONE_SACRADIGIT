@@ -38,6 +38,7 @@ export const DATA_MODULES = [
   { model: 'Role',                  label: 'Roles',                    area: 'System' },
   { model: 'AccessLog',             label: 'Activity Logs',            area: 'System' },
   { model: 'ServiceSlot',           label: 'Service Slots',            area: 'System' },
+  { model: 'ParishInfo',            label: 'Parish Contact Info',      area: 'System' },
 ].filter(m => client.models[m.model]);
 
 /* ---------- Cloud storage folders ----------

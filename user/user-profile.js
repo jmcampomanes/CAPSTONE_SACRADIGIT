@@ -19,7 +19,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { currentUserName } from '../auth.js';
+import { currentUserName, currentUser } from '../auth.js';
 import { NOTIF_TYPES, loadPrefs, savePrefs, enableDeviceAlerts } from '../notifications/parish-notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -152,6 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const pfPhone          = document.getElementById('pf-phone');
   const pfAddress           = document.getElementById('pf-address');
   const pfBio                  = document.getElementById('pf-bio');
+
+  // Start from the signed-in account, not a placeholder.
+  const me = currentUser() || {};
+  if (me.name) {
+    pfName.value = me.name;
+    headerName.textContent = me.name;
+    const initials = initialsFrom(me.name);
+    if (!avatarLg.style.backgroundImage) avatarLg.textContent = initials;
+  }
+  if (me.email && !pfEmail.value) pfEmail.value = me.email;
 
   const defaults = {
     name: pfName.value, email: pfEmail.value, phone: pfPhone.value,

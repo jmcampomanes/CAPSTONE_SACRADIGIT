@@ -1,0 +1,107 @@
+/* ============================================
+   SacraDigit — Parish Info editor
+   (Sacraitech/itech-parish-info, Sacradigit/parish-info)
+   ============================================ */
+
+.pi-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .pi-layout { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+}
+
+.pi-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .pi-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pi-form .pi-wide { grid-column: 1 / -1; }
+}
+
+.pi-form .form-label { display: block; margin-bottom: 0.35rem; }
+.pi-form .form-input { width: 100%; }
+.pi-form .form-input:disabled { background-color: #f3f4f6; color: #6b7280; cursor: not-allowed; }
+.pi-form .form-input.has-error { border-color: #dc2626; }
+
+.pi-error {
+  font-size: 0.6875rem;
+  color: #dc2626;
+  margin-top: 0.3rem;
+}
+
+.pi-hint {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  margin-top: 0.3rem;
+}
+
+.pi-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid #f1f2f5;
+}
+
+.pi-actions-buttons { display: flex; gap: 0.5rem; }
+
+.pi-updated { font-size: 0.75rem; color: #9ca3af; }
+
+.pi-readonly {
+  margin: 1.25rem 1.25rem 0;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.6rem;
+  background: #fef9ec;
+  border: 1px solid #f3e2b3;
+  color: #7a5b12;
+  font-size: 0.8125rem;
+}
+
+/* What the assistant will say — styled like its chat bubble. */
+.pi-preview-wrap { padding: 1.25rem; }
+
+.pi-preview-q,
+.pi-preview {
+  max-width: 90%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.9rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.pi-preview-q {
+  margin-left: auto;
+  margin-bottom: 0.6rem;
+  background: #1e2a4a;
+  color: #ffffff;
+  border-bottom-right-radius: 0.25rem;
+  width: fit-content;
+}
+
+.pi-preview {
+  background: #f3f4f8;
+  color: #1f2937;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.pi-preview-lead { font-weight: 600; margin-bottom: 0.3rem; }
+.pi-preview ul { list-style: disc; padding-left: 1.1rem; margin: 0; }
+.pi-preview li + li { margin-top: 0.15rem; }
+
+.pi-preview-note { font-size: 0.6875rem; color: #9ca3af; margin-top: 0.75rem; }
+
+/* Dark mode */
+:root[data-theme="dark"] .pi-form .form-input:disabled { background-color: #151b28; color: #8a93a6; }
+:root[data-theme="dark"] .pi-actions { border-top-color: #2c3547; }
+:root[data-theme="dark"] .pi-readonly { background: #2a2414; border-color: #4a3d1c; color: #e6cf8f; }
+:root[data-theme="dark"] .pi-preview { background: #242c3e; color: #e5e8ef; }
+:root[data-theme="dark"] .pi-preview-q { background: #8b8fc7; color: #0f1420; }

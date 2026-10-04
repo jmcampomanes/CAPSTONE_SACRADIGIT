@@ -19,6 +19,12 @@ import { client } from '../amplify-init.js';
 import { printReport, tableHtml, esc } from '../print-report.js';
 import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
+import { notifyServiceUpdate } from '../email-notify.js';
+
+// Blessing records don't always carry an email (only walk-ins staff type one
+// in) — for parishioner-made requests it's folded into the Cognito "owner"
+// field as `${sub}::${email}` (identityClaim is cognito:username = email).
+const recipientEmail = (r) => r?.email || (r?.owner || '').split('::')[1] || '';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -562,6 +568,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(value ?? '');
   }
 
+  // Plain-text "Label: value" lines for the confirmation email — same facts
+  // as rescheduleFactsHtml, minus the reschedule-history note.
+  function emailDetailLines(r) {
+    const details = detailsOf(r);
+    const pin = details[MAP_PIN_LABEL];
+    return Object.entries(details)
+      .filter(([k]) => k !== MAP_PIN_LABEL && k !== RESCHEDULE_REASON_LABEL)
+      .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
+      .map(([k, v]) => `${k}: ${v}`)
+      .concat(pin ? [`Pinned Location: ${googleMapsUrl(pin)}`] : []);
+  }
+
   /* Printable service schedule for one day, on the parish letterhead
      (see ../print-report.js). */
   function printDaySchedule(iso) {
@@ -711,6 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(declineModal);
       logBookingAction(client, { action: declineIsCancel ? 'Cancel' : 'Decline', record: r, reason });
+      if (r) notifyServiceUpdate({ to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'declined', declineReason: reason });
       showToast(declineIsCancel
         ? `Booking for ${r ? r.requesterName : 'requester'} cancelled — the slot is open again.`
         : `Request from ${r ? r.requesterName : 'requester'} declined.`);
@@ -854,6 +873,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       const from = r.status === 'scheduled' ? `${formatLongDate(r.date)} ${r.time}` : 'pending request';
       logBookingAction(client, { action: 'Reschedule', record: { ...r, date: slot.date, time: slot.time }, reason: `${reason} (from ${from})` });
+      notifyServiceUpdate({
+        to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'scheduled',
+        date: formatLongDate(slot.date), time: slot.time, location: r.location || locationFor(r.type),
+        contact: r.contact, detailsLines: emailDetailLines(r),
+      });
       closeRescheduleScreen();
       showToast(`${r.type} for ${r.requesterName} moved to ${formatLongDate(slot.date)} at ${slot.time}.`);
     } catch (err) {

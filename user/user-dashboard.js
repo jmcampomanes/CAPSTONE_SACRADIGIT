@@ -7,6 +7,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { currentUser } from '../auth.js';
 import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../weekly-mass-schedule.js';
 import { watchLivestream } from '../livestream-status.js';
 import { mountBadgeStrip } from './faith-journey-widgets.js';
@@ -32,8 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  // "Welcome back, <first name>" — from the signed-in account (cached by auth.js,
+  // then refreshed from Cognito when the sacradigit:user event fires).
   const greetingName = document.getElementById('greeting-name');
-  if (greetingName) greetingName.textContent = 'Maria';
+  const paintGreeting = (u) => {
+    if (!greetingName || !u) return;
+    greetingName.textContent = u.firstName || (u.name || '').split(' ')[0] || 'Parishioner';
+  };
+  paintGreeting(currentUser());
+  document.addEventListener('sacradigit:user', (e) => paintGreeting(e.detail));
 
   const quickActions = [
     { label: 'Request Certificate', sub: 'Baptismal, Marriage, etc.', href: 'user-request-certificate.html',

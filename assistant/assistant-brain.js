@@ -499,8 +499,9 @@ function accountAnswer(q) {
   return { html: list(rows) + link('user-profile.html', 'My Profile'), chips: lang === 'fil' ? ['Ano ang kaya mong sagutin?'] : ['What can you help with?'] };
 }
 
-function contactAnswer({ lang }) {
-  const c = PARISH_CONTACT;
+async function contactAnswer({ lang }, ctx) {
+  // Saved by ITech / the Head Admin (see ../parish-info.js); file defaults otherwise.
+  const c = (await ctx?.data?.contact?.().catch(() => null)) || PARISH_CONTACT;
   const rows = [
     c.officeHours?.[lang] ? `${lang === 'fil' ? 'Oras ng opisina' : 'Office hours'}: ${esc(c.officeHours[lang])}` : null,
     c.phone ? `${lang === 'fil' ? 'Telepono' : 'Phone'}: <a class="pa-link-inline" href="tel:${esc(c.phone.replace(/[^\d+]/g, ''))}">${esc(c.phone)}</a>` : null,
@@ -554,7 +555,7 @@ export async function answerQuestion(question, ctx) {
       case 'closed': out = await closedAnswer(q, ctx); break;
       case 'announcements': out = await announcementsAnswer(q, ctx); break;
       case 'account': out = accountAnswer(q); break;
-      case 'contact': out = contactAnswer(q); break;
+      case 'contact': out = await contactAnswer(q, ctx); break;
       case 'help': out = helpAnswer(q); break;
       case 'thanks':
         out = { html: `<p>${q.lang === 'fil' ? 'Walang anuman! Pagpalain ka ng Diyos. 🙏' : 'You’re welcome! God bless. 🙏'}</p>`, chips: [] }; break;

@@ -8,12 +8,17 @@
      button (the browser's own install prompt)
    - iPhone / iPad Safari: how to use Share →
      Add to Home Screen (Safari has no prompt)
-   Dismissing hides it for 14 days; it never shows
-   inside the installed app.
+   Closing it (×) hides it until the browser is
+   closed; it comes back on the next visit until
+   the app is installed. There's also an "Install
+   app" button in every top bar (installButton(),
+   added by ui-prefs.js) for installing any time.
+   Neither shows inside the installed app.
    ============================================ */
 
 const DISMISS_KEY = 'sacradigit_install_dismissed';
-const DISMISS_DAYS = 14;
+// Earlier versions hid the banner for 14 days in localStorage — forget that.
+try { localStorage.removeItem(DISMISS_KEY); } catch { /* private mode */ }
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -33,11 +38,57 @@ const isIos = () => /iphone|ipod/i.test(navigator.userAgent) || isIpad();
 // Safari's Share button: square with an up arrow.
 const SHARE_ICON = '<svg class="pwa-share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 00-1 1v8a1 1 0 001 1h14a1 1 0 001-1v-8a1 1 0 00-1-1h-1"/></svg>';
 
-function recentlyDismissed() {
-  try {
-    const at = Number(localStorage.getItem(DISMISS_KEY) || 0);
-    return Date.now() - at < DISMISS_DAYS * 24 * 60 * 60 * 1000;
-  } catch { return false; }
+// Closed this visit? (sessionStorage clears when the browser closes.)
+function dismissedThisVisit() {
+  try { return sessionStorage.getItem(DISMISS_KEY) === '1'; } catch { return false; }
+}
+
+const fil = () => { try { return localStorage.getItem('sacradigit_lang') === 'fil'; } catch { return false; } };
+
+// The browser's install prompt (Chrome / Edge / Android). It can be used once per page load.
+let deferredPrompt = null;
+const canInstall = () => !isInstalled() && (!!deferredPrompt || isIos());
+
+// iPad Safari keeps Share at the top right; iPhone at the bottom of the screen.
+const iosSteps = () => (isIpad()
+  ? ' Tap Share (top right), then “Add to Home Screen”.'
+  : ' Tap Share (bottom of the screen), then “Add to Home Screen”.');
+
+async function promptInstall() {
+  if (!deferredPrompt) return;
+  const e = deferredPrompt;
+  deferredPrompt = null; // single use
+  e.prompt();
+  await e.userChoice.catch(() => {});
+  paintInstallButtons();
+}
+
+/* ---------- "Install app" button for the top bar ---------- */
+
+const DOWNLOAD_ICON = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg>';
+
+function paintInstallButtons() {
+  document.querySelectorAll('.pwa-install-btn').forEach(btn => { btn.hidden = !canInstall(); });
+}
+
+/** A top-bar button that installs the app (or shows how, on iPhone/iPad). Hidden when not possible. */
+export function installButton() {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'ui-prefs-btn pwa-install-btn';
+  btn.innerHTML = DOWNLOAD_ICON;
+  const label = fil() ? 'I-install ang app' : 'Install app';
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+  btn.hidden = !canInstall();
+  btn.addEventListener('click', () => {
+    if (deferredPrompt) promptInstall();
+    else if (isIos()) {
+      document.querySelector('.pwa-banner')?.remove();
+      showBanner({ text: iosSteps(), icon: SHARE_ICON });
+    }
+  });
+  return btn;
 }
 
 const STYLE = `
@@ -92,7 +143,7 @@ function showBanner({ text, icon = '', onInstall }) {
   document.body.appendChild(banner);
 
   banner.querySelector('.pwa-banner-close').addEventListener('click', () => {
-    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* private mode */ }
+    try { sessionStorage.setItem(DISMISS_KEY, '1'); } catch { /* private mode */ }
     banner.remove();
   });
   banner.querySelector('.pwa-banner-install')?.addEventListener('click', async () => {
@@ -101,31 +152,29 @@ function showBanner({ text, icon = '', onInstall }) {
   });
 }
 
-if (!isInstalled() && !recentlyDismissed()) {
-  // Chrome / Edge / Android: the browser tells us when the site can be installed.
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    showBanner({
-      text: 'Install it on your phone for one-tap access to Mass times, requests and your badges.',
-      onInstall: async () => {
-        e.prompt();
-        await e.userChoice.catch(() => {});
-      },
-    });
+// Chrome / Edge / Android: the browser tells us when the site can be installed.
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  paintInstallButtons();
+  if (isInstalled() || dismissedThisVisit()) return;
+  showBanner({
+    text: 'Install it on your phone for one-tap access to Mass times, requests and your badges.',
+    onInstall: promptInstall,
   });
+});
 
-  // iPhone / iPad Safari never fires that event — explain the manual steps instead.
-  if (isIos()) {
-    // iPad Safari keeps Share at the top right; iPhone at the bottom of the screen.
-    const text = isIpad()
-      ? ' Tap Share (top right), then “Add to Home Screen”.'
-      : ' Tap Share (bottom of the screen), then “Add to Home Screen”.';
-    const start = () => showBanner({ text, icon: SHARE_ICON });
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  }
+// iPhone / iPad Safari never fires that event — explain the manual steps instead.
+if (isIos() && !isInstalled() && !dismissedThisVisit()) {
+  const start = () => showBanner({ text: iosSteps(), icon: SHARE_ICON });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 }
 
-window.addEventListener('appinstalled', () => document.querySelector('.pwa-banner')?.remove());
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.querySelector('.pwa-banner')?.remove();
+  paintInstallButtons();
+});
 
 /* ---------- "You're offline" notice ----------
    Pages the app has cached still open without a connection, but their
