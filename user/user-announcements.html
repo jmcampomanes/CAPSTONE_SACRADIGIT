@@ -38,7 +38,8 @@
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -145,6 +146,12 @@
             <h2 class="req-hero-title">Announcements</h2>
             <p class="req-hero-sub">Stay up to date with news and events from Our Lady of Fatima Parish.</p>
           </div>
+        </div>
+
+        <!-- Official announcements vs casual updates -->
+        <div class="ann-kind-tabs" role="tablist" aria-label="Show">
+          <button type="button" class="ann-kind-tab active" role="tab" aria-selected="true" data-kind="announcement">Announcements <span class="ann-kind-count" id="count-announcement">0</span></button>
+          <button type="button" class="ann-kind-tab" role="tab" aria-selected="false" data-kind="post">Updates <span class="ann-kind-count" id="count-post">0</span></button>
         </div>
 
         <!-- Search + filter bar -->

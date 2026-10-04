@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 40 stylesheets.
+   Built by tools/build-dark-theme.mjs from 43 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -230,6 +230,46 @@
     border: 1px solid #3b3e5e;
     background-color: #1a2131;
     color: #a8aad1
+}
+:root[data-theme="dark"] .prep-chip {
+    color: #eeb18b;
+    background-color: #3f3718
+}
+:root[data-theme="dark"] .prep-chip.complete {
+    color: #8decb1;
+    background-color: #193e26
+}
+:root[data-theme="dark"] .prep-box {
+    border: 1px solid #2c3548;
+    background-color: #1a2131
+}
+:root[data-theme="dark"] .prep-title {
+    color: #aabacf
+}
+:root[data-theme="dark"] .prep-count {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .prep-meter {
+    background-color: #1c273b
+}
+:root[data-theme="dark"] .prep-note {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .prep-item {
+    color: #aabacf
+}
+:root[data-theme="dark"] .prep-item small {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .prep-item.done > label > span,
+:root[data-theme="dark"] .prep-item.done > span:last-child {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .prep-item.done .prep-mark {
+    color: #8decb1
+}
+:root[data-theme="dark"] .prep-item.missing .prep-mark {
+    color: #ee8c8c
 }
 /*  from Sacradigit/sacradigit-css/admin-shell.css  */
 :root[data-theme="dark"] body {
@@ -461,6 +501,19 @@
 :root[data-theme="dark"] .admin-hero .btn-secondary {
     border: 1px solid rgba(44, 53, 72, 0.22)
 }
+:root[data-theme="dark"] .tp-colon {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .tp-meridiem {
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .tp-mer {
+    color: #a0a8b6;
+    background-color: #1a2131
+}
+:root[data-theme="dark"] .tp-mer + .tp-mer {
+    border-left: 1px solid #2c3548
+}
 /*  from Sacradigit/sacradigit-css/announcements.css  */
 :root[data-theme="dark"] .ann-hero-icon {
     border: 1px solid rgba(44, 53, 72, 0.18);
@@ -501,6 +554,23 @@
 }
 :root[data-theme="dark"] .ann-tab.active {
     color: #a1b0d9
+}
+:root[data-theme="dark"] .ann-kind-filter {
+    color: #c4c9d3;
+    background-color: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .ann-kind-option {
+    border: 1.5px solid #2c3548
+}
+:root[data-theme="dark"] .ann-kind-option:has(input:checked) {
+    background-color: #121827
+}
+:root[data-theme="dark"] .ann-kind-option b {
+    color: #aabacf
+}
+:root[data-theme="dark"] .ann-kind-option small {
+    color: #a0a8b6
 }
 :root[data-theme="dark"] .ann-duration-hint {
     color: #8b93a3
@@ -595,6 +665,32 @@
 :root[data-theme="dark"] .post-detail-body {
     color: #b0bac9
 }
+/*  from Sacradigit/sacradigit-css/attendance.css  */
+:root[data-theme="dark"] .att-note {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .att-sub {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .att-empty {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .att-near-full {
+    color: #eeb18b;
+    background-color: #3f3718
+}
+:root[data-theme="dark"] .att-table-toggle summary {
+    color: #a9abd1
+}
+:root[data-theme="dark"] .att-table-toggle th,
+:root[data-theme="dark"] .att-table-toggle td {
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .att-restricted {
+    color: #eeb18b;
+    background-color: #3f3718;
+    border: 1px solid #6b5f2e
+}
 /*  from Sacradigit/sacradigit-css/blessings.css  */
 :root[data-theme="dark"] .pagination-bar {
     border-top: 1px solid #434956
@@ -652,6 +748,10 @@
 :root[data-theme="dark"] .completed-icon {
     background-color: #1a3d28;
     color: #8decb1
+}
+:root[data-theme="dark"] .completed-icon.cancelled {
+    background-color: #121827;
+    color: #ee8c8c
 }
 :root[data-theme="dark"] .completed-name {
     color: #aabacf
@@ -735,6 +835,273 @@
 :root[data-theme="dark"] .day-plan-item-purpose {
     color: #a0a8b6
 }
+/*  from Sacradigit/sacradigit-css/chat.css  */
+:root[data-theme="dark"] .chat-layout {
+    background-color: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .chat-threads {
+    border-right: 1px solid #2c3548
+}
+:root[data-theme="dark"] .chat-threads-head {
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .chat-search {
+    border: 1px solid #2c3548;
+    background-color: #1a2131;
+    color: #aabacf
+}
+:root[data-theme="dark"] .chat-thread {
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .chat-thread:hover {
+    background-color: #121827
+}
+:root[data-theme="dark"] .chat-thread.active {
+    background-color: #121827
+}
+:root[data-theme="dark"] .chat-thread-name {
+    color: #aabacf
+}
+:root[data-theme="dark"] .chat-thread-time {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .chat-thread-preview {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .chat-thread.unread .chat-thread-name,
+:root[data-theme="dark"] .chat-thread.unread .chat-thread-preview {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .chat-pane-head {
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .chat-pane-title {
+    color: #aabacf
+}
+:root[data-theme="dark"] .chat-pane-sub {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .chat-back {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .chat-messages {
+    background-color: #121827
+}
+:root[data-theme="dark"] .chat-day span {
+    color: #a0a8b6;
+    background-color: #222835
+}
+:root[data-theme="dark"] .chat-sender {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .chat-msg.is-theirs .chat-bubble {
+    background-color: #1a2131;
+    color: #aabacf;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .chat-time {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .chat-empty {
+    color: #a0a8b6;
+    background-color: #121827
+}
+:root[data-theme="dark"] .chat-empty strong {
+    color: #aabacf
+}
+:root[data-theme="dark"] .chat-composer {
+    border-top: 1px solid #2c3548;
+    background-color: #1a2131
+}
+:root[data-theme="dark"] .chat-input {
+    border: 1px solid #2c3548;
+    background-color: #1a2131;
+    color: #aabacf
+}
+:root[data-theme="dark"] .chat-note {
+    color: #8b93a3;
+    background-color: #1a2131
+}
+:root[data-theme="dark"] .chat-unavailable {
+    color: #eeb18b;
+    background-color: #3f3718;
+    border: 1px solid #6b5f2e
+}
+:root[data-theme="dark"] .chat-unavailable strong {
+    color: #eeaf8b
+}
+/*  from Sacradigit/sacradigit-css/community.css  */
+:root[data-theme="dark"] .community-unavailable {
+    color: #eeb18b;
+    background-color: #3f3718;
+    border: 1px solid #6b5f2e
+}
+:root[data-theme="dark"] .pw-anon {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .pw-counter {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .pw-help {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .pw-mine-item {
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .pw-mine-body {
+    color: #aabacf
+}
+:root[data-theme="dark"] .pw-mine-meta {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .pw-mine-note {
+    color: #eeb18b
+}
+:root[data-theme="dark"] .pw-status-pending {
+    color: #eeb68b
+}
+:root[data-theme="dark"] .pw-status-approved {
+    color: #8decb1
+}
+:root[data-theme="dark"] .pw-status-rejected {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .pw-card,
+:root[data-theme="dark"] .pw-mod-card {
+    background-color: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .pw-card-body {
+    color: #aabacf
+}
+:root[data-theme="dark"] .pw-card-who {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .pw-pray {
+    color: #c4c9d3;
+    background-color: #121827;
+    border: 1px solid #3b3e5e
+}
+:root[data-theme="dark"] .pw-pray:hover:not(:disabled) {
+    background-color: #212136
+}
+:root[data-theme="dark"] .pw-pray.prayed {
+    color: #8decb1;
+    background-color: #1a3d28;
+    border-color: #2e6b43
+}
+:root[data-theme="dark"] .pw-pray b {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .pw-tabs {
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .pw-tab {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .pw-tab.active {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .pw-tab-count {
+    color: #a0a8b6;
+    background-color: #242c3e
+}
+:root[data-theme="dark"] .pw-mod-meta {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .pw-delete {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .min-month-nav button {
+    border: 1px solid #2c3548;
+    background-color: #1a2131;
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .min-month {
+    color: #aabacf
+}
+:root[data-theme="dark"] .min-swap-tag {
+    color: #eeb18b;
+    background-color: #3f3718
+}
+:root[data-theme="dark"] .min-chip {
+    color: #c4c9d3;
+    background-color: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .min-mine {
+    color: #aabacf
+}
+:root[data-theme="dark"] .min-mass {
+    background-color: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .min-mass-head {
+    background-color: #121827;
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .min-mass-day {
+    color: #aabacf
+}
+:root[data-theme="dark"] .min-mass-title {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .min-past-tag {
+    color: #a0a8b6;
+    background-color: #2c3548
+}
+:root[data-theme="dark"] .min-today-tag {
+    color: #a1b0d9;
+    background-color: #39321e
+}
+:root[data-theme="dark"] .min-row + .min-row {
+    border-top: 1px dashed #434956
+}
+:root[data-theme="dark"] .min-name {
+    color: #aabacf
+}
+:root[data-theme="dark"] .min-filled {
+    color: #eeb68b
+}
+:root[data-theme="dark"] .min-filled.full {
+    color: #8decb1
+}
+:root[data-theme="dark"] .min-person {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .min-person.me {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .min-person.none {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .min-link {
+    color: #a9abd1
+}
+:root[data-theme="dark"] .min-link.strong {
+    color: #8decb1
+}
+:root[data-theme="dark"] .min-table th {
+    color: #a0a8b6;
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .min-table td {
+    border-bottom: 1px solid #2c3548;
+    color: #aabacf
+}
+:root[data-theme="dark"] .min-mass-cell small {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .min-remove {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .min-remove:hover {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .min-open {
+    color: #eeb68b
+}
 /*  from Sacradigit/sacradigit-css/dashboard.css  */
 :root[data-theme="dark"] .list-time {
     color: #a3b3d7
@@ -809,6 +1176,10 @@
 }
 :root[data-theme="dark"] .records-table .row-action-danger:hover {
     color: #e69393
+}
+:root[data-theme="dark"] .dup-tag {
+    color: #eeb18b;
+    background-color: #3f3718
 }
 :root[data-theme="dark"] .records-table tr.row-selected td {
     background-color: #121827
@@ -1427,6 +1798,11 @@
 :root[data-theme="dark"] .row-remove:hover {
     color: #ee8b8b
 }
+:root[data-theme="dark"] .mi-locked-note {
+    color: #eeb18b;
+    background-color: #3f3718;
+    border: 1px solid #6b5f2e
+}
 :root[data-theme="dark"] .so-detail-grid {
     background-color: #121827
 }
@@ -1608,6 +1984,20 @@
 :root[data-theme="dark"] .time-pill {
     background-color: #242c3e;
     color: #c4c9d3
+}
+:root[data-theme="dark"] .mass-conflict {
+    color: #ee8c8c;
+    background-color: #121827;
+    border: 1px solid #6b2e2e
+}
+:root[data-theme="dark"] .mass-conflict.is-ok {
+    color: #8decb1;
+    background-color: #1a3d28;
+    border-color: #2e6b43
+}
+:root[data-theme="dark"] .schedule-overlap {
+    color: #ee8c8c;
+    background-color: #121827
 }
 :root[data-theme="dark"] .schedule-details-btn {
     color: #a8aad1
@@ -1853,6 +2243,23 @@
     color: #9c96e3
 }
 /*  from Sacradigit/sacradigit-css/special-schedules.css  */
+:root[data-theme="dark"] .sched-tab {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .sched-tab:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .sched-tab.active {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .sched-tab-count {
+    color: #a0a8b6;
+    background-color: #242c3e
+}
+:root[data-theme="dark"] .sched-tab.active .sched-tab-count {
+    color: #a1b0d9;
+    background-color: #39321e
+}
 :root[data-theme="dark"] .schedules-view-all-btn {
     color: #a9abd1
 }
@@ -1952,6 +2359,17 @@
 :root[data-theme="dark"] .status-tag.upcoming {
     background-color: #242c3e;
     color: #a0a8b6
+}
+:root[data-theme="dark"] .status-tag.completed {
+    background-color: #18293f;
+    color: #8ba5ee
+}
+:root[data-theme="dark"] .status-tag.cancelled {
+    background-color: #121827;
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .sched-restore {
+    color: #8decb1
 }
 :root[data-theme="dark"] .schedule-date-bar {
     color: #c4c9d3
@@ -2082,6 +2500,26 @@
 }
 :root[data-theme="dark"] .post-detail-body {
     color: #b0bac9
+}
+:root[data-theme="dark"] .ann-kind-tabs {
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .ann-kind-tab {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .ann-kind-tab:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .ann-kind-tab.active {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .ann-kind-count {
+    color: #a0a8b6;
+    background-color: #242c3e
+}
+:root[data-theme="dark"] .ann-kind-tab.active .ann-kind-count {
+    color: #a1b0d9;
+    background-color: #39321e
 }
 /*  from user/user-css/user-badges.css  */
 :root[data-theme="dark"] .req-hero-icon {

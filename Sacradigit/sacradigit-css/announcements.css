@@ -231,6 +231,77 @@
   border-bottom-color: #c9a84c;
 }
 
+/* ---------- Announcement vs Post / Update ---------- */
+.ann-kind-filter {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.ann-kind-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.ann-kind-option {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ann-kind-option:has(input:checked) {
+  border-color: #8b8fc7;
+  background-color: #f5f5fc;
+}
+
+.ann-kind-option input {
+  margin-top: 0.2rem;
+  accent-color: #6c6fb0;
+}
+
+.ann-kind-option b {
+  display: block;
+  font-size: 0.8125rem;
+  color: #1f2937;
+}
+
+.ann-kind-option small {
+  display: block;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: #6b7280;
+  margin-top: 0.1rem;
+}
+
+.post-kind-tag {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  color: #ffffff;
+  background-color: #6c6fb0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 480px) {
+  .ann-kind-switch { grid-template-columns: 1fr; }
+}
+
 /* ---------- Expiry note on the New/Edit form ---------- */
 .ann-duration-hint {
   font-size: 0.7rem;

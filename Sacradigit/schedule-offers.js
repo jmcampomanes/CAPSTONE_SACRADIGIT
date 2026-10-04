@@ -21,6 +21,9 @@
 import { client } from '../amplify-init.js';
 import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl, canReschedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
+import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithChecklistItem } from '../sacrament-prep.js';
+import { currentUserName } from '../auth.js';
+import { logActivity } from '../activity-log.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -269,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
           <td class="font-medium text-gray-900">${escapeHtml(o.requesterName)}</td>
           <td>
-            <span class="service-type-tag">${escapeHtml(o.type)}</span>
+            <span class="service-type-tag">${escapeHtml(o.type)}</span>${progressChipHtml(o)}
           </td>
           <td>
             ${o.date
@@ -329,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function rescheduleFactsHtml(o) {
     const fact = (label, value) => `<div><p class="svc-screen-fact-label">${escapeHtml(label)}</p><p class="svc-screen-fact-value">${escapeHtml(value)}</p></div>`;
     const extra = Object.entries(parseDetails(o))
+      .filter(([k]) => !isPrepKey(k))
       .map(([k, v]) => [k === RESCHEDULE_REASON_LABEL ? 'Last Rescheduled' : k, formatDetailValue(v)])
       .filter(([, v]) => v)
       .map(([k, v]) => fact(k, v));
@@ -568,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     const infoRows = Object.entries(details)
-      .filter(([k]) => k !== RESCHEDULE_REASON_LABEL && k !== MAP_PIN_LABEL)
+      .filter(([k]) => k !== RESCHEDULE_REASON_LABEL && k !== MAP_PIN_LABEL && !isPrepKey(k))
       .map(([k, v]) => [k, formatDetailValue(v)])
       .filter(([, v]) => hasValue(v))
       .map(([k, v]) => [k, escapeHtml(v)]);
@@ -590,11 +594,47 @@ document.addEventListener('DOMContentLoaded', () => {
       tableGroupHtml('Request Information', infoRows) +
       tableGroupHtml('Reasons & Notes', noteRows);
 
+    renderViewChecklist(o);
     viewRescheduleBtn.classList.toggle('hidden', !isReschedulable(o));
     viewCancelBookingBtn.classList.toggle('hidden', !isOpenBooking(o));
 
     openModal(viewModal);
   }
+
+  /* --- Sacrament preparation checklist (../sacrament-prep.js) ---
+     Baptism / Confirmation / First Communion / Wedding requests show
+     their requirements here; each tick saves straight away and the
+     parishioner sees it on their Requested Services page. */
+  const viewChecklist = document.getElementById('view-checklist');
+
+  function renderViewChecklist(o) {
+    viewChecklist.innerHTML = hasChecklist(o.type) ? checklistHtml(o, { editable: true }) : '';
+  }
+
+  viewChecklist.addEventListener('change', async (e) => {
+    const box = e.target.closest('[data-prep-item]');
+    if (!box || !viewTargetId) return;
+    const o = offers.find(x => x.id === viewTargetId);
+    if (!o) return;
+    box.disabled = true;
+    const by = currentUserName() || 'Parish Office';
+    try {
+      const result = await client.models.Blessing.update({
+        id: o.id,
+        details: detailsWithChecklistItem(o.details, box.dataset.prepItem, box.checked, by),
+      });
+      if (result.errors) throw new Error(result.errors.map(er => er.message).join('; '));
+      Object.assign(o, result.data || {});
+      renderViewChecklist(o);
+      const label = box.closest('label')?.querySelector('span')?.firstChild?.textContent || box.dataset.prepItem;
+      logActivity(box.checked ? 'Approve' : 'Edit', `Preparation — ${o.type} for ${o.requesterName}: ${box.checked ? '✓' : 'un-ticked'} ${label}`);
+    } catch (err) {
+      console.error('Failed to update checklist:', err);
+      showToast(err.message || "Couldn't save the checklist.", true);
+      box.checked = !box.checked;
+      box.disabled = false;
+    }
+  });
 
   viewRescheduleBtn.addEventListener('click', () => {
     if (!viewTargetId) return;

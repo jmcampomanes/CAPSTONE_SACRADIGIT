@@ -8,6 +8,21 @@ import { guardPage } from '../auth.js';
 guardPage('admin');
 import { initPageHelp } from '../help-tutorial.js';
 import { initUiPrefs } from '../ui-prefs.js';
+import { watchUnreadBadge } from '../chat.js';
+import { watchRequests } from '../prayer-wall.js';
+
+// Red count on the sidebar's Prayer Wall link: requests waiting for review.
+function watchPendingPrayers(link) {
+  if (!link) return;
+  const badge = document.createElement('span');
+  badge.className = 'chat-unread-badge hidden';
+  link.appendChild(badge);
+  watchRequests((items) => {
+    const n = items.filter(r => r.status === 'pending').length;
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.toggle('hidden', n === 0);
+  });
+}
 // Adds the rotating sacred art to every navy page header (see sacred-art.js).
 import './sacred-art.js';
 
@@ -70,8 +85,8 @@ const HELP_CONTENT = {
       'Search by name or service type to find a specific booking.',
       'Click “View” to see the requester’s details and booked date and time.',
       'Click “Cancel” on an upcoming booking if the parish can’t honour it. Give a reason; the parishioner sees it and the slot opens up again.',
-      'Older requests from before fixed schedules show Reschedule — pick a new slot and give a reason.',
-      'Click “+ Service” when a parishioner asks at the office (walk-in or phone call): choose the service, fill in their details, and book one of the same fixed slots for them — same-day is allowed.',
+      'Click “Reschedule” to move a booking to another open slot — allowed up to the day before its date. Give a reason; the parishioner sees it.',
+      'Click “+ Service” when a parishioner asks at the office (walk-in or phone call): choose the service, fill in their details, and book one of the same fixed slots for them — from tomorrow onward.',
       'Use “Clear Filters” to reset the list.',
     ],
   },
@@ -130,14 +145,55 @@ const HELP_CONTENT = {
       'Use “Clear Filters” to reset your search.',
     ],
   },
+  'prayer-wall.html': {
+    title: 'Prayer Wall',
+    intro: 'Prayer requests from parishioners. Nothing appears on the wall until the office approves it.',
+    steps: [
+      'Waiting for Review lists new requests, oldest first. Approve puts one on the wall; Reject asks for a short reason the person will see.',
+      'On the Wall shows what parishioners see, with how many have prayed for each.',
+      'Take Down removes an approved request (with a reason). Requests leave the wall on their own after 60 days.',
+      'Anonymous requests never store the person’s name, so the office doesn’t see it either.',
+    ],
+  },
+  'ministry-roster.html': {
+    title: 'Ministry Roster',
+    intro: 'Who is serving at each weekend and special Mass this month.',
+    steps: [
+      'Parishioners sign up from their portal’s Ministry Sign-ups page; this table updates live.',
+      '“Open” shows slots that still need volunteers; “Swap” marks someone who asked to be replaced.',
+      'Click × to remove someone from a slot. Print Roster prints the month for the sacristy.',
+      'How many lectors, choir members, altar servers and ushers each Mass needs is set in ministry.js.',
+    ],
+  },
+  'attendance.html': {
+    title: 'Attendance Insights',
+    intro: 'How full each Mass is, built from parishioners’ QR check-ins. For the Head Admin.',
+    steps: [
+      'Pick a period and enter the church’s seating capacity — it’s remembered on this computer.',
+      'Fullest Masses ranks the busiest Masses; ▲ Near capacity means 90% of seats or more.',
+      'Check-ins per Week shows whether attendance is growing or dropping.',
+      'The heatmap shows the average turnout for each day and Mass time — useful for planning schedules and priest assignments.',
+      'Hover (or tab to) any bar or cell for exact numbers, or open “Show as table”. Counts only include people who checked in.',
+    ],
+  },
+  'messages.html': {
+    title: 'Messages',
+    intro: 'Questions parishioners send to the parish office. The Head Admin and the Secretary share this inbox.',
+    steps: [
+      'Pick a conversation on the left — unread ones are bold with a red count.',
+      'Type your reply at the bottom and press Enter to send (Shift+Enter for a new line). The parishioner sees it on their Messages page.',
+      'Parishioners start conversations from their portal; the office can reply to any of them.',
+      'The red number next to Messages in the sidebar shows how many parishioner messages are still unread.',
+    ],
+  },
   'special-schedules.html': {
     title: 'Special Schedules',
     intro: 'Manage seasonal and special liturgical schedules, like Simbang Gabi or Holy Week.',
     steps: [
       'Click “Add Schedule” to create a new seasonal schedule with its own dates and description.',
       'Switch to Calendar View to see all special schedules laid out by date.',
-      'Mark a schedule Completed once the season has ended.',
-      'Review Upcoming Special Schedules for what’s coming next.',
+      'Use the Upcoming, Completed and Cancelled tabs — a schedule moves to Completed on its own once its end date passes.',
+      'Click “Cancel” to call off a schedule; it moves to the Cancelled tab, where you can Restore it or delete it for good.',
     ],
   },
   'profile.html': {
@@ -161,6 +217,55 @@ document.addEventListener('DOMContentLoaded', () => {
      each link's href so the right tab is
      highlighted no matter which page loads.
   ------------------------------------------ */
+  /* "Communications → Messages" (the parish office inbox), added here
+     rather than in every page's HTML, with an unread count. */
+  const annLink = document.querySelector('#sidebar a.sidebar-link[href="announcements.html"]');
+  if (annLink && !document.querySelector('#sidebar a.sidebar-link[href="messages.html"]')) {
+    annLink.closest('li').insertAdjacentHTML('afterend', `
+          <li>
+            <a href="messages.html" data-nav="messages" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Messages
+            </a>
+          </li>`);
+  }
+  watchUnreadBadge(document.querySelector('#sidebar a.sidebar-link[href="messages.html"]'), 'office');
+
+  /* "Prayer Wall" (with a count waiting for review) and "Ministry Roster". */
+  const msgLi = document.querySelector('#sidebar a.sidebar-link[href="messages.html"]')?.closest('li');
+  if (msgLi && !document.querySelector('#sidebar a.sidebar-link[href="prayer-wall.html"]')) {
+    msgLi.insertAdjacentHTML('afterend', `
+          <li>
+            <a href="prayer-wall.html" data-nav="prayer-wall" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4c-1.5 2-3 4.5-3 7.5V17l-3 3h12l-3-3v-5.5C15 8.5 13.5 6 12 4zM12 4v13"/></svg>
+              Prayer Wall
+            </a>
+          </li>`);
+  }
+  const fbLi = document.querySelector('#sidebar a.sidebar-link[href="facility-booking.html"]')?.closest('li');
+  if (fbLi && !document.querySelector('#sidebar a.sidebar-link[href="ministry-roster.html"]')) {
+    fbLi.insertAdjacentHTML('afterend', `
+          <li>
+            <a href="ministry-roster.html" data-nav="ministry-roster" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              Ministry Roster
+            </a>
+          </li>`);
+  }
+  watchPendingPrayers(document.querySelector('#sidebar a.sidebar-link[href="prayer-wall.html"]'));
+
+  /* "Attendance" (Head Admin only) under Masses — charts from QR check-ins. */
+  const massesLink = document.querySelector('#sidebar a.sidebar-link[href="masses.html"]');
+  if (massesLink && !document.querySelector('#sidebar a.sidebar-link[href="attendance.html"]')) {
+    massesLink.closest('li').insertAdjacentHTML('afterend', `
+          <li class="head-admin-only">
+            <a href="attendance.html" data-nav="attendance" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              Attendance
+            </a>
+          </li>`);
+  }
+
   const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
   const sidebarLinks = document.querySelectorAll('.sidebar-link');
 

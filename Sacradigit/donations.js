@@ -343,6 +343,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('stat-week').textContent   = formatPeso(weekTotal);
     document.getElementById('stat-month').textContent  = formatPeso(monthTotal);
+    document.getElementById('stat-month-sub').textContent =
+      `${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} total`;
     document.getElementById('stat-donors').textContent  = uniqueDonors.size;
   }
 

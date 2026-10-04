@@ -16,6 +16,7 @@ import { currentUserName } from '../../auth.js';
 import { uploadData } from 'aws-amplify/storage';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../../name-utils.js';
 import { DOC_TYPES, extractFields } from './scan-engine.js';
+import { confirmNotDuplicate } from '../record-duplicates.js';
 import { openDocument, rotateCanvas, scanPage, warmUpOcr, isPdf } from './document-scanner.js';
 
 const LOW_CONF = 60;          // below this, a word/field is flagged "please check"
@@ -24,7 +25,7 @@ const ZOOMS = [1, 1.5, 2, 3];
 
 export const SCAN_SUFFIX = '.scan.json';
 
-export function initScanScreen({ showToast }) {
+export function initScanScreen({ showToast, getRecords = () => [] }) {
   const $ = (id) => document.getElementById(id);
   const screen      = $('scan-screen');
   const fileInput   = $('scan-file');
@@ -377,6 +378,7 @@ export function initScanScreen({ showToast }) {
 
     let fullName = formatFullName(name);
     if (docTypeSel.value === 'marriage' && nameFieldsFilled('scan-spouse')) fullName += ` & ${formatFullName(readNameFields('scan-spouse'))}`;
+    if (!confirmNotDuplicate(getRecords(), { fullName, type, dateOfEvent: $('scan-date').value })) return;
 
     const fields = {};
     fieldsWrap.querySelectorAll('input[data-key]').forEach(i => {

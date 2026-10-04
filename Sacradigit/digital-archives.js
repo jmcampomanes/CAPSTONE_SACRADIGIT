@@ -8,6 +8,7 @@ import { currentUserName, isHeadAdmin } from '../auth.js';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../name-utils.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { initScanScreen, SCAN_SUFFIX } from './scanner/scan-screen.js';
+import { confirmNotDuplicate, duplicateIds } from './record-duplicates.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -133,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateVal = dateFilter.value;
     const now = new Date();
 
+    const dupes = duplicateIds(records);
     const filtered = records.filter(r => {
       const matchesQuery = !query ||
         (r.fullName || '').toLowerCase().includes(query) ||
@@ -169,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.classList.toggle('row-selected', selected.has(r.id));
         tr.innerHTML = `
           <td class="col-select head-admin-only"><input type="checkbox" class="row-check row-select" data-id="${r.id}" aria-label="Select ${escapeHtml(r.fullName)}" ${selected.has(r.id) ? 'checked' : ''} /></td>
-          <td class="font-medium text-gray-900">${escapeHtml(r.fullName)}</td>
+          <td class="font-medium text-gray-900">${escapeHtml(r.fullName)}${dupes.has(r.id) ? ' <span class="dup-tag" title="Same type and name as another record — check it isn’t a duplicate">Possible duplicate</span>' : ''}</td>
           <td>${escapeHtml(r.type)}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td>${escapeHtml(r.addedByName)}</td>
@@ -277,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Scan Document — OCR screen (see scanner/scan-screen.js). showToast is a
   // function declaration further down, so it's already available here.
-  const scanScreen = initScanScreen({ showToast });
+  const scanScreen = initScanScreen({ showToast, getRecords: () => records });
   document.getElementById('btn-scan').addEventListener('click', () => scanScreen.open());
   document.getElementById('btn-new-record').addEventListener('click', () => openModal(newRecordModal));
 
@@ -409,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const officiant = document.getElementById('edit-officiant').value.trim();
 
     if (!fullName || !type) { showToast('Please fill in name and type.', true); return; }
+    if (!confirmNotDuplicate(records, { fullName, type, dateOfEvent: document.getElementById('edit-date').value }, { excludeId: editingId })) return;
 
     const submitBtn = document.getElementById('edit-record-submit');
     submitBtn.disabled = true;
@@ -469,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!type || !nameFieldsFilled('upload-name')) { showToast('Please fill in record type and name.', true); return; }
 
     const fullName = formatFullName(name);
+    if (!confirmNotDuplicate(records, { fullName, type: type.toLowerCase() })) return;
     const file = fileInput.files[0];
     const submitBtn = document.getElementById('upload-submit');
     submitBtn.disabled = true;
@@ -513,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!nameFieldsFilled('new-name') || !type || !date) { showToast('Please fill in name, type, and date.', true); return; }
 
     const fullName = formatFullName(name);
+    if (!confirmNotDuplicate(records, { fullName, type: type.toLowerCase(), dateOfEvent: date })) return;
 
     try {
       const result = await client.models.ParishRecord.create({

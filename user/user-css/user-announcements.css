@@ -628,3 +628,47 @@
 .photo-lightbox-close:hover {
   background-color: rgba(255, 255, 255, 0.22);
 }
+
+/* ---------- Announcements / Updates tabs ---------- */
+.ann-kind-tabs {
+  display: flex;
+  gap: 0.375rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ann-kind-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.ann-kind-tab:hover { color: #1e2a4a; }
+
+.ann-kind-tab.active {
+  color: #1e2a4a;
+  border-bottom-color: #c9a84c;
+}
+
+.ann-kind-count {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+}
+
+.ann-kind-tab.active .ann-kind-count {
+  color: #1e2a4a;
+  background-color: #f6efd9;
+}

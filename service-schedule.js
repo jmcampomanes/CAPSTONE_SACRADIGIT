@@ -74,7 +74,7 @@ export const CLOSURE_TYPE = 'No Services (Parish Closed)';
 /** Pull the closure ranges out of a list of SpecialSchedule records. */
 export function closuresFrom(specialSchedules = []) {
   return specialSchedules
-    .filter(s => s.type === CLOSURE_TYPE && s.startDate)
+    .filter(s => s.type === CLOSURE_TYPE && s.startDate && s.status !== 'Cancelled')
     .map(s => ({ start: s.startDate, end: s.endDate || s.startDate, name: s.name }));
 }
 

@@ -1,40 +1,16 @@
 /* ============================================
    SacraDigit Media — Event Coverage & Approvals
-   Scripts. Client-side prototype: stores requests
-   in localStorage under 'sacradigit_media_coverage'.
-
-   In a real deployment, ministries would submit
-   these requests from their own view (or a shared
-   form) and Media/Admin would approve/reject here —
-   that split is exactly what an EventCoverageRequest
-   model with a `status` enum and role-scoped
-   authorization rules in amplify/data/resource.ts
-   would give you once RBAC is restored.
+   Backed by the EventCoverageRequest model
+   (eventName, date, location, contact, requestedBy,
+   notes, status 'pending' | 'approved' | 'rejected'),
+   so requests are shared with the whole Media team
+   and the Head Admin, live. Changes are recorded in
+   Activity Logs automatically (../activity-log.js).
    ============================================ */
 
-const STORAGE_KEY = 'sacradigit_media_coverage';
-
-function readRequests() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeRequests(requests) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
-}
-
-function seedIfMissing() {
-  if (localStorage.getItem(STORAGE_KEY) !== null) return;
-  writeRequests([
-    { id: 'r1', eventName: 'Youth Ministry Recollection', date: '2026-09-20', location: 'Parish Hall', contact: 'Youth Ministry', notes: 'Need photos + short recap video', status: 'pending' },
-    { id: 'r2', eventName: 'First Communion Batch 2', date: '2026-09-27', location: 'Main Church', contact: 'Catechism Office', notes: '', status: 'approved' },
-    { id: 'r3', eventName: 'Choir Practice Highlight Reel', date: '2026-09-10', location: 'Choir Loft', contact: 'Music Ministry', notes: 'For social media only, not for bulletin', status: 'rejected' },
-  ]);
-}
+import { client } from '../amplify-init.js';
+import { currentUserName } from '../auth.js';
+import { importLocalEntries } from './media-local-import.js';
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -54,8 +30,6 @@ function formatDate(dateStr) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  seedIfMissing();
-
   const tbody = document.getElementById('coverage-tbody');
   const statusFilter = document.getElementById('status-filter');
   const modal = document.getElementById('request-modal');
@@ -84,19 +58,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);
   }
 
+  const model = client.models.EventCoverageRequest;
+  if (!model) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Event coverage isn\'t connected to the database yet.</td></tr>';
+    addBtn.disabled = true;
+    return;
+  }
+
+  let requests = [];
+
   function render() {
     const filter = statusFilter.value;
-    let requests = [...readRequests()].sort((a, b) => a.date.localeCompare(b.date));
+    let shown = requests.slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
     if (filter !== 'all') {
-      requests = requests.filter(r => r.status === filter);
+      shown = shown.filter(r => (r.status || 'pending') === filter);
     }
 
-    if (requests.length === 0) {
+    if (shown.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400 text-sm py-8">No requests here.</td></tr>';
       return;
     }
 
-    tbody.innerHTML = requests.map(r => `
+    tbody.innerHTML = shown.map(r => {
+      const status = r.status || 'pending';
+      return `
       <tr data-id="${r.id}">
         <td>
           <p class="font-medium text-gray-900">${escapeHtml(r.eventName)}</p>
@@ -105,22 +90,36 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${formatDate(r.date)}</td>
         <td>${escapeHtml(r.location)}</td>
         <td>${escapeHtml(r.contact)}</td>
-        <td><span class="badge badge-${r.status}">${capitalize(r.status)}</span></td>
+        <td><span class="badge badge-${status}">${capitalize(status)}</span></td>
         <td class="text-right whitespace-nowrap">
-          ${r.status === 'pending' ? `
+          ${status === 'pending' ? `
             <button type="button" class="row-action row-action-approve" data-approve="${r.id}">Approve</button>
             <button type="button" class="row-action row-action-reject" data-reject="${r.id}">Reject</button>
           ` : `
             <button type="button" class="row-action row-action-delete" data-delete="${r.id}">Remove</button>
           `}
         </td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   }
+
+  model.observeQuery().subscribe({
+    next: ({ items }) => { requests = items; render(); },
+    error: (err) => {
+      console.error('Failed to load coverage requests:', err);
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Couldn\'t load the coverage requests.</td></tr>';
+    },
+  });
+
+  // Requests added before this page used the database (kept in this browser only)
+  importLocalEntries('sacradigit_media_coverage', 'EventCoverageRequest', (r) => ({
+    eventName: r.eventName, date: r.date, location: r.location || '', contact: r.contact || 'Unspecified',
+    notes: r.notes || '', status: r.status || 'pending', requestedBy: currentUserName() || 'Media Team',
+  })).then(n => { if (n) showToast(`Moved ${n} request${n === 1 ? '' : 's'} from this browser into the shared list.`); });
 
   function openModal() {
     eventField.value = '';
-    dateField.value = new Date().toISOString().slice(0, 10);
+    dateField.value = new Date().toLocaleDateString('en-CA');
     locationField.value = '';
     contactField.value = '';
     notesField.value = '';
@@ -142,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === modal) closeModal();
   });
 
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
     const eventName = eventField.value.trim();
     if (!eventName) {
       showToast('Please enter the event name.', true);
@@ -153,59 +152,66 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const requests = readRequests();
-    requests.push({
-      id: 'r' + Date.now(),
-      eventName,
-      date: dateField.value,
-      location: locationField.value.trim(),
-      contact: contactField.value.trim() || 'Unspecified',
-      notes: notesField.value.trim(),
-      status: 'pending',
-    });
-
-    writeRequests(requests);
-    render();
-    closeModal();
-    showToast(`Coverage request for "${eventName}" submitted.`);
+    saveBtn.disabled = true;
+    try {
+      const { errors } = await model.create({
+        eventName,
+        date: dateField.value,
+        location: locationField.value.trim(),
+        contact: contactField.value.trim() || 'Unspecified',
+        notes: notesField.value.trim(),
+        status: 'pending',
+        requestedBy: currentUserName() || 'Media Team',
+      });
+      if (errors) throw new Error(errors.map(e => e.message).join('; '));
+      closeModal();
+      showToast(`Coverage request for "${eventName}" submitted.`);
+    } catch (err) {
+      console.error('Failed to submit coverage request:', err);
+      showToast(err.message || "Couldn't submit the request.", true);
+    } finally {
+      saveBtn.disabled = false;
+    }
   });
 
-  tbody.addEventListener('click', (e) => {
+  async function setStatus(r, status) {
+    try {
+      const { errors } = await model.update({ id: r.id, status });
+      if (errors) throw new Error(errors.map(e => e.message).join('; '));
+      showToast(`"${r.eventName}" ${status}.`, status === 'rejected');
+    } catch (err) {
+      console.error('Failed to update coverage request:', err);
+      showToast(err.message || "Couldn't update the request.", true);
+    }
+  }
+
+  tbody.addEventListener('click', async (e) => {
     const approveId = e.target.closest('[data-approve]')?.dataset.approve;
     const rejectId = e.target.closest('[data-reject]')?.dataset.reject;
     const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
 
-    const requests = readRequests();
-
     if (approveId) {
       const r = requests.find(x => x.id === approveId);
-      if (r) {
-        r.status = 'approved';
-        writeRequests(requests);
-        render();
-        showToast(`"${r.eventName}" approved.`);
-      }
+      if (r) await setStatus(r, 'approved');
     }
 
     if (rejectId) {
       const r = requests.find(x => x.id === rejectId);
-      if (r) {
-        r.status = 'rejected';
-        writeRequests(requests);
-        render();
-        showToast(`"${r.eventName}" rejected.`, true);
-      }
+      if (r) await setStatus(r, 'rejected');
     }
 
     if (deleteId) {
       const r = requests.find(x => x.id === deleteId);
       if (!r) return;
       if (!confirm(`Remove "${r.eventName}" from the list?`)) return;
-      writeRequests(requests.filter(x => x.id !== deleteId));
-      render();
-      showToast(`"${r.eventName}" removed.`);
+      try {
+        const { errors } = await model.delete({ id: deleteId });
+        if (errors) throw new Error(errors.map(er => er.message).join('; '));
+        showToast(`"${r.eventName}" removed.`);
+      } catch (err) {
+        console.error('Failed to remove coverage request:', err);
+        showToast(err.message || "Couldn't remove the request.", true);
+      }
     }
   });
-
-  render();
 });

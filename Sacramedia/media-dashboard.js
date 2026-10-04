@@ -1,63 +1,84 @@
 /* ============================================
    SacraDigit Media — Dashboard Scripts
-   Reads the same localStorage keys the other
-   media pages write to, purely for the summary
-   view. Each individual page (content-calendar.js,
-   event-coverage.js, etc.) owns its own seeding —
-   this file only seeds if a key is completely
-   missing, so the dashboard never looks empty on
-   a first-ever visit before any other page has
-   been opened. The Media Files count is live from
-   the CloudFile model (folder 'media'), the same
-   records media-library.js reads and writes.
+   Summary of the other Media pages, live from the
+   same database models they use: ContentCalendarEntry
+   (scheduled posts + upcoming list), EventCoverageRequest
+   (pending approvals), CloudFile in folder 'media'
+   (media files) and the livestream status.
    ============================================ */
 
 import { client } from '../amplify-init.js';
 import { watchLivestream } from '../livestream-status.js';
 
-const KEYS = {
-  calendar: 'sacradigit_media_calendar',
-  coverage: 'sacradigit_media_coverage',
-};
-
-function readJSON(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function seedIfMissing(key, value) {
-  if (localStorage.getItem(key) === null) {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Minimal seed so the dashboard has something to show even before
-  // the person has visited the calendar/coverage/library pages.
-  seedIfMissing(KEYS.calendar, [
-    { id: 'c1', date: '2026-09-13', title: 'Sunday Mass Schedule Graphic', type: 'scheduled', platform: 'Facebook' },
-    { id: 'c2', date: '2026-09-14', title: 'Feast of the Exaltation of the Cross — greeting', type: 'draft', platform: 'Facebook' },
-    { id: 'c3', date: '2026-09-19', title: 'Recollection reminder', type: 'scheduled', platform: 'Facebook' },
-  ]);
-  seedIfMissing(KEYS.coverage, [
-    { id: 'r1', eventName: 'Youth Ministry Recollection', date: '2026-09-20', location: 'Parish Hall', contact: 'Youth Ministry', notes: 'Need photos + short recap video', status: 'pending' },
-    { id: 'r2', eventName: 'First Communion Batch 2', date: '2026-09-27', location: 'Main Church', contact: 'Catechism Office', notes: '', status: 'approved' },
-  ]);
+  // ---- Content calendar: scheduled count + upcoming list ----
+  const scheduledEl = document.getElementById('stat-scheduled');
+  const upcomingEl = document.getElementById('upcoming-content-list');
+  if (client.models.ContentCalendarEntry) {
+    client.models.ContentCalendarEntry.observeQuery().subscribe({
+      next: ({ items }) => renderCalendar(items),
+      error: (err) => { console.error('Failed to load the content calendar:', err); scheduledEl.textContent = '–'; },
+    });
+  } else {
+    scheduledEl.textContent = '–';
+  }
 
-  const calendar = readJSON(KEYS.calendar, []);
-  const coverage = readJSON(KEYS.coverage, []);
+  function renderCalendar(calendar) {
+    scheduledEl.textContent = String(calendar.filter(c => c.status === 'scheduled').length);
+    const upcoming = calendar
+      .filter(c => c.status !== 'published')
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+      .slice(0, 5);
 
-  // ---- Stat cards ----
-  const scheduledCount = calendar.filter(c => c.type === 'scheduled').length;
-  document.getElementById('stat-scheduled').textContent = String(scheduledCount);
+    if (upcoming.length === 0) {
+      upcomingEl.innerHTML = '<li class="empty-state">Nothing scheduled yet. <a href="content-calendar.html" style="color:#6c6fb0;">Add something →</a></li>';
+      return;
+    }
+    upcomingEl.innerHTML = upcoming.map(c => {
+      const status = c.status || 'draft';
+      return `
+      <li class="list-row flex items-center justify-between text-sm">
+        <div class="min-w-0">
+          <p class="list-name truncate">${escapeHtml(c.title)}</p>
+          <p class="list-time">${formatDate(c.date)} · ${escapeHtml(c.platform || '')}</p>
+        </div>
+        <span class="badge badge-${status}">${capitalize(status)}</span>
+      </li>`;
+    }).join('');
+  }
 
-  const pendingCount = coverage.filter(r => r.status === 'pending').length;
-  document.getElementById('stat-pending').textContent = String(pendingCount);
+  // ---- Event coverage: pending count + approvals list ----
+  const pendingStatEl = document.getElementById('stat-pending');
+  const pendingEl = document.getElementById('pending-approvals-list');
+  if (client.models.EventCoverageRequest) {
+    client.models.EventCoverageRequest.observeQuery().subscribe({
+      next: ({ items }) => renderCoverage(items),
+      error: (err) => { console.error('Failed to load coverage requests:', err); pendingStatEl.textContent = '–'; },
+    });
+  } else {
+    pendingStatEl.textContent = '–';
+  }
+
+  function renderCoverage(coverage) {
+    const pending = coverage
+      .filter(r => (r.status || 'pending') === 'pending')
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    pendingStatEl.textContent = String(pending.length);
+
+    if (pending.length === 0) {
+      pendingEl.innerHTML = '<li class="empty-state">No pending requests right now.</li>';
+      return;
+    }
+    pendingEl.innerHTML = pending.slice(0, 5).map(r => `
+      <li class="list-row flex items-center justify-between text-sm">
+        <div class="min-w-0">
+          <p class="list-name truncate">${escapeHtml(r.eventName)}</p>
+          <p class="list-time">${formatDate(r.date)} · ${escapeHtml(r.location || '')}</p>
+        </div>
+        <span class="badge badge-pending">Pending</span>
+      </li>`).join('');
+  }
 
   const libraryStatEl = document.getElementById('stat-library');
   client.models.CloudFile.observeQuery({ filter: { folder: { eq: 'media' } } }).subscribe({
@@ -82,44 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ---- Upcoming content list ----
-  const upcomingEl = document.getElementById('upcoming-content-list');
-  const upcoming = [...calendar]
-    .filter(c => c.type !== 'published')
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 5);
-
-  if (upcoming.length === 0) {
-    upcomingEl.innerHTML = '<li class="empty-state">Nothing scheduled yet. <a href="content-calendar.html" style="color:#6c6fb0;">Add something →</a></li>';
-  } else {
-    upcomingEl.innerHTML = upcoming.map(c => `
-      <li class="list-row flex items-center justify-between text-sm">
-        <div class="min-w-0">
-          <p class="list-name truncate">${escapeHtml(c.title)}</p>
-          <p class="list-time">${formatDate(c.date)} · ${escapeHtml(c.platform || '')}</p>
-        </div>
-        <span class="badge badge-${c.type}">${capitalize(c.type)}</span>
-      </li>
-    `).join('');
-  }
-
-  // ---- Pending approvals list ----
-  const pendingEl = document.getElementById('pending-approvals-list');
-  const pending = coverage.filter(r => r.status === 'pending').slice(0, 5);
-
-  if (pending.length === 0) {
-    pendingEl.innerHTML = '<li class="empty-state">No pending requests right now.</li>';
-  } else {
-    pendingEl.innerHTML = pending.map(r => `
-      <li class="list-row flex items-center justify-between text-sm">
-        <div class="min-w-0">
-          <p class="list-name truncate">${escapeHtml(r.eventName)}</p>
-          <p class="list-time">${formatDate(r.date)} · ${escapeHtml(r.location || '')}</p>
-        </div>
-        <span class="badge badge-pending">Pending</span>
-      </li>
-    `).join('');
-  }
 });
 
 function escapeHtml(str) {

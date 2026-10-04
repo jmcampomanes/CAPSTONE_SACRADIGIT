@@ -82,6 +82,13 @@ const STYLES = (orientation, footerLeft) => `
   .reader .flow { font-size: 12.5pt; line-height: 1.75; margin: 4px 0 10px; }
   .reader .closing { margin-top: 14px; font-size: 11.5pt; font-weight: 600; }
 
+  /* ---- Altar sheets (one Mass per page, read by the priest) ---- */
+  .altar-mass + .altar-mass { break-before: page; }
+  .altar .mass-heading { font-size: 16pt; font-weight: 800; color: #1e2a4a; border-bottom: 2px solid #c9a84c; padding-bottom: 4px; margin: 0 0 12px; text-transform: none; letter-spacing: 0; }
+  .altar h2 { font-size: 13pt; }
+  .altar .flow { font-size: 15pt; line-height: 1.85; margin: 4px 0 14px; }
+  .altar .closing { font-size: 13pt; }
+
   /* ---- Signatures ---- */
   .sigs { display: flex; gap: 40px; margin-top: 36px; break-inside: avoid; }
   .sig { flex: 1; text-align: center; font-size: 8.5pt; color: #4b5563; }
@@ -168,6 +175,30 @@ export function tableHtml(cols, rows, { empty = 'Nothing to show.', foot = null 
 }
 
 /** Prints the Mass intentions reader's sheet from what's on screen (admin + parishioner pages). */
+/**
+ * The priest's altar sheets: every Mass of one day, each on its own page,
+ * in large type. masses: [{ heading: '6:00 AM Mass', groups: [[title, text], …] }]
+ */
+export function printAltarSheets(dayLabel, masses) {
+  const total = masses.reduce((n, m) => n + m.groups.reduce((k, [, t]) => k + (t ? t.split(' / ').length : 0), 0), 0);
+  const body = masses.map(m => `
+    <section class="altar-mass">
+      <p class="mass-heading">${esc(m.heading)}</p>
+      ${m.groups.map(([h, t], i) => `
+        <h2>${esc(h)}</h2>
+        <p class="flow">${t ? esc(t) : '<span class="muted">None.</span>'}</p>
+        ${i === 0 ? `<p class="flow"><b>${esc('All Donors of Fatima Builders')}</b></p>` : ''}`).join('')}
+      <p class="closing">*** ${esc('All Mass Card Intentions')}<br>*** ${esc('All Souls in Purgatory')}</p>
+    </section>`).join('');
+  return printReport({
+    title: 'Mass Intentions',
+    subtitle: dayLabel,
+    chips: [['Masses', masses.length], ['Intentions', total]],
+    body,
+    className: 'reader altar',
+  });
+}
+
 export function printReadersSheet() {
   const flow = (id) => (document.getElementById(id)?.textContent || '').trim();
   const range = (document.getElementById('sheet-mass-range')?.textContent || '').trim();

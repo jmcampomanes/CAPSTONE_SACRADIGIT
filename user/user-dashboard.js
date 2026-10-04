@@ -160,14 +160,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (annGrid) {
     client.models.Announcement.observeQuery({ filter: { published: { eq: true } } }).subscribe({
       next: ({ items }) => {
-        const sorted = items.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
+        const today = new Date().toLocaleDateString('en-CA');
+        const meta = (a) => { try { const m = JSON.parse(a.media || '{}'); return Array.isArray(m) ? {} : m; } catch { return {}; } };
+        const esc = (s) => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
+        // Only what's live today (not scheduled for later, not past its End Date)
+        const sorted = items
+          .filter(a => { const m = meta(a); return (!m.startDate || m.startDate <= today) && (!m.endDate || m.endDate >= today); })
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
         annGrid.innerHTML = sorted.map(a => `
           <div class="user-ann-card">
-            <p class="user-ann-title">${a.title}</p>
-            <p class="user-ann-excerpt">${a.body}</p>
+            <p class="user-ann-title">${meta(a).kind === 'post' ? '<span class="user-ann-kind">Update</span> ' : ''}${esc(a.title)}</p>
+            <p class="user-ann-excerpt">${esc(a.body)}</p>
             <div class="user-ann-meta">
               <span class="user-ann-date">${formatShortDate(a.createdAt)}</span>
-              <span class="user-ann-audience">${a.audience || 'All Parishioners'}</span>
+              <span class="user-ann-audience">${esc(a.audience || 'All Parishioners')}</span>
             </div>
           </div>`).join('');
       },

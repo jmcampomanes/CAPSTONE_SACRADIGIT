@@ -39,8 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let myIntentions = [];
 
-  const badgeClass = { pending: 'badge-amber', scheduled: 'badge-green', completed: 'badge-blue' };
-  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', completed: 'Completed' };
+  const badgeClass = { pending: 'badge-amber', scheduled: 'badge-green', completed: 'badge-blue', cancelled: 'badge-red', rejected: 'badge-red' };
+  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled', rejected: 'Rejected' };
 
   const list          = document.getElementById('intentions-list');
   const emptyState      = document.getElementById('intentions-empty');
@@ -146,9 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
      Preferred Mass Date — custom calendar
      A native <input type="date"> can't restrict which
      days are pickable, so this renders a small calendar
-     where only Saturdays, Sundays, and today-or-later
-     are actual, clickable buttons — every other day is
-     rendered disabled, not just flagged after the fact.
+     where only weekends from tomorrow on are actual,
+     clickable buttons — every other day is rendered
+     disabled, not just flagged after the fact. Picking a
+     day books its whole Sat–Sun weekend, so a weekend
+     whose Saturday is today (or past) isn't offered.
   ------------------------------------------ */
   const dateTrigger  = document.getElementById('mi-date-trigger');
   const dateDisplay    = document.getElementById('mi-date-display');
@@ -178,7 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const date = new Date(y, m, d);
     date.setHours(0, 0, 0, 0);
     const dow = date.getDay();
-    return (dow === 0 || dow === 6) && date >= startOfToday();
+    if (dow !== 0 && dow !== 6) return false;
+    const saturday = new Date(date);
+    if (dow === 0) saturday.setDate(saturday.getDate() - 1);
+    return saturday > startOfToday(); // booked at least a day before the weekend's Mass
   }
 
   /* Mass runs Saturday evening through Sunday, so picking either day
@@ -906,6 +911,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><p class="details-label">Submitted</p><p class="details-value">${formatShort(it.createdAt)}</p></div>
         <div><p class="details-label">Mass Date</p><p class="details-value">${it.massDate ? formatShort(it.massDate) : 'Awaiting assignment'}</p></div>
       </div>
+      ${it.status === 'cancelled' || it.status === 'rejected' ? `
+      <div><p class="details-label">${it.status === 'rejected' ? 'Reason for Rejection' : 'Reason for Cancellation'}</p><p class="details-value">${escapeHtml(it.cancelReason) || 'No reason given'}</p></div>` : ''}
       <div><p class="details-label">Offering</p><p class="details-value text-green-700">${formatPeso(it.offering)}</p></div>`;
 
     showModal(detailsModal);

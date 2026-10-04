@@ -1,6 +1,13 @@
 /* ============================================
    SacraDigit Admin — Special Schedules Scripts (AWS Amplify)
    Backed by the SpecialSchedule model.
+
+   Split into Upcoming (ongoing + not yet started),
+   Completed (end date passed) and Cancelled tabs.
+   Cancelling sets status 'Cancelled' instead of
+   deleting, so the record stays; a cancelled "No
+   Services" closure stops blocking bookings. Only a
+   cancelled schedule can be deleted for good.
    ============================================ */
 
 import { client } from '../amplify-init.js';
@@ -15,8 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const schedulesEmpty  = document.getElementById('schedules-empty');
   const schedulesEmptyText = schedulesEmpty.querySelector('p');
   const schedulesCount  = document.getElementById('schedules-count');
-  const schedulesPanelTitle = document.getElementById('schedules-panel-title');
-  const viewAllBtn      = document.getElementById('btn-view-all-schedules');
+  const tabButtons      = document.querySelectorAll('.sched-tab');
 
   /* --- View toggle: list panels vs. calendar --- */
   const listViewPanel      = document.getElementById('list-view-panel');
@@ -106,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
      from January once it's September). Everything below sorts and
      filters off this computed value instead. */
   function getScheduleState(s) {
+    if (s.status === 'Cancelled') return 'cancelled';
     const today = parseDate(todayISO).getTime();
     const start = parseDate(s.startDate).getTime();
     const end   = parseDate(s.endDate).getTime();
@@ -114,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'ongoing';
   }
 
-  const STATE_RANK = { ongoing: 0, upcoming: 1, completed: 2 };
+  const STATE_RANK = { ongoing: 0, upcoming: 1, completed: 2, cancelled: 3 };
 
   /* Ongoing first, then upcoming, then completed last — within each
      group, soonest-relevant first (ongoing: ending soonest; upcoming:
@@ -124,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const stateA = getScheduleState(a);
       const stateB = getScheduleState(b);
       if (STATE_RANK[stateA] !== STATE_RANK[stateB]) return STATE_RANK[stateA] - STATE_RANK[stateB];
-      if (stateA === 'completed') return parseDate(b.endDate) - parseDate(a.endDate);
+      if (stateA === 'completed' || stateA === 'cancelled') return parseDate(b.endDate) - parseDate(a.endDate);
       if (stateA === 'ongoing')   return parseDate(a.endDate) - parseDate(b.endDate);
       return parseDate(a.startDate) - parseDate(b.startDate);
     });
@@ -172,32 +179,43 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  const DEFAULT_VISIBLE_COUNT = 6; // two rows at the grid's usual 3-column width
-  let showAllSchedules = false;
+  /* --- Tabs: Upcoming (ongoing + not yet started) / Completed / Cancelled --- */
+  let activeTab = 'upcoming';
+  const tabOf = (s) => {
+    const state = getScheduleState(s);
+    return state === 'ongoing' ? 'upcoming' : state;
+  };
+  const EMPTY_TEXT = {
+    upcoming: 'No upcoming special schedules',
+    completed: 'No completed special schedules',
+    cancelled: 'No cancelled special schedules',
+  };
+  const STATE_LABEL = { ongoing: 'Ongoing', upcoming: 'Upcoming', completed: 'Completed', cancelled: 'Cancelled' };
 
-  viewAllBtn.addEventListener('click', () => {
-    showAllSchedules = !showAllSchedules;
-    renderGrid();
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeTab = btn.dataset.tab;
+      tabButtons.forEach(b => {
+        const on = b === btn;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+      });
+      renderGrid();
+    });
   });
 
   function renderGrid() {
     const allSorted = sortSchedules(schedules);
-    const relevant   = allSorted.filter(s => getScheduleState(s) !== 'completed');
-    const visible    = showAllSchedules ? allSorted : relevant.slice(0, DEFAULT_VISIBLE_COUNT);
+    ['upcoming', 'completed', 'cancelled'].forEach(tab => {
+      document.getElementById(`tab-count-${tab}`).textContent = allSorted.filter(s => tabOf(s) === tab).length;
+    });
+    const visible = allSorted.filter(s => tabOf(s) === activeTab);
 
-    schedulesPanelTitle.textContent = showAllSchedules ? 'All Special Schedules' : 'Upcoming Special Schedules';
-    viewAllBtn.textContent = showAllSchedules ? 'Show Upcoming Only' : 'View All';
-    viewAllBtn.setAttribute('aria-pressed', String(showAllSchedules));
-
-    schedulesCount.textContent = showAllSchedules
-      ? `${allSorted.length} schedule${allSorted.length === 1 ? '' : 's'}`
-      : (relevant.length > DEFAULT_VISIBLE_COUNT
-          ? `Showing ${visible.length} of ${relevant.length} upcoming`
-          : `${relevant.length} upcoming`);
+    schedulesCount.textContent = `${visible.length} schedule${visible.length === 1 ? '' : 's'}`;
 
     if (visible.length === 0) {
       grid.innerHTML = '';
-      schedulesEmptyText.textContent = showAllSchedules ? 'No special schedules yet' : 'No upcoming special schedules';
+      schedulesEmptyText.textContent = EMPTY_TEXT[activeTab];
       schedulesEmpty.classList.remove('hidden');
       return;
     }
@@ -205,15 +223,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     grid.innerHTML = visible.map((s) => {
       const typeClass = typeClassMap[s.type] || 'special';
+      const state      = getScheduleState(s);
+      const cancelled  = state === 'cancelled';
       const progress   = progressPercent(s.startDate, s.endDate);
-      const durLabel    = durationLabel(s.startDate, s.endDate);
+      const durLabel    = cancelled ? 'Cancelled' : durationLabel(s.startDate, s.endDate);
+      // Upcoming: Edit + Cancel · Completed: Edit · Cancelled: Restore + Delete
+      const actions = cancelled
+        ? `<button type="button" class="sched-restore head-admin-only" data-id="${s.id}">Restore</button>
+           <button type="button" class="sched-delete head-admin-only" data-id="${s.id}">Delete</button>`
+        : `<button type="button" class="sched-edit head-admin-only" data-id="${s.id}">Edit</button>
+           ${state === 'completed' ? '' : `<button type="button" class="sched-delete sched-cancel head-admin-only" data-id="${s.id}">Cancel</button>`}`;
 
       return `
-        <div class="schedule-card ${typeClass}">
+        <div class="schedule-card ${typeClass}${cancelled ? ' is-cancelled' : ''}">
           <div class="schedule-card-body">
             <div class="schedule-card-top">
               <p class="schedule-name">${escapeHtml(s.name)}</p>
-              <span class="status-tag ${(s.status || '').toLowerCase()}">${escapeHtml(s.status)}</span>
+              <span class="status-tag ${state}">${STATE_LABEL[state]}</span>
             </div>
             <div>
               <span class="type-tag ${typeClass}">${escapeHtml(s.type)}</span>
@@ -232,8 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <div class="schedule-actions">
-              <button type="button" class="sched-edit head-admin-only" data-id="${s.id}">Edit</button>
-              <button type="button" class="sched-delete head-admin-only" data-id="${s.id}">Delete</button>
+              ${actions}
             </div>
           </div>
         </div>
@@ -242,11 +267,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   grid.addEventListener('click', (e) => {
-    const editBtn   = e.target.closest('.sched-edit');
+    const editBtn    = e.target.closest('.sched-edit');
     const deleteBtn  = e.target.closest('.sched-delete');
+    const restoreBtn = e.target.closest('.sched-restore');
 
     if (editBtn) openEditModal(editBtn.dataset.id);
     if (deleteBtn) openDeleteModal(deleteBtn.dataset.id);
+    if (restoreBtn) restoreSchedule(restoreBtn.dataset.id);
   });
 
 
@@ -280,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Date strings compare correctly lexicographically (YYYY-MM-DD), so
   // this containment check doesn't need to parse into Date objects.
   function schedulesActiveOn(iso) {
-    return schedules.filter(s => s.startDate <= iso && s.endDate >= iso);
+    return schedules.filter(s => s.status !== 'Cancelled' && s.startDate <= iso && s.endDate >= iso);
   }
 
   function renderCalendar() {
@@ -458,34 +485,61 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  /* --- Delete Confirmation Modal --- */
+  /* --- Cancel / Delete Confirmation Modal ---
+     An active schedule is Cancelled (status 'Cancelled', record kept);
+     only an already-cancelled one can be deleted for good. */
   const deleteModal      = document.getElementById('delete-modal');
-  const deleteTargetName  = document.getElementById('delete-target-name');
+  const deleteModalTitle = document.getElementById('delete-modal-title');
+  const deleteModalText  = document.getElementById('delete-modal-text');
+  const deleteSubmitBtn  = document.getElementById('delete-confirm-submit');
   let deleteTargetId = null;
+  let deleteIsPermanent = false;
 
   function openDeleteModal(id) {
     const s = schedules.find(x => x.id === id);
     if (!s) return;
     deleteTargetId = id;
-    deleteTargetName.textContent = s.name;
+    deleteIsPermanent = s.status === 'Cancelled';
+    deleteModalTitle.textContent = deleteIsPermanent ? 'Delete Special Schedule' : 'Cancel Special Schedule';
+    deleteSubmitBtn.textContent  = deleteIsPermanent ? 'Delete Schedule' : 'Cancel Schedule';
+    deleteModalText.innerHTML = deleteIsPermanent
+      ? `Permanently delete <span class="font-semibold text-gray-900">${escapeHtml(s.name)}</span>? This can't be undone.`
+      : `Cancel <span class="font-semibold text-gray-900">${escapeHtml(s.name)}</span>? It moves to the Cancelled tab${s.type === 'No Services (Parish Closed)' ? ' and stops blocking service bookings' : ''}. You can restore it later.`;
     openModal(deleteModal);
   }
 
-  document.getElementById('delete-confirm-submit').addEventListener('click', async () => {
+  deleteSubmitBtn.addEventListener('click', async () => {
     if (deleteTargetId === null) return;
     const s = schedules.find(x => x.id === deleteTargetId);
 
     try {
-      const result = await client.models.SpecialSchedule.delete({ id: deleteTargetId });
+      const result = deleteIsPermanent
+        ? await client.models.SpecialSchedule.delete({ id: deleteTargetId })
+        : await client.models.SpecialSchedule.update({ id: deleteTargetId, status: 'Cancelled' });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(deleteModal);
-      showToast(`"${s ? s.name : 'Schedule'}" removed.`);
+      showToast(`"${s ? s.name : 'Schedule'}" ${deleteIsPermanent ? 'deleted' : 'cancelled'}.`);
       deleteTargetId = null;
     } catch (err) {
-      console.error('Failed to delete schedule:', err);
-      showToast(err.message || "Couldn't delete the schedule.", true);
+      console.error('Failed to cancel/delete schedule:', err);
+      showToast(err.message || "Couldn't update the schedule.", true);
     }
   });
+
+  // Restore puts a cancelled schedule back; its tab then follows its dates.
+  async function restoreSchedule(id) {
+    const s = schedules.find(x => x.id === id);
+    if (!s) return;
+    const status = s.startDate > todayISO ? 'Upcoming' : 'Ongoing';
+    try {
+      const result = await client.models.SpecialSchedule.update({ id, status });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      showToast(`"${s.name}" restored.`);
+    } catch (err) {
+      console.error('Failed to restore schedule:', err);
+      showToast(err.message || "Couldn't restore the schedule.", true);
+    }
+  }
 
 
   /* --- Modal helpers --- */

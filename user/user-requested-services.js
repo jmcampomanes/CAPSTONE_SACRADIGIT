@@ -8,7 +8,8 @@
    New requests book a fixed slot and are saved as
    'scheduled' right away (see ../service-schedule.js).
    Status mapping: scheduled -> Scheduled, completed ->
-   Completed, declined -> Cancelled (by the parish),
+   Completed, declined -> Cancelled (by the parish, or by the
+   parishioner — declineReason says which),
    pending -> Pending (older requests from before
    fixed schedules).
    Filters client-side by requesterName === hardcoded
@@ -18,8 +19,9 @@
 import { client } from '../amplify-init.js';
 import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
 import { currentUserName } from '../auth.js';
+import { isPrepKey, checklistHtml, progressChipHtml } from '../sacrament-prep.js';
 import { formatFullName, isNameEmpty } from '../name-utils.js';
-import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField } from '../service-schedule.js';
+import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -152,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="svc-row-body">
           <p class="svc-row-title">${escapeHtml(svc.name)}</p>
           <p class="svc-row-meta">${r.date ? '' : `Preferred ${fmtDate(r.preferredDate)} · `}Submitted ${fmtDate(r.createdAt)}</p>
-          <div>${scheduleChip}</div>
+          <div>${scheduleChip}${r.status === 'declined' ? '' : progressChipHtml(r)}</div>
         </div>
         <div class="svc-row-actions">
           <span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span>
@@ -175,12 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentDetailId = id;
     // Pending requests, and booked slots that haven't happened yet, can
-    // be cancelled — deleting the record frees the slot for someone else.
+    // be cancelled — status 'declined' frees the slot for someone else and
+    // keeps the record, so the parish office still sees it was cancelled.
     const todayISO = new Date().toLocaleDateString('en-CA');
     const cancellable = r.status === 'pending' || (r.status === 'scheduled' && (r.date || '') >= todayISO);
     modalCancelBtn.classList.toggle('hidden', !cancellable);
     modalCalendarBtn.classList.toggle('hidden', !(r.status === 'scheduled' && r.date && r.time && r.date >= todayISO));
-    modalRescheduleBtn.classList.toggle('hidden', !cancellable); // same rule: pending, or booked and still upcoming
+    // Rescheduling closes a day earlier than cancelling: only up to the day before the booking.
+    modalRescheduleBtn.classList.toggle('hidden', !(r.status === 'pending' || canReschedule(r)));
 
     document.getElementById('detail-modal-title').textContent = `${svc.name} Request`;
     modalStatusBadge.textContent = statusLabel[r.status] || r.status;
@@ -188,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalSubmittedDate.textContent = `Submitted ${fmtDate(r.createdAt)}`;
 
     modalDetails.innerHTML = Object.entries(details)
+      .filter(([label]) => !isPrepKey(label))
       .map(([label, value]) => [label, formatDetailValue(value)])
       .filter(([, value]) => value)
       .map(([label, value]) => label === MAP_PIN_LABEL
@@ -200,6 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('') + `
       ${r.date ? '' : `<div><p class="modal-detail-item-label">Preferred Date</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate)}</p></div>`}
       <div><p class="modal-detail-item-label">Contact</p><p class="modal-detail-item-value">${escapeHtml(r.contact)}</p></div>`;
+
+    // What's still needed for Baptism / Confirmation / First Communion / Wedding
+    document.getElementById('modal-checklist').innerHTML = r.status === 'declined' ? '' : checklistHtml(r);
 
     if (r.date) {
       modalScheduleValue.textContent = `${fmtDate(r.date)}${r.time ? ` at ${r.time}` : ''}`;
@@ -278,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fact = (label, valueHtml) => `<div><p class="svc-screen-fact-label">${escapeHtml(label)}</p><p class="svc-screen-fact-value">${valueHtml}</p></div>`;
     document.getElementById('reschedule-facts').innerHTML = [
       ...Object.entries(getDetails(r))
+        .filter(([label]) => !isPrepKey(label))
         .map(([label, value]) => [label, formatDetailValue(value)])
         .filter(([, value]) => value)
         .map(([label, value]) => label === MAP_PIN_LABEL
@@ -329,6 +338,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const slot = reschedulePicker && reschedulePicker.getValue();
     const reason = rescheduleReason.value();
     if (!r) return;
+    if (r.status === 'scheduled' && !canReschedule(r)) {
+      window.showToast('Bookings can only be rescheduled up to the day before. Please contact the parish office.', true);
+      return;
+    }
     if (!reason) { rescheduleReason.showError(); window.showToast('Please tell the parish why you need to reschedule.', true); return; }
     if (!slot) { reschedulePickerEl.classList.add('has-error'); window.showToast('Please pick a new date and time.', true); return; }
     if (r.status === 'scheduled' && slot.date === r.date && slot.time === r.time) {
@@ -392,7 +405,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentDetailId) return;
     const removed = myRequests.find(x => x.id === currentDetailId);
     try {
-      const result = await client.models.Blessing.delete({ id: currentDetailId });
+      const result = await client.models.Blessing.update({
+        id: currentDetailId,
+        status: 'declined',
+        declineReason: 'Cancelled by the parishioner.',
+      });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       currentDetailId = null;
       closeModal(detailModal);

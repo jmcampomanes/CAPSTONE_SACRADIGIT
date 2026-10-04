@@ -12,15 +12,29 @@
    render time (not at upload time) and is cached briefly,
    since signed URLs expire and announcements can be
    viewed long after they were uploaded.
+
+   Two kinds share the Announcement model, told apart
+   by `kind` in the media JSON (no backend change):
+     Announcement — official notice; only the Head Admin
+                    publishes; Start + End Date required.
+     Post / Update — casual, from the Media team (or any
+                    staff); "Post Now" makes it live right
+                    away and it archives itself after
+                    POST_LIFETIME_DAYS. Parishioners see the
+                    two in separate tabs.
    ============================================ */
 
 import { client } from '../amplify-init.js';
 import { isHeadAdmin } from '../auth.js';
+import { createTimePicker, displayTime } from '../time-picker.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   let announcements = []; // kept in sync via observeQuery, each has .id
+  const POST_LIFETIME_DAYS = 14;
+  const kindFilter = document.getElementById('ann-kind-filter');
+  kindFilter.addEventListener('change', () => renderGrid());
 
   const grid              = document.getElementById('announcements-grid');
   const announcementsEmpty  = document.getElementById('announcements-empty');
@@ -73,13 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
      Both shapes are normalized to one return value so every call
      site can just read `.items` / `.eventDate` / `.location`. */
   function parseMediaField(raw) {
-    if (!raw) return { items: [], eventDate: '', location: '', startDate: '', endDate: '', duration: '' };
+    if (!raw) return { items: [], kind: 'announcement', eventDate: '', eventTime: '', location: '', startDate: '', endDate: '', duration: '' };
     let parsed;
-    try { parsed = JSON.parse(raw); } catch { return { items: [], eventDate: '', location: '', startDate: '', endDate: '', duration: '' }; }
-    if (Array.isArray(parsed)) return { items: parsed, eventDate: '', location: '', startDate: '', endDate: '', duration: '' };
+    try { parsed = JSON.parse(raw); } catch { return { items: [], kind: 'announcement', eventDate: '', eventTime: '', location: '', startDate: '', endDate: '', duration: '' }; }
+    if (Array.isArray(parsed)) return { items: parsed, kind: 'announcement', eventDate: '', eventTime: '', location: '', startDate: '', endDate: '', duration: '' };
     return {
       items: Array.isArray(parsed.items) ? parsed.items : [],
+      kind: parsed.kind === 'post' ? 'post' : 'announcement',
       eventDate: parsed.eventDate || '',
+      eventTime: parsed.eventTime || '',
       location: parsed.location || '',
       startDate: parsed.startDate || '',
       endDate: parsed.endDate || '',
@@ -91,10 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  function formatEventDate(iso) {
+  // "Sunday, October 12, 2026 · 9:00 AM" (time only when one was set)
+  function formatEventDate(iso, time12 = '') {
     if (!iso) return '';
     const d = new Date(iso + 'T00:00:00');
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const date = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    return time12 ? `${date} · ${displayTime(time12)}` : date;
   }
 
   function formatPlainDate(iso) {
@@ -174,11 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const MEGAPHONE_ICON = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>';
   const CAMERA_ICON    = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-width="2"/></svg>';
 
-  function eventBarHtml(eventDate, location) {
+  function eventBarHtml(eventDate, location, eventTime = '') {
     if (!eventDate && !location) return '';
     return `
       <div class="social-post-eventbar">
-        ${eventDate ? `<span class="chip chip-date">${CALENDAR_ICON}${formatEventDate(eventDate)}</span>` : ''}
+        ${eventDate ? `<span class="chip chip-date">${CALENDAR_ICON}${formatEventDate(eventDate, eventTime)}</span>` : ''}
         ${location ? `<span class="chip chip-location">${PIN_ICON}${escapeHtml(location)}</span>` : ''}
       </div>`;
   }
@@ -281,7 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Each post's tab is derived from its publish flag + Start/End
     // Date, not stored — Active, Draft (incl. scheduled), or Archived.
-    const visible = announcements.filter(a => matchesTab(a, activeTab));
+    const kindWanted = kindFilter.value;
+    const visible = announcements.filter(a => matchesTab(a, activeTab) && (!kindWanted || parseMediaField(a.media).kind === kindWanted));
 
     if (activeTab === 'archived') {
       announcementsCount.textContent = `${visible.length} archived`;
@@ -317,17 +336,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (myToken !== renderToken) return;
 
     grid.innerHTML = visible.map((a, i) => {
+      // Posts are managed by whoever runs them (Media/staff); official
+      // announcements stay Head Admin only.
+      const isPost = parseMediaField(a.media).kind === 'post';
+      const adminOnly = isPost ? '' : ' head-admin-only';
       const statusActions = a.published
-        ? `<button type="button" class="post-icon-btn ann-unpublish head-admin-only" data-id="${a.id}" title="Unpublish">
+        ? `<button type="button" class="post-icon-btn ann-unpublish${adminOnly}" data-id="${a.id}" title="Unpublish">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/></svg>
             <span>Unpublish</span>
           </button>`
-        : `<button type="button" class="post-icon-btn ann-republish head-admin-only" data-id="${a.id}" title="Republish">
+        : `<button type="button" class="post-icon-btn ann-republish${adminOnly}" data-id="${a.id}" title="Republish">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
             <span>Republish</span>
           </button>`;
 
-      const { eventDate, location, startDate, endDate } = parseMediaField(a.media);
+      const { eventDate, eventTime, location, startDate, endDate } = parseMediaField(a.media);
       const media = resolvedMedia[i];
       const cover = media[0];
       const status = getPostStatus(a);
@@ -360,11 +383,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="post-card-cover">
             ${coverHtml}
             ${statusBadge}
+            ${isPost ? '<span class="post-kind-tag">Post</span>' : ''}
             ${media.length > 1 ? `<span class="post-card-media-count">${CAMERA_ICON}${media.length}</span>` : ''}
           </div>
           <div class="post-card-body">
             <p class="post-card-title">${escapeHtml(a.title)}</p>
-            ${eventBarHtml(eventDate, location)}
+            ${eventBarHtml(eventDate, location, eventTime)}
             <p class="post-card-excerpt">${escapeHtml(a.body)}</p>
             <div class="post-card-meta">
               <span class="announcement-date">${CALENDAR_ICON}${metaDateText}</span>
@@ -394,7 +418,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (editBtn) { openEditModal(editBtn.dataset.id); return; }
 
-    if ((unpublishBtn || republishBtn || deleteBtn) && !isHeadAdmin()) return;
+    if (deleteBtn && !isHeadAdmin()) return;
+    if ((unpublishBtn || republishBtn) && !isHeadAdmin()) {
+      const target = announcements.find(x => x.id === (unpublishBtn || republishBtn).dataset.id);
+      if (!target || parseMediaField(target.media).kind !== 'post') return;
+    }
 
     if (unpublishBtn) { openUnpublishModal(unpublishBtn.dataset.id); return; }
 
@@ -484,9 +512,9 @@ document.addEventListener('DOMContentLoaded', () => {
     detailUnpublishBtn.classList.toggle('ann-unpublish', a.published);
     detailUnpublishBtn.classList.toggle('ann-republish', !a.published);
 
-    const { items: media, eventDate, location, startDate, endDate } = parseMediaField(a.media);
+    const { items: media, eventDate, eventTime, location, startDate, endDate } = parseMediaField(a.media);
     detailEventDateChip.classList.toggle('hidden', !eventDate);
-    detailEventDateText.textContent = eventDate ? formatEventDate(eventDate) : '';
+    detailEventDateText.textContent = eventDate ? formatEventDate(eventDate, eventTime) : '';
     detailLocationChip.classList.toggle('hidden', !location);
     detailLocationText.textContent = location || '';
 
@@ -616,9 +644,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const bodyInput            = document.getElementById('ann-body');
   const audienceSelect        = document.getElementById('ann-audience');
   const eventDateInput          = document.getElementById('ann-event-date');
+  const eventTimePicker         = createTimePicker(document.getElementById('ann-event-time-picker'));
   const locationInput             = document.getElementById('ann-location');
   const startDateInput            = document.getElementById('ann-start-date');
   const endDateInput              = document.getElementById('ann-end-date');
+  const postNowBtn                = document.getElementById('announcement-post-now');
+  const endDateWrap               = document.getElementById('ann-end-date-wrap');
+  const durationHint              = document.getElementById('ann-duration-hint');
+  const kindRadios                = [...document.querySelectorAll('input[name="ann-kind"]')];
+  const ANNOUNCEMENT_HINT = durationHint.textContent;
+
+  const currentKind = () => (kindRadios.find(r => r.checked)?.value === 'post' ? 'post' : 'announcement');
+
+  /* Posts: no End Date (they archive themselves), and "Post Now" instead
+     of the Head Admin's "Publish Now". */
+  function applyKindUI(kind, { editing = false } = {}) {
+    kindRadios.forEach(r => { r.checked = r.value === kind; });
+    const isPost = kind === 'post';
+    endDateWrap.classList.toggle('hidden', isPost);
+    durationHint.textContent = isPost
+      ? `Goes live on the Start Date and disappears from the parishioner feed ${POST_LIFETIME_DAYS} days later.`
+      : ANNOUNCEMENT_HINT;
+    submitBtn.classList.toggle('hidden', isPost);
+    postNowBtn.classList.toggle('hidden', !isPost);
+    postNowBtn.textContent = editing ? 'Save Changes' : 'Post Now';
+    modalTitle.textContent = `${editing ? 'Edit' : 'New'} ${isPost ? 'Post / Update' : 'Announcement'}`;
+  }
+  kindRadios.forEach(r => r.addEventListener('change', () => applyKindUI(currentKind(), { editing: editTargetId !== null })));
+  postNowBtn.addEventListener('click', () => saveAnnouncement(true));
+
+  const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toLocaleDateString('en-CA'); };
 
   function todayIso() {
     const d = new Date();
@@ -715,11 +770,13 @@ document.addEventListener('DOMContentLoaded', () => {
     bodyInput.value = '';
     audienceSelect.value = 'All Parishioners';
     eventDateInput.value = '';
+    eventTimePicker.reset();
     locationInput.value = '';
     startDateInput.value = todayIso();
     endDateInput.value = '';
     currentMedia = [];
     renderMediaGrid();
+    applyKindUI('announcement');
     openModal(modal);
   });
 
@@ -764,8 +821,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // displays. New items added in this session get a `file` instead
     // until they're uploaded on save, and already have a usable
     // `previewUrl` from the local FileReader preview.
-    const { items: existingMedia, eventDate, location, startDate, endDate } = parseMediaField(a.media);
+    const { items: existingMedia, kind, eventDate, eventTime, location, startDate, endDate } = parseMediaField(a.media);
+    applyKindUI(kind, { editing: true });
     eventDateInput.value = eventDate || '';
+    eventTimePicker.set(eventTime);
     locationInput.value = location || '';
     // Posts saved under the old preset-duration scheme (or created
     // before this feature existed) have no explicit Start/End Date —
@@ -808,23 +867,31 @@ document.addEventListener('DOMContentLoaded', () => {
      getPostStatus() reports it as "scheduled" (shown in Draft) until
      that date arrives, then it moves to Active on its own. */
   async function saveAnnouncement(publishedFlag) {
-    // A Secretary saves drafts; the Head Admin publishes them.
-    if (publishedFlag && !isHeadAdmin()) { showToast('Only the Head Admin can publish. Save it as a draft instead.', true); return; }
+    const kind = currentKind();
+    // Official announcements: a Secretary/Media saves drafts, the Head Admin
+    // publishes. Posts / Updates: anyone on staff can post them.
+    if (kind === 'announcement' && publishedFlag && !isHeadAdmin()) { showToast('Only the Head Admin can publish. Save it as a draft instead.', true); return; }
     const title    = titleInput.value.trim();
     const body      = bodyInput.value.trim();
     const audience   = audienceSelect.value;
     const eventDate    = eventDateInput.value;
+    const eventTime    = eventTimePicker.value();
     const location       = locationInput.value.trim();
     const startDate          = startDateInput.value;
-    const endDate                = endDateInput.value;
+    const endDate                = kind === 'post' && startDate ? addDays(startDate, POST_LIFETIME_DAYS) : endDateInput.value;
 
     if (!title || !body) {
       showToast('Please fill in both title and body.', true);
       return;
     }
 
+    if (eventTime && !eventDate) {
+      showToast('Please pick the Event Date for that Event Time.', true);
+      return;
+    }
+
     if (!startDate || !endDate) {
-      showToast('Please set both a Start Date and an End Date.', true);
+      showToast(kind === 'post' ? 'Please set the Start Date.' : 'Please set both a Start Date and an End Date.', true);
       return;
     }
 
@@ -833,15 +900,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const clickedBtn = publishedFlag ? submitBtn : draftBtn;
+    const clickedBtn = !publishedFlag ? draftBtn : kind === 'post' ? postNowBtn : submitBtn;
     const clickedLabel = clickedBtn.textContent;
     submitBtn.disabled = true;
     draftBtn.disabled = true;
+    postNowBtn.disabled = true;
     clickedBtn.textContent = 'Saving…';
 
     try {
       const items = await uploadPendingMedia(currentMedia);
-      const media = JSON.stringify({ items, eventDate, location, startDate, endDate });
+      const media = JSON.stringify({ items, kind, eventDate, eventTime, location, startDate, endDate });
 
       if (editTargetId !== null) {
         // "Save Changes" leaves whatever publish state the post
@@ -867,6 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       submitBtn.disabled = false;
       draftBtn.disabled = false;
+      postNowBtn.disabled = false;
       clickedBtn.textContent = clickedLabel;
     }
   }

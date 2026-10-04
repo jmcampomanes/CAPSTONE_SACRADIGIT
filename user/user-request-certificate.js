@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div class="sm:col-span-2">
-        <label class="field-na-label" style="font-size:0.8125rem;color:#374151;">
+        <label class="field-na-label" style="font-size:0.8125rem;">
           <input type="checkbox" id="guardian-toggle" class="checkbox-input" />
           This child is being presented by a guardian (not the parents)
         </label>
@@ -734,7 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div class="sm:col-span-2">
-        <label class="field-na-label" style="font-size:0.8125rem;color:#374151;">
+        <label class="field-na-label" style="font-size:0.8125rem;">
           <input type="checkbox" id="guardian-toggle" class="checkbox-input" />
           This person is being presented by a guardian (not the parents)
         </label>
@@ -1006,7 +1006,7 @@ document.addEventListener('DOMContentLoaded', () => {
      record-requests.js). */
   function marriageCellGuardian(side, sideLabel) {
     return `
-      <label class="field-na-label" style="font-size:0.8125rem;color:#374151;">
+      <label class="field-na-label" style="font-size:0.8125rem;">
         <input type="checkbox" id="${side}-guardian-toggle" class="checkbox-input" />
         Add Guardian
       </label>

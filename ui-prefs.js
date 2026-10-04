@@ -1,6 +1,7 @@
 /* ============================================
    SacraDigit — display preferences
-   Light/Dark theme + English/Filipino, for every
+   Light/Dark theme + English/Filipino + Accessibility
+   mode (larger text, high contrast), for every
    role (admin, parishioner, ITech, Media). Each
    role's shell script calls initUiPrefs(), which
    puts both controls in the top bar next to the
@@ -9,6 +10,7 @@
    Saved per browser (localStorage):
      sacradigit_theme = 'light' | 'dark'
      sacradigit_lang  = 'en' | 'fil'
+     sacradigit_a11y  = 'on' | 'off'   (styles: accessibility.css)
    A tiny inline script in each page's <head>
    applies the saved theme before the page is
    drawn (no white flash); see THEME_BOOT below.
@@ -23,15 +25,26 @@ import './pwa.js'; // installable app: service worker + "Install app" banner
 
 const THEME_KEY = 'sacradigit_theme';
 const LANG_KEY = 'sacradigit_lang';
+const A11Y_KEY = 'sacradigit_a11y';
 
 /** The inline <head> snippet every page carries (kept here for reference). */
-export const THEME_BOOT = `try{var t=localStorage.getItem('${THEME_KEY}');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('${LANG_KEY}')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}`;
+export const THEME_BOOT = `try{var t=localStorage.getItem('${THEME_KEY}');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('${A11Y_KEY}')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('${LANG_KEY}')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}`;
 
 const read = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const write = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
 
 export const currentTheme = () => (document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
 export const currentLang = () => (read(LANG_KEY) === 'fil' ? 'fil' : 'en');
+
+export const accessibilityOn = () => document.documentElement.dataset.a11y === 'on';
+
+/** Larger text + high contrast (accessibility.css). */
+export function setAccessibility(on) {
+  if (on) document.documentElement.dataset.a11y = 'on';
+  else delete document.documentElement.dataset.a11y;
+  write(A11Y_KEY, on ? 'on' : 'off');
+  document.dispatchEvent(new CustomEvent('sacradigit:a11y', { detail: on }));
+}
 
 export function setTheme(theme) {
   if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
@@ -249,6 +262,7 @@ export function initUiPrefs() {
   const group = document.createElement('div');
   group.className = 'ui-prefs';
   group.innerHTML = `
+    <button type="button" class="ui-prefs-btn ui-prefs-a11y" id="ui-a11y-btn">Aa</button>
     <button type="button" class="ui-prefs-btn" id="ui-theme-btn"></button>
     <label class="ui-prefs-lang" title="Language / Wika">
       ${GLOBE}
@@ -273,9 +287,22 @@ export function initUiPrefs() {
   themeBtn.addEventListener('click', () => { setTheme(currentTheme() === 'dark' ? 'light' : 'dark'); paintThemeBtn(); });
   paintThemeBtn();
 
+  const a11yBtn = group.querySelector('#ui-a11y-btn');
+  const paintA11yBtn = () => {
+    const on = accessibilityOn();
+    a11yBtn.setAttribute('aria-pressed', String(on));
+    const label = currentLang() === 'fil'
+      ? (on ? 'Ibalik sa karaniwang laki ng teksto' : 'Mas malaking teksto at mas malinaw na kulay')
+      : (on ? 'Back to normal text size' : 'Larger text and high contrast');
+    a11yBtn.setAttribute('aria-label', label);
+    a11yBtn.title = label;
+  };
+  a11yBtn.addEventListener('click', () => { setAccessibility(!accessibilityOn()); paintA11yBtn(); });
+  paintA11yBtn();
+
   const langSel = group.querySelector('#ui-lang-select');
   langSel.value = currentLang();
-  langSel.addEventListener('change', () => { setLanguage(langSel.value); paintThemeBtn(); });
+  langSel.addEventListener('change', () => { setLanguage(langSel.value); paintThemeBtn(); paintA11yBtn(); });
 
   // Sit next to the date / (?) help button in the top bar.
   const dateEl = document.getElementById('current-date');

@@ -53,7 +53,8 @@
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -277,6 +278,8 @@
               <option value="pending">Pending</option>
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="rejected">Rejected</option>
             </select>
             <button id="btn-clear-filters" type="button" class="btn-filter">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -325,6 +328,19 @@
 
         <!-- ========== READER'S SHEET TAB ========== -->
         <div id="panel-sheet" class="mi-panel space-y-5">
+
+          <!-- Altar sheets: every Mass of one day, one page each -->
+          <div class="sheet-toolbar sheet-day-bar no-print">
+            <div class="sheet-picker-wrap">
+              <label class="form-label" for="sheet-day">Print for the Priest</label>
+              <input type="date" id="sheet-day" class="form-input" />
+            </div>
+            <button id="btn-print-day" type="button" class="btn-lavender shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-12 0v4h12v-4m-12 0h12"/></svg>
+              Print All Masses for This Day
+            </button>
+            <p class="sheet-picker-note" id="sheet-day-note">Every Mass that day on its own page, in large type, ready to read at the altar. Cancelled and rejected intentions are left out.</p>
+          </div>
 
           <!-- Mass picker -->
           <div class="sheet-toolbar no-print">
@@ -429,6 +445,7 @@
         </button>
       </div>
       <div class="modal-body">
+        <p id="add-locked-note" class="mi-locked-note hidden">This Mass is today or already past, so only the status can be changed (e.g. mark it Completed).</p>
         <div class="grid grid-cols-2 gap-3">
           <div class="col-span-2">
             <label class="form-label" for="add-donor">Donor Name</label>
@@ -525,21 +542,28 @@
     </div>
   </div>
 
-  <!-- ========== REMOVE INTENTION CONFIRM MODAL ========== -->
+  <!-- ========== CANCEL / REJECT INTENTION MODAL ==========
+       Keeps the record (status 'cancelled' or 'rejected' + cancelReason)
+       instead of deleting it. -->
   <div id="remove-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Remove Intention</h3>
+        <h3 class="modal-title" id="remove-title">Cancel Intention</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <p class="text-sm text-gray-600">Remove the intention for <span id="remove-target-name" class="font-semibold text-gray-900"></span>? This can't be undone.</p>
+        <p class="text-sm text-gray-600"><span id="remove-verb">Cancel the intention for</span> <span id="remove-target-name" class="font-semibold text-gray-900"></span>?</p>
+        <p class="text-xs text-gray-400 mt-1">The record stays in the log with its new status.</p>
+        <div class="mt-4">
+          <label class="form-label" for="remove-reason">Reason <span class="text-red-500">*</span></label>
+          <textarea id="remove-reason" class="form-input" rows="3" maxlength="500" placeholder="e.g. Donor asked to cancel; offering refunded."></textarea>
+        </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="remove-submit" class="btn-danger">Remove Intention</button>
+        <button type="button" class="btn-secondary" data-close-modal>Back</button>
+        <button type="button" id="remove-submit" class="btn-danger">Cancel Intention</button>
       </div>
     </div>
   </div>

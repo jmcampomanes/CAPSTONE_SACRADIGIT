@@ -231,6 +231,11 @@
   flex-shrink: 0;
 }
 
+.completed-icon.cancelled {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
 .completed-info {
   flex: 1;
   min-width: 0;

@@ -1,52 +1,36 @@
 /* ============================================
    SacraDigit Media — Post Templates Scripts
-   Client-side prototype: stores templates in
-   localStorage under 'sacradigit_media_templates'.
-   Same swap-to-backend note as content-calendar.js —
-   add a PostTemplate model to the Amplify schema when
-   ready to make this shared across devices/team members.
+   Backed by the PostTemplate model (title,
+   category, body), so the whole Media team and the
+   Head Admin share the same templates, live.
+   Changes are recorded in Activity Logs
+   automatically (../activity-log.js).
    ============================================ */
 
-const STORAGE_KEY = 'sacradigit_media_templates';
+import { client } from '../amplify-init.js';
+import { importLocalEntries } from './media-local-import.js';
+
 // Read by Sacradigit/announcements.js to prefill a new post
 const ANNOUNCEMENT_PREFILL_KEY = 'sacradigit_announcement_prefill';
 
-function readTemplates() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeTemplates(templates) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
-}
-
-function seedIfMissing() {
-  if (localStorage.getItem(STORAGE_KEY) !== null) return;
-  writeTemplates([
-    {
-      id: 't1',
-      title: 'Weekly Mass Schedule',
-      category: 'Mass Schedule',
-      body: 'MASS SCHEDULE this week 🙏\n\nWeekdays: 6:30 AM | 6:00 PM\nSunday: 7:30 AM | 9:00 AM | 12:00 NN | 4:30 PM | 6:00 PM\n\nSee you at Mass!',
-    },
-    {
-      id: 't2',
-      title: 'Feast Day Greeting',
-      category: 'Feast Day Greeting',
-      body: 'Today we celebrate the Feast of [SAINT/OCCASION]. Join us in prayer and thanksgiving as we honor this special day in our parish calendar. 🕯️',
-    },
-    {
-      id: 't3',
-      title: 'Novena Reminder',
-      category: 'Novena Reminder',
-      body: 'Join us for the Novena to [DEVOTION] starting [DATE] at [TIME]. Bring your intentions — all are welcome. 🙏',
-    },
-  ]);
-}
+// Offered (once, for everyone) while there are no templates yet
+const STARTER_TEMPLATES = [
+  {
+    title: 'Weekly Mass Schedule',
+    category: 'Mass Schedule',
+    body: 'MASS SCHEDULE this week 🙏\n\nWeekdays: 6:30 AM | 6:00 PM\nSunday: 7:30 AM | 9:00 AM | 12:00 NN | 4:30 PM | 6:00 PM\n\nSee you at Mass!',
+  },
+  {
+    title: 'Feast Day Greeting',
+    category: 'Feast Day Greeting',
+    body: 'Today we celebrate the Feast of [SAINT/OCCASION]. Join us in prayer and thanksgiving as we honor this special day in our parish calendar. 🕯️',
+  },
+  {
+    title: 'Novena Reminder',
+    category: 'Novena Reminder',
+    body: 'Join us for the Novena to [DEVOTION] starting [DATE] at [TIME]. Bring your intentions — all are welcome. 🙏',
+  },
+];
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -55,8 +39,6 @@ function escapeHtml(str) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  seedIfMissing();
-
   const grid = document.getElementById('templates-grid');
   const modal = document.getElementById('template-modal');
   const addBtn = document.getElementById('add-template-btn');
@@ -84,15 +66,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);
   }
 
-  function render() {
-    const templates = readTemplates();
+  const model = client.models.PostTemplate;
+  if (!model) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">Post templates aren\'t connected to the database yet.</div>';
+    addBtn.disabled = true;
+    return;
+  }
 
+  let templates = [];
+
+  function render() {
     if (templates.length === 0) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No templates yet. Click "New Template" to create one.</div>';
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          No templates yet. Click "New Template" to create one.
+          <div class="mt-3"><button type="button" class="btn-secondary" data-load-starters>Load starter templates</button></div>
+        </div>`;
       return;
     }
 
-    grid.innerHTML = templates.map(t => `
+    const sorted = templates.slice().sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.title || '').localeCompare(b.title || ''));
+    grid.innerHTML = sorted.map(t => `
       <div class="template-card" data-id="${t.id}">
         <span class="template-card-category">${escapeHtml(t.category)}</span>
         <p class="template-card-title">${escapeHtml(t.title)}</p>
@@ -106,6 +100,19 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `).join('');
   }
+
+  model.observeQuery().subscribe({
+    next: ({ items }) => { templates = items; render(); },
+    error: (err) => {
+      console.error('Failed to load post templates:', err);
+      grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">Couldn\'t load the post templates.</div>';
+    },
+  });
+
+  // Templates made before this page used the database (kept in this browser only)
+  importLocalEntries('sacradigit_media_templates', 'PostTemplate', (t) => ({
+    title: t.title, category: t.category || 'Other', body: t.body || '',
+  })).then(n => { if (n) showToast(`Moved ${n} template${n === 1 ? '' : 's'} from this browser into the shared list.`); });
 
   function openModalForNew() {
     modalTitle.textContent = 'New Template';
@@ -139,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === modal) closeModal();
   });
 
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
     const title = titleField.value.trim();
     const body = bodyField.value.trim();
     if (!title) {
@@ -151,31 +158,48 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const templates = readTemplates();
     const id = idField.value;
+    const fields = { title, category: categoryField.value, body };
 
-    if (id) {
-      const idx = templates.findIndex(t => t.id === id);
-      if (idx !== -1) {
-        templates[idx] = { ...templates[idx], title, category: categoryField.value, body };
-      }
-      showToast(`"${title}" updated.`);
-    } else {
-      templates.push({ id: 't' + Date.now(), title, category: categoryField.value, body });
-      showToast(`"${title}" saved.`);
+    saveBtn.disabled = true;
+    try {
+      const { errors } = id ? await model.update({ id, ...fields }) : await model.create(fields);
+      if (errors) throw new Error(errors.map(e => e.message).join('; '));
+      showToast(id ? `"${title}" updated.` : `"${title}" saved.`);
+      closeModal();
+    } catch (err) {
+      console.error('Failed to save template:', err);
+      showToast(err.message || "Couldn't save the template.", true);
+    } finally {
+      saveBtn.disabled = false;
     }
-
-    writeTemplates(templates);
-    render();
-    closeModal();
   });
 
   grid.addEventListener('click', async (e) => {
     const useId = e.target.closest('[data-use]')?.dataset.use;
     const copyId = e.target.closest('[data-copy]')?.dataset.copy;
+    const editId = e.target.closest('[data-edit]')?.dataset.edit;
+    const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
+    const loadStarters = e.target.closest('[data-load-starters]');
+
+    if (loadStarters) {
+      loadStarters.disabled = true;
+      try {
+        for (const t of STARTER_TEMPLATES) {
+          const { errors } = await model.create(t);
+          if (errors) throw new Error(errors.map(er => er.message).join('; '));
+        }
+        showToast('Starter templates added.');
+      } catch (err) {
+        console.error('Failed to add starter templates:', err);
+        showToast(err.message || "Couldn't add the starter templates.", true);
+        loadStarters.disabled = false;
+      }
+      return;
+    }
 
     if (useId) {
-      const t = readTemplates().find(x => x.id === useId);
+      const t = templates.find(x => x.id === useId);
       if (!t) return;
       try {
         sessionStorage.setItem(ANNOUNCEMENT_PREFILL_KEY, JSON.stringify({ title: t.title, body: t.body }));
@@ -186,11 +210,9 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = 'announcements.html';
       return;
     }
-    const editId = e.target.closest('[data-edit]')?.dataset.edit;
-    const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
 
     if (copyId) {
-      const t = readTemplates().find(x => x.id === copyId);
+      const t = templates.find(x => x.id === copyId);
       if (!t) return;
       try {
         await navigator.clipboard.writeText(t.body);
@@ -201,20 +223,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (editId) {
-      const t = readTemplates().find(x => x.id === editId);
+      const t = templates.find(x => x.id === editId);
       if (t) openModalForEdit(t);
     }
 
     if (deleteId) {
-      const templates = readTemplates();
       const t = templates.find(x => x.id === deleteId);
       if (!t) return;
       if (!confirm(`Delete the "${t.title}" template?`)) return;
-      writeTemplates(templates.filter(x => x.id !== deleteId));
-      render();
-      showToast(`"${t.title}" deleted.`);
+      try {
+        const { errors } = await model.delete({ id: deleteId });
+        if (errors) throw new Error(errors.map(er => er.message).join('; '));
+        showToast(`"${t.title}" deleted.`);
+      } catch (err) {
+        console.error('Failed to delete template:', err);
+        showToast(err.message || "Couldn't delete the template.", true);
+      }
     }
   });
-
-  render();
 });

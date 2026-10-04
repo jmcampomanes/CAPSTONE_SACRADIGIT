@@ -764,3 +764,21 @@ a:focus-visible, button:focus-visible {
 @media (max-width: 360px) {
   .grid.grid-cols-1:has(> .stat-card, > .donation-stat-card, > .mi-stat-card) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---------- Unread messages badge on the sidebar "Messages" link (../chat.js) ---------- */
+.chat-unread-badge {
+  margin-left: auto;
+  min-width: 1.15rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+  color: #ffffff;
+  background-color: #b91c1c;
+  border-radius: 999px;
+}
+
+.chat-unread-badge.hidden {
+  display: none;
+}

@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let upcoming = [];
   let requests = [];
   let completed = [];
+  let cancelled = [];
   let allRecords = []; // every Blessing record — used to show which fixed slots are taken
   let walkIn = null;         // "+ Service" walk-in booking screen (see walk-in-service.js)
   let closures = [];         // 'No Services (Parish Closed)' date ranges from Special Schedules
@@ -47,6 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const completedList    = document.getElementById('completed-list');
   const completedCount    = document.getElementById('completed-count');
   const completedPagination = document.getElementById('completed-pagination');
+  const cancelledList       = document.getElementById('cancelled-list');
+  const cancelledEmpty      = document.getElementById('cancelled-empty');
+  const cancelledCount      = document.getElementById('cancelled-count');
+  const cancelledPagination = document.getElementById('cancelled-pagination');
 
   const searchInput = document.getElementById('search-input');
   const typeFilter    = document.getElementById('type-filter');
@@ -55,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let upcomingPage = 1;
   let requestsPage = 1;
   let completedPage = 1;
+  let cancelledPage = 1;
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -95,18 +101,20 @@ document.addEventListener('DOMContentLoaded', () => {
       upcoming = [];
       requests = [];
       completed = [];
+      cancelled = [];
 
       items.forEach(b => {
         if (b.status === 'scheduled') upcoming.push(b);
         else if (b.status === 'pending') requests.push(b);
         else if (b.status === 'completed') completed.push(b);
-        // 'declined' records are intentionally not shown in any list
+        else if (b.status === 'declined') cancelled.push(b); // cancelled by the parish or the parishioner
       });
 
       renderStats();
       renderUpcoming();
       renderRequests();
       renderCompleted();
+      renderCancelled();
       if (showingCalendar) renderCalendar();
       // Keep an open Day Plan modal in sync with live updates (e.g.
       // another admin approving/declining a request while it's on screen).
@@ -304,7 +312,50 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* Shared pagination-bar renderer for the three list panels above. */
+  // Most recently cancelled first. Their slot is already free again.
+  function renderCancelled() {
+    const sorted = cancelled.slice().sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+    const filtered = sorted.filter(matchesFilters);
+
+    cancelledCount.textContent = `${filtered.length} cancelled`;
+
+    if (filtered.length === 0) {
+      cancelledList.innerHTML = '';
+      cancelledEmpty.classList.remove('hidden');
+      cancelledPagination.innerHTML = '';
+      return;
+    }
+    cancelledEmpty.classList.add('hidden');
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (cancelledPage > totalPages) cancelledPage = totalPages;
+
+    const startIdx = (cancelledPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+
+    cancelledList.innerHTML = pageItems.map(c => `
+      <li>
+        <div class="completed-row">
+          <div class="completed-icon cancelled">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <div class="completed-info">
+            <p class="completed-name">${escapeHtml(c.requesterName)}</p>
+            <p class="completed-meta">${escapeHtml(c.type)} · ${escapeHtml(c.declineReason || 'No reason given')}</p>
+          </div>
+          <div>
+            <div class="completed-date">${formatLongDate(c.date || c.preferredDate)}</div>
+            <button type="button" class="blessing-details-btn" data-section="cancelled" data-id="${c.id}">Details ›</button>
+          </div>
+        </div>
+      </li>
+    `).join('');
+
+    renderPaginationBar(cancelledPagination, filtered.length, cancelledPage, totalPages, startIdx, pageItems.length);
+  }
+
+
+  /* Shared pagination-bar renderer for the list panels above. */
   function renderPaginationBar(barEl, totalItems, currentPage, totalPages, startIdx, pageCount) {
     if (totalPages <= 1) {
       barEl.innerHTML = `<span class="pagination-info">Showing ${totalItems} of ${totalItems}</span>`;
@@ -350,6 +401,15 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (btn.dataset.action === 'next') { completedPage++; }
     else if (btn.dataset.page) { completedPage = parseInt(btn.dataset.page, 10); }
     renderCompleted();
+  });
+
+  cancelledPagination.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pagination-btn');
+    if (!btn) return;
+    if (btn.dataset.action === 'prev') { if (cancelledPage > 1) cancelledPage--; }
+    else if (btn.dataset.action === 'next') { cancelledPage++; }
+    else if (btn.dataset.page) { cancelledPage = parseInt(btn.dataset.page, 10); }
+    renderCancelled();
   });
 
 
@@ -516,6 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     const tableRows = rows.map(r => {
       const details = Object.entries(detailsOf(r))
+        .filter(([k]) => k !== 'Preparation Checklist')
         .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
         .map(([k, v]) => `<div class="small"><b>${esc(k)}:</b> ${esc(v)}</div>`).join('');
       return [
@@ -571,22 +632,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   searchInput.addEventListener('input', () => {
-    upcomingPage = 1; requestsPage = 1; completedPage = 1;
-    renderUpcoming(); renderRequests(); renderCompleted();
+    upcomingPage = 1; requestsPage = 1; completedPage = 1; cancelledPage = 1;
+    renderUpcoming(); renderRequests(); renderCompleted(); renderCancelled();
   });
   typeFilter.addEventListener('change', () => {
-    upcomingPage = 1; requestsPage = 1; completedPage = 1;
-    renderUpcoming(); renderRequests(); renderCompleted();
+    upcomingPage = 1; requestsPage = 1; completedPage = 1; cancelledPage = 1;
+    renderUpcoming(); renderRequests(); renderCompleted(); renderCancelled();
   });
 
   document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
     searchInput.value = '';
     typeFilter.value = '';
-    upcomingPage = 1; requestsPage = 1; completedPage = 1;
-    renderUpcoming(); renderRequests(); renderCompleted();
+    upcomingPage = 1; requestsPage = 1; completedPage = 1; cancelledPage = 1;
+    renderUpcoming(); renderRequests(); renderCompleted(); renderCancelled();
   });
 
-  [upcomingList, requestsList, completedList].forEach(listEl => {
+  [upcomingList, requestsList, completedList, cancelledList].forEach(listEl => {
     listEl.addEventListener('click', (e) => {
       const detailsBtn = e.target.closest('.blessing-details-btn');
       if (!detailsBtn) return;
@@ -694,6 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const details = detailsOf(r);
     const pin = details[MAP_PIN_LABEL];
     const extra = Object.entries(details)
+      .filter(([k]) => k !== 'Preparation Checklist')
       .filter(([k]) => k !== MAP_PIN_LABEL)
       .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
       .map(([k, v]) => fact(escapeHtml(k === RESCHEDULE_REASON_LABEL ? 'Last Rescheduled' : k), escapeHtml(v)));
@@ -842,6 +904,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // one in mind, in which case only the date shows here (Approve
       // still falls back to 09:00 AM in that case; see approveRequest()).
       if (record) dateValue = `${formatLongDate(record.preferredDate)}${record.time ? ` · ${record.time}` : ' · No preferred time given'}`;
+    } else if (section === 'cancelled') {
+      record = cancelled.find(x => x.id === id);
+      statusLabel = 'Cancelled';
+      dateLabel = record?.date ? 'Was Scheduled For' : 'Preferred Date';
+      if (record) dateValue = record.date ? `${formatLongDate(record.date)} · ${record.time}` : formatLongDate(record.preferredDate);
+      if (record) extraRows = `<div style="grid-column: 1 / -1;"><p class="so-detail-label">Cancellation Reason</p><p class="so-detail-value">${escapeHtml(record.declineReason || 'No reason given')}</p></div>`;
     } else {
       record = completed.find(x => x.id === id);
       statusLabel = 'Completed';

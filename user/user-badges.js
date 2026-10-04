@@ -16,7 +16,7 @@
 
 import { client } from '../amplify-init.js';
 import { loadFaithfulGivers } from '../public-data.js';
-import { currentUserName } from '../auth.js';
+import { currentUserName, currentUser } from '../auth.js';
 import { computeBadges, badgeIconSvg, BADGES, parishionerKey, monthStreak, streakLabel } from '../badges.js';
 import { checkInReady, preferencesReady, submitCheckIn, listCheckInsFor, optedOutKeys, getPreference, setShowOnHonorRoll, formatCode, normalizeCode } from '../mass-checkin.js';
 
@@ -56,6 +56,15 @@ document.addEventListener('DOMContentLoaded', () => {
     next: ({ items }) => { data.intentions = items; loaded.intentions = true; render(); },
     error: (err) => console.error('Failed to load intentions:', err),
   });
+
+  // Ministry sign-ups → Faithful Servant (../ministry.js)
+  if (client.models.MinistrySignup && currentUser()?.sub) {
+    loaded.ministry = false;
+    client.models.MinistrySignup.observeQuery({ filter: { volunteerId: { eq: currentUser().sub } } }).subscribe({
+      next: ({ items }) => { data.ministry = items; loaded.ministry = true; render(); },
+      error: (err) => { console.error('Failed to load ministry sign-ups:', err); loaded.ministry = true; render(); },
+    });
+  }
 
   client.models.Blessing.observeQuery({ filter: { requesterName: { eq: PARISHIONER_NAME } } }).subscribe({
     next: ({ items }) => { data.blessings = items; loaded.blessings = true; render(); },

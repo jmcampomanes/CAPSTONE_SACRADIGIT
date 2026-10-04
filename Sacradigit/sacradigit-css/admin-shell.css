@@ -588,3 +588,66 @@ button:focus-visible {
   .grid.grid-cols-1:has(> .stat-card:nth-child(3):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* ---------- Time picker (../time-picker.js): hour / minute + AM-PM switch ---------- */
+.time-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.time-picker .form-input {
+  width: auto;
+  min-width: 4.25rem;
+  padding-right: 1.75rem;
+}
+
+.tp-colon {
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.tp-meridiem {
+  display: inline-flex;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.tp-mer {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+  background-color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tp-mer + .tp-mer {
+  border-left: 1px solid #d1d5db;
+}
+
+.tp-mer.active {
+  color: #ffffff;
+  background-color: #1e2a4a;
+}
+
+/* ---------- Unread messages badge on the sidebar "Messages" link (../chat.js) ---------- */
+.chat-unread-badge {
+  margin-left: auto;
+  min-width: 1.15rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+  color: #ffffff;
+  background-color: #b91c1c;
+  border-radius: 999px;
+}
+
+.chat-unread-badge.hidden {
+  display: none;
+}
