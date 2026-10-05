@@ -114,5 +114,5 @@ export async function loadCommunityIntentions() {
     return (parseJson(res.data) || []).map(r => ({ ...r, names: typeof r.names === 'string' ? r.names : JSON.stringify(r.names || []) }));
   }
   const { data } = await client.models.MassIntention.list({ limit: 1000 });
-  return data || [];
+  return (data || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected');
 }

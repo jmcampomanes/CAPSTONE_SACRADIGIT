@@ -105,7 +105,8 @@ export function timeAgo(iso) {
 export function actionKind(action = '') {
   const a = action.toLowerCase();
   if (/(create|upload|add|seed)/.test(a)) return 'create';
-  if (/(delete|remove|cancel|decline)/.test(a)) return 'delete';
+  if (/(delete|remove|cancel|decline|reject)/.test(a)) return 'delete';
+  if (/approve/.test(a)) return 'create';
   if (/(export|backup|download)/.test(a)) return 'export';
   if (/(reschedule|move)/.test(a)) return 'move';
   if (/(edit|update|role)/.test(a)) return 'edit';

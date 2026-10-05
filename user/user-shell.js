@@ -9,6 +9,7 @@ import { guardPage, currentUser } from '../auth.js';
 guardPage('parishioner');
 import { initPageHelp } from '../help-tutorial.js';
 import { initUiPrefs } from '../ui-prefs.js';
+import { watchUnreadBadge } from '../chat.js';
 import { initParishAssistant } from '../assistant/parish-assistant.js';
 import { initNotifications } from '../notifications/parish-notifications.js';
 import { initSacredArt } from './sacred-art.js';
@@ -43,6 +44,35 @@ function addSacredArtToHeaders() {
    help-tutorial.js for how it's rendered.
 ------------------------------------------ */
 const HELP_CONTENT = {
+  'user-messages.html': {
+    title: 'Messages',
+    intro: 'Chat with the parish office — the Head Admin or the Secretary will reply here.',
+    steps: [
+      'Type your question at the bottom and press Enter to send (Shift+Enter for a new line).',
+      'Replies from the parish office show up here as soon as they are sent.',
+      'A red number next to Messages in the menu means the office has replied and you haven’t read it yet.',
+    ],
+  },
+  'user-prayer-wall.html': {
+    title: 'Prayer Wall',
+    intro: 'Share a prayer request with the parish, and pray for others.',
+    steps: [
+      'Write your request and press Post Request. Tick “Post anonymously” if you don’t want your name shown — it isn’t saved at all.',
+      'The parish office reads each request before it appears. Your Requests shows whether yours is waiting, on the wall, or not posted.',
+      'Tap 🙏 “I prayed for this” on someone’s request to let them know they’re being prayed for.',
+    ],
+  },
+  'user-ministry.html': {
+    title: 'Ministry Sign-ups',
+    intro: 'Serve as a lector, choir member, altar server or usher at Mass.',
+    steps: [
+      'Use ‹ › to pick a month and the chips to show one ministry.',
+      'Press Volunteer under an open slot. You can withdraw until the day before the Mass.',
+      'Can’t make it? Press Ask for swap — anyone can then take your slot.',
+      'See “Swap needed” on someone’s slot? Press Take this slot to serve in their place.',
+      'Serving 4 times earns the Faithful Servant badge.',
+    ],
+  },
   'user-badges.html': {
     title: 'My Badges',
     intro: 'Your Faith Journey — badges for coming to Mass, giving, and parish life.',
@@ -210,6 +240,18 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="sidebar-label mt-5">Faith Journey</p>
         <ul class="space-y-0.5">
           <li>
+            <a href="user-prayer-wall.html" data-nav="prayer-wall" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4c-1.5 2-3 4.5-3 7.5V17l-3 3h12l-3-3v-5.5C15 8.5 13.5 6 12 4zM12 4v13"/></svg>
+              Prayer Wall
+            </a>
+          </li>
+          <li>
+            <a href="user-ministry.html" data-nav="ministry" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              Ministry Sign-ups
+            </a>
+          </li>
+          <li>
             <a href="user-badges.html" data-nav="badges" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg>
               My Badges
@@ -217,6 +259,18 @@ document.addEventListener('DOMContentLoaded', () => {
           </li>
         </ul>`);
   }
+
+
+  /* "Parish → Messages" — chat with the parish office (../chat.js),
+     with a count of office replies not read yet. */
+  const annLink = document.querySelector('#sidebar a.sidebar-link[href="user-announcements.html"]');
+  if (annLink && !document.querySelector('#sidebar a.sidebar-link[href="user-messages.html"]')) {
+    annLink.closest('li').insertAdjacentHTML('afterend', `
+          <li><a href="user-messages.html" data-nav="messages" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Messages</a></li>`);
+  }
+  watchUnreadBadge(document.querySelector('#sidebar a.sidebar-link[href="user-messages.html"]'), 'parishioner', { threadId: me.sub });
 
 
   /* ------------------------------------------

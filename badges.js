@@ -191,6 +191,8 @@ export const BADGES = [
   // ---- Community ----
   { id: 'blessed-home', group: 'community', tier: 'bronze', icon: 'home',
     name: 'Blessed Home', desc: 'Had a home, business, or vehicle blessed.' },
+  { id: 'faithful-servant', group: 'community', tier: 'silver', icon: 'hands',
+    name: 'Faithful Servant', desc: 'Served at Mass 4 times as a lector, choir member, altar server or usher.' },
 ];
 
 export const BADGE_GROUPS = [
@@ -214,7 +216,7 @@ const PRE_BUILT = /BUILD|CONSTRUCT|RESTOR|RENOVAT|BELL|ROOF|ALTAR|CHAPEL/i;
  * this parishioner. Returns every badge with { earned, earnedOn?, progress?:
  * { current, target, label } }, earned ones first (newest first).
  */
-export function computeBadges({ checkIns = [], donations = [], intentions = [], blessings = [] } = {}, today = new Date()) {
+export function computeBadges({ checkIns = [], donations = [], intentions = [], blessings = [], ministry = [] } = {}, today = new Date()) {
   const todayIso = isoDate(today);
   const ins = checkIns.filter(c => c.massDate && c.massDate <= todayIso)
     .sort((a, b) => (a.massDate + (a.checkedInAt || '')).localeCompare(b.massDate + (b.checkedInAt || '')));
@@ -303,6 +305,10 @@ export function computeBadges({ checkIns = [], donations = [], intentions = [], 
   // --- Community ---
   const blessed = blessings.find(b => /bless/i.test(b.type || '') && (b.status === 'completed' || (b.status === 'scheduled' && b.date && b.date < todayIso)));
   set('blessed-home', !!blessed, { earnedOn: blessed?.date });
+
+  // Ministry sign-ups (../ministry.js) for Masses that have already happened
+  const served = ministry.filter(s => s.massDate && s.massDate < todayIso).sort((a, b) => a.massDate.localeCompare(b.massDate));
+  set('faithful-servant', served.length >= 4, { earnedOn: nth(served, 4, s => s.massDate), progress: { current: Math.min(served.length, 4), target: 4, label: 'times served' } });
 
   return BADGES.map(b => ({ ...b, ...out[b.id] }))
     .sort((a, b) => (b.earned - a.earned) ||

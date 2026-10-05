@@ -38,7 +38,8 @@
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -178,7 +179,7 @@
                 <!-- Common fields for all types -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="sm:col-span-2">
-                    <label class="field-na-label" style="font-size:0.8125rem;color:#374151;align-items:flex-start;">
+                    <label class="field-na-label" style="font-size:0.8125rem;align-items:flex-start;">
                       <input type="checkbox" id="field-parish-confirm" class="checkbox-input" style="margin-top:0.15rem;" />
                       <span>I confirm this sacrament/event took place at <strong>Our Lady of Fatima Parish</strong> and is recorded in the parish register. <span class="text-red-500">*</span></span>
                     </label>

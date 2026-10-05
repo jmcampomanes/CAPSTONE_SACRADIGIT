@@ -52,21 +52,27 @@ document.addEventListener('DOMContentLoaded', () => {
      shapes are normalized so every call site can just read
      `.items` / `.eventDate` / `.location`. */
   function parseMediaField(raw) {
-    if (!raw) return { items: [], eventDate: '', location: '' };
+    if (!raw) return { items: [], kind: 'announcement', eventDate: '', eventTime: '', location: '', startDate: '', endDate: '' };
     let parsed;
-    try { parsed = JSON.parse(raw); } catch { return { items: [], eventDate: '', location: '' }; }
-    if (Array.isArray(parsed)) return { items: parsed, eventDate: '', location: '' };
+    try { parsed = JSON.parse(raw); } catch { return { items: [], kind: 'announcement', eventDate: '', eventTime: '', location: '', startDate: '', endDate: '' }; }
+    if (Array.isArray(parsed)) return { items: parsed, kind: 'announcement', eventDate: '', eventTime: '', location: '', startDate: '', endDate: '' };
     return {
       items: Array.isArray(parsed.items) ? parsed.items : [],
+      kind: parsed.kind === 'post' ? 'post' : 'announcement',
+      startDate: parsed.startDate || '',
+      endDate: parsed.endDate || '',
       eventDate: parsed.eventDate || '',
+      eventTime: parsed.eventTime || '',
       location: parsed.location || '',
     };
   }
 
-  function formatEventDate(iso) {
+  // "Sunday, October 12, 2026 · 9:00 AM" (time only when one was set)
+  function formatEventDate(iso, time12 = '') {
     if (!iso) return '';
     const d = new Date(iso + 'T00:00:00');
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const date = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    return time12 ? `${date} · ${time12.replace(/^0(\d)/, '$1')}` : date;
   }
 
   /* Split a body into paragraphs on blank lines (a single newline
@@ -82,11 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const MEGAPHONE_ICON = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>';
   const CAMERA_ICON    = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-width="2"/></svg>';
 
-  function eventBarHtml(eventDate, location) {
+  function eventBarHtml(eventDate, location, eventTime = '') {
     if (!eventDate && !location) return '';
     return `
       <div class="social-post-eventbar">
-        ${eventDate ? `<span class="chip chip-date">${CALENDAR_ICON}${formatEventDate(eventDate)}</span>` : ''}
+        ${eventDate ? `<span class="chip chip-date">${CALENDAR_ICON}${formatEventDate(eventDate, eventTime)}</span>` : ''}
         ${location ? `<span class="chip chip-location">${PIN_ICON}${escapeHtml(location)}</span>` : ''}
       </div>`;
   }
@@ -128,21 +134,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let renderToken = 0;
 
+  /* Two feeds: official Announcements and casual Updates (posts from
+     the Media team) — see Sacradigit/announcements.js. Only posts that
+     are live today show: not before their Start Date, not after their
+     End Date (Updates archive themselves after two weeks). */
+  let activeKind = 'announcement';
+  const kindTabs = document.querySelectorAll('.ann-kind-tab');
+  kindTabs.forEach(tab => tab.addEventListener('click', () => {
+    activeKind = tab.dataset.kind;
+    kindTabs.forEach(t => { const on = t === tab; t.classList.toggle('active', on); t.setAttribute('aria-selected', String(on)); });
+    renderGrid();
+  }));
+
+  const todayIso = () => new Date().toLocaleDateString('en-CA');
+  function isLive(a) {
+    const { startDate, endDate } = parseMediaField(a.media);
+    const today = todayIso();
+    return (!startDate || startDate <= today) && (!endDate || endDate >= today);
+  }
+
   async function renderGrid() {
     const myToken = ++renderToken;
 
     const query   = searchInput.value.trim().toLowerCase();
     const audience = audienceFilter.value;
 
-    const filtered = announcements.filter(a => {
+    const live = announcements.filter(isLive);
+    ['announcement', 'post'].forEach(k => {
+      document.getElementById(`count-${k}`).textContent = live.filter(a => parseMediaField(a.media).kind === k).length;
+    });
+
+    const filtered = live.filter(a => {
+      const matchKind    = parseMediaField(a.media).kind === activeKind;
       const matchQuery   = !query || a.title.toLowerCase().includes(query) || a.body.toLowerCase().includes(query);
       const matchAudience = !audience || a.audience === audience;
-      return matchQuery && matchAudience;
+      return matchKind && matchQuery && matchAudience;
     });
 
     filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    resultsLabel.textContent = `${filtered.length} announcement${filtered.length === 1 ? '' : 's'}`;
+    const noun = activeKind === 'post' ? 'update' : 'announcement';
+    resultsLabel.textContent = `${filtered.length} ${noun}${filtered.length === 1 ? '' : 's'}`;
 
     if (filtered.length === 0) {
       grid.innerHTML = '';
@@ -164,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (myToken !== renderToken) return;
 
     grid.innerHTML = filtered.map((a, i) => {
-      const { items, eventDate, location } = parseMediaField(a.media);
+      const { items, eventDate, eventTime, location } = parseMediaField(a.media);
       const cover = resolvedCovers[i];
 
       const coverHtml = cover
@@ -181,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="post-card-body">
             <p class="post-card-title">${escapeHtml(a.title)}</p>
-            ${eventBarHtml(eventDate, location)}
+            ${eventBarHtml(eventDate, location, eventTime)}
             <p class="post-card-excerpt">${escapeHtml(a.body)}</p>
             <div class="post-card-meta">
               <span class="announcement-date">${CALENDAR_ICON}${formatShortDate(a.createdAt)}</span>
@@ -255,9 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
     detailAudience.textContent = a.audience;
     detailAudience.className   = `ann-audience-tag ${audienceClass(a.audience)}`;
 
-    const { items: media, eventDate, location } = parseMediaField(a.media);
+    const { items: media, eventDate, eventTime, location } = parseMediaField(a.media);
     detailEventDateChip.classList.toggle('hidden', !eventDate);
-    detailEventDateText.textContent = eventDate ? formatEventDate(eventDate) : '';
+    detailEventDateText.textContent = eventDate ? formatEventDate(eventDate, eventTime) : '';
     detailLocationChip.classList.toggle('hidden', !location);
     detailLocationText.textContent = location || '';
     detailEventbar.classList.toggle('hidden', !eventDate && !location);

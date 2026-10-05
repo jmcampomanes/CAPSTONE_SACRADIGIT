@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthly = myDonations.filter(d => (d.date || '').startsWith(monthPrefix)).reduce((s, d) => s + (d.amount || 0), 0);
     document.getElementById('stat-total').textContent = formatPeso(total);
     document.getElementById('stat-month').textContent = formatPeso(monthly);
+    document.getElementById('stat-month-sub').textContent = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     document.getElementById('stat-count').textContent = myDonations.length;
   }
 

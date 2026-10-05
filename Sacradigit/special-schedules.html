@@ -52,7 +52,8 @@
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -220,14 +221,15 @@
         <!-- List view (card grid) -->
         <div id="list-view-panel">
 
-        <!-- Upcoming Special Schedules panel -->
+        <!-- Special Schedules panel — Upcoming / Completed / Cancelled tabs -->
         <div class="panel">
           <div class="panel-header">
-            <h2 id="schedules-panel-title" class="panel-title">Upcoming Special Schedules</h2>
-            <div class="flex items-center gap-3">
-              <p id="schedules-count" class="text-xs text-gray-400 font-medium"></p>
-              <button type="button" id="btn-view-all-schedules" class="schedules-view-all-btn">View All</button>
+            <div class="sched-tabs" role="tablist" aria-label="Special schedules">
+              <button type="button" class="sched-tab active" role="tab" aria-selected="true" data-tab="upcoming">Upcoming <span class="sched-tab-count" id="tab-count-upcoming">0</span></button>
+              <button type="button" class="sched-tab" role="tab" aria-selected="false" data-tab="completed">Completed <span class="sched-tab-count" id="tab-count-completed">0</span></button>
+              <button type="button" class="sched-tab" role="tab" aria-selected="false" data-tab="cancelled">Cancelled <span class="sched-tab-count" id="tab-count-cancelled">0</span></button>
             </div>
+            <p id="schedules-count" class="text-xs text-gray-400 font-medium"></p>
           </div>
           <div id="schedules-grid" class="schedules-grid">
             <!-- Cards injected by special-schedules.js -->
@@ -334,17 +336,17 @@
   <div id="delete-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Delete Special Schedule</h3>
+        <h3 class="modal-title" id="delete-modal-title">Cancel Special Schedule</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <p class="text-sm text-gray-600">Remove <span id="delete-target-name" class="font-semibold text-gray-900"></span> from special schedules? This can't be undone.</p>
+        <p class="text-sm text-gray-600" id="delete-modal-text"></p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="delete-confirm-submit" class="btn-danger">Delete Schedule</button>
+        <button type="button" class="btn-secondary" data-close-modal>Back</button>
+        <button type="button" id="delete-confirm-submit" class="btn-danger">Cancel Schedule</button>
       </div>
     </div>
   </div>

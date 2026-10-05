@@ -5,6 +5,12 @@
    model (one row per day of the week) — see
    weekly-mass-schedule.js for the shared merge logic
    with the parishioner-facing page.
+
+   Masses can't overlap: each one is treated as lasting
+   MASS_LENGTH_MINUTES, so two Masses on the same date
+   (scheduled or from the weekly pattern) must start at
+   least that far apart. The Schedule and Edit Weekly
+   modals check this as soon as a date/time is picked.
    ============================================ */
 
 import { client } from '../amplify-init.js';
@@ -14,6 +20,7 @@ import { mergeWeeklySchedule, recurringMassesForDate } from '../weekly-mass-sche
 import { checkInReady } from '../mass-checkin.js';
 import { isoDate } from '../badges.js';
 import { initCheckInDisplay } from './mass-checkin-display.js';
+import { createTimePicker } from '../time-picker.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -79,6 +86,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = new Date(iso + 'T00:00:00');
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
+
+  /* --- Overlap rules --- */
+  const MASS_LENGTH_MINUTES = 60; // a Mass is treated as taking an hour
+
+  // Every Mass on a date: individually scheduled ones plus the weekly pattern.
+  function massesOnDate(iso) {
+    return [...allMasses.filter(m => m.date === iso), ...recurringMassesForDate(weeklySchedule, iso)];
+  }
+
+  // The Masses in `list` that would overlap one starting at `minutes`.
+  function clashesWith(list, minutes) {
+    return list.filter(m => m.time && Math.abs(to24h(m.time) - minutes) < MASS_LENGTH_MINUTES);
+  }
+
+  const massName = (m) => m.title || massTypeInfo(m.type).label;
+  const weekdayKey = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
 
 
   /* --- Live data --- */
@@ -150,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isToday = iso === isoDate(new Date());
 
     currentDateMasses.forEach((m, idx) => {
+      const overlaps = clashesWith(currentDateMasses.filter(x => x !== m), to24h(m.time));
       const open = openCheckIns.find(s => s.massDate === m.date && s.massTime === m.time) ||
         openCheckIns.find(s => s.massDate === iso && s.massTime === m.time);
       const checkInBtn = !isToday ? '' : open
@@ -162,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="schedule-info">
             <p class="schedule-type">${escapeHtml(m.title || m.type)}</p>
             ${m.note && m.title !== m.note ? `<p class="schedule-note">${escapeHtml(m.note)}</p>` : ''}
+            ${overlaps.length ? `<span class="schedule-overlap" title="Masses need at least 1 hour between start times">Overlaps ${escapeHtml(overlaps.map(o => o.time).join(', '))}</span>` : ''}
           </div>
           ${massTypeBadgeHtml(m.type)}
           ${checkInBtn}
@@ -453,9 +479,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* --- Schedule Mass Modal --- */
   const scheduleModal = document.getElementById('schedule-modal');
+  const scheduleDateInput = document.getElementById('schedule-date');
+  const scheduleConflict = document.getElementById('schedule-conflict');
+  const scheduleSubmitBtn = document.getElementById('schedule-submit');
+  const scheduleTime = createTimePicker(document.getElementById('schedule-time-picker'), { onChange: checkScheduleSlot });
+
+  /* Runs whenever the date or time changes: says straight away whether
+     that slot is free, and keeps Save disabled while it isn't. Returns
+     an error message, or '' when the slot can be booked. */
+  function checkScheduleSlot() {
+    const date = scheduleDateInput.value;
+    const time12 = scheduleTime.value();
+    let problem = '';
+    if (date && date < todayISO) {
+      problem = 'That date has already passed.';
+    } else if (date && time12) {
+      const clashes = clashesWith(massesOnDate(date), to24h(time12));
+      if (clashes.length) {
+        problem = `${time12} on ${formatShortDate(date)} is taken — it overlaps ${clashes.map(c => `the ${c.time} ${massName(c)}`).join(' and ')}. Masses need at least 1 hour between start times.`;
+      }
+    }
+    if (problem) {
+      scheduleConflict.textContent = problem;
+      scheduleConflict.classList.remove('hidden', 'is-ok');
+    } else if (date && time12) {
+      scheduleConflict.textContent = `${time12} on ${formatShortDate(date)} is free.`;
+      scheduleConflict.classList.remove('hidden');
+      scheduleConflict.classList.add('is-ok');
+    } else {
+      scheduleConflict.classList.add('hidden');
+    }
+    scheduleSubmitBtn.disabled = !!problem;
+    return problem;
+  }
+
+  scheduleDateInput.addEventListener('change', checkScheduleSlot);
 
   document.getElementById('btn-schedule-mass').addEventListener('click', () => {
-    document.getElementById('schedule-date').value = datePicker.value;
+    scheduleDateInput.value = datePicker.value;
+    scheduleTime.reset();
+    checkScheduleSlot();
     openModal(scheduleModal);
   });
 
@@ -473,18 +536,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
 
   document.getElementById('schedule-submit').addEventListener('click', async () => {
-    const date    = document.getElementById('schedule-date').value;
-    const time24  = document.getElementById('schedule-time').value;
+    const date    = scheduleDateInput.value;
+    const time12  = scheduleTime.value();
     const type    = document.getElementById('schedule-type').value;
     const note     = document.getElementById('schedule-note').value.trim();
     const isSpecial = document.getElementById('schedule-special').checked;
 
-    if (!date || !time24 || !type) {
+    if (!date || !time12 || !type) {
       showToast('Please fill in date, time, and mass type.', true);
       return;
     }
-
-    const time12 = formatTime12(time24);
+    // Last check against the latest data (another admin may have just booked it)
+    const problem = checkScheduleSlot();
+    if (problem) { showToast(problem, true); return; }
 
     try {
       const result = await client.models.Mass.create({
@@ -506,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
       closeModal(scheduleModal);
       showToast(`Mass scheduled for ${formatShortDate(date)} at ${time12}.`);
 
-      document.getElementById('schedule-time').value = '';
+      scheduleTime.reset();
       document.getElementById('schedule-type').value = '';
       document.getElementById('schedule-note').value = '';
       document.getElementById('schedule-special').checked = false;
@@ -516,18 +580,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function formatTime12(time24) {
-    let [h, m] = time24.split(':').map(Number);
-    const meridiem = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${meridiem}`;
-  }
-
 
   /* --- Edit Weekly Schedule Modal (Regular Weekly Mass Schedule) --- */
   const weeklyEditModal    = document.getElementById('weekly-edit-modal');
   const weeklyEditTitle    = document.getElementById('weekly-edit-title');
-  const weeklyEditTimeInput = document.getElementById('weekly-edit-time-input');
+  const weeklyEditConflict  = document.getElementById('weekly-edit-conflict');
   const weeklyEditTimeAdd   = document.getElementById('weekly-edit-time-add');
   const weeklyEditTimeList  = document.getElementById('weekly-edit-time-list');
   const weeklyEditType      = document.getElementById('weekly-edit-type');
@@ -546,18 +603,55 @@ document.addEventListener('DOMContentLoaded', () => {
     `).join('') || `<p class="text-xs text-gray-400">No times added yet.</p>`;
   }
 
+  /* A new weekly time must be an hour clear of this day's other times,
+     and of any Mass already scheduled on an upcoming date that falls on
+     this weekday. Returns an error message, or '' when it's free. */
+  function weeklyTimeProblem(time12) {
+    const minutes = to24h(time12);
+    const sameDay = clashesWith(editingTimes.map(t => ({ time: t })), minutes);
+    if (sameDay.length) {
+      return `${time12} overlaps ${sameDay.map(c => c.time).join(' and ')} already on this day. Masses need at least 1 hour between start times.`;
+    }
+    const w = weeklySchedule[editingDayIndex];
+    const upcoming = allMasses
+      .filter(m => m.date >= todayISO && w && weekdayKey(m.date) === w.dayKey)
+      .filter(m => clashesWith([m], minutes).length)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (upcoming.length) {
+      const first = upcoming[0];
+      const more = upcoming.length > 1 ? ` (and ${upcoming.length - 1} more)` : '';
+      return `${time12} overlaps the ${first.time} ${massName(first)} on ${formatShortDate(first.date)}${more}.`;
+    }
+    return '';
+  }
+
+  function showWeeklyProblem(message) {
+    weeklyEditConflict.textContent = message;
+    weeklyEditConflict.classList.toggle('hidden', !message);
+  }
+
+  const weeklyEditTime = createTimePicker(document.getElementById('weekly-edit-time-picker'), {
+    onChange: () => {
+      const time12 = weeklyEditTime.value();
+      const problem = time12 ? weeklyTimeProblem(time12) : '';
+      showWeeklyProblem(problem);
+      weeklyEditTimeAdd.disabled = !!problem;
+    },
+  });
+
   function addEditingTime(time12) {
-    if (editingTimes.includes(time12)) return;
+    const problem = weeklyTimeProblem(time12);
+    if (problem) { showWeeklyProblem(problem); return; }
     editingTimes.push(time12);
     editingTimes.sort((a, b) => to24h(a) - to24h(b));
     renderWeeklyEditTimeChips();
   }
 
   weeklyEditTimeAdd.addEventListener('click', () => {
-    const time24 = weeklyEditTimeInput.value;
-    if (!time24) return;
-    addEditingTime(formatTime12(time24));
-    weeklyEditTimeInput.value = '';
+    const time12 = weeklyEditTime.value();
+    if (!time12) { showWeeklyProblem('Pick an hour first.'); return; }
+    addEditingTime(time12);
+    if (!weeklyEditConflict.textContent || weeklyEditConflict.classList.contains('hidden')) weeklyEditTime.reset();
   });
 
   weeklyEditTimeList.addEventListener('click', (e) => {
@@ -573,6 +667,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     editingDayIndex = idx;
     editingTimes = w.times.slice();
+    weeklyEditTime.reset();
+    showWeeklyProblem('');
+    weeklyEditTimeAdd.disabled = false;
 
     weeklyEditTitle.textContent = `Edit ${w.dayLabel}'s Schedule`;
     weeklyEditType.value = w.massType;

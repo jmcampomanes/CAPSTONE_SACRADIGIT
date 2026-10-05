@@ -1,0 +1,108 @@
+/* ============================================
+   SacraDigit — Accessibility mode
+   Larger text + higher contrast, for senior
+   parishioners (and anyone who needs it). Turned
+   on with the "Aa" button next to the dark-mode
+   and language controls (ui-prefs.js); the <head>
+   snippet on every page sets
+   <html data-a11y="on"> before the page is drawn.
+   Works with both light and dark mode.
+   ============================================ */
+
+/* ---------- Larger text ----------
+   The app's sizes (Tailwind and our own CSS) are in rem, so growing
+   the root font size enlarges text, spacing and controls together. */
+:root[data-a11y="on"] {
+  font-size: 118%;
+}
+
+:root[data-a11y="on"] body {
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Clear focus ring for keyboard users ---------- */
+:root[data-a11y="on"] :focus-visible {
+  outline: 3px solid #1d4ed8 !important;
+  outline-offset: 2px !important;
+}
+
+:root[data-a11y="on"][data-theme="dark"] :focus-visible {
+  outline-color: #93c5fd !important;
+}
+
+/* ---------- Links read as links ---------- */
+:root[data-a11y="on"] main a:not([class*="btn"]):not(.sidebar-link):not(.certificate-chip) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------- Higher contrast: light mode ----------
+   Faint grey helper text becomes near-black; field borders darken. */
+:root[data-a11y="on"]:not([data-theme="dark"]) :is(
+  .text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600,
+  [class*="-sub"], [class*="-meta"], [class*="-label"], [class*="-note"], [class*="-time"], [class*="-hint"],
+  .pagination-info, .empty-state, .form-error-msg
+):not(button *):not(.badge):not(.badge *):not([class*="btn"] *):not(.chat-msg.is-mine *) {
+  color: #1f2937 !important;
+}
+
+:root[data-a11y="on"]:not([data-theme="dark"]) :is(input, select, textarea, .form-input, .filter-select, .search-input, .chat-input) {
+  border-color: #4b5563 !important;
+}
+
+:root[data-a11y="on"]:not([data-theme="dark"]) ::placeholder {
+  color: #4b5563 !important;
+  opacity: 1;
+}
+
+:root[data-a11y="on"]:not([data-theme="dark"]) :is(.panel, .stat-card, .modal-card, .schedule-card, .template-card) {
+  border-color: #9ca3af !important;
+}
+
+/* ---------- Higher contrast: dark mode ----------
+   Dim grey text becomes bright; borders become visible. */
+:root[data-a11y="on"][data-theme="dark"] :is(
+  .text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600,
+  [class*="-sub"], [class*="-meta"], [class*="-label"], [class*="-note"], [class*="-time"], [class*="-hint"],
+  .pagination-info, .empty-state
+):not(.badge):not(.badge *) {
+  color: #f3f4f6 !important;
+}
+
+:root[data-a11y="on"][data-theme="dark"] body {
+  color: #ffffff;
+}
+
+:root[data-a11y="on"][data-theme="dark"] :is(input, select, textarea, .form-input, .filter-select, .search-input, .chat-input) {
+  border-color: #9ca3af !important;
+}
+
+:root[data-a11y="on"][data-theme="dark"] ::placeholder {
+  color: #d1d5db !important;
+  opacity: 1;
+}
+
+:root[data-a11y="on"][data-theme="dark"] :is(.panel, .stat-card, .modal-card, .schedule-card, .template-card) {
+  border-color: #6b7280 !important;
+}
+
+/* ---------- The "Aa" button itself ---------- */
+.ui-prefs-a11y {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.75rem !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ui-prefs-a11y[aria-pressed="true"] {
+  background: #1e2a4a !important;
+  border-color: #1e2a4a !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .ui-prefs-a11y[aria-pressed="true"] {
+  background: #f3f4f6 !important;
+  border-color: #f3f4f6 !important;
+  color: #111827 !important;
+}

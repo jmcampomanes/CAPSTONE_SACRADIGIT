@@ -16,6 +16,50 @@
 }
 
 /* ---------- "View All" toggle (Upcoming Special Schedules panel) ---------- */
+/* ---------- Upcoming / Completed / Cancelled tabs ---------- */
+.sched-tabs {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.sched-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.sched-tab:hover { color: #1e2a4a; }
+
+.sched-tab.active {
+  color: #1e2a4a;
+  border-bottom-color: #c9a84c;
+}
+
+.sched-tab-count {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+}
+
+.sched-tab.active .sched-tab-count {
+  color: #1e2a4a;
+  background-color: #f6efd9;
+}
+
 .schedules-view-all-btn {
   font-size: 0.6875rem;
   font-weight: 700;
@@ -420,6 +464,24 @@
 .status-tag.upcoming {
   background-color: #f3f4f6;
   color: #6b7280;
+}
+
+.status-tag.completed {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.status-tag.cancelled {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.schedule-card.is-cancelled {
+  opacity: 0.75;
+}
+
+.sched-restore {
+  color: #15803d;
 }
 
 /* ---------- Date range bar ---------- */

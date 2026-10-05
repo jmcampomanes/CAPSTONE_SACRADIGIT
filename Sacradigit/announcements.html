@@ -52,7 +52,8 @@
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -222,6 +223,11 @@
               <button type="button" class="ann-tab" data-ann-tab="draft" id="ann-tab-draft" role="tab" aria-selected="false">Draft</button>
               <button type="button" class="ann-tab" data-ann-tab="archived" id="ann-tab-archived" role="tab" aria-selected="false">Archived</button>
             </div>
+            <select id="ann-kind-filter" class="ann-kind-filter" aria-label="Show">
+              <option value="">All types</option>
+              <option value="announcement">Announcements</option>
+              <option value="post">Posts / Updates</option>
+            </select>
             <p id="announcements-count" class="text-xs text-gray-400 font-medium"></p>
           </div>
           <div id="announcements-grid" class="announcements-grid">
@@ -249,6 +255,19 @@
       <div class="modal-body">
         <div class="grid grid-cols-2 gap-3">
           <div class="col-span-2">
+            <span class="form-label">Type</span>
+            <div class="ann-kind-switch" role="radiogroup" aria-label="Type">
+              <label class="ann-kind-option">
+                <input type="radio" name="ann-kind" value="announcement" checked />
+                <span><b>Announcement</b><small>Official parish notice. The Head Admin publishes it.</small></span>
+              </label>
+              <label class="ann-kind-option">
+                <input type="radio" name="ann-kind" value="post" />
+                <span><b>Post / Update</b><small>Quick, casual update. Goes live right away and disappears after 14 days.</small></span>
+              </label>
+            </div>
+          </div>
+          <div class="col-span-2">
             <label class="form-label" for="ann-title">Title</label>
             <input type="text" id="ann-title" class="form-input" placeholder="e.g. Parish Fiesta Schedule" />
           </div>
@@ -257,6 +276,10 @@
             <input type="date" id="ann-event-date" class="form-input" />
           </div>
           <div>
+            <label class="form-label">Event Time <span class="text-gray-400 font-normal normal-case">(optional)</span></label>
+            <div id="ann-event-time-picker"></div>
+          </div>
+          <div class="col-span-2">
             <label class="form-label" for="ann-location">Location <span class="text-gray-400 font-normal normal-case">(optional)</span></label>
             <input type="text" id="ann-location" class="form-input" placeholder="e.g. Parish Grounds" />
           </div>
@@ -266,12 +289,12 @@
                 <label class="form-label" for="ann-start-date">Start Date</label>
                 <input type="date" id="ann-start-date" class="form-input" />
               </div>
-              <div>
+              <div id="ann-end-date-wrap">
                 <label class="form-label" for="ann-end-date">End Date</label>
                 <input type="date" id="ann-end-date" class="form-input" />
               </div>
             </div>
-            <p class="ann-duration-hint">Both required. A future Start Date keeps the post in Draft (scheduled) until then; once the End Date passes it moves to Archived automatically.</p>
+            <p class="ann-duration-hint" id="ann-duration-hint">Both required. A future Start Date keeps the post in Draft (scheduled) until then; once the End Date passes it moves to Archived automatically.</p>
           </div>
           <div class="col-span-2">
             <label class="form-label" for="ann-body">Body</label>
@@ -302,6 +325,7 @@
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
         <button type="button" id="announcement-save-draft" class="btn-secondary">Save as Draft</button>
+        <button type="button" id="announcement-post-now" class="btn-lavender hidden">Post Now</button>
         <button type="button" id="announcement-submit" class="btn-lavender head-admin-only">Publish Now</button>
       </div>
     </div>

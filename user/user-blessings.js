@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
     upcoming:  { statusLabel: 'Scheduled', dateLabel: 'Date & Time', list: () => upcoming },
     requests:  { statusLabel: 'Pending Approval', dateLabel: 'Preferred Date', list: () => requests },
     completed: { statusLabel: 'Completed', dateLabel: 'Date Completed', list: () => completed },
-    declined:  { statusLabel: 'Cancelled by the parish', dateLabel: 'Date', list: () => declined },
+    declined:  { statusLabel: 'Cancelled', dateLabel: 'Date', list: () => declined },
   };
 
   function openDetailsModal(section, id) {

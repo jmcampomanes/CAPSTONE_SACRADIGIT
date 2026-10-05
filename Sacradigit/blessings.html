@@ -54,7 +54,8 @@
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -339,13 +340,30 @@
           <!-- Completed Blessings -->
           <div class="panel">
             <div class="panel-header">
-              <h2 class="panel-title">Completed Blessings — May 2026</h2>
+              <h2 class="panel-title">Completed Blessings</h2>
               <p id="completed-count" class="text-xs text-gray-400 font-medium"></p>
             </div>
             <ul id="completed-list" class="divide-y divide-gray-100">
               <!-- Rows injected by blessings.js -->
             </ul>
             <div id="completed-pagination" class="pagination-bar">
+              <!-- Injected by blessings.js -->
+            </div>
+          </div>
+
+          <!-- Cancelled Blessings (by the parish or by the parishioner) -->
+          <div class="panel" id="cancelled-panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Cancelled Blessings</h2>
+              <p id="cancelled-count" class="text-xs text-gray-400 font-medium"></p>
+            </div>
+            <ul id="cancelled-list" class="divide-y divide-gray-100">
+              <!-- Rows injected by blessings.js -->
+            </ul>
+            <div id="cancelled-empty" class="empty-state hidden">
+              <p class="text-sm font-medium text-gray-600">No cancelled blessings</p>
+            </div>
+            <div id="cancelled-pagination" class="pagination-bar">
               <!-- Injected by blessings.js -->
             </div>
           </div>

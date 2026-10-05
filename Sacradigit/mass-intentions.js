@@ -5,10 +5,17 @@
    massTime — see amplify/data/resource.ts).
    The "names" field is a.json(), so it's stringified
    before sending and parsed back when reading.
+
+   Records are never deleted: Cancel (scheduled) or
+   Reject (pending) sets status 'cancelled' / 'rejected'
+   with a cancelReason, so the log keeps them.
+   Booking, changes and cancelling are only allowed up to
+   the day before the Mass; from the Mass day on, Edit
+   can only change the status (e.g. mark Completed).
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { printReport, printReadersSheet, tableHtml, esc } from '../print-report.js';
+import { printReport, printReadersSheet, printAltarSheets, tableHtml, esc } from '../print-report.js';
 import { formatFullName } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function nameDisplay(n) { return formatFullName(normalizeName(n)); }
 
   const todayISO = new Date().toISOString().slice(0, 10);
+  // Local date (UTC would still say "yesterday" before 8 AM in the Philippines)
+  const localTodayISO = () => new Date().toLocaleDateString('en-CA');
+
+  const CLOSED_STATUSES = ['cancelled', 'rejected'];
+  const isClosed = (it) => CLOSED_STATUSES.includes(it.status);
+  // The Mass day has arrived (or passed): no more changes except status.
+  const isLocked = (it) => !!it.massDate && it.massDate <= localTodayISO();
 
   let intentions = []; // kept in sync via observeQuery, each has .id
 
@@ -37,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const PAGE_SIZE = 8;
   let currentPage = 1;
 
-  const badgeClass = { pending: 'badge-amber', scheduled: 'badge-green', completed: 'badge-blue' };
-  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', completed: 'Completed' };
+  const badgeClass = { pending: 'badge-amber', scheduled: 'badge-green', completed: 'badge-blue', cancelled: 'badge-red', rejected: 'badge-red' };
+  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled', rejected: 'Rejected' };
 
   /* Which of the 3 Reader's Sheet categories each intention type
      belongs to. Shared by the Add/Edit type picker (which uses it
@@ -313,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('stat-total-week').textContent = thisWeek.length;
     document.getElementById('stat-pending').textContent = intentions.filter(i => i.status === 'pending').length;
 
-    const totalOfferings = thisWeek.reduce((sum, i) => sum + (i.offering || 0), 0);
+    const totalOfferings = thisWeek.filter(i => !isClosed(i)).reduce((sum, i) => sum + (i.offering || 0), 0);
     document.getElementById('stat-offerings').textContent = formatPeso(totalOfferings);
   }
 
@@ -324,11 +338,13 @@ document.addEventListener('DOMContentLoaded', () => {
       : '—';
 
     const names = getNames(it);
+    // Cancel a scheduled intention, Reject one still pending — only up to the day before the Mass.
+    const canCancel = (it.status === 'pending' || it.status === 'scheduled') && !isLocked(it);
     const actionHtml = `
       <div class="row-actions">
-        <button type="button" class="row-edit" data-id="${it.id}">Edit</button>
+        ${isClosed(it) ? '' : `<button type="button" class="row-edit" data-id="${it.id}">Edit</button>`}
         <button type="button" class="row-view" data-id="${it.id}">View</button>
-        <button type="button" class="row-remove" data-id="${it.id}">Remove</button>
+        ${canCancel ? `<button type="button" class="row-remove" data-id="${it.id}">${it.status === 'pending' ? 'Reject' : 'Cancel'}</button>` : ''}
       </div>
     `;
 
@@ -619,7 +635,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') { e.preventDefault(); addNameEditingIndex = null; renderAddNameChips(); }
   });
 
+  /* From the Mass day on, Edit only changes the status: every other
+     control in the form is disabled and a note explains why. */
+  const addLockedNote = document.getElementById('add-locked-note');
+  let editLocked = false;
+  function setEditLocked(locked) {
+    editLocked = locked;
+    addLockedNote.classList.toggle('hidden', !locked);
+    addModal.querySelectorAll('.modal-body input, .modal-body select, .modal-body textarea, .modal-body button').forEach(el => {
+      if (el.id !== 'add-status') el.disabled = locked;
+    });
+  }
+
   function resetAddForm() {
+    setEditLocked(false);
     document.getElementById('add-donor').value = '';
     document.getElementById('add-offering').value = '';
     document.getElementById('add-status').value = 'pending';
@@ -670,6 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-name-full').value = '';
     document.getElementById('add-name-full').classList.remove('border-red-400');
     renderAddNameChips();
+    setEditLocked(isLocked(it));
 
     openModal(addModal);
   }
@@ -677,8 +707,8 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------
      Mass Date Assigned — custom calendar
      Same weekend-only restriction as the parishioner-facing
-     Preferred Mass Date picker (only Saturdays, Sundays, and
-     today-or-later are selectable). Unlike that picker, this one
+     Preferred Mass Date picker (only Saturdays and Sundays from
+     tomorrow on are selectable — nothing is booked for the same day). Unlike that picker, this one
      assigns an exact mass instance rather than a preference, so it
      stores and displays the single day clicked instead of pairing
      Saturday+Sunday into one weekend selection.
@@ -710,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const date = new Date(y, m, d);
     date.setHours(0, 0, 0, 0);
     const dow = date.getDay();
-    return (dow === 0 || dow === 6) && date >= startOfToday();
+    return (dow === 0 || dow === 6) && date > startOfToday();
   }
 
   function renderMassDateCalendar() {
@@ -833,6 +863,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('add-submit').addEventListener('click', async () => {
+    // Mass day reached: only the status can change.
+    if (editLocked && editTargetId !== null) {
+      const it = intentions.find(x => x.id === editTargetId);
+      addSubmitBtn.disabled = true;
+      try {
+        const result = await client.models.MassIntention.update({ id: editTargetId, status: document.getElementById('add-status').value });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        showToast(`Status updated for ${it ? it.donor : 'donor'}.`);
+        editTargetId = null;
+        closeModal(addModal);
+        resetAddForm();
+      } catch (err) {
+        console.error('Failed to update status:', err);
+        showToast(err.message || "Couldn't update the status.", true);
+      } finally {
+        addSubmitBtn.disabled = false;
+      }
+      return;
+    }
+
     if (document.getElementById('add-name-full').value.trim()) addIntentionName();
 
     const donor       = document.getElementById('add-donor').value.trim();
@@ -843,6 +893,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!donor || addedIntentions.length === 0 || !offering) {
       showToast('Please fill in donor name, at least one name (with category), and offering amount.', true);
+      return;
+    }
+
+    if (massDate && massDate <= localTodayISO()) {
+      showToast('Mass dates can only be booked up to the day before. Please pick a later date.', true);
       return;
     }
 
@@ -939,6 +994,11 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><p class="so-detail-label">Offering</p><p class="so-detail-value">${formatPeso(it.offering)}</p></div>
         <div><p class="so-detail-label">Submitted</p><p class="so-detail-value">${formatShortDate(it.createdAt ? it.createdAt.slice(0, 10) : null)}</p></div>
         <div><p class="so-detail-label">Mass Date Assigned</p><p class="so-detail-value">${it.massDate ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}` : '—'}</p></div>
+        ${isClosed(it) ? `
+        <div class="col-span-2" style="grid-column: 1 / -1;">
+          <p class="so-detail-label">${it.status === 'rejected' ? 'Rejection' : 'Cancellation'} Reason</p>
+          <p class="so-detail-value">${escapeHtml(it.cancelReason) || 'No reason given'}</p>
+        </div>` : ''}
         ${it.startTime && it.endTime ? `
         <div class="col-span-2">
           <p class="so-detail-label">Timeline</p>
@@ -957,32 +1017,56 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* --- Remove Intention Modal --- */
+  /* --- Cancel / Reject Intention Modal ---
+     A pending intention is Rejected, a scheduled one Cancelled. Either
+     way the record stays (status + cancelReason) for proper keeping. */
   const removeModal = document.getElementById('remove-modal');
   const removeTargetName = document.getElementById('remove-target-name');
+  const removeReason = document.getElementById('remove-reason');
+  const removeSubmitBtn = document.getElementById('remove-submit');
   let removeTargetId = null;
+  let removeNextStatus = 'cancelled';
 
   function openRemoveModal(id) {
     const it = intentions.find(x => x.id === id);
     if (!it) return;
+    if (isLocked(it)) { showToast('Intentions can only be cancelled up to the day before the Mass.', true); return; }
     removeTargetId = id;
+    removeNextStatus = it.status === 'pending' ? 'rejected' : 'cancelled';
+    const verb = removeNextStatus === 'rejected' ? 'Reject' : 'Cancel';
+    document.getElementById('remove-title').textContent = `${verb} Intention`;
+    document.getElementById('remove-verb').textContent = `${verb} the intention for`;
+    removeSubmitBtn.textContent = `${verb} Intention`;
     removeTargetName.textContent = it.donor;
+    removeReason.value = '';
+    removeReason.classList.remove('border-red-400');
     openModal(removeModal);
   }
 
-  document.getElementById('remove-submit').addEventListener('click', async () => {
+  removeReason.addEventListener('input', () => removeReason.classList.remove('border-red-400'));
+
+  removeSubmitBtn.addEventListener('click', async () => {
     if (removeTargetId === null) return;
     const it = intentions.find(x => x.id === removeTargetId);
+    const reason = removeReason.value.trim();
+    if (!reason) {
+      removeReason.classList.add('border-red-400');
+      showToast('Please give a reason.', true);
+      return;
+    }
 
+    removeSubmitBtn.disabled = true;
     try {
-      const result = await client.models.MassIntention.delete({ id: removeTargetId });
+      const result = await client.models.MassIntention.update({ id: removeTargetId, status: removeNextStatus, cancelReason: reason });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(removeModal);
-      showToast(`Intention for ${it ? it.donor : 'donor'} removed.`);
+      showToast(`Intention for ${it ? it.donor : 'donor'} ${removeNextStatus}.`);
       removeTargetId = null;
     } catch (err) {
-      console.error('Failed to remove intention:', err);
-      showToast(err.message || "Couldn't remove the intention.", true);
+      console.error('Failed to cancel intention:', err);
+      showToast(err.message || "Couldn't update the intention.", true);
+    } finally {
+      removeSubmitBtn.disabled = false;
     }
   });
 
@@ -1022,7 +1106,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getSheetOptions() {
     const map = new Map();
     intentions.forEach(it => {
-      if (!it.massDate) return;
+      if (!it.massDate || isClosed(it)) return;
       const key = sheetKey(it);
       if (!map.has(key)) map.set(key, { massDate: it.massDate, massTime: it.massTime || '', count: 0 });
       map.get(key).count += 1;
@@ -1060,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const matching = intentions.filter(it => it.massDate && sheetKey(it) === currentSheetKey);
+    const matching = intentions.filter(it => it.massDate && !isClosed(it) && sheetKey(it) === currentSheetKey);
 
     if (matching.length === 0) {
       sheetBody.classList.add('hidden');
@@ -1150,7 +1234,7 @@ document.addEventListener('DOMContentLoaded', () => {
      page on screen), with the offering total, on the parish letterhead. */
   document.getElementById('btn-print').addEventListener('click', () => {
     const rows = getFilteredIntentions();
-    const total = rows.reduce((sum, it) => sum + (Number(it.offering) || 0), 0);
+    const total = rows.filter(it => !isClosed(it)).reduce((sum, it) => sum + (Number(it.offering) || 0), 0);
     const tableRows = rows.map(it => {
       const names = getNames(it).map(nameDisplay).join(', ');
       return [
@@ -1169,6 +1253,52 @@ document.addEventListener('DOMContentLoaded', () => {
       body: tableHtml(cols, tableRows, { empty: 'No intentions match the current filters.', foot: ['Total', '', '', '', esc(formatPeso(total))] }),
       signatures: ['Prepared by', 'Parish Priest'],
     });
+  });
+
+  /* --- Altar sheets: every Mass of the chosen day, one page each --- */
+  const sheetDayInput = document.getElementById('sheet-day');
+  const SHEET_GROUPS = [
+    ['thanksgiving', 'Thanksgiving & (Birthdays):'],
+    ['special', 'Special Intentions:'],
+    ['souls', 'Souls:'],
+  ];
+
+  // The next day (today or later) that has intentions assigned, so the
+  // button is ready for the coming Masses without picking a date.
+  function nextDayWithIntentions() {
+    const today = localTodayISO();
+    const days = [...new Set(intentions.filter(it => it.massDate && !isClosed(it) && it.massDate >= today).map(it => it.massDate))].sort();
+    return days[0] || today;
+  }
+  let sheetDayTouched = false;
+  sheetDayInput.addEventListener('change', () => { sheetDayTouched = true; });
+  const refreshSheetDay = () => { if (!sheetDayTouched) sheetDayInput.value = nextDayWithIntentions(); };
+  refreshSheetDay();
+  document.querySelector('[data-tab="sheet"]')?.addEventListener('click', refreshSheetDay);
+
+  document.getElementById('btn-print-day').addEventListener('click', () => {
+    const day = sheetDayInput.value;
+    if (!day) { showToast('Pick a day to print.', true); return; }
+    const forDay = intentions.filter(it => it.massDate === day && !isClosed(it));
+    if (!forDay.length) { showToast(`No intentions are assigned to Masses on ${formatShortDate(day)}.`, true); return; }
+
+    const byMass = new Map();
+    forDay.forEach(it => {
+      const key = it.massTime || '';
+      if (!byMass.has(key)) byMass.set(key, []);
+      byMass.get(key).push(it);
+    });
+    const masses = [...byMass.entries()]
+      .sort(([a], [b]) => timeToMinutes(a) - timeToMinutes(b))
+      .map(([time, items]) => ({
+        heading: time ? `${time.replace(/^0/, '')} Mass` : 'Mass (time not set)',
+        groups: SHEET_GROUPS.map(([bucket, title]) => [title, items
+          .filter(it => (GROUP_TYPE_MAP[it.type] || 'special') === bucket)
+          .map(it => { const names = getNames(it); return names.length ? names.map(nameDisplay).join(' / ') : it.donor; })
+          .join(' / ')]),
+      }));
+    const dayLabel = new Date(day + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    printAltarSheets(dayLabel, masses);
   });
 
   document.getElementById('btn-print-sheet').addEventListener('click', () => {

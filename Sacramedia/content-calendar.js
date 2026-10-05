@@ -1,43 +1,18 @@
 /* ============================================
    SacraDigit Media — Content Calendar Scripts
-   Client-side prototype: stores entries in
-   localStorage under 'sacradigit_media_calendar'.
-
-   To wire this up to a real backend later, add a
-   ContentCalendarEntry model to amplify/data/resource.ts
-   (fields: date, title, platform, status, notes) and
-   swap the readEntries()/writeEntries() calls below for
-   client.models.ContentCalendarEntry.list()/create()/
-   update()/delete(), the same pattern already used in
-   Sacradigit/announcements.js.
+   Backed by the ContentCalendarEntry model
+   (date, title, platform, status, notes), so the
+   whole Media team and the Head Admin see the same
+   calendar, live. Changes are recorded in Activity
+   Logs automatically (../activity-log.js).
    ============================================ */
 
-const STORAGE_KEY = 'sacradigit_media_calendar';
+import { client } from '../amplify-init.js';
+import { importLocalEntries } from './media-local-import.js';
+
 // Read by Sacradigit/announcements.js to prefill (and schedule) a new post
 const ANNOUNCEMENT_PREFILL_KEY = 'sacradigit_announcement_prefill';
-
-function readEntries() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeEntries(entries) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-}
-
-function seedIfMissing() {
-  if (localStorage.getItem(STORAGE_KEY) !== null) return;
-  writeEntries([
-    { id: 'c1', date: '2026-09-13', title: 'Sunday Mass Schedule Graphic', platform: 'Facebook', type: 'scheduled', notes: '' },
-    { id: 'c2', date: '2026-09-14', title: 'Feast of the Exaltation of the Cross — greeting', platform: 'Facebook', type: 'draft', notes: 'Waiting on final art' },
-    { id: 'c3', date: '2026-09-19', title: 'Recollection reminder', platform: 'Instagram', type: 'scheduled', notes: '' },
-    { id: 'c4', date: '2026-09-06', title: '22nd Sunday reflection post', platform: 'Facebook', type: 'published', notes: '' },
-  ]);
-}
+const STATUSES = ['draft', 'scheduled', 'published'];
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -56,9 +31,9 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  seedIfMissing();
+const statusOf = (e) => (STATUSES.includes(e.status) ? e.status : 'draft');
 
+document.addEventListener('DOMContentLoaded', () => {
   const tbody = document.getElementById('calendar-tbody');
   const modal = document.getElementById('entry-modal');
   const addBtn = document.getElementById('add-entry-btn');
@@ -88,33 +63,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);
   }
 
-  function render() {
-    const entries = readEntries().sort((a, b) => a.date.localeCompare(b.date));
+  const model = client.models.ContentCalendarEntry;
+  if (!model) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 text-sm py-8">The content calendar isn\'t connected to the database yet.</td></tr>';
+    addBtn.disabled = true;
+    return;
+  }
 
-    if (entries.length === 0) {
+  let entries = [];
+
+  function render() {
+    const sorted = entries.slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    if (sorted.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400 text-sm py-8">No content planned yet. Click "New Entry" to add one.</td></tr>';
       return;
     }
 
-    tbody.innerHTML = entries.map(e => `
+    tbody.innerHTML = sorted.map(e => {
+      const status = statusOf(e);
+      return `
       <tr data-id="${e.id}">
         <td>${formatDate(e.date)}</td>
         <td>${escapeHtml(e.title)}</td>
         <td>${escapeHtml(e.platform)}</td>
-        <td><span class="badge badge-${e.type}">${capitalize(e.type)}</span></td>
+        <td><span class="badge badge-${status}">${capitalize(status)}</span></td>
         <td class="text-right whitespace-nowrap">
-          ${e.type !== 'published' ? `<button type="button" class="row-action" data-announce="${e.id}" title="Open the announcement composer with this entry, scheduled for its date">Schedule as Announcement</button>` : ''}
+          ${status !== 'published' ? `<button type="button" class="row-action" data-announce="${e.id}" title="Open the announcement composer with this entry, scheduled for its date">Schedule as Announcement</button>` : ''}
           <button type="button" class="row-action" data-edit="${e.id}">Edit</button>
           <button type="button" class="row-action row-action-danger" data-delete="${e.id}">Delete</button>
         </td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   }
+
+  model.observeQuery().subscribe({
+    next: ({ items }) => { entries = items; render(); },
+    error: (err) => {
+      console.error('Failed to load the content calendar:', err);
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 text-sm py-8">Couldn\'t load the content calendar.</td></tr>';
+    },
+  });
+
+  // Entries added before the calendar used the database (kept in this browser only)
+  importLocalEntries('sacradigit_media_calendar', 'ContentCalendarEntry', (e) => ({
+    date: e.date, title: e.title, platform: e.platform || 'Facebook', status: e.type || e.status || 'draft', notes: e.notes || '',
+  })).then(n => { if (n) showToast(`Moved ${n} entr${n === 1 ? 'y' : 'ies'} from this browser into the shared calendar.`); });
 
   function openModalForNew() {
     modalTitle.textContent = 'New Content Entry';
     idField.value = '';
-    dateField.value = new Date().toISOString().slice(0, 10);
+    dateField.value = new Date().toLocaleDateString('en-CA');
     titleField.value = '';
     platformField.value = 'Facebook';
     statusField.value = 'draft';
@@ -127,8 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
     idField.value = entry.id;
     dateField.value = entry.date;
     titleField.value = entry.title;
-    platformField.value = entry.platform;
-    statusField.value = entry.type;
+    platformField.value = entry.platform || 'Facebook';
+    statusField.value = statusOf(entry);
     notesField.value = entry.notes || '';
     modal.classList.remove('hidden');
   }
@@ -147,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === modal) closeModal();
   });
 
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
     const title = titleField.value.trim();
     if (!title) {
       showToast('Please give this entry a title.', true);
@@ -158,47 +157,38 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const entries = readEntries();
     const id = idField.value;
+    const fields = {
+      date: dateField.value,
+      title,
+      platform: platformField.value,
+      status: statusField.value,
+      notes: notesField.value.trim(),
+    };
 
-    if (id) {
-      const idx = entries.findIndex(e => e.id === id);
-      if (idx !== -1) {
-        entries[idx] = {
-          ...entries[idx],
-          date: dateField.value,
-          title,
-          platform: platformField.value,
-          type: statusField.value,
-          notes: notesField.value.trim(),
-        };
-      }
-      showToast(`"${title}" updated.`);
-    } else {
-      entries.push({
-        id: 'c' + Date.now(),
-        date: dateField.value,
-        title,
-        platform: platformField.value,
-        type: statusField.value,
-        notes: notesField.value.trim(),
-      });
-      showToast(`"${title}" added to the calendar.`);
+    saveBtn.disabled = true;
+    try {
+      const { errors } = id ? await model.update({ id, ...fields }) : await model.create(fields);
+      if (errors) throw new Error(errors.map(e => e.message).join('; '));
+      showToast(id ? `"${title}" updated.` : `"${title}" added to the calendar.`);
+      closeModal();
+    } catch (err) {
+      console.error('Failed to save calendar entry:', err);
+      showToast(err.message || "Couldn't save the entry.", true);
+    } finally {
+      saveBtn.disabled = false;
     }
-
-    writeEntries(entries);
-    render();
-    closeModal();
   });
 
-  tbody.addEventListener('click', (e) => {
+  tbody.addEventListener('click', async (e) => {
     const announceId = e.target.closest('[data-announce]')?.dataset.announce;
     const editId = e.target.closest('[data-edit]')?.dataset.edit;
+    const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
 
     // Hands the entry to the announcement composer. With a future date,
     // "Schedule Post" there makes it go live automatically on that day.
     if (announceId) {
-      const entry = readEntries().find(x => x.id === announceId);
+      const entry = entries.find(x => x.id === announceId);
       if (!entry) return;
       try {
         sessionStorage.setItem(ANNOUNCEMENT_PREFILL_KEY, JSON.stringify({
@@ -213,23 +203,24 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = 'announcements.html';
       return;
     }
-    const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
 
     if (editId) {
-      const entry = readEntries().find(x => x.id === editId);
+      const entry = entries.find(x => x.id === editId);
       if (entry) openModalForEdit(entry);
     }
 
     if (deleteId) {
-      const entries = readEntries();
       const entry = entries.find(x => x.id === deleteId);
       if (!entry) return;
       if (!confirm(`Remove "${entry.title}" from the calendar?`)) return;
-      writeEntries(entries.filter(x => x.id !== deleteId));
-      render();
-      showToast(`"${entry.title}" removed.`);
+      try {
+        const { errors } = await model.delete({ id: deleteId });
+        if (errors) throw new Error(errors.map(er => er.message).join('; '));
+        showToast(`"${entry.title}" removed.`);
+      } catch (err) {
+        console.error('Failed to delete calendar entry:', err);
+        showToast(err.message || "Couldn't remove the entry.", true);
+      }
     }
   });
-
-  render();
 });

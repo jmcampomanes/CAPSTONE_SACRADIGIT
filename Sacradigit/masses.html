@@ -53,7 +53,8 @@
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -392,9 +393,10 @@
             <input type="date" id="schedule-date" class="form-input" />
           </div>
           <div>
-            <label class="form-label" for="schedule-time">Time</label>
-            <input type="time" id="schedule-time" class="form-input" />
+            <label class="form-label">Time</label>
+            <div id="schedule-time-picker"></div>
           </div>
+          <p id="schedule-conflict" class="col-span-2 mass-conflict hidden" role="alert"></p>
           <div class="col-span-2">
             <label class="form-label" for="schedule-type">Mass Type</label>
             <select id="schedule-type" class="form-input">
@@ -477,13 +479,14 @@
       <div class="modal-body">
         <div class="grid grid-cols-2 gap-3">
           <div class="col-span-2">
-            <label class="form-label" for="weekly-edit-time-input">Times</label>
+            <label class="form-label">Times</label>
             <div class="name-chip-input-row">
-              <input type="time" id="weekly-edit-time-input" class="form-input" />
+              <div id="weekly-edit-time-picker"></div>
               <button type="button" id="weekly-edit-time-add" class="btn-secondary">Add</button>
             </div>
+            <p id="weekly-edit-conflict" class="mass-conflict hidden" role="alert"></p>
             <div id="weekly-edit-time-list" class="name-chip-list"></div>
-            <p class="text-xs text-gray-400 mt-1">Add each Mass time for this day. At least one is required.</p>
+            <p class="text-xs text-gray-400 mt-1">Add each Mass time for this day. At least one is required. Masses must start at least 1 hour apart.</p>
           </div>
           <div class="col-span-2">
             <label class="form-label" for="weekly-edit-type">Mass Type</label>

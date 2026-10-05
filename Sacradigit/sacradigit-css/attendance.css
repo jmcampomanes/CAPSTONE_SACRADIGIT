@@ -1,0 +1,329 @@
+/* ============================================
+   SacraDigit Admin — Attendance Insights
+   Chart colours are tokens on .att-root so light and
+   dark mode each get their own validated steps
+   (single blue for bars; blue ramp for the heatmap,
+   lightest step ≥ 2:1 against the panel).
+   ============================================ */
+
+.att-root {
+  --att-bar: #2a78d6;
+  --att-bar-hover: #1c5cab;
+  --att-track: #eef3fb;
+  --att-grid: #e9ebef;
+  --att-axis: #6b7280;
+  --att-ink: #111827;
+  --att-ink-2: #4b5563;
+  --att-tip-bg: #111827;
+  --att-tip-ink: #ffffff;
+  --heat-empty: #f3f4f6;
+  --heat-1: #86b6ef;
+  --heat-2: #3987e5;
+  --heat-3: #256abf;
+  --heat-4: #184f95;
+  --heat-5: #0d366b;
+}
+
+:root[data-theme="dark"] .att-root {
+  --att-bar: #3987e5;
+  --att-bar-hover: #6da7ec;
+  --att-track: #1f2a40;
+  --att-grid: #2c3548;
+  --att-axis: #9ca3af;
+  --att-ink: #f3f4f6;
+  --att-ink-2: #c3c8d2;
+  --att-tip-bg: #f3f4f6;
+  --att-tip-ink: #111827;
+  --heat-empty: #222a3b;
+  --heat-1: #256abf;
+  --heat-2: #3987e5;
+  --heat-3: #6da7ec;
+  --heat-4: #9ec5f4;
+  --heat-5: #cde2fb;
+}
+
+/* ---------- Toolbar ---------- */
+.att-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+}
+
+.att-toolbar .form-input {
+  width: auto;
+  min-width: 10rem;
+}
+
+.att-capacity {
+  width: 7rem !important;
+  min-width: 0 !important;
+}
+
+.att-note {
+  font-size: 0.75rem;
+  color: #6b7280;
+  flex: 1 1 18rem;
+}
+
+/* ---------- Stat tiles ---------- */
+.att-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .att-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Chart panels ---------- */
+.att-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1100px) {
+  .att-grid-2 { grid-template-columns: minmax(0, 1fr); }
+}
+
+.att-chart {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.att-sub {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.15rem;
+}
+
+.att-empty {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+/* ---------- Fullest Masses (horizontal bars) ---------- */
+.att-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.att-bar-row {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.4rem;
+  outline-offset: 2px;
+}
+
+.att-bar-label {
+  font-size: 0.8125rem;
+  color: var(--att-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.att-bar-label small {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--att-ink-2);
+}
+
+.att-bar-track {
+  display: block;
+  height: 0.875rem;
+  background-color: var(--att-track);
+  border-radius: 0 4px 4px 0;
+  overflow: visible;
+}
+
+.att-bar-fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background-color: var(--att-bar);
+  border-radius: 0 4px 4px 0;
+  transition: background-color 0.15s ease;
+}
+
+.att-bar-row:hover .att-bar-fill,
+.att-bar-row:focus .att-bar-fill {
+  background-color: var(--att-bar-hover);
+}
+
+.att-bar-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--att-ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.att-bar-value small {
+  font-weight: 500;
+  color: var(--att-ink-2);
+}
+
+.att-near-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #92400e;
+  background-color: #fef3c7;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+@media (max-width: 560px) {
+  .att-bar-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .att-bar-track { grid-column: 1 / -1; grid-row: 2; }
+}
+
+/* ---------- Trend (SVG columns) ---------- */
+.att-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.att-svg .gridline { stroke: var(--att-grid); stroke-width: 1; }
+.att-svg .axis-text { fill: var(--att-axis); font-size: 11px; font-family: inherit; }
+.att-svg .col { fill: var(--att-bar); transition: fill 0.15s ease; }
+.att-svg .col-hit { fill: transparent; cursor: default; outline: none; }
+.att-svg .col-hit:hover + .col,
+.att-svg .col-hit:focus + .col { fill: var(--att-bar-hover); }
+.att-svg .end-label { fill: var(--att-ink); font-size: 11px; font-weight: 600; font-family: inherit; }
+
+/* ---------- Heatmap ---------- */
+.att-heat-wrap {
+  overflow-x: auto;
+}
+
+.att-heat {
+  border-collapse: separate;
+  border-spacing: 2px;
+  width: 100%;
+  min-width: 28rem;
+}
+
+.att-heat th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--att-ink-2);
+  padding: 0.25rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.att-heat th[scope="row"] {
+  text-align: right;
+  padding-right: 0.5rem;
+}
+
+.att-heat td {
+  height: 2.25rem;
+  min-width: 2.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  outline-offset: 1px;
+}
+
+.att-heat td.empty {
+  background-color: var(--heat-empty);
+  color: var(--att-axis);
+  font-weight: 400;
+}
+
+.att-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  font-size: 0.6875rem;
+  color: var(--att-ink-2);
+}
+
+.att-legend span.sw {
+  width: 1.25rem;
+  height: 0.6rem;
+  border-radius: 2px;
+}
+
+/* ---------- Table view (accessibility) ---------- */
+.att-table-toggle {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.att-table-toggle summary {
+  cursor: pointer;
+  color: #6c6fb0;
+  font-weight: 600;
+}
+
+.att-table-toggle table {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.att-table-toggle th,
+.att-table-toggle td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.att-table-toggle td.num,
+.att-table-toggle th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Tooltip ---------- */
+.att-tip {
+  position: fixed;
+  z-index: 80;
+  pointer-events: none;
+  max-width: 16rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--att-tip-ink);
+  background-color: var(--att-tip-bg);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.att-tip b {
+  display: block;
+  font-size: 0.8125rem;
+}
+
+.att-restricted {
+  font-size: 0.875rem;
+  color: #92400e;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
