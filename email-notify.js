@@ -9,8 +9,9 @@
                         emails a sign-up confirmation code
      password-reset  — courtesy notice after Cognito
                         emails a password-reset code
-     service-update  — a blessing/service request was
-                        scheduled or declined
+     service-update   — a blessing/service request was
+                         scheduled or declined
+     service-reminder — a scheduled booking is tomorrow
 
    Never blocks the caller: if the notifier is down
    or the request fails, this just logs a warning.
@@ -44,16 +45,29 @@ export const notifySignupCode = (to, name) => send('signup-code', { to, name });
 /** Courtesy email after startPasswordReset() — Cognito sends the actual code. */
 export const notifyPasswordReset = (to, name) => send('password-reset', { to, name });
 
+async function staffAuthToken() {
+  try {
+    const { fetchAuthSession } = await import('aws-amplify/auth');
+    return (await fetchAuthSession()).tokens?.idToken?.toString();
+  } catch { return undefined; } // not signed in — server will reject, which is correct
+}
+
 /**
  * A blessing/service request was scheduled or declined. Requires the
  * signed-in staff/admin's Cognito ID token (the server checks the group).
  */
 export async function notifyServiceUpdate({ to, name, serviceType, status, date, time, declineReason, location, contact, detailsLines }) {
   if (!to) return; // nothing to notify (e.g. no email on file for this requester)
-  let authToken;
-  try {
-    const { fetchAuthSession } = await import('aws-amplify/auth');
-    authToken = (await fetchAuthSession()).tokens?.idToken?.toString();
-  } catch { /* not signed in — server will reject, which is correct */ }
+  const authToken = await staffAuthToken();
   return send('service-update', { to, name, serviceType, status, date, time, declineReason, location, contact, detailsLines }, { authToken });
+}
+
+/**
+ * A scheduled booking falls tomorrow. Same staff-only gate as above — this
+ * is meant to be called from the admin Blessings page when it loads.
+ */
+export async function notifyServiceReminder({ to, name, serviceType, date, time, location }) {
+  if (!to) return;
+  const authToken = await staffAuthToken();
+  return send('service-reminder', { to, name, serviceType, date, time, location }, { authToken });
 }

@@ -19,7 +19,7 @@ import { client } from '../amplify-init.js';
 import { printReport, tableHtml, esc } from '../print-report.js';
 import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
-import { notifyServiceUpdate } from '../email-notify.js';
+import { notifyServiceUpdate, notifyServiceReminder } from '../email-notify.js';
 
 // Blessing records don't always carry an email (only walk-ins staff type one
 // in) — for parishioner-made requests it's folded into the Cognito "owner"
@@ -29,6 +29,7 @@ const recipientEmail = (r) => r?.email || (r?.owner || '').split('::')[1] || '';
 document.addEventListener('DOMContentLoaded', () => {
 
   const todayISO = new Date().toISOString().slice(0, 10);
+  const tomorrowISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   let upcoming = [];
   let requests = [];
@@ -74,6 +75,34 @@ document.addEventListener('DOMContentLoaded', () => {
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
 
+  // Day-before email reminders. Fires whenever this page loads/refreshes
+  // and finds a booking dated tomorrow that hasn't been reminded yet
+  // (tracked per-browser, so re-opening the page doesn't resend it) —
+  // there's no always-on server here to run this at a fixed time of night.
+  const REMINDED_KEY = 'sacradigit_reminders_sent';
+  function remindedSet() {
+    try { return new Set(JSON.parse(localStorage.getItem(REMINDED_KEY)) || []); } catch { return new Set(); }
+  }
+  function markReminded(key) {
+    const set = remindedSet();
+    set.add(key);
+    try { localStorage.setItem(REMINDED_KEY, JSON.stringify([...set])); } catch { /* private mode */ }
+  }
+  function sendDueReminders(records) {
+    const already = remindedSet();
+    records
+      .filter(r => r.status === 'scheduled' && r.date === tomorrowISO)
+      .forEach(r => {
+        const key = `${r.id}:${r.date}`;
+        if (already.has(key)) return;
+        markReminded(key);
+        notifyServiceReminder({
+          to: recipientEmail(r), name: r.requesterName, serviceType: r.type,
+          date: formatLongDate(r.date), time: r.time, location: r.location || locationFor(r.type),
+        });
+      });
+  }
+
   function blessingIconSvg() {
     return `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`;
   }
@@ -96,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
   client.models.Blessing.observeQuery().subscribe({
     next: ({ items }) => {
       allRecords = items;
+      sendDueReminders(items);
       if (walkIn) walkIn.refresh();
       if (reschedulePicker) reschedulePicker.refresh(allRecords);
       upcoming = [];

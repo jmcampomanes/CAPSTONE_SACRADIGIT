@@ -94,6 +94,13 @@ const KIND_BUILDERS = {
     subject: 'SacraDigit password reset requested',
     text: `Hi ${name || 'there'},\n\nWe just sent a 6-digit code to this email address to reset your SacraDigit password.\n\nPlease check your inbox (and spam folder) for a message from AWS Cognito and enter that code on the reset screen. If you didn't request this, you can ignore this message — your password will stay the same.\n\n— SacraDigit`,
   }),
+  'service-reminder': ({ name, serviceType, date, time, location }) => {
+    const service = serviceType || 'service request';
+    return {
+      subject: `Reminder: your ${service} is tomorrow`,
+      text: `Hi ${name || 'there'},\n\nJust a reminder — your ${service} is scheduled for tomorrow, ${date || ''}${time ? ` at ${time}` : ''}.${location ? `\n\nLocation: ${location}` : ''}\n\nSee you then! If you need to reschedule or cancel, please contact the parish office.\n\n— SacraDigit`,
+    };
+  },
   'service-update': ({ name, serviceType, status, date, time, declineReason, location, contact, detailsLines }) => {
     const who = name || 'there';
     const service = serviceType || 'service request';
@@ -132,7 +139,7 @@ app.post('/notify-parishioner', async (req, res) => {
     return res.status(429).json({ success: false, error: 'Too many requests — please slow down' });
   }
 
-  if (kind === 'service-update') {
+  if (kind === 'service-update' || kind === 'service-reminder') {
     try { await requireStaff(req); }
     catch { return res.status(403).json({ success: false, error: 'Staff sign-in required' }); }
   }
