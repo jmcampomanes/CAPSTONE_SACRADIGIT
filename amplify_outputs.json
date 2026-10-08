@@ -712,6 +712,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "cancelReason": {
+              "name": "cancelReason",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "createdAt": {
               "name": "createdAt",
               "isArray": false,
@@ -3693,7 +3700,9 @@
           "values": [
             "pending",
             "scheduled",
-            "completed"
+            "completed",
+            "cancelled",
+            "rejected"
           ]
         },
         "FacilityBookingStatus": {
