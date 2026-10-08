@@ -2940,6 +2940,13 @@
               "isRequired": true,
               "attributes": []
             },
+            "owner": {
+              "name": "owner",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "createdAt": {
               "name": "createdAt",
               "isArray": false,
@@ -2995,7 +3002,7 @@
                     "operations": [
                       "read"
                     ],
-                    "identityClaim": "cognito:username"
+                    "identityClaim": "sub"
                   },
                   {
                     "groupClaim": "cognito:groups",
