@@ -46,6 +46,7 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="sacradigit-css/admin-shell.css" />
   <link rel="stylesheet" href="sacradigit-css/dashboard.css" />
+  <link rel="stylesheet" href="sacradigit-css/mass-checkin.css" />
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
@@ -213,6 +214,9 @@
           </div>
         </div>
 
+        <!-- "Check-in is open" — reopen the QR code from here (checkin-shortcut.js) -->
+        <div id="checkin-shortcut" class="ci-shortcut hidden" aria-live="polite"></div>
+
         <!-- Stat cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
@@ -363,5 +367,6 @@
   <script type="module" src="sacred-art.js"></script>
   <script type="module" src="dashboard.js"></script>
   <script type="module" src="dashboard-data.js"></script>
+  <script type="module" src="checkin-shortcut.js"></script>
 </body>
 </html>

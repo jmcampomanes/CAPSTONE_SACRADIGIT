@@ -330,3 +330,80 @@
 @media (prefers-reduced-motion: reduce) {
   .watch-live-dot { animation: none; }
 }
+
+/* ---------- Check In at Mass card (checkin-card.js) ---------- */
+.ci-card {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  padding: 1rem 1.15rem;
+  background-color: #ffffff;
+  border: 2px solid #8b8fc7;
+  border-radius: 1rem;
+  box-shadow: 0 4px 14px rgba(30, 42, 74, 0.08);
+}
+
+.ci-card.hidden {
+  display: none;
+}
+
+.ci-card-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  background-color: #f5f5fc;
+  flex-shrink: 0;
+}
+
+.ci-card-icon.done {
+  color: #ffffff;
+  background-color: #16a34a;
+  font-weight: 700;
+}
+
+.ci-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ci-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e2a4a;
+}
+
+.ci-card-sub {
+  font-size: 0.8125rem;
+  color: #4b5563;
+  margin-top: 0.15rem;
+}
+
+.ci-card-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  max-width: 22rem;
+}
+
+.ci-card-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.25rem !important;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.ci-card-msg {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.ci-card-msg.err { color: #b91c1c; }
+.ci-card-msg.ok { color: #15803d; }

@@ -11,8 +11,10 @@ import { currentUser } from '../auth.js';
 import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../weekly-mass-schedule.js';
 import { watchLivestream } from '../livestream-status.js';
 import { mountBadgeStrip } from './faith-journey-widgets.js';
+import { mountCheckInCard } from './checkin-card.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  mountCheckInCard(document.getElementById('checkin-card'));
 
   mountBadgeStrip(document.getElementById('fj-badge-strip'));
 

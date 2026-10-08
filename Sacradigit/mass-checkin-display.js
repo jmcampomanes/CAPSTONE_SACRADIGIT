@@ -10,7 +10,7 @@
 import QRCode from 'qrcode';
 import {
   checkInReady, startSession, closeSession, watchSessionCheckIns,
-  rememberedCode, checkInUrl, formatCode, massStart,
+  codeFor, rotateCode, checkInUrl, formatCode, massStart,
 } from '../mass-checkin.js';
 
 const escapeHtml = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
@@ -35,7 +35,7 @@ export function initCheckInDisplay({ showToast }) {
             <li>Point it at the QR code</li>
             <li>Tap the link to check in</li>
           </ol>
-          <p class="ci-or">No camera? Go to <strong>My Badges</strong> in the SacraDigit app and enter:</p>
+          <p class="ci-or">No camera? Open <strong>SacraDigit</strong> — the check-in box is right on your dashboard. Enter:</p>
           <p class="ci-code" id="ci-code"></p>
         </div>
         <div class="ci-right">
@@ -129,15 +129,24 @@ export function initCheckInDisplay({ showToast }) {
         showToast(err.message || "Couldn't start check-in.", true);
       }
     },
-    /** Re-open the display for a session started on this device. */
+    /** Show an open session's QR code and code again — on any staff device, any number of times. */
     async resume(sess) {
-      const code = rememberedCode(sess.id);
-      if (!code) {
-        showToast('This check-in was started on another device. Close it and start a new one to show a QR code here.', true);
+      try {
+        let code = await codeFor(sess.id);
+        if (!code) {
+          // Opened before codes were shared between devices: make a new one.
+          if (!confirm('This check-in’s code isn’t saved for other devices. Show a new code? Any screen still showing the old code will need this new one.')) return false;
+          const fresh = await rotateCode(sess.id);
+          sess = fresh.session || sess;
+          code = fresh.code;
+        }
+        await show(sess, code);
+        return true;
+      } catch (err) {
+        console.error('Failed to reopen check-in:', err);
+        showToast(err.message || "Couldn't reopen check-in.", true);
         return false;
       }
-      await show(sess, code);
-      return true;
     },
   };
 }

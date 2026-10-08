@@ -206,8 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const m = currentDateMasses[parseInt(ciBtn.dataset.index, 10)];
       if (!m) return;
       const open = ciBtn.dataset.session && openCheckIns.find(s => s.id === ciBtn.dataset.session);
-      if (open && await checkInDisplay.resume(open)) return;
-      if (open) return; // started elsewhere — resume() already explained
+      if (open) { await checkInDisplay.resume(open); return; } // reopen on any device, any time
       ciBtn.disabled = true;
       await checkInDisplay.start({
         id: m.id,

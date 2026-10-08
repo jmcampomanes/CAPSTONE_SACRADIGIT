@@ -77,7 +77,7 @@ const HELP_CONTENT = {
     title: 'My Badges',
     intro: 'Your Faith Journey — badges for coming to Mass, giving, and parish life.',
     steps: [
-      'At Mass, scan the QR code on the church screen with your phone camera, or type the code shown under it in “Check In at Mass”.',
+      'At Mass, scan the QR code on the church screen with your phone camera — or type the 6-character code in the “Check In at Mass” box, which also appears on your Dashboard while a Mass is open. It checks you in as soon as all 6 characters are in.',
       'Each check-in counts toward badges like Faithful Month, Steadfast (Sundays in a row), Simbang Gabi, and Holy Week Pilgrim. Saturday evening Mass counts for Sunday.',
       'Giving badges count how regularly you give — any amount. Amounts are never shown to anyone.',
       'Faithful Givers lists parishioners who have given every month for 3 months or more. Anonymous gifts never appear, and you can hide your name with the switch below the list.',

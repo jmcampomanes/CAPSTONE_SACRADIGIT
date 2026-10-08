@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 43 stylesheets.
+   Built by tools/build-dark-theme.mjs from 44 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -1124,6 +1124,19 @@
 }
 :root[data-theme="dark"] .cloud-box-value {
     color: #a3b3d7
+}
+:root[data-theme="dark"] .ci-shortcut {
+    background-color: #1a3d28;
+    border: 1px solid #2e6b43
+}
+:root[data-theme="dark"] .ci-shortcut-icon {
+    color: #8beeb0
+}
+:root[data-theme="dark"] .ci-shortcut-title {
+    color: #94e5b4
+}
+:root[data-theme="dark"] .ci-shortcut-sub {
+    color: #92e7b2
 }
 /*  from Sacradigit/sacradigit-css/digital-archives.css  */
 :root[data-theme="dark"] .stat-icon-green {
@@ -2812,6 +2825,24 @@
     background: #1a2131;
     color: #ee8c8c
 }
+:root[data-theme="dark"] .ci-card {
+    background-color: #1a2131
+}
+:root[data-theme="dark"] .ci-card-icon {
+    background-color: #121827
+}
+:root[data-theme="dark"] .ci-card-title {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .ci-card-sub {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .ci-card-msg.err {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .ci-card-msg.ok {
+    color: #8decb1
+}
 /*  from user/user-css/user-donations.css  */
 :root[data-theme="dark"] .req-hero-icon {
     border: 1px solid rgba(44, 53, 72, 0.18);
@@ -4453,6 +4484,50 @@
 }
 :root[data-theme="dark"] .dropzone-hint {
     color: #8b93a3
+}
+/*  from Sacraitech/itech-css/service-schedules.css  */
+:root[data-theme="dark"] .ss-intro {
+    background: #1a2131;
+    border: 1px solid #2c3548;
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .ss-category {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .ss-card {
+    background: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .ss-card-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .badge-teal {
+    color: #8bd9ee
+}
+:root[data-theme="dark"] .ss-label {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .ss-day {
+    border: 1px solid #2c3548;
+    background: #1a2131;
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .ss-time {
+    background: #242c3e;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .ss-time-remove {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .ss-time-remove:hover {
+    background: #3f1818;
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .ss-empty {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .ss-card-foot {
+    border-top: 1px solid #454954
 }
 /*  from Sacramedia/media-css/content-calendar.css  */
 :root[data-theme="dark"] .row-action {

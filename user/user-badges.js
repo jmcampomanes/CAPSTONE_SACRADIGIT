@@ -18,7 +18,7 @@ import { client } from '../amplify-init.js';
 import { loadFaithfulGivers } from '../public-data.js';
 import { currentUserName, currentUser } from '../auth.js';
 import { computeBadges, badgeIconSvg, BADGES, parishionerKey, monthStreak, streakLabel } from '../badges.js';
-import { checkInReady, preferencesReady, submitCheckIn, listCheckInsFor, optedOutKeys, getPreference, setShowOnHonorRoll, formatCode, normalizeCode } from '../mass-checkin.js';
+import { checkInReady, preferencesReady, submitCheckIn, listCheckInsFor, optedOutKeys, getPreference, setShowOnHonorRoll, formatCode, normalizeCode, checkInErrorMessage } from '../mass-checkin.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -193,9 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
      Check-in
   ------------------------------------------ */
   const codeInput = $('checkin-code');
+  // Uppercase as they type, dash after 3 — and check in by itself at 6 characters
   codeInput.addEventListener('input', () => {
     const c = normalizeCode(codeInput.value).slice(0, 6);
-    codeInput.value = c.length > 3 ? formatCode(c.padEnd(6, ' ')).trim() : c;
+    codeInput.value = c.length > 3 ? `${c.slice(0, 3)}-${c.slice(3)}` : c;
+    if (c.length === 6 && !$('checkin-submit').disabled) doCheckIn({ code: c });
   });
 
   $('checkin-form').addEventListener('submit', (e) => {
@@ -221,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('Check-in failed:', err);
-      showResult({ ok: false, message: 'Check-in didn’t go through. Please check your connection and try again.' });
+      showResult({ ok: false, message: checkInErrorMessage(err) });
     } finally {
       btn.disabled = false;
       btn.textContent = 'Check In';

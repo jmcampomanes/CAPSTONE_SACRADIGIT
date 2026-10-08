@@ -148,7 +148,8 @@ $('btn-check').addEventListener('click', async () => {
     const trackedPaths = new Set([...tracked.map(f => f.url), ...records.map(p => p.fileURL).filter(u => u && !isExternal(u))]);
 
     const missing = tracked.filter(f => !objects.has(f.url));
-    const orphans = items.filter(o => !trackedPaths.has(o.path) && !o.path.endsWith('/'));
+    // cloudFiles/checkin-codes/ holds Mass check-in codes (../mass-checkin.js), not uploads
+    const orphans = items.filter(o => !trackedPaths.has(o.path) && !o.path.endsWith('/') && !o.path.startsWith('cloudFiles/checkin-codes/'));
     const orphanBytes = orphans.reduce((s, o) => s + (o.size || 0), 0);
 
     const tile = (value, label, bad) => `<div class="check-tile ${bad ? 'bad' : 'good'}"><p class="check-tile-value">${value}</p><p class="check-tile-label">${label}</p></div>`;
