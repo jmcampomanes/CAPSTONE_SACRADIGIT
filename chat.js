@@ -75,7 +75,9 @@ export async function markRead(messages, side) {
     .catch(err => console.error('Failed to mark message read:', err))));
 }
 
-/** Sends a message. The office passes the conversation's `owner` so the parishioner can read the reply. */
+/** Sends a message. `owner` must be the parishioner's own Cognito username (owner-auth field) —
+ *  the parishioner passes their own on every message; the office passes the conversation's
+ *  existing `owner` on replies so the parishioner can still read them. */
 export async function sendMessage({ threadId, body, fromOffice, senderName, parishionerName, owner }) {
   const text = (body || '').trim();
   if (!text) throw new Error('Type a message first.');
@@ -89,7 +91,7 @@ export async function sendMessage({ threadId, body, fromOffice, senderName, pari
     readByOffice: fromOffice,
     readByParishioner: !fromOffice,
   };
-  if (fromOffice && owner) input.owner = owner;
+  if (owner) input.owner = owner;
   const result = await client.models.ChatMessage.create(input);
   if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
   return result.data;

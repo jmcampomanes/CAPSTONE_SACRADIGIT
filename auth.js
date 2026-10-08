@@ -88,7 +88,7 @@ function roleFromGroups(groups) {
   return ROLE_ORDER.find(r => groups.includes(r)) || 'parishioner';
 }
 
-/** { sub, email, firstName, lastName, name, groups, role } or null — synchronous (cached). */
+/** { sub, username, email, firstName, lastName, name, groups, role } or null — synchronous (cached). */
 export function currentUser() {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || null; } catch { return null; }
 }
@@ -126,6 +126,9 @@ export async function loadUser() {
     const email = attrs.email || payload.username || '';
     const user = {
       sub: payload.sub,
+      // Cognito's "cognito:username" claim (same value AppSync reads for
+      // identityClaim('cognito:username') owner-auth checks, e.g. ChatMessage).
+      username: payload.username,
       email,
       firstName,
       lastName,
