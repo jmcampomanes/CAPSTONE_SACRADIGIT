@@ -3257,7 +3257,7 @@
                       "read",
                       "update"
                     ],
-                    "identityClaim": "cognito:username"
+                    "identityClaim": "sub"
                   },
                   {
                     "groupClaim": "cognito:groups",

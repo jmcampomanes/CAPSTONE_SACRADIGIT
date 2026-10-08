@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fromOffice: false,
         senderName: me.name || 'Parishioner',
         parishionerName: me.name || 'Parishioner',
-        owner: me.username,
+        owner: me.sub,
       });
       composer.reset();
       list.scrollTop = list.scrollHeight;

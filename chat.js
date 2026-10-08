@@ -75,7 +75,7 @@ export async function markRead(messages, side) {
     .catch(err => console.error('Failed to mark message read:', err))));
 }
 
-/** Sends a message. `owner` must be the parishioner's own Cognito username (owner-auth field) —
+/** Sends a message. `owner` must be the parishioner's own Cognito sub (owner-auth field) —
  *  the parishioner passes their own on every message; the office passes the conversation's
  *  existing `owner` on replies so the parishioner can still read them. */
 export async function sendMessage({ threadId, body, fromOffice, senderName, parishionerName, owner }) {
