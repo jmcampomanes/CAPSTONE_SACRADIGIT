@@ -21,7 +21,7 @@ import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
 import { currentUserName } from '../auth.js';
 import { isPrepKey, checklistHtml, progressChipHtml } from '../sacrament-prep.js';
 import { formatFullName, isNameEmpty } from '../name-utils.js';
-import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule } from '../service-schedule.js';
+import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -73,6 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const badgeClass  = { pending: 'badge-amber', scheduled: 'badge-green', declined: 'badge-red', completed: 'badge-blue' };
   const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+
+  // A scheduled request whose date has passed already happened — nothing ever
+  // flips it to 'completed' in the database, so it's shown as Completed here
+  // instead of sitting as "Scheduled" forever.
+  const effectiveStatus = (r) => isPastSchedule(r) ? 'completed' : r.status;
 
   let myRequests = [];
 
@@ -129,8 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderStats() {
     document.getElementById('stat-total').textContent     = myRequests.length;
     document.getElementById('stat-pending').textContent   = myRequests.filter(r => r.status === 'pending').length;
-    document.getElementById('stat-approved').textContent  = myRequests.filter(r => r.status === 'scheduled').length;
-    document.getElementById('stat-completed').textContent = myRequests.filter(r => r.status === 'completed').length;
+    document.getElementById('stat-approved').textContent  = myRequests.filter(r => effectiveStatus(r) === 'scheduled').length;
+    document.getElementById('stat-completed').textContent = myRequests.filter(r => effectiveStatus(r) === 'completed').length;
   }
 
   function renderList() {
@@ -157,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div>${scheduleChip}${r.status === 'declined' ? '' : progressChipHtml(r)}</div>
         </div>
         <div class="svc-row-actions">
-          <span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span>
+          <span class="badge ${badgeClass[effectiveStatus(r)] || 'badge-gray'}">${statusLabel[effectiveStatus(r)] || effectiveStatus(r)}</span>
           <button type="button" class="btn-view-details" data-id="${r.id}">View ›</button>
         </div>
       </div>`;
@@ -187,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
     modalRescheduleBtn.classList.toggle('hidden', !(r.status === 'pending' || canReschedule(r)));
 
     document.getElementById('detail-modal-title').textContent = `${svc.name} Request`;
-    modalStatusBadge.textContent = statusLabel[r.status] || r.status;
-    modalStatusBadge.className = `badge ${badgeClass[r.status] || 'badge-gray'}`;
+    modalStatusBadge.textContent = statusLabel[effectiveStatus(r)] || effectiveStatus(r);
+    modalStatusBadge.className = `badge ${badgeClass[effectiveStatus(r)] || 'badge-gray'}`;
     modalSubmittedDate.textContent = `Submitted ${fmtDate(r.createdAt)}`;
 
     modalDetails.innerHTML = Object.entries(details)

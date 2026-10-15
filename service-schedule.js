@@ -150,6 +150,15 @@ export function canReschedule(record, todayIso = toLocalISODate()) {
   return !!record && record.status === 'scheduled' && !!record.date && record.date > todayIso;
 }
 
+/** True once a booked slot's date has passed — the service already happened,
+    but nothing ever flips its status to 'completed' (that's a manual, rarely-used
+    state in this model), so screens that group/label by status treat a past
+    'scheduled' record as effectively completed instead of leaving it stuck as
+    upcoming forever. */
+export function isPastSchedule(record, todayIso = toLocalISODate()) {
+  return !!record && record.status === 'scheduled' && !!record.date && record.date < todayIso;
+}
+
 export function toLocalISODate(d = new Date()) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');

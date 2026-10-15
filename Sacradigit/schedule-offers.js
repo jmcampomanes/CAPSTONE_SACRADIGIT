@@ -19,7 +19,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl, canReschedule } from '../service-schedule.js';
+import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl, canReschedule, isPastSchedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
 import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithChecklistItem } from '../sacrament-prep.js';
 import { currentUserName } from '../auth.js';
@@ -50,6 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const statusLabel = { pending: 'Scheduled', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
   const badgeClass = { Scheduled: 'badge-green', Cancelled: 'badge-red', Completed: 'badge-blue' };
+
+  // A scheduled booking whose date has passed already happened — nothing ever
+  // flips it to 'completed' in the database, so it's shown as Completed here
+  // instead of sitting as "Scheduled" forever.
+  const effectiveStatus = (o) => isPastSchedule(o, todayISO) ? 'completed' : o.status;
 
   // A booking the office can still cancel: scheduled and not yet past.
   const isOpenBooking = (o) => o.status === 'pending' || (o.status === 'scheduled' && (o.date || '') >= todayISO);
@@ -172,8 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }).length;
 
     document.getElementById('stat-total').textContent    = offers.length;
-    document.getElementById('stat-approved').textContent  = offers.filter(o => statusLabel[o.status] === 'Scheduled').length;
-    document.getElementById('stat-completed').textContent = offers.filter(o => o.status === 'completed').length;
+    document.getElementById('stat-approved').textContent  = offers.filter(o => statusLabel[effectiveStatus(o)] === 'Scheduled').length;
+    document.getElementById('stat-completed').textContent = offers.filter(o => effectiveStatus(o) === 'completed').length;
     document.getElementById('stat-week').textContent     = weekCount;
 
     updateActiveStatCard();
@@ -231,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateActiveStatCard();
 
     const filtered = offers.filter(o => {
-      const label = statusLabel[o.status] || o.status;
+      const label = statusLabel[effectiveStatus(o)] || effectiveStatus(o);
       const matchQuery  = !query || (o.requesterName || '').toLowerCase().includes(query) || (o.type || '').toLowerCase().includes(query);
       const matchType    = !typeVal   || o.type === typeVal;
       const matchStatus  = !statusVal || label  === statusVal;
@@ -251,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     offersEmpty.classList.add('hidden');
 
     tbody.innerHTML = sorted.map(o => {
-      const label = statusLabel[o.status] || o.status;
+      const label = statusLabel[effectiveStatus(o)] || effectiveStatus(o);
 
       let actionsHtml = '';
       if (isOpenBooking(o)) {
@@ -542,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!o) return;
     viewTargetId = id;
 
-    const label = statusLabel[o.status] || o.status;
+    const label = statusLabel[effectiveStatus(o)] || effectiveStatus(o);
     const details = parseDetails(o);
 
     viewType.textContent = o.type || 'Service Request';

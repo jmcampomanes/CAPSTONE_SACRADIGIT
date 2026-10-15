@@ -6,9 +6,10 @@
    The "names" field is a.json(), so it's stringified
    before sending and parsed back when reading.
 
-   Records are never deleted: Cancel (scheduled) or
-   Reject (pending) sets status 'cancelled' / 'rejected'
-   with a cancelReason, so the log keeps them.
+   Records are never deleted: Cancel sets status
+   'cancelled' with a cancelReason, so the log keeps
+   them. Every intention is 'scheduled' as soon as
+   it's logged — there's no pending/approval step.
    Booking, changes and cancelling are only allowed up to
    the day before the Mass; from the Mass day on, Edit
    can only change the status (e.g. mark Completed).
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Local date (UTC would still say "yesterday" before 8 AM in the Philippines)
   const localTodayISO = () => new Date().toLocaleDateString('en-CA');
 
-  const CLOSED_STATUSES = ['cancelled', 'rejected'];
+  const CLOSED_STATUSES = ['cancelled'];
   const isClosed = (it) => CLOSED_STATUSES.includes(it.status);
   // The Mass day has arrived (or passed): no more changes except status.
   const isLocked = (it) => !!it.massDate && it.massDate <= localTodayISO();
@@ -51,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const PAGE_SIZE = 8;
   let currentPage = 1;
 
-  const badgeClass = { pending: 'badge-amber', scheduled: 'badge-green', completed: 'badge-blue', cancelled: 'badge-red', rejected: 'badge-red' };
-  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled', rejected: 'Rejected' };
+  const badgeClass = { scheduled: 'badge-green', completed: 'badge-blue', cancelled: 'badge-red' };
+  const statusLabel = { scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
 
   /* Which of the 3 Reader's Sheet categories each intention type
      belongs to. Shared by the Add/Edit type picker (which uses it
@@ -259,43 +260,22 @@ document.addEventListener('DOMContentLoaded', () => {
     findInput.focus();
   });
 
-  /* ------------------------------------------
-     STAT CARDS AS QUICK FILTERS
-     Only "Pending Mass Assignment" maps to a
-     single status value, so it's the only stat
-     card wired as a clickable quick filter —
-     "Total Intentions This Week" and "Total
-     Offerings" don't map to one status and stay
-     plain, non-interactive stat cards.
-
-     NOTE: declared above the observeQuery subscription below, since
-     its callback (via renderTable -> updateActiveStatCard) can fire
-     synchronously on first subscribe and reads statCardsByStatus.
-  ------------------------------------------ */
-  const statCardsByStatus = [
-    { card: document.getElementById('stat-pending').closest('.stat-card'), status: 'pending' },
-  ];
-
-  statCardsByStatus.forEach(({ card, status }) => {
-    card.classList.add('stat-card-clickable');
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    const activate = () => {
-      searchInput.value = '';
-      statusFilter.value = status;
-      currentPage = 1;
-      renderTable();
-    };
-    card.addEventListener('click', activate);
-    card.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
-    });
-  });
-
-  function updateActiveStatCard() {
-    statCardsByStatus.forEach(({ card, status }) => {
-      card.classList.toggle('stat-card-active', statusFilter.value === status);
-    });
+  // Once its Mass day arrives there's nothing left to do but mark it
+  // Completed — this does that automatically instead of waiting for an
+  // admin to open Edit and change the status by hand. Runs whenever this
+  // page loads/refreshes (there's no always-on server here to run it on
+  // a schedule); autoCompleting tracks ids already sent so a burst of
+  // observeQuery updates can't fire the same update twice.
+  const autoCompleting = new Set();
+  function autoCompletePastIntentions(items) {
+    items
+      .filter(it => it.status === 'scheduled' && isLocked(it) && !autoCompleting.has(it.id))
+      .forEach(it => {
+        autoCompleting.add(it.id);
+        client.models.MassIntention.update({ id: it.id, status: 'completed' })
+          .catch(err => console.error('Failed to auto-complete intention:', it.id, err))
+          .finally(() => autoCompleting.delete(it.id));
+      });
   }
 
   /* --- Live data --- */
@@ -305,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderStats();
       renderTable();
       renderSheetOptions();
+      autoCompletePastIntentions(items);
     },
     error: (err) => {
       console.error('Failed to load intentions:', err);
@@ -325,7 +306,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('stat-total-week').textContent = thisWeek.length;
-    document.getElementById('stat-pending').textContent = intentions.filter(i => i.status === 'pending').length;
 
     const totalOfferings = thisWeek.filter(i => !isClosed(i)).reduce((sum, i) => sum + (i.offering || 0), 0);
     document.getElementById('stat-offerings').textContent = formatPeso(totalOfferings);
@@ -338,13 +318,13 @@ document.addEventListener('DOMContentLoaded', () => {
       : '—';
 
     const names = getNames(it);
-    // Cancel a scheduled intention, Reject one still pending — only up to the day before the Mass.
-    const canCancel = (it.status === 'pending' || it.status === 'scheduled') && !isLocked(it);
+    // Cancel a scheduled intention — only up to the day before the Mass.
+    const canCancel = it.status === 'scheduled' && !isLocked(it);
     const actionHtml = `
       <div class="row-actions">
         ${isClosed(it) ? '' : `<button type="button" class="row-edit" data-id="${it.id}">Edit</button>`}
         <button type="button" class="row-view" data-id="${it.id}">View</button>
-        ${canCancel ? `<button type="button" class="row-remove" data-id="${it.id}">${it.status === 'pending' ? 'Reject' : 'Cancel'}</button>` : ''}
+        ${canCancel ? `<button type="button" class="row-remove" data-id="${it.id}">Cancel</button>` : ''}
       </div>
     `;
 
@@ -370,7 +350,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderTable() {
-    updateActiveStatCard();
     const filtered = getFilteredIntentions();
 
     logCount.textContent = `${filtered.length} intention${filtered.length === 1 ? '' : 's'}`;
@@ -651,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setEditLocked(false);
     document.getElementById('add-donor').value = '';
     document.getElementById('add-offering').value = '';
-    document.getElementById('add-status').value = 'pending';
+    document.getElementById('add-status').value = 'scheduled';
     resetMassDatePicker(null);
     document.getElementById('add-mass-time').value = '';
     addedIntentions = [];
@@ -996,7 +975,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><p class="so-detail-label">Mass Date Assigned</p><p class="so-detail-value">${it.massDate ? `${formatShortDate(it.massDate)}${it.massTime ? ' · ' + it.massTime : ''}` : '—'}</p></div>
         ${isClosed(it) ? `
         <div class="col-span-2" style="grid-column: 1 / -1;">
-          <p class="so-detail-label">${it.status === 'rejected' ? 'Rejection' : 'Cancellation'} Reason</p>
+          <p class="so-detail-label">Cancellation Reason</p>
           <p class="so-detail-value">${escapeHtml(it.cancelReason) || 'No reason given'}</p>
         </div>` : ''}
         ${it.startTime && it.endTime ? `
@@ -1017,26 +996,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* --- Cancel / Reject Intention Modal ---
-     A pending intention is Rejected, a scheduled one Cancelled. Either
-     way the record stays (status + cancelReason) for proper keeping. */
+  /* --- Cancel Intention Modal ---
+     The record stays (status 'cancelled' + cancelReason) for proper keeping. */
   const removeModal = document.getElementById('remove-modal');
   const removeTargetName = document.getElementById('remove-target-name');
   const removeReason = document.getElementById('remove-reason');
   const removeSubmitBtn = document.getElementById('remove-submit');
   let removeTargetId = null;
-  let removeNextStatus = 'cancelled';
+  const removeNextStatus = 'cancelled';
 
   function openRemoveModal(id) {
     const it = intentions.find(x => x.id === id);
     if (!it) return;
     if (isLocked(it)) { showToast('Intentions can only be cancelled up to the day before the Mass.', true); return; }
     removeTargetId = id;
-    removeNextStatus = it.status === 'pending' ? 'rejected' : 'cancelled';
-    const verb = removeNextStatus === 'rejected' ? 'Reject' : 'Cancel';
-    document.getElementById('remove-title').textContent = `${verb} Intention`;
-    document.getElementById('remove-verb').textContent = `${verb} the intention for`;
-    removeSubmitBtn.textContent = `${verb} Intention`;
+    document.getElementById('remove-title').textContent = 'Cancel Intention';
+    document.getElementById('remove-verb').textContent = 'Cancel the intention for';
+    removeSubmitBtn.textContent = 'Cancel Intention';
     removeTargetName.textContent = it.donor;
     removeReason.value = '';
     removeReason.classList.remove('border-red-400');

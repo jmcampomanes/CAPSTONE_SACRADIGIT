@@ -17,7 +17,7 @@
 
 import { client } from '../amplify-init.js';
 import { printReport, tableHtml, esc } from '../print-report.js';
-import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule } from '../service-schedule.js';
+import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
 import { notifyServiceUpdate, notifyServiceReminder } from '../email-notify.js';
 
@@ -140,7 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cancelled = [];
 
       items.forEach(b => {
-        if (b.status === 'scheduled') upcoming.push(b);
+        // A scheduled blessing whose date has passed already happened — nothing
+        // ever flips it to 'completed' in the database, so it's treated as
+        // completed here instead of sitting in Upcoming forever.
+        if (b.status === 'scheduled') (isPastSchedule(b, todayISO) ? completed : upcoming).push(b);
         else if (b.status === 'pending') requests.push(b);
         else if (b.status === 'completed') completed.push(b);
         else if (b.status === 'declined') cancelled.push(b); // cancelled by the parish or the parishioner

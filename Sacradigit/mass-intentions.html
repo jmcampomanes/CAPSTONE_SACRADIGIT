@@ -229,7 +229,7 @@
         <div id="panel-log" class="mi-panel active space-y-5">
 
           <!-- Stat boxes -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             <div class="stat-card">
               <div class="flex items-start justify-between mb-3">
@@ -240,17 +240,6 @@
               </div>
               <p class="stat-value" id="stat-total-week">0</p>
               <p class="stat-sub">submitted by donors</p>
-            </div>
-
-            <div class="stat-card">
-              <div class="flex items-start justify-between mb-3">
-                <p class="stat-label">Pending Mass Assignment</p>
-                <div class="stat-icon stat-icon-amber">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-              </div>
-              <p class="stat-value" id="stat-pending">0</p>
-              <p class="stat-sub">awaiting a mass date</p>
             </div>
 
             <div class="stat-card">
@@ -281,11 +270,9 @@
             </select>
             <select id="status-filter" class="filter-select">
               <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
-              <option value="rejected">Rejected</option>
             </select>
             <button id="btn-clear-filters" type="button" class="btn-filter">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -345,7 +332,7 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-12 0v4h12v-4m-12 0h12"/></svg>
               Print All Masses for This Day
             </button>
-            <p class="sheet-picker-note" id="sheet-day-note">Every Mass that day on its own page, in large type, ready to read at the altar. Cancelled and rejected intentions are left out.</p>
+            <p class="sheet-picker-note" id="sheet-day-note">Every Mass that day on its own page, in large type, ready to read at the altar. Cancelled intentions are left out.</p>
           </div>
 
           <!-- Mass picker -->
@@ -451,7 +438,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <p id="add-locked-note" class="mi-locked-note hidden">This Mass is today or already past, so only the status can be changed (e.g. mark it Completed).</p>
+        <p id="add-locked-note" class="mi-locked-note hidden">This Mass is today or already past, so it's marked Completed automatically — only the status can still be changed here, if something needs correcting.</p>
         <div class="grid grid-cols-2 gap-3">
           <div class="col-span-2">
             <label class="form-label" for="add-donor">Donor Name</label>
@@ -482,7 +469,6 @@
           <div>
             <label class="form-label" for="add-status">Status</label>
             <select id="add-status" class="form-input">
-              <option value="pending">Pending</option>
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
             </select>
@@ -548,8 +534,8 @@
     </div>
   </div>
 
-  <!-- ========== CANCEL / REJECT INTENTION MODAL ==========
-       Keeps the record (status 'cancelled' or 'rejected' + cancelReason)
+  <!-- ========== CANCEL INTENTION MODAL ==========
+       Keeps the record (status 'cancelled' + cancelReason)
        instead of deleting it. -->
   <div id="remove-modal" class="modal-overlay hidden">
     <div class="modal-card">

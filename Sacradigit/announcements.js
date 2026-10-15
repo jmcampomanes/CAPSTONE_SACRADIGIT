@@ -288,6 +288,15 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
+  // getPostStatus() is computed from Date.now(), but renderGrid() otherwise
+  // only re-runs on a database change or a tab click — so a post that
+  // crosses its End Date while this page just sits open (no edits by
+  // anyone) stays in Active until something else happens to trigger a
+  // re-render. Re-check once a minute, and right away when the tab comes
+  // back into focus after being away a while.
+  setInterval(renderGrid, 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) renderGrid(); });
+
 
   /* ------------------------------------------
      1. RENDER — Announcement card grid

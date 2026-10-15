@@ -14,6 +14,7 @@
 
 import { client } from '../amplify-init.js';
 import { currentUserName } from '../auth.js';
+import { isPastSchedule } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -78,7 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
       declined = [];
 
       mine.forEach(b => {
-        if (b.status === 'scheduled') upcoming.push(b);
+        // A scheduled blessing whose date has passed already happened — nothing
+        // ever flips it to 'completed' in the database, so it's treated as
+        // completed here instead of sitting in Upcoming forever.
+        if (b.status === 'scheduled') (isPastSchedule(b, todayISO) ? completed : upcoming).push(b);
         else if (b.status === 'pending') requests.push(b);
         else if (b.status === 'completed') completed.push(b);
         else if (b.status === 'declined') declined.push(b);

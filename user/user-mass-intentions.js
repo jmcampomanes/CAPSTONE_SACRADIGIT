@@ -39,8 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let myIntentions = [];
 
-  const badgeClass = { pending: 'badge-amber', scheduled: 'badge-green', completed: 'badge-blue', cancelled: 'badge-red', rejected: 'badge-red' };
-  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled', rejected: 'Rejected' };
+  const badgeClass = { scheduled: 'badge-green', completed: 'badge-blue', cancelled: 'badge-red' };
+  const statusLabel = { scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
 
   const list          = document.getElementById('intentions-list');
   const emptyState      = document.getElementById('intentions-empty');
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
           names: JSON.stringify([item.name]),
           massDate: dateInput.value || undefined,
           offering: base + (i === count - 1 ? remainder : 0),
-          status: 'pending',
+          status: 'scheduled',
         });
       }));
       const failed = results.find(r => r.errors);
@@ -911,8 +911,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><p class="details-label">Submitted</p><p class="details-value">${formatShort(it.createdAt)}</p></div>
         <div><p class="details-label">Mass Date</p><p class="details-value">${it.massDate ? formatShort(it.massDate) : 'Awaiting assignment'}</p></div>
       </div>
-      ${it.status === 'cancelled' || it.status === 'rejected' ? `
-      <div><p class="details-label">${it.status === 'rejected' ? 'Reason for Rejection' : 'Reason for Cancellation'}</p><p class="details-value">${escapeHtml(it.cancelReason) || 'No reason given'}</p></div>` : ''}
+      ${it.status === 'cancelled' ? `
+      <div><p class="details-label">Reason for Cancellation</p><p class="details-value">${escapeHtml(it.cancelReason) || 'No reason given'}</p></div>` : ''}
       <div><p class="details-label">Offering</p><p class="details-value text-green-700">${formatPeso(it.offering)}</p></div>`;
 
     showModal(detailsModal);
