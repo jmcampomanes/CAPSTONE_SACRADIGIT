@@ -3898,6 +3898,38 @@
             }
           }
         },
+        "chatWithAssistant": {
+          "name": "chatWithAssistant",
+          "isArray": false,
+          "type": "String",
+          "isRequired": false,
+          "arguments": {
+            "message": {
+              "name": "message",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "history": {
+              "name": "history",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "context": {
+              "name": "context",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "lang": {
+              "name": "lang",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            }
+          }
+        },
         "checkIn": {
           "name": "checkIn",
           "isArray": false,
