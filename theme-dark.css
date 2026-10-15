@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 44 stylesheets.
+   Built by tools/build-dark-theme.mjs from 45 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -3869,6 +3869,30 @@
 }
 :root[data-theme="dark"] .map-pin-link:hover {
     color: #a1b0d9
+}
+/*  from user/user-css/user-settings.css  */
+:root[data-theme="dark"] .settings-row {
+    border-bottom: 1px solid #454954
+}
+:root[data-theme="dark"] .settings-row-icon {
+    color: #a9abd1
+}
+:root[data-theme="dark"] .settings-row-title {
+    color: #aabacf
+}
+:root[data-theme="dark"] .settings-row-desc {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .settings-select {
+    border: 1px solid #2c3548;
+    color: #b0bac9;
+    background-color: #1a2131
+}
+:root[data-theme="dark"] .toggle-slider {
+    background-color: #3a4459
+}
+:root[data-theme="dark"] .toggle-slider::before {
+    background-color: #1a2131
 }
 /*  from user/user-css/user-shell.css  */
 :root[data-theme="dark"] body {

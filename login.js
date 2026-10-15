@@ -77,7 +77,7 @@ document.addEventListener('click', (e) => {
 });
 
 async function busy(form, fn) {
-  const btn = form.querySelector('.lg-btn');
+  const btn = form.querySelector('.lg-btn[type="submit"]');
   const label = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Please wait…';
@@ -103,6 +103,38 @@ $('su-password').addEventListener('input', () => {
   const p = $('su-password').value;
   document.querySelectorAll('#su-rules li').forEach(li => li.classList.toggle('ok', RULES[li.dataset.rule](p)));
 });
+$('rp-password').addEventListener('input', () => {
+  const p = $('rp-password').value;
+  document.querySelectorAll('#rp-rules li').forEach(li => li.classList.toggle('ok', RULES[li.dataset.rule](p)));
+});
+
+/* ---------- reset-password two-step flow (code, then new password) ---------- */
+function showResetView(email) {
+  $('rp-email-label').textContent = email;
+  $('rp-email-label2').textContent = email;
+  $('rp-code').value = '';
+  $('rp-password').value = '';
+  $('rp-password2').value = '';
+  document.querySelectorAll('#rp-rules li').forEach(li => li.classList.remove('ok'));
+  $('rp-step-code').classList.remove('hidden');
+  $('rp-step-password').classList.add('hidden');
+  $('rp-step-password').querySelector('.lg-btn[type="submit"]').disabled = true;
+  show('reset');
+}
+
+function rpContinue() {
+  const code = $('rp-code').value.trim();
+  if (!/^\d{6}$/.test(code)) { setAlert('Please enter the 6-digit code from the email.'); return; }
+  setAlert('');
+  $('rp-step-code').classList.add('hidden');
+  $('rp-step-password').classList.remove('hidden');
+  $('rp-step-password').querySelector('.lg-btn[type="submit"]').disabled = false;
+  $('rp-password').focus();
+}
+$('rp-continue').addEventListener('click', rpContinue);
+$('rp-code').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); rpContinue(); }
+});
 
 /* ---------- forms ---------- */
 const form = (view) => document.querySelector(`.lg-view[data-view="${view}"]`);
@@ -126,10 +158,9 @@ form('signin').addEventListener('submit', (e) => {
     if (step === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') { show('newpass'); return; }
     if (step === 'RESET_PASSWORD') {
       pendingEmail = email;
-      $('rp-email-label').textContent = email;
       await startPasswordReset(email);
       notifyPasswordReset(email);
-      show('reset');
+      showResetView(email);
       setAlert('Your password needs to be reset. We emailed you a code.', 'ok');
       return;
     }
@@ -191,8 +222,7 @@ form('forgot').addEventListener('submit', (e) => {
     await startPasswordReset(email);
     notifyPasswordReset(email);
     pendingEmail = email;
-    $('rp-email-label').textContent = email;
-    show('reset');
+    showResetView(email);
     setAlert('If that email has an account, a code is on its way.', 'ok');
   });
 });
@@ -201,8 +231,10 @@ form('reset').addEventListener('submit', (e) => {
   e.preventDefault();
   const code = $('rp-code').value.trim();
   const password = $('rp-password').value;
+  const password2 = $('rp-password2').value;
   if (!/^\d{6}$/.test(code)) { setAlert('Please enter the 6-digit code from the email.'); return; }
   if (!passwordOk(password)) { setAlert('Password must be at least 8 characters with an uppercase letter, a lowercase letter, a number, and a symbol.'); return; }
+  if (password !== password2) { setAlert('The two passwords don’t match.'); return; }
   busy(e.target, async () => {
     await finishPasswordReset(pendingEmail, code, password);
     show('signin');

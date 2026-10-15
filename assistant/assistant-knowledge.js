@@ -25,6 +25,7 @@ export const PARISH_CONTACT = {
   phone: '',                          // e.g. '(02) 8123 4567'
   email: '',
   facebook: '',                       // e.g. 'https://facebook.com/…'
+  location: '',                       // e.g. 'Mariana St, Barangay Immaculate Conception, Cubao, Quezon City'
 };
 
 /** Typical documents per service, keyed by the service name in service-catalog.js. */

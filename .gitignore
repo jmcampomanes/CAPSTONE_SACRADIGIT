@@ -3,6 +3,9 @@ node_modules
 # Email notifier secrets (Gmail OAuth2 credentials, API key) — never commit.
 server/email-notifier/.env
 
+# AI chat proxy secrets (OpenRouter API key, shared key) — never commit.
+server/ai-chat/.env
+
 # Build output — GitHub Actions builds and deploys this on every push.
 dist
 

@@ -1,0 +1,14 @@
+{
+  "name": "sacradigit-ai-chat",
+  "version": "1.0.0",
+  "description": "Proxies the Parish Assistant chat to OpenRouter so the API key never reaches the browser.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "aws-jwt-verify": "^4.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

@@ -171,6 +171,16 @@ const HELP_CONTENT = {
       'Export your Recent Activity if you’d like a copy for your records.',
     ],
   },
+  'user-settings.html': {
+    title: 'My Settings',
+    intro: 'Choose how the portal looks and reads for you.',
+    steps: [
+      'Switch between Light and Dark mode.',
+      'Switch the portal language between English and Filipino.',
+      'Turn on Larger Text & High Contrast if that’s easier to read.',
+      'These are saved on this device, so they stay the same next time you sign in here.',
+    ],
+  },
   'user-request-certificate.html': {
     title: 'Request a Certificate',
     intro: 'Submit a request for a Baptismal, Confirmation, Marriage, or First Communion certificate.',
@@ -369,12 +379,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
      6. USER MENU — real dropdown
-     Settings isn't built yet, so it's shown but
-     marked "Soon". Profile links to the new
-     My Profile page. Log Out returns to the
-     portal launcher. Injected via JS so every
-     user page picks this up for free (this file
-     is shared across all of them).
+     Profile links to the My Profile page, Settings
+     to the My Settings page, Log Out returns to the
+     portal launcher. Injected via JS so every user
+     page picks this up for free (this file is shared
+     across all of them).
   ------------------------------------------ */
   const userMenuBtn = document.getElementById('user-menu-btn');
   if (userMenuBtn) {
@@ -389,10 +398,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         My Profile
       </button>
-      <button type="button" class="user-menu-item" role="menuitem" data-action="settings" aria-disabled="true">
+      <button type="button" class="user-menu-item" role="menuitem" data-action="settings">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         Settings
-        <span class="user-menu-item-soon">Soon</span>
       </button>
       <div class="user-menu-divider"></div>
       <button type="button" class="user-menu-item user-menu-item-danger" role="menuitem" data-action="logout">
@@ -436,6 +444,8 @@ document.addEventListener('DOMContentLoaded', () => {
       closeUserMenu();
       if (item.dataset.action === 'profile') {
         window.location.href = 'user-profile.html';
+      } else if (item.dataset.action === 'settings') {
+        window.location.href = 'user-settings.html';
       } else if (item.dataset.action === 'logout') {
         window.location.href = '../index.html';
       }

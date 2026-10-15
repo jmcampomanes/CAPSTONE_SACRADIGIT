@@ -33,6 +33,7 @@ export function toContact(record) {
     phone: record.phone || '',
     email: record.email || '',
     facebook: record.facebook || '',
+    location: record.location || '',
   };
 }
 
@@ -48,7 +49,7 @@ export async function loadParishContact(client) {
 
 /* ---------- editor (shared by the ITech and Admin pages) ---------- */
 
-const FIELDS = ['officeHoursEn', 'officeHoursFil', 'phone', 'email', 'facebook'];
+const FIELDS = ['officeHoursEn', 'officeHoursFil', 'phone', 'email', 'facebook', 'location'];
 
 /** Returns an error message per invalid field (empty object = all good). */
 function validate(v) {
@@ -81,6 +82,7 @@ export function initParishInfoEditor({ client, canEdit, userName, showToast, onS
     inputs.phone.value = c.phone || '';
     inputs.email.value = c.email || '';
     inputs.facebook.value = c.facebook || '';
+    inputs.location.value = c.location || '';
     $('pi-updated').textContent = r?.updatedAt
       ? `Last saved ${new Date(r.updatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}${r.updatedByName ? ` by ${r.updatedByName}` : ''}`
       : 'Not saved yet — the assistant is using the built-in defaults.';
@@ -99,6 +101,7 @@ export function initParishInfoEditor({ client, canEdit, userName, showToast, onS
   function renderPreview() {
     const v = values();
     const rows = [
+      v.location && `Location: ${v.location}`,
       v.officeHoursEn && `Office hours: ${v.officeHoursEn}`,
       v.phone && `Phone: ${v.phone}`,
       v.email && `Email: ${v.email}`,

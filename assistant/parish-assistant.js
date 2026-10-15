@@ -1,14 +1,16 @@
 /* ============================================
    SacraDigit — Parish Assistant (chat window)
    A floating "Ask" button on every parishioner
-   page that opens a small chat. Answers come
-   from assistant-brain.js, using the same live
-   data the portal pages show (Mass schedule,
-   special Masses, closures, livestream, and the
-   parishioner's own requests).
+   page that opens a small chat. Answers come from
+   OpenRouter (see server/ai-chat), grounded with
+   the same live data the portal pages show (Mass
+   schedule, special Masses, closures, livestream,
+   and the parishioner's own requests) plus the
+   static parish knowledge base — see buildContext()
+   below and server/ai-chat/server.js's system prompt.
 
-   Free: runs in the browser, no AI service.
-   The chat is kept for this tab only.
+   Uses a real AI service (OpenRouter). The chat is
+   kept for this tab only.
    ============================================ */
 
 import { client } from '../amplify-init.js';
@@ -16,9 +18,17 @@ import { currentUser } from '../auth.js';
 import { currentLang } from '../ui-prefs.js';
 import { mergeWeeklySchedule } from '../weekly-mass-schedule.js';
 import { closuresFrom } from '../service-schedule.js';
-import { answerQuestion, starterChips, toISO } from './assistant-brain.js';
-import { FACILITIES, FUNDS } from './assistant-knowledge.js';
+import { askAssistant } from './ai-chat-client.js';
+import { FACILITIES, FUNDS, REQUIREMENTS, CERTIFICATES, OFFERING_PER_INTENTION } from './assistant-knowledge.js';
 import { loadParishContact } from '../parish-info.js';
+
+const toISO = (d) => d.toISOString().slice(0, 10);
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+
+const STARTER_CHIPS = {
+  en: ['What time is Mass on Sunday?', 'What do I need for a baptism?', 'How do I get a certificate?', 'Status of my requests'],
+  fil: ['Anong oras ang Misa sa Linggo?', 'Ano ang kailangan sa binyag?', 'Paano kumuha ng certificate?', 'Status ng mga request ko'],
+};
 
 /* ---------- live data (fetched on demand, reused for a minute) ---------- */
 
@@ -64,6 +74,52 @@ const data = {
   contact: () => cached('contact', () => loadParishContact(client)),
   announcements: () => cached('announcements', () => listAll(client.models.Announcement, { filter: { published: { eq: true } } })),
 };
+
+/* ------------------------------------------
+   Grounding facts sent to the AI with every
+   message (see server/ai-chat/server.js's
+   system prompt) — the same live data and
+   static knowledge base the portal pages use,
+   so the assistant never disagrees with the
+   rest of the site. Trimmed to keep the
+   request small.
+   ------------------------------------------ */
+async function buildContext() {
+  const today = new Date();
+  const todayISO = toISO(today);
+  const in14 = toISO(addDays(today, 14));
+  const in60 = toISO(addDays(today, 60));
+  const signedIn = !!currentUser();
+
+  const [weekly, masses, closures, livestream, contact, announcements, myCertificates, myServices] = await Promise.all([
+    data.weekly(), data.masses(), data.closures(), data.livestream(), data.contact(), data.announcements(),
+    signedIn ? data.myCertificates() : [], signedIn ? data.myServices() : [],
+  ]);
+
+  return {
+    today: todayISO,
+    weeklyMassSchedule: weekly.map(d => ({ day: d.dayLabel, times: d.times, type: d.massType, label: d.label })),
+    upcomingSpecialMasses: masses
+      .filter(m => m.isSpecial && m.date >= todayISO && m.date <= in14)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 8)
+      .map(m => ({ date: m.date, time: m.time, title: m.title || m.note || '' })),
+    closures: closures.filter(c => c.end >= todayISO && c.start <= in60),
+    livestream: livestream?.isLive ? { isLive: true, platform: livestream.platform, url: livestream.url } : { isLive: false },
+    parishContact: contact,
+    recentAnnouncements: announcements.slice(0, 5).map(a => ({ title: a.title, date: a.createdAt })),
+    serviceRequirements: REQUIREMENTS,
+    certificates: CERTIFICATES,
+    facilities: FACILITIES,
+    funds: FUNDS,
+    offeringPerMassIntention: OFFERING_PER_INTENTION,
+    signedIn,
+    myRequests: signedIn ? {
+      certificates: myCertificates.slice(0, 5).map(r => ({ type: r.certificateType, status: r.status, rejectionReason: r.rejectionReason || null })),
+      services: myServices.slice(0, 5).map(r => ({ type: r.type, status: r.status, date: r.date || null, time: r.time || null })),
+    } : null,
+  };
+}
 
 /* ---------- wording for the window itself ---------- */
 
@@ -212,6 +268,7 @@ export function initParishAssistant() {
   const send = root.querySelector('.pa-send');
   let greeted = false;
   let busy = false;
+  const history = []; // {role: 'user'|'assistant', content}[] — this tab only, sent with each turn for context
 
   const scrollDown = () => { log.scrollTop = log.scrollHeight; };
 
@@ -222,6 +279,17 @@ export function initParishAssistant() {
     log.appendChild(el);
     scrollDown();
     return el;
+  }
+
+  // The AI's reply is plain text — escape it before inserting as HTML, then
+  // turn blank lines / line breaks into <p>/<br> so replies still read well.
+  function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+  function formatReply(text) {
+    return text.split(/\n{2,}/).map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
   }
 
   function addChips(chips) {
@@ -250,11 +318,21 @@ export function initParishAssistant() {
     addMessage('user', q);
     const typing = addMessage('bot', '<span class="pa-typing"><i></i><i></i><i></i></span>', { html: true });
     const started = Date.now();
-    const reply = await answerQuestion(q, { today: new Date(), uiLang: currentLang(), data, facilities: FACILITIES, funds: FUNDS });
-    await new Promise(r => setTimeout(r, Math.max(0, 450 - (Date.now() - started)))); // brief "typing…" so replies don't flash
-    typing.innerHTML = reply.html;
+    const uiLang = currentLang();
+    try {
+      const context = await buildContext();
+      const reply = await askAssistant(q, history, context, uiLang);
+      await new Promise(r => setTimeout(r, Math.max(0, 450 - (Date.now() - started)))); // brief "typing…" so replies don't flash
+      typing.innerHTML = formatReply(reply);
+      history.push({ role: 'user', content: q }, { role: 'assistant', content: reply });
+    } catch (err) {
+      console.error('Parish Assistant:', err);
+      typing.innerHTML = `<p>${uiLang === 'fil'
+        ? 'Pasensya na, hindi ako makasagot ngayon. 🙏 Subukan ulit mamaya, o itanong sa parish office.'
+        : 'Sorry, I can’t answer right now. 🙏 Please try again later, or ask the parish office.'}</p>`;
+    }
     scrollDown();
-    addChips(reply.chips);
+    addChips(STARTER_CHIPS[uiLang]);
     busy = false;
     send.disabled = !input.value.trim();
   }
@@ -266,7 +344,7 @@ export function initParishAssistant() {
     if (!greeted) {
       greeted = true;
       addMessage('bot', `<p>${ui.hello}</p>`, { html: true });
-      addChips(starterChips(lang));
+      addChips(STARTER_CHIPS[lang]);
     }
     // On phones, don't pop the keyboard over the greeting.
     if (window.matchMedia('(min-width: 641px)').matches) input.focus();

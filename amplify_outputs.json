@@ -1137,6 +1137,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "location": {
+              "name": "location",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "updatedByName": {
               "name": "updatedByName",
               "isArray": false,
