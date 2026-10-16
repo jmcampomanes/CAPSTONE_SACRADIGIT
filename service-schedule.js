@@ -187,7 +187,12 @@ function slotDateOf(record) {
 export function bookedCounts(records, type, { excludeId } = {}) {
   const counts = new Map();
   records.forEach(r => {
-    if (r.type !== type || !ACTIVE_STATUSES.has(r.status) || r.id === excludeId) return;
+    // excludeId only matters when it's actually set — records from the public
+    // takenSlots query never carry an id (stripped for privacy), so without
+    // this guard `r.id === excludeId` was `undefined === undefined` (true)
+    // for every one of them, silently excluding every real booking from the
+    // count and always showing full availability on the parishioner side.
+    if (r.type !== type || !ACTIVE_STATUSES.has(r.status) || (excludeId && r.id === excludeId)) return;
     const date = slotDateOf(r);
     if (!date || !r.time) return;
     const key = `${date}|${r.time}`;
