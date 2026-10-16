@@ -214,6 +214,11 @@ $('cf-resend').addEventListener('click', async () => {
   catch (err) { setAlert(friendlyAuthError(err)); }
 });
 
+$('rp-resend').addEventListener('click', async () => {
+  try { await startPasswordReset(pendingEmail); notifyPasswordReset(pendingEmail); setAlert('A new code is on its way.', 'ok'); }
+  catch (err) { setAlert(friendlyAuthError(err)); }
+});
+
 form('forgot').addEventListener('submit', (e) => {
   e.preventDefault();
   const email = $('fp-email').value.trim();

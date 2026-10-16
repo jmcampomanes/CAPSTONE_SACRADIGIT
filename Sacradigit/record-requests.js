@@ -10,6 +10,13 @@ import { client } from '../amplify-init.js';
 import { isHeadAdmin } from '../auth.js';
 import { uploadData } from 'aws-amplify/storage';
 import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
+import { notifyCertificateReady } from '../email-notify.js';
+
+// CertificateRequest has no dedicated email field — a parishioner's own
+// request carries their address in the Cognito "owner" field as
+// `${sub}::${email}` (identityClaim is cognito:username = email), same
+// convention as Sacradigit/blessings.js.
+const recipientEmail = (r) => (r?.owner || '').split('::')[1] || '';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -283,6 +290,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await client.models.CertificateRequest.update({ id, status: nextStatus });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
         showToast(`Request for ${r ? r.requesterName : 'requester'} marked ${statusLabel[nextStatus].toLowerCase()}.`);
+        if (nextStatus === 'approved' && r) {
+          notifyCertificateReady({ to: recipientEmail(r), name: r.requesterName, certificateType: r.certificateType });
+        }
       } catch (err) {
         console.error('Failed to update request:', err);
         showToast(err.message || "Couldn't update the request.", true);

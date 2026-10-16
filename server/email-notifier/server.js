@@ -45,7 +45,9 @@ function rateLimited(key) {
   return recent.length > MAX_PER_WINDOW;
 }
 
-/* ---------- Cognito ID token verification (admin/staff only, for service-update) ---------- */
+/* ---------- Cognito ID token verification (staff for most kinds; a
+   parishioner may also confirm their own self-booked slot — see
+   requireStaffOrSelf below) ---------- */
 
 const jwtVerifier = process.env.COGNITO_USER_POOL_ID
   ? CognitoJwtVerifier.create({
@@ -64,16 +66,32 @@ async function requireStaff(req) {
   if (!groups.includes('admin') && !groups.includes('staff')) throw new Error('Not staff');
 }
 
-/* ---------- mail transport (Gmail via OAuth2 — no plaintext password stored) ---------- */
+/* A confirmation email is legitimate from either: staff updating someone
+   else's request (approve/decline), or a parishioner who just booked their
+   own fixed slot confirming it to themselves. Never trust the client's `to`
+   for the self case — pull the recipient from the verified token's own
+   email claim, so a signed-in parishioner can only ever "confirm" their own
+   address, never email an arbitrary stranger. */
+async function requireStaffOrSelf(req, to) {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token || !jwtVerifier) throw new Error('Missing or unsupported authorization');
+  const payload = await jwtVerifier.verify(token);
+  const groups = payload['cognito:groups'] || [];
+  if (groups.includes('admin') || groups.includes('staff')) return;
+  if ((payload.email || '').toLowerCase() === String(to || '').toLowerCase()) return;
+  throw new Error('Not authorized');
+}
+
+/* ---------- mail transport (Gmail via an App Password — not your real
+   Google password; generate one at https://myaccount.google.com/apppasswords,
+   requires 2-Step Verification turned on first) ---------- */
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    type: 'OAuth2',
     user: process.env.GMAIL_USER,
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+    pass: process.env.GMAIL_APP_PASSWORD,
   },
 });
 
@@ -110,6 +128,12 @@ const KIND_BUILDERS = {
         text: `Hi ${who},\n\nWe're sorry — your ${service} request could not be scheduled.${declineReason ? `\n\nReason: ${declineReason}` : ''}\n\nPlease contact the parish office if you have questions or would like to submit a new request.\n\n— SacraDigit`,
       };
     }
+    if (status === 'completed') {
+      return {
+        subject: `Your ${service} appointment is complete`,
+        text: `Hi ${who},\n\nYour ${service} appointment${date ? ` on ${date}${time ? ` at ${time}` : ''}` : ''} has been completed.\n\nThank you for trusting the parish with this. You can see this anytime under "Requested Services" in SacraDigit. If anything looks wrong, please contact the parish office.\n\n— SacraDigit`,
+      };
+    }
     const facts = [
       `Service: ${service}`,
       `Date: ${date || 'TBD'}`,
@@ -122,6 +146,13 @@ const KIND_BUILDERS = {
     return {
       subject: `Confirmed: your ${service} request`,
       text: `Hi ${who},\n\nGood news — your ${service} request is confirmed. Here are the details:\n\n${factBlock}\n\nYou can see this anytime under "Requested Services" in SacraDigit. If anything above looks wrong, please contact the parish office.\n\n— SacraDigit`,
+    };
+  },
+  'certificate-ready': ({ name, certificateType }) => {
+    const cert = certificateType || 'certificate';
+    return {
+      subject: `Your ${cert} is ready`,
+      text: `Hi ${name || 'there'},\n\nGood news — your ${cert} request has been approved and is ready for pickup at the parish office.\n\nYou can see this anytime under "My Requests" in SacraDigit.\n\n— SacraDigit`,
     };
   },
 };
@@ -139,14 +170,27 @@ app.post('/notify-parishioner', async (req, res) => {
     return res.status(429).json({ success: false, error: 'Too many requests — please slow down' });
   }
 
-  if (kind === 'service-update' || kind === 'service-reminder') {
+  if (kind === 'service-reminder' || kind === 'certificate-ready') {
     try { await requireStaff(req); }
     catch { return res.status(403).json({ success: false, error: 'Staff sign-in required' }); }
+  }
+  if (kind === 'service-update') {
+    // Only staff can tell someone their request was declined — but a
+    // confirmation (scheduled) may come from the parishioner who just
+    // booked it themselves, not just staff approving someone else's.
+    if (req.body.status === 'declined') {
+      try { await requireStaff(req); }
+      catch { return res.status(403).json({ success: false, error: 'Staff sign-in required' }); }
+    } else {
+      try { await requireStaffOrSelf(req, to); }
+      catch { return res.status(403).json({ success: false, error: 'Sign-in required' }); }
+    }
   }
 
   const data = {
     name: clean(req.body.name, 100),
     serviceType: clean(req.body.serviceType, 100),
+    certificateType: clean(req.body.certificateType, 100),
     status: clean(req.body.status, 30),
     date: clean(req.body.date, 40),
     time: clean(req.body.time, 40),

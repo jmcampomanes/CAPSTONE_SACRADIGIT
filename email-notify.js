@@ -2,16 +2,18 @@
    SacraDigit — parishioner email notifier client
 
    Talks to the small Express server in
-   server/email-notifier (Gmail via OAuth2, see
-   its README/.env.example to run it). Only three
-   kinds of email ever go out:
-     signup-code     — courtesy notice after Cognito
-                        emails a sign-up confirmation code
-     password-reset  — courtesy notice after Cognito
-                        emails a password-reset code
-     service-update   — a blessing/service request was
-                         scheduled or declined
-     service-reminder — a scheduled booking is tomorrow
+   server/email-notifier (Gmail via an App Password, see
+   its README/.env.example to run it). Kinds of email that
+   go out:
+     signup-code       — courtesy notice after Cognito
+                          emails a sign-up confirmation code
+     password-reset    — courtesy notice after Cognito
+                          emails a password-reset code
+     service-update     — a blessing/service request was
+                           scheduled or declined
+     service-reminder   — a scheduled booking is tomorrow
+     certificate-ready — a certificate request was approved
+                          and is ready for pickup
 
    Never blocks the caller: if the notifier is down
    or the request fails, this just logs a warning.
@@ -70,4 +72,15 @@ export async function notifyServiceReminder({ to, name, serviceType, date, time,
   if (!to) return;
   const authToken = await staffAuthToken();
   return send('service-reminder', { to, name, serviceType, date, time, location }, { authToken });
+}
+
+/**
+ * A certificate request was approved and is ready for pickup. Same
+ * staff-only gate as above — meant to be called from Record Requests
+ * when the Head Admin approves a request.
+ */
+export async function notifyCertificateReady({ to, name, certificateType }) {
+  if (!to) return;
+  const authToken = await staffAuthToken();
+  return send('certificate-ready', { to, name, certificateType }, { authToken });
 }

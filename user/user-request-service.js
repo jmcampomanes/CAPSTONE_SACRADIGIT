@@ -13,7 +13,8 @@
 
 import { client } from '../amplify-init.js';
 import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
-import { currentUserName } from '../auth.js';
+import { currentUserName, currentUser } from '../auth.js';
+import { notifyServiceUpdate } from '../email-notify.js';
 import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, watchClosures, serviceSchedulesReady } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
 import { createPinMap, formatLatLng } from '../pin-map.js';
@@ -322,6 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
         status: 'scheduled',
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      notifyServiceUpdate({
+        to: currentUser()?.email, name: REQUESTER_NAME, serviceType: svc.name, status: 'scheduled',
+        date: slot.date, time: slot.time, location: locationFor(svc.name, details),
+      });
 
       goToMenu();
       window.showToast(`${svc.name} booked for ${fmtLongDate(slot.date)} at ${slot.time}. See it under "Requested Services."`);

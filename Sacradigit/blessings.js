@@ -109,6 +109,34 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // "Your appointment is complete" emails. Same per-browser, fires-on-page-
+  // load mechanism as the reminder above — a booking whose date has passed
+  // (isPastSchedule, see blessings/service-schedule.js's own auto-complete
+  // display logic) gets emailed once, the first time this page notices.
+  const COMPLETED_KEY = 'sacradigit_completion_notices_sent';
+  function completionNotifiedSet() {
+    try { return new Set(JSON.parse(localStorage.getItem(COMPLETED_KEY)) || []); } catch { return new Set(); }
+  }
+  function markCompletionNotified(key) {
+    const set = completionNotifiedSet();
+    set.add(key);
+    try { localStorage.setItem(COMPLETED_KEY, JSON.stringify([...set])); } catch { /* private mode */ }
+  }
+  function sendCompletionNotices(records) {
+    const already = completionNotifiedSet();
+    records
+      .filter(r => isPastSchedule(r, todayISO))
+      .forEach(r => {
+        const key = `${r.id}:${r.date}`;
+        if (already.has(key)) return;
+        markCompletionNotified(key);
+        notifyServiceUpdate({
+          to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'completed',
+          date: formatLongDate(r.date), time: r.time, location: r.location || locationFor(r.type),
+        });
+      });
+  }
+
   function blessingIconSvg() {
     return `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`;
   }
@@ -132,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     next: ({ items }) => {
       allRecords = items;
       sendDueReminders(items);
+      sendCompletionNotices(items);
       if (walkIn) walkIn.refresh();
       if (reschedulePicker) reschedulePicker.refresh(allRecords);
       upcoming = [];
