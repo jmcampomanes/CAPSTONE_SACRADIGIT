@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading Screen Test – SacraDigit</title>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="loader-screen" id="loaderScreen">
+
+    <!-- Soft ambient glow + floating particles -->
+    <div class="loader-glow"></div>
+    <div class="loader-particles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="loader-content">
+      <div class="loader-halo">
+        <div class="loader-ring"></div>
+        <div class="loader-ring loader-ring--soft"></div>
+        <div class="loader-logo-frame">
+          <img src="logo.png" alt="SacraDigit logo" class="loader-logo" />
+        </div>
+      </div>
+
+      <p class="loader-brand">SacraDigit</p>
+      <p class="loader-tagline">Our Lady of Fatima Parish</p>
+
+      <div class="loader-bar">
+        <div class="loader-bar-fill" id="loaderBarFill"></div>
+      </div>
+
+      <p class="loader-text">
+        <span class="loader-status">Loading</span>
+        <span class="loader-dots"><span>.</span><span>.</span><span>.</span></span>
+        <span class="loader-percent" id="loaderPercent">0%</span>
+      </p>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
