@@ -2,12 +2,26 @@
    SacraDigit User Portal — My Profile Scripts (AWS Amplify)
    Runs after user-shell.js.
 
-   There is no auth/sign-in system yet (see the
-   TODO comments across the user pages, e.g.
-   user-mass-intentions.js's hardcoded DONOR_NAME),
-   so Profile Info / Security / Notifications have
-   no backing data model and stay session-local —
-   same convention as the admin's profile.js.
+   Profile Info (phone/address/about + photo) is
+   backed by the ParishionerPreference model and the
+   avatars/{identityId}/* storage path — same per-
+   parishioner record the Honor Roll opt-out already
+   uses (see mass-checkin.js).
+
+   Full Name and Email stay read-only/session-local,
+   like Security and Notifications: the whole app
+   matches "my" records (Mass Intentions, Donations,
+   bookings, Honor Roll...) by exact name string, not
+   a stable id, so renaming the real Cognito account
+   here would silently orphan this parishioner's
+   existing records from those views — and changing
+   the Cognito email needs a verification-code step
+   this page doesn't have. Both are bigger, separate
+   changes than this page's fix.
+
+   Security's Change Password calls Cognito's real
+   updatePassword(); Notifications/2FA stay session-
+   local (no backing data model yet).
 
    The My Activity tab IS wired to real data: the
    MassIntention model, filtered to this parishioner's
@@ -19,7 +33,10 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { currentUserName, currentUser } from '../auth.js';
+import { currentUserName, currentUser, friendlyAuthError } from '../auth.js';
+import { updatePassword } from 'aws-amplify/auth';
+import { uploadData, getUrl } from 'aws-amplify/storage';
+import { getPreference, preferencesReady, saveProfileDetails } from '../mass-checkin.js';
 import { NOTIF_TYPES, loadPrefs, savePrefs, enableDeviceAlerts } from '../notifications/parish-notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
      0. SESSION-LOCAL ACCOUNT DATA (no backend model)
   ------------------------------------------ */
   const DONOR_NAME = currentUserName(); // the signed-in parishioner (auth.js)
-  const STORED_PASSWORD = 'parish123'; // demo-only "current" password
 
   // Icons for the Notifications tab; the list itself and what's saved live in
   // notifications/parish-notifications.js (the 🔔 bell reads the same settings).
@@ -119,13 +135,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     3. CHANGE PHOTO
+     3. CHANGE PHOTO — uploads to avatars/{identityId}/*,
+        saved on ParishionerPreference.avatarKey
   ------------------------------------------ */
   const photoInput = document.getElementById('photo-input');
+  const btnChangePhoto = document.getElementById('btn-change-photo');
 
-  document.getElementById('btn-change-photo').addEventListener('click', () => photoInput.click());
+  btnChangePhoto.addEventListener('click', () => photoInput.click());
 
-  photoInput.addEventListener('change', () => {
+  async function resolveAvatarUrl(avatarKey) {
+    try {
+      const { url } = await getUrl({ path: avatarKey, options: { expiresIn: 3600 } });
+      avatarLg.style.backgroundImage = `url(${url})`;
+      avatarLg.textContent = '';
+    } catch (err) {
+      console.error('Failed to load profile photo:', err);
+    }
+  }
+
+  photoInput.addEventListener('change', async () => {
     const file = photoInput.files[0];
     if (!file) return;
 
@@ -133,25 +161,47 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Please choose an image file.', true);
       return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image is too large (max 5MB).', true);
+      return;
+    }
+    if (!preferencesReady()) {
+      showToast('Profile photos aren’t available yet.', true);
+      return;
+    }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      avatarLg.style.backgroundImage = `url(${e.target.result})`;
-      avatarLg.textContent = '';
+    btnChangePhoto.disabled = true;
+    try {
+      const path = ({ identityId }) => `avatars/${identityId}/${Date.now()}_${file.name}`;
+      const { path: avatarKey } = await uploadData({ path, data: file }).result;
+      await saveProfileDetails(DONOR_NAME, { avatarKey });
+      await resolveAvatarUrl(avatarKey);
       showToast('Profile photo updated.');
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Failed to upload profile photo:', err);
+      showToast('Could not upload photo. Please try again.', true);
+    } finally {
+      btnChangePhoto.disabled = false;
+      photoInput.value = '';
+    }
   });
 
 
   /* ------------------------------------------
-     4. PROFILE INFO — save / reset (session-local)
+     4. PROFILE INFO — save / reset
+        Name/Email → read-only (see file header note above).
+        Phone/Address/About → ParishionerPreference.
   ------------------------------------------ */
   const pfName       = document.getElementById('pf-name');
   const pfEmail        = document.getElementById('pf-email');
   const pfPhone          = document.getElementById('pf-phone');
   const pfAddress           = document.getElementById('pf-address');
   const pfBio                  = document.getElementById('pf-bio');
+  const pfJoined                   = document.getElementById('pf-joined');
+  const pfSave                         = document.getElementById('pf-save');
+
+  pfName.disabled = true;
+  pfEmail.disabled = true;
 
   // Start from the signed-in account, not a placeholder.
   const me = currentUser() || {};
@@ -161,64 +211,74 @@ document.addEventListener('DOMContentLoaded', () => {
     const initials = initialsFrom(me.name);
     if (!avatarLg.style.backgroundImage) avatarLg.textContent = initials;
   }
-  if (me.email && !pfEmail.value) pfEmail.value = me.email;
+  if (me.email) pfEmail.value = me.email;
 
-  const defaults = {
-    name: pfName.value, email: pfEmail.value, phone: pfPhone.value,
-    address: pfAddress.value, bio: pfBio.value,
-  };
+  const defaults = { phone: pfPhone.value, address: pfAddress.value, bio: pfBio.value };
 
-  [pfName, pfEmail, pfPhone, pfAddress].forEach(input => {
+  // Fill in the saved details (phone/address/about/photo) once they load.
+  if (preferencesReady()) {
+    getPreference(DONOR_NAME).then((pref) => {
+      if (!pref) return;
+      pfPhone.value = pref.phone || '';
+      pfAddress.value = pref.address || '';
+      pfBio.value = pref.about || '';
+      defaults.phone = pfPhone.value;
+      defaults.address = pfAddress.value;
+      defaults.bio = pfBio.value;
+      if (pref.createdAt) pfJoined.value = new Date(pref.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      if (pref.avatarKey) resolveAvatarUrl(pref.avatarKey);
+    }).catch((err) => console.error('Failed to load profile details:', err));
+  }
+
+  [pfPhone, pfAddress].forEach(input => {
     input.addEventListener('input', () => clearFieldError(input));
   });
 
-  document.getElementById('pf-save').addEventListener('click', () => {
-    let hasError = false;
-
-    clearFieldError(pfName);
-    if (!pfName.value.trim()) { setFieldError(pfName, 'Full name is required.'); hasError = true; }
-
-    clearFieldError(pfEmail);
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (pfEmail.value.trim() && !emailPattern.test(pfEmail.value.trim())) {
-      setFieldError(pfEmail, 'Enter a valid email address.');
-      hasError = true;
-    }
-
-    if (hasError) {
-      showToast('Please fix the highlighted fields.', true);
+  pfSave.addEventListener('click', async () => {
+    if (!preferencesReady()) {
+      showToast('Profile details aren’t available yet.', true);
       return;
     }
 
-    headerName.textContent = pfName.value.trim();
-    sidebarUserName.textContent = pfName.value.trim();
+    pfSave.disabled = true;
+    try {
+      await saveProfileDetails(DONOR_NAME, {
+        phone: pfPhone.value.trim(),
+        address: pfAddress.value.trim(),
+        about: pfBio.value.trim(),
+      });
 
-    const initials = initialsFrom(pfName.value.trim());
-    sidebarInitials.textContent = initials;
-    if (!avatarLg.style.backgroundImage) avatarLg.textContent = initials;
+      defaults.phone = pfPhone.value;
+      defaults.address = pfAddress.value;
+      defaults.bio = pfBio.value;
 
-    showToast('Profile information saved for this session.');
+      showToast('Profile information saved.');
+    } catch (err) {
+      console.error('Failed to save profile information:', err);
+      showToast('Could not save your changes. Please try again.', true);
+    } finally {
+      pfSave.disabled = false;
+    }
   });
 
   document.getElementById('pf-reset').addEventListener('click', () => {
-    pfName.value = defaults.name;
-    pfEmail.value = defaults.email;
     pfPhone.value = defaults.phone;
     pfAddress.value = defaults.address;
     pfBio.value = defaults.bio;
-    [pfName, pfEmail, pfPhone, pfAddress].forEach(clearFieldError);
+    [pfPhone, pfAddress].forEach(clearFieldError);
     showToast('Changes discarded.');
   });
 
 
   /* ------------------------------------------
-     5. SECURITY — password strength + change (session-local demo)
+     5. SECURITY — password strength + change (real Cognito password)
   ------------------------------------------ */
   const pwCurrent      = document.getElementById('pw-current');
   const pwNew            = document.getElementById('pw-new');
   const pwConfirm           = document.getElementById('pw-confirm');
   const pwStrengthFill        = document.getElementById('pw-strength-fill');
   const pwStrengthLabel          = document.getElementById('pw-strength-label');
+  const pwSubmit                    = document.getElementById('pw-submit');
 
   [pwCurrent, pwNew, pwConfirm].forEach(input => {
     input.addEventListener('input', () => clearFieldError(input));
@@ -246,15 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
     pwStrengthLabel.textContent = s.label;
   });
 
-  document.getElementById('pw-submit').addEventListener('click', () => {
+  pwSubmit.addEventListener('click', async () => {
     let hasError = false;
     [pwCurrent, pwNew, pwConfirm].forEach(clearFieldError);
 
     if (!pwCurrent.value) {
       setFieldError(pwCurrent, 'Enter your current password.');
-      hasError = true;
-    } else if (pwCurrent.value !== STORED_PASSWORD) {
-      setFieldError(pwCurrent, 'Current password is incorrect.');
       hasError = true;
     }
 
@@ -282,15 +339,33 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    pwCurrent.value = '';
-    pwNew.value = '';
-    pwConfirm.value = '';
-    pwStrengthFill.className = 'pw-strength-fill';
-    pwStrengthFill.style.width = '0%';
-    pwStrengthLabel.className = 'pw-strength-label';
-    pwStrengthLabel.textContent = 'Password strength';
+    pwSubmit.disabled = true;
+    try {
+      await updatePassword({ oldPassword: pwCurrent.value, newPassword: pwNew.value });
 
-    showToast('Your password has been updated for this session.');
+      pwCurrent.value = '';
+      pwNew.value = '';
+      pwConfirm.value = '';
+      pwStrengthFill.className = 'pw-strength-fill';
+      pwStrengthFill.style.width = '0%';
+      pwStrengthLabel.className = 'pw-strength-label';
+      pwStrengthLabel.textContent = 'Password strength';
+
+      showToast('Your password has been updated.');
+    } catch (err) {
+      console.error('Failed to update password:', err);
+      if (err?.name === 'NotAuthorizedException') {
+        setFieldError(pwCurrent, 'Current password is incorrect.');
+        showToast('Current password is incorrect.', true);
+      } else if (err?.name === 'InvalidPasswordException') {
+        setFieldError(pwNew, friendlyAuthError(err));
+        showToast(friendlyAuthError(err), true);
+      } else {
+        showToast(friendlyAuthError(err), true);
+      }
+    } finally {
+      pwSubmit.disabled = false;
+    }
   });
 
 

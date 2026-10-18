@@ -281,6 +281,16 @@ export async function setShowOnHonorRoll(name, show) {
   return res.data;
 }
 
+/** Upserts phone/address/about/avatarKey on My Profile. Pass only the fields changing. */
+export async function saveProfileDetails(name, fields) {
+  const existing = await getPreference(name);
+  const res = existing
+    ? await client.models.ParishionerPreference.update({ id: existing.id, ...fields })
+    : await client.models.ParishionerPreference.create({ parishionerKey: parishionerKey(name), displayName: name, ...fields });
+  if (res.errors) throw new Error(res.errors.map(e => e.message).join('; '));
+  return res.data;
+}
+
 /** Date of a Mass from its "YYYY-MM-DD" + "06:00 AM" parts. */
 export function massStart(dateIso, time12) {
   if (!dateIso) return null;
