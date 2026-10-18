@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading Screen – In-context Example</title>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Overrides/additions for this example only — style.css and script.js
+       stay untouched so index.html remains the plain standalone preview. */
+
+    html, body { overflow: auto; }
+
+    /* Turn the loader into a fixed overlay so real page content can sit
+       underneath it and be revealed once loading finishes. */
+    .loader-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+    }
+    .loader-screen.done {
+      pointer-events: none;
+    }
+
+    /* ---------- mock "real page" behind the loader ---------- */
+    .demo-page {
+      min-height: 100vh;
+      background: #f4f5f8;
+      font-family: "Inter", system-ui, sans-serif;
+      color: #1e2a4a;
+    }
+
+    .demo-topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      background: #1e2a4a;
+      color: #ffffff;
+    }
+    .demo-topbar img { width: 32px; height: 32px; border-radius: 8px; }
+    .demo-topbar strong { font-size: 16px; }
+    .demo-topbar span { font-size: 12px; color: #aab4cf; display: block; }
+
+    .demo-body { max-width: 860px; margin: 0 auto; padding: 32px 24px 60px; }
+    .demo-welcome h1 { font-family: "Playfair Display", serif; font-size: 26px; margin: 0 0 6px; }
+    .demo-welcome p { margin: 0 0 28px; color: #5b6472; font-size: 14px; }
+
+    .demo-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .demo-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .demo-card .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+    .demo-card .value { font-size: 22px; font-weight: 700; color: #1e2a4a; }
+
+    .demo-restart {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e2a4a;
+      color: #ffffff;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .demo-restart:hover { background: #28396a; }
+    .demo-note { margin-top: 10px; font-size: 12px; color: #9ca3af; }
+  </style>
+</head>
+<body>
+
+  <!-- ===== mock page content, revealed once the loader fades ===== -->
+  <div class="demo-page">
+    <div class="demo-topbar">
+      <img src="logo.png" alt="" />
+      <div>
+        <strong>SacraDigit</strong>
+        <span>Our Lady of Fatima Parish</span>
+      </div>
+    </div>
+
+    <div class="demo-body">
+      <div class="demo-welcome">
+        <h1>Good morning, Juan 👋</h1>
+        <p>This is placeholder dashboard content so you can see how the loading screen looks fading into a real page, instead of a blank background.</p>
+      </div>
+
+      <div class="demo-cards">
+        <div class="demo-card"><div class="label">Today's Masses</div><div class="value">4</div></div>
+        <div class="demo-card"><div class="label">Pending Requests</div><div class="value">12</div></div>
+        <div class="demo-card"><div class="label">New Messages</div><div class="value">3</div></div>
+      </div>
+
+      <button class="demo-restart" id="restartBtn" type="button">↻ Replay loading screen</button>
+      <p class="demo-note">Click to re-run the loader without reloading the page.</p>
+    </div>
+  </div>
+
+  <!-- ===== loader overlay — same markup/classes as index.html ===== -->
+  <main class="loader-screen" id="loaderScreen">
+    <div class="loader-glow"></div>
+    <div class="loader-particles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="loader-content">
+      <div class="loader-halo">
+        <div class="loader-ring"></div>
+        <div class="loader-ring loader-ring--soft"></div>
+        <div class="loader-logo-frame">
+          <img src="logo.png" alt="SacraDigit logo" class="loader-logo" />
+        </div>
+      </div>
+
+      <p class="loader-brand">SacraDigit</p>
+      <p class="loader-tagline">Our Lady of Fatima Parish</p>
+
+      <div class="loader-bar">
+        <div class="loader-bar-fill" id="loaderBarFill"></div>
+      </div>
+
+      <p class="loader-text">
+        <span class="loader-status">Loading</span>
+        <span class="loader-dots"><span>.</span><span>.</span><span>.</span></span>
+        <span class="loader-percent" id="loaderPercent">0%</span>
+      </p>
+    </div>
+  </main>
+
+  <script src="example.js"></script>
+</body>
+</html>
