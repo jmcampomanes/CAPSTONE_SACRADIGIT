@@ -1,3 +1,9 @@
+/* No longer used by the deployed site — the frontend now calls the
+   notifyParishioner mutation (sacradigit-amplify/amplify/functions/
+   notify-parishioner), which does the same job via AppSync/Lambda so it
+   works once the site is deployed, not just on localhost. This server is
+   kept only as a local reference/fallback; it still works standalone if
+   you run it (see .env/.env.example). */
 require('dotenv').config();
 const express = require('express');
 const nodemailer = require('nodemailer');

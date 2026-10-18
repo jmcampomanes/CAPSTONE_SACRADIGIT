@@ -3926,6 +3926,86 @@
             }
           }
         },
+        "notifyParishioner": {
+          "name": "notifyParishioner",
+          "isArray": false,
+          "type": "AWSJSON",
+          "isRequired": false,
+          "arguments": {
+            "kind": {
+              "name": "kind",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "to": {
+              "name": "to",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "name": {
+              "name": "name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "serviceType": {
+              "name": "serviceType",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "certificateType": {
+              "name": "certificateType",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "status": {
+              "name": "status",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "date": {
+              "name": "date",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "time": {
+              "name": "time",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "declineReason": {
+              "name": "declineReason",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "location": {
+              "name": "location",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "contact": {
+              "name": "contact",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "detailsLines": {
+              "name": "detailsLines",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            }
+          }
+        },
         "chatWithAssistant": {
           "name": "chatWithAssistant",
           "isArray": false,
