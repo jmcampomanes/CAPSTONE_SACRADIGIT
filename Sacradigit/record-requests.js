@@ -11,6 +11,7 @@ import { isHeadAdmin } from '../auth.js';
 import { uploadData } from 'aws-amplify/storage';
 import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 import { notifyCertificateReady } from '../email-notify.js';
+import { createMarriageForm, MARRIAGE_STEPS } from '../marriage-request-form.js';
 
 // CertificateRequest has no dedicated email field — a parishioner's own
 // request carries their address in the Cognito "owner" field as
@@ -335,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('new-type').value = '';
     document.getElementById('new-date').value = '';
     ['new-requester', 'new-type', 'new-date'].forEach(id => clearFieldError(document.getElementById(id)));
+    setWalkInMarriage(false);
     openModal(newRequestModal);
   });
 
@@ -455,6 +457,45 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('change', () => clearFieldError(el));
   });
 
+  /* Marriage walk-ins use the same step-by-step form as the parishioner's
+     Request a Certificate page (Groom → Bride → Sponsors → Confirm), so
+     the details are stored the same way and Generate Certificate can
+     prefill them. Purpose/Notes move into its last step, "Confirm", and
+     Log Request only shows there. */
+  const MARRIAGE_TYPE = 'Marriage Certificate';
+  const newMarriageWrap = document.getElementById('new-marriage-form');
+  const newCommonFields = document.getElementById('new-common-fields');
+  const newCommonHome = document.createComment('purpose/notes home'); // where Purpose/Notes go back to
+  newCommonFields.before(newCommonHome);
+  const newSubmitBtn = document.getElementById('new-request-submit');
+  let walkInMarriage = null; // the open Marriage form (createMarriageForm), else null
+
+  function setWalkInMarriage(on) {
+    newRequestModal.querySelector('.modal-card').classList.toggle('modal-card-wide', on);
+    newMarriageWrap.classList.toggle('hidden', !on);
+    if (on) {
+      walkInMarriage = createMarriageForm(newMarriageWrap, {
+        toast: showToast,
+        lastStepBack: true,
+        confirmHint: 'Add the purpose and any notes, then log the request.',
+        onStepChange: (step, isLast) => newSubmitBtn.classList.toggle('hidden', !isLast),
+      });
+      walkInMarriage.slot.appendChild(newCommonFields);
+      newCommonFields.classList.remove('mt-3');
+    } else {
+      newCommonHome.after(newCommonFields);
+      newCommonFields.classList.add('mt-3');
+      newMarriageWrap.innerHTML = '';
+      walkInMarriage = null;
+      newSubmitBtn.classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('new-type').addEventListener('change', (e) => {
+    const wantMarriage = e.target.value === MARRIAGE_TYPE;
+    if (wantMarriage !== !!walkInMarriage) setWalkInMarriage(wantMarriage);
+  });
+
   document.getElementById('new-request-submit').addEventListener('click', async () => {
     const requesterInput = document.getElementById('new-requester');
     const typeInput       = document.getElementById('new-type');
@@ -463,6 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const requester = requesterInput.value.trim();
     const type       = typeInput.value;
     const purpose    = document.getElementById('new-purpose').value.trim();
+    const notes      = document.getElementById('new-notes').value.trim();
 
     [requesterInput, typeInput, dateInput].forEach(clearFieldError);
 
@@ -472,14 +514,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (hasError) {
       showToast('Please fix the highlighted fields.', true);
+      requesterInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
+    // Marriage: everything on the steps must be filled in first.
+    let details;
+    if (walkInMarriage) {
+      const unfinished = walkInMarriage.firstUnfinished();
+      if (unfinished !== undefined) {
+        walkInMarriage.go(unfinished);
+        showToast(`Please finish the ${MARRIAGE_STEPS[unfinished].label} step first.`, true);
+        return;
+      }
+      details = walkInMarriage.collect().details;
+    }
+
+    newSubmitBtn.disabled = true;
     try {
       const result = await client.models.CertificateRequest.create({
         requesterName: requester,
         certificateType: type,
         purpose: purpose || undefined,
+        notes: notes || undefined,
+        details: details ? JSON.stringify(details) : undefined,
         status: 'pending',
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
@@ -492,9 +550,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       document.getElementById('new-type').value = '';
       document.getElementById('new-date').value = '';
+      setWalkInMarriage(false);
     } catch (err) {
       console.error('Failed to log request:', err);
       showToast(err.message || "Couldn't log the request.", true);
+    } finally {
+      newSubmitBtn.disabled = false;
     }
   });
 

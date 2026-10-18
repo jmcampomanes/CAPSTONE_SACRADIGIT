@@ -12,10 +12,12 @@ import { guardPage } from '../auth.js';
 guardPage('media');
 import '../Sacradigit/sacred-art.js';
 import { initUiPrefs } from '../ui-prefs.js';
+import { initExtToggles } from '../name-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
+  initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
 
   /* ------------------------------------------
      1. ACTIVE SIDEBAR LINK

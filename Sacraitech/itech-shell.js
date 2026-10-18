@@ -14,6 +14,7 @@ import { guardPage, currentUserName } from '../auth.js';
 // Only signed-in IT team members get past this (see auth.js).
 guardPage('itech');
 import { initUiPrefs } from '../ui-prefs.js';
+import { initExtToggles } from '../name-utils.js';
 
 export const ITECH_USER = 'Sacra ITech'; // fallback when the name isn't known
 
@@ -202,6 +203,7 @@ export function wireModals(...modals) {
 
 function initShell() {
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
+  initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
 
   // 1. Active sidebar link — matches the current page filename
   const currentPage = window.location.pathname.split('/').pop() || 'itech-dashboard.html';

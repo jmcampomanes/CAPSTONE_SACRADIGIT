@@ -8,6 +8,7 @@ import { guardPage } from '../auth.js';
 guardPage('admin');
 import { initPageHelp } from '../help-tutorial.js';
 import { initUiPrefs } from '../ui-prefs.js';
+import { initExtToggles } from '../name-utils.js';
 import { watchUnreadBadge } from '../chat.js';
 import { watchRequests } from '../prayer-wall.js';
 
@@ -315,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   initPageHelp(HELP_CONTENT[currentPage]);
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
+  initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
 
 
   /* ------------------------------------------

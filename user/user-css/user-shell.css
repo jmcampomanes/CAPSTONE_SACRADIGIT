@@ -308,27 +308,8 @@ body { background-color: #f7f8fa; }
   min-width: 0;
 }
 
-/* "Add extension" checkbox (added by name-utils.js) — phones only. */
-.name-ext-toggle {
-  display: none;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  color: #4b5563;
-  cursor: pointer;
-  padding: 0.25rem 0;
-}
-.name-ext-toggle.is-disabled { opacity: 0.5; cursor: default; }
-
-/* Phones: one box per line, and the Ext. box only once its checkbox is ticked. */
-@media (max-width: 640px) {
-  .name-field-row,
-  .marriage-cell-name-row {
-    grid-template-columns: 1fr !important;
-  }
-  .name-ext-toggle { display: flex; }
-  .name-ext-toggle:not(:has(input:checked)) + .name-ext-input { display: none; }
-}
+/* Phones (one box per line, "Add extension" checkbox): styles come with
+   initExtToggles() in ../name-utils.js, shared by every portal. */
 
 /* ---------- Checkbox (shared) ---------- */
 .checkbox-input {
@@ -793,15 +774,5 @@ a:focus-visible, button:focus-visible {
   display: none;
 }
 
-/* ---------- Top bar: date first, then the buttons ---------- */
-/* The date is grouped with the bell / Aa / theme / language / (?) buttons
-   (see help-tutorial.js); show it on the left of that group. */
-header .help-date-wrap > #current-date {
-  order: -1;
-  margin-right: 0.25rem;
-}
-
-/* No "Install app" (download) button in the parishioner top bar (pwa.js). */
-header .pwa-install-btn {
-  display: none !important;
-}
+/* Top bar order (date first) and no "Install app" button: shared by every
+   portal, see ../ui-prefs.js. */

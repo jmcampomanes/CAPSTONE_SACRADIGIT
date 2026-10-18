@@ -118,6 +118,12 @@ export const PORTAL_DIRECTORY = [
     { page: 'user-dashboard.html', en: 'Dashboard', fil: 'Dashboard',
       what: { en: "Overview: today's Masses, latest announcements, your recent requests, and the Mass check-in box.", fil: 'Buod: Misa ngayong araw, pinakabagong anunsyo, iyong mga huling request, at ang check-in sa Misa.' } },
   ] },
+  { section: { en: 'Track Requests', fil: 'Subaybayan ang mga Hiling' }, pages: [
+    { page: 'user-my-requests.html', en: 'My Requests', fil: 'Aking mga Hiling',
+      what: { en: 'Track the status of your certificate requests.', fil: 'Subaybayan ang status ng iyong mga request ng certificate.' } },
+    { page: 'user-requested-services.html', en: 'Requested Services', fil: 'Mga Hiniling na Serbisyo',
+      what: { en: 'Track or cancel your sacraments, special Masses and blessings (filter by category). Blessings show "Awaiting Approval" until the parish office approves them.', fil: 'Subaybayan o kanselahin ang iyong mga sakramento, espesyal na Misa at bendisyon (i-filter ayon sa kategorya). Ang bendisyon ay "Naghihintay ng Pag-apruba" hanggang aprubahan ng parish office.' } },
+  ] },
   { section: { en: 'Parish', fil: 'Parokya' }, pages: [
     { page: 'user-mass-schedule.html', en: 'Mass Schedule', fil: 'Iskedyul ng Misa',
       what: { en: 'Regular weekly Mass times and the full schedule (including special Masses) for any date.', fil: 'Regular na oras ng Misa bawat linggo at buong iskedyul (kasama ang espesyal na Misa) sa anumang petsa.' } },
@@ -129,12 +135,8 @@ export const PORTAL_DIRECTORY = [
   { section: { en: 'Services', fil: 'Mga Serbisyo' }, pages: [
     { page: 'user-request-certificate.html', en: 'Request a Certificate', fil: 'Humiling ng Sertipiko', also: ['Request Certificate'],
       what: { en: 'Request a Baptismal, Confirmation, First Communion or Marriage certificate.', fil: 'Humiling ng Baptismal, Confirmation, First Communion o Marriage certificate.' } },
-    { page: 'user-my-requests.html', en: 'My Requests', fil: 'Aking mga Hiling',
-      what: { en: 'Track the status of your certificate requests.', fil: 'Subaybayan ang status ng iyong mga request ng certificate.' } },
     { page: 'user-request-service.html', en: 'Request a Service', fil: 'Humiling ng Serbisyo',
       what: { en: 'Book a sacrament (Baptism, Wedding, Confirmation…) or a special Mass (Funeral, Anniversary…) — booked right away — or request a blessing, which the parish office approves first.', fil: 'Mag-book ng sakramento (Binyag, Kasal, Kumpil…) o espesyal na Misa (Libing, Anibersaryo…) — agad na naka-book — o humiling ng bendisyon, na aaprubahan muna ng parish office.' } },
-    { page: 'user-requested-services.html', en: 'Requested Services', fil: 'Mga Hiniling na Serbisyo',
-      what: { en: 'Track or cancel your sacraments, special Masses and blessings (filter by category). Blessings show "Awaiting Approval" until the parish office approves them.', fil: 'Subaybayan o kanselahin ang iyong mga sakramento, espesyal na Misa at bendisyon (i-filter ayon sa kategorya). Ang bendisyon ay "Naghihintay ng Pag-apruba" hanggang aprubahan ng parish office.' } },
     { page: 'user-mass-intentions.html', en: 'Mass Intentions', fil: 'Mga Intensyon sa Misa',
       what: { en: 'Offer a Mass intention (Thanksgiving, Special Intention, or for a Soul) and track it.', fil: 'Mag-alay ng intensyon sa Misa (Pasasalamat, Espesyal na Intensyon, o para sa Kaluluwa) at subaybayan ito.' } },
     { page: 'user-facility-booking.html', en: 'Facility Booking', fil: 'Pag-book ng Pasilidad',

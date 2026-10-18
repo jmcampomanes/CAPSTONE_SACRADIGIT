@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 44 stylesheets.
+   Built by tools/build-dark-theme.mjs from 45 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -292,6 +292,51 @@
 }
 :root[data-theme="dark"] .prep-item.missing .prep-mark {
     color: #ee8c8c
+}
+/*  from marriage-request-form.css  */
+:root[data-theme="dark"] :where(.mwiz) :where(.field-na-label) {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mstep-bar li + li::before {
+    background-color: #2c3548
+}
+:root[data-theme="dark"] .mstep-num {
+    color: #8b93a3;
+    background-color: #1a2131;
+    border: 2px solid #2c3548
+}
+:root[data-theme="dark"] .mstep-label {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .mstep-dot.is-done .mstep-num {
+    background-color: #193e26;
+    border-color: #2e6b44;
+    color: #8decb1
+}
+:root[data-theme="dark"] .mstep-dot.is-done .mstep-label {
+    color: #8decb1
+}
+:root[data-theme="dark"] .mstep-dot.is-current .mstep-label {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .mstep-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .mstep-hint {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mstep-section {
+    border: 1px solid #434956;
+    background-color: #121827
+}
+:root[data-theme="dark"] .mstep-section-title {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .mstep-optional {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .marriage-table-note {
+    color: #8b93a3
 }
 /*  from Sacradigit/sacradigit-css/admin-shell.css  */
 :root[data-theme="dark"] body {
@@ -3557,57 +3602,6 @@
 }
 :root[data-theme="dark"] .confirm-table td {
     color: #a3b3d7
-}
-:root[data-theme="dark"] .marriage-table-wrap {
-    border: 1px solid #2c3548;
-    background-color: #121827
-}
-:root[data-theme="dark"] .marriage-table thead th {
-    color: #a8aad1;
-    background-color: #222a35;
-    border-bottom: 1px solid #2c3548
-}
-:root[data-theme="dark"] .marriage-table tbody th {
-    color: #b0bac9;
-    background-color: #353122
-}
-:root[data-theme="dark"] .marriage-table tbody tr:not(:last-child) th,
-:root[data-theme="dark"] .marriage-table tbody tr:not(:last-child) td {
-    border-bottom: 1px solid #454b54
-}
-:root[data-theme="dark"] .marriage-table thead th:nth-child(2),
-:root[data-theme="dark"] .marriage-table thead th:nth-child(3),
-:root[data-theme="dark"] .marriage-table tbody td:nth-child(2),
-:root[data-theme="dark"] .marriage-table tbody td:nth-child(3) {
-    border-left: 1px solid #2c3548
-}
-:root[data-theme="dark"] .marriage-table tbody td:nth-child(2) {
-    background-color: #222c35
-}
-:root[data-theme="dark"] .marriage-table tbody td:nth-child(3) {
-    background-color: #372420
-}
-:root[data-theme="dark"] .marriage-table tbody tr:nth-child(even) td:nth-child(2) {
-    background-color: #222c35
-}
-:root[data-theme="dark"] .marriage-table tbody tr:nth-child(even) td:nth-child(3) {
-    background-color: #352421
-}
-:root[data-theme="dark"] .marriage-table tbody tr:nth-child(even) th {
-    background-color: #353222
-}
-@media (max-width: 640px) {
-    :root[data-theme="dark"] .marriage-table tbody tr:not(:last-child) td:nth-child(2) {
-        border-bottom: 1px dashed #2c3548
-    }
-}
-@media (max-width: 640px) {
-    :root[data-theme="dark"] .marriage-cell-side {
-        color: #a8aad1
-    }
-}
-:root[data-theme="dark"] .marriage-table-note {
-    color: #8b93a3
 }
 /*  from user/user-css/user-request-service.css  */
 :root[data-theme="dark"] .req-screen {

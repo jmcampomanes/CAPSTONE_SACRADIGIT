@@ -111,27 +111,61 @@ export async function translateElement(root) {
 /** Translate a piece of text (used by i18n-fil.js patterns for the parts they capture). */
 export const t = (s) => (dict && translateText(s)) || s;
 
+/* The English each translated piece replaced, so switching back to English
+   just puts it back — no page reload, nothing typed into forms is lost.
+   { en, fil }: `fil` is exactly what we wrote, so we only restore (or skip
+   re-translating) text that hasn't been changed by the page since. */
+let textOrig = new Map();   // text node → { en, fil }
+let attrOrig = new Map();   // element → Map(attribute | 'value' → { en, fil })
+let titleOrig = null;       // { en, fil } for document.title
+
 function translateTextNode(node) {
   const raw = node.nodeValue;
-  if (!raw || !/[A-Za-z]/.test(raw)) return;
+  const prev = textOrig.get(node);
+  if (prev && raw === prev.fil) return; // our own change echoing back from the observer
+  if (!raw || !/[A-Za-z]/.test(raw)) { textOrig.delete(node); return; }
   const fil = translateText(raw);
-  if (!fil || fil === norm(raw)) return;
+  if (!fil || fil === norm(raw)) { textOrig.delete(node); return; }
   const lead = raw.match(/^\s*/)[0], trail = raw.match(/\s*$/)[0];
-  node.nodeValue = lead + fil + trail;
+  const out = lead + fil + trail;
+  textOrig.set(node, { en: raw, fil: out });
+  node.nodeValue = out;
+}
+
+function rememberAttr(el, name, en, fil) {
+  if (!attrOrig.has(el)) attrOrig.set(el, new Map());
+  attrOrig.get(el).set(name, { en, fil });
 }
 
 function translateAttrs(el) {
   for (const a of ATTRS) {
     const v = el.getAttribute && el.getAttribute(a);
     if (!v) continue;
+    if (attrOrig.get(el)?.get(a)?.fil === v) continue; // ours already
     const fil = translateText(v);
-    if (fil && fil !== v) el.setAttribute(a, fil);
+    if (fil && fil !== v) { rememberAttr(el, a, v, fil); el.setAttribute(a, fil); }
   }
   // <input type="button" value="…">
   if (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit') && el.value) {
+    if (attrOrig.get(el)?.get('value')?.fil === el.value) return;
     const fil = translateText(el.value);
-    if (fil) el.value = fil;
+    if (fil) { rememberAttr(el, 'value', el.value, fil); el.value = fil; }
   }
+}
+
+/** Back to English in place: stop translating and put every original back. */
+function stopTranslating() {
+  if (observer) { observer.disconnect(); observer = null; }
+  textOrig.forEach(({ en, fil }, node) => { if (node.nodeValue === fil) node.nodeValue = en; });
+  attrOrig.forEach((attrs, el) => attrs.forEach(({ en, fil }, name) => {
+    if (name === 'value') { if (el.value === fil) el.value = en; }
+    else if (el.getAttribute(name) === fil) el.setAttribute(name, en);
+  }));
+  if (titleOrig && document.title === titleOrig.fil) document.title = titleOrig.en;
+  textOrig = new Map();
+  attrOrig = new Map();
+  titleOrig = null;
+  document.documentElement.lang = 'en';
 }
 
 // <textarea> content is never translated (people type there), but its placeholder is.
@@ -166,7 +200,7 @@ async function startTranslating() {
   }
   document.documentElement.lang = 'fil';
   const t = translateText(document.title);
-  if (t) document.title = t;
+  if (t) { titleOrig = { en: document.title, fil: t }; document.title = t; }
   translateTree(document.body);
   if (observer) return; // already watching (e.g. Filipino picked again from another control)
   // Keep translating whatever the page adds or changes later (tables, toasts, modals…).
@@ -180,15 +214,13 @@ async function startTranslating() {
   observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
 }
 
+/** Switches the whole page in place — both ways, no reload. */
 export async function setLanguage(lang) {
   write(LANG_KEY, lang);
+  if (lang === 'fil') await startTranslating();
+  else stopTranslating();
+  // After the switch, so widgets that write their own text (bell, assistant…) relabel in the new language.
   document.dispatchEvent(new CustomEvent('sacradigit:lang', { detail: lang }));
-  if (lang === 'fil') {
-    await startTranslating();
-  } else {
-    // Back to English: the original text is simply the page as served.
-    window.location.reload();
-  }
 }
 
 /* ------------------------------------------
@@ -207,17 +239,77 @@ const STYLE = `
   .ui-prefs-btn { width: 1.75rem; padding: 0; }
   .ui-prefs-btn[hidden] { display: none; }
   .ui-prefs-btn svg { width: 0.95rem; height: 0.95rem; }
-  .ui-prefs-lang { padding: 0 0.5rem 0 0.45rem; }
+  /* Language picker: a pill that opens our own menu (the browser's native
+     <select> list can't be styled or lined up under the pill). */
+  .ui-prefs-lang-wrap { position: relative; display: inline-flex; }
+  .ui-prefs-lang { padding: 0 0.4rem 0 0.45rem; font-family: inherit; }
   .ui-prefs-lang svg { width: 0.85rem; height: 0.85rem; flex-shrink: 0; }
-  .ui-prefs-lang select {
-    appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit;
-    font: inherit; cursor: pointer; padding: 0; outline: none;
+  .ui-prefs-lang .ui-prefs-caret { width: 0.65rem; height: 0.65rem; opacity: 0.7; transition: transform 0.15s ease; }
+  .ui-prefs-lang[aria-expanded="true"] { border-color: #8b8fc7; color: #1e2a4a; background: #f3f3ff; }
+  .ui-prefs-lang[aria-expanded="true"] .ui-prefs-caret { transform: rotate(180deg); }
+
+  .ui-prefs-lang-menu {
+    position: absolute; top: calc(100% + 0.4rem); right: 0; z-index: 80; min-width: 10.5rem;
+    margin: 0; padding: 0.3rem; list-style: none;
+    background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.75rem;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+    transform-origin: top right; animation: ui-prefs-menu-in 0.12s ease;
   }
+  .ui-prefs-lang-menu[hidden] { display: none; }
+  @keyframes ui-prefs-menu-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+  .ui-prefs-lang-option {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%;
+    padding: 0.5rem 0.6rem; border: 0; border-radius: 0.5rem; background: none;
+    font: inherit; font-size: 0.8125rem; color: #1f2937; text-align: left; cursor: pointer;
+  }
+  .ui-prefs-lang-option:hover, .ui-prefs-lang-option:focus-visible { background: #f3f3ff; outline: none; }
+  .ui-prefs-lang-code {
+    flex-shrink: 0; width: 1.9rem; text-align: center; font-size: 0.625rem; font-weight: 700; letter-spacing: 0.04em;
+    color: #5b5fa8; background: #eef0f8; border-radius: 0.35rem; padding: 0.15rem 0;
+  }
+  .ui-prefs-lang-name { flex: 1; font-weight: 600; }
+  .ui-prefs-lang-check { width: 0.95rem; height: 0.95rem; color: #5b5fa8; visibility: hidden; }
+  .ui-prefs-lang-option[aria-checked="true"] .ui-prefs-lang-check { visibility: visible; }
+  .ui-prefs-lang-option[aria-checked="true"] .ui-prefs-lang-name { color: #1e2a4a; }
+  /* Switching: the globe spins until the new language is in place */
+  .ui-prefs-lang.is-busy { cursor: progress; opacity: 0.85; }
+  .ui-prefs-lang.is-busy > svg:first-child { animation: ui-prefs-spin 0.9s linear infinite; }
+  @keyframes ui-prefs-spin { to { transform: rotate(360deg); } }
+
+  .ui-prefs-toast {
+    position: fixed; left: 50%; bottom: calc(1.25rem + env(safe-area-inset-bottom)); z-index: 120;
+    transform: translate(-50%, 0.75rem); opacity: 0; pointer-events: none;
+    background: #1e2a4a; color: #ffffff; font-size: 0.8125rem; font-weight: 600;
+    padding: 0.55rem 1rem; border-radius: 999px; box-shadow: 0 10px 28px rgba(15, 23, 42, 0.25);
+    transition: opacity 0.2s ease, transform 0.2s ease; white-space: nowrap;
+  }
+  .ui-prefs-toast.show { opacity: 1; transform: translate(-50%, 0); }
+  :root[data-theme="dark"] .ui-prefs-toast { background: #8b8fc7; color: #0f1420; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-prefs-lang-menu { animation: none; }
+    .ui-prefs-lang.is-busy > svg:first-child { animation: none; }
+    .ui-prefs-toast { transition: none; }
+  }
+
   .ui-prefs-btn:hover, .ui-prefs-lang:hover { background: #f3f4f6; border-color: #9ca3af; color: #1e2a4a; }
-  .ui-prefs-btn:focus-visible, .ui-prefs-lang:focus-within { outline: 2px solid #8b8fc7; outline-offset: 2px; }
+  .ui-prefs-btn:focus-visible, .ui-prefs-lang:focus-visible { outline: 2px solid #8b8fc7; outline-offset: 2px; }
   :root[data-theme="dark"] .ui-prefs-btn, :root[data-theme="dark"] .ui-prefs-lang { background: #1a2131; border-color: #3a4459; color: #b6bdca; }
   :root[data-theme="dark"] .ui-prefs-btn:hover, :root[data-theme="dark"] .ui-prefs-lang:hover { background: #242c3e; color: #f1f3f7; }
+  :root[data-theme="dark"] .ui-prefs-lang[aria-expanded="true"] { background: #242c3e; border-color: #8b8fc7; color: #f1f3f7; }
+  :root[data-theme="dark"] .ui-prefs-lang-menu { background: #1a2131; border-color: #2c3547; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); }
+  :root[data-theme="dark"] .ui-prefs-lang-option { color: #e3e6ec; }
+  :root[data-theme="dark"] .ui-prefs-lang-option:hover, :root[data-theme="dark"] .ui-prefs-lang-option:focus-visible { background: #242c3e; }
+  :root[data-theme="dark"] .ui-prefs-lang-code { color: #c7cbe8; background: #2c3547; }
+  :root[data-theme="dark"] .ui-prefs-lang-check { color: #b3b6e6; }
+  :root[data-theme="dark"] .ui-prefs-lang-option[aria-checked="true"] .ui-prefs-lang-name { color: #ffffff; }
   .ui-prefs-standalone { position: fixed; top: 0.75rem; right: 0.75rem; z-index: 60; }
+
+  /* Every portal's top bar: the date sits on the LEFT of the bell / Aa /
+     theme / language / (?) group (help-tutorial.js groups them), and there's
+     no "Install app" (download) button — the install banner still offers it. */
+  header .help-date-wrap > #current-date { order: -1; margin-right: 0.25rem; }
+  header .pwa-install-btn { display: none !important; }
 
   /* Phones: every portal's top bar keeps menu · title · these buttons on one row.
      (body header.bg-white outranks the Tailwind utility classes in the markup.) */
@@ -253,7 +345,33 @@ const STYLE = `
 
 const MOON = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>';
 const SUN = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>';
+const CARET = '<svg class="ui-prefs-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 9l6 6 6-6"/></svg>';
+const CHECK = '<svg class="ui-prefs-lang-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" d="M5 13l4 4L19 7"/></svg>';
+// Each language shows in its own words, so it's findable whichever one is on.
+const LANGS = [
+  { value: 'en', code: 'EN', name: 'English' },
+  { value: 'fil', code: 'FIL', name: 'Filipino' },
+];
 const GLOBE = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+
+/** Small "language switched" note at the bottom of the screen (works on every portal). */
+function langToast(message) {
+  let el = document.getElementById('ui-prefs-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'ui-prefs-toast';
+    el.className = 'ui-prefs-toast';
+    el.setAttribute('role', 'status');
+    el.setAttribute('data-no-translate', '');
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.classList.remove('show');
+  void el.offsetWidth; // restart the animation
+  el.classList.add('show');
+  clearTimeout(langToast.timer);
+  langToast.timer = setTimeout(() => el.classList.remove('show'), 2200);
+}
 
 export function initUiPrefs() {
   if (document.querySelector('.ui-prefs')) return;
@@ -269,13 +387,21 @@ export function initUiPrefs() {
   group.innerHTML = `
     <button type="button" class="ui-prefs-btn ui-prefs-a11y" id="ui-a11y-btn">Aa</button>
     <button type="button" class="ui-prefs-btn" id="ui-theme-btn"></button>
-    <label class="ui-prefs-lang" title="Language / Wika">
-      ${GLOBE}
-      <select id="ui-lang-select" aria-label="Language / Wika">
-        <option value="en">EN</option>
-        <option value="fil">FIL</option>
-      </select>
-    </label>`;
+    <div class="ui-prefs-lang-wrap">
+      <button type="button" class="ui-prefs-lang" id="ui-lang-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="ui-lang-menu" title="Language / Wika">
+        ${GLOBE}<span id="ui-lang-current"></span>${CARET}
+      </button>
+      <ul class="ui-prefs-lang-menu" id="ui-lang-menu" role="menu" aria-label="Language / Wika" hidden>
+        ${LANGS.map(l => `
+        <li role="none">
+          <button type="button" class="ui-prefs-lang-option" role="menuitemradio" data-lang="${l.value}" aria-checked="false">
+            <span class="ui-prefs-lang-code">${l.code}</span>
+            <span class="ui-prefs-lang-name">${l.name}</span>
+            ${CHECK}
+          </button>
+        </li>`).join('')}
+      </ul>
+    </div>`;
   // Never translate the picker itself.
   group.setAttribute('data-no-translate', '');
   group.prepend(installButton());
@@ -306,12 +432,72 @@ export function initUiPrefs() {
   a11yBtn.addEventListener('click', () => { setAccessibility(!accessibilityOn()); paintA11yBtn(); });
   paintA11yBtn();
 
-  const langSel = group.querySelector('#ui-lang-select');
-  langSel.value = currentLang();
-  langSel.addEventListener('change', () => setLanguage(langSel.value));
+  /* Language menu: opens under the pill, right-aligned with it. Click,
+     Enter/Space or ↓ opens it; ↑/↓ move, Esc or a click outside closes. */
+  const langBtn = group.querySelector('#ui-lang-btn');
+  const langMenu = group.querySelector('#ui-lang-menu');
+  const langOptions = [...langMenu.querySelectorAll('.ui-prefs-lang-option')];
+
+  const paintLang = () => {
+    const lang = currentLang();
+    group.querySelector('#ui-lang-current').textContent = LANGS.find(l => l.value === lang).code;
+    langOptions.forEach(o => o.setAttribute('aria-checked', String(o.dataset.lang === lang)));
+    const label = lang === 'fil' ? 'Wika: Filipino — palitan' : 'Language: English — change';
+    langBtn.setAttribute('aria-label', label);
+  };
+
+  const menuOpen = () => !langMenu.hidden;
+  function openMenu({ focus = 'current' } = {}) {
+    langMenu.hidden = false;
+    langBtn.setAttribute('aria-expanded', 'true');
+    const target = focus === 'first' ? langOptions[0]
+      : langOptions.find(o => o.getAttribute('aria-checked') === 'true') || langOptions[0];
+    target.focus();
+  }
+  function closeMenu({ refocus = false } = {}) {
+    if (!menuOpen()) return;
+    langMenu.hidden = true;
+    langBtn.setAttribute('aria-expanded', 'false');
+    if (refocus) langBtn.focus();
+  }
+
+  langBtn.addEventListener('click', () => (menuOpen() ? closeMenu() : openMenu()));
+  langBtn.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); openMenu(); }
+  });
+  langMenu.addEventListener('click', async (e) => {
+    const opt = e.target.closest('.ui-prefs-lang-option');
+    if (!opt) return;
+    closeMenu({ refocus: true });
+    const lang = opt.dataset.lang;
+    if (lang === currentLang() || langBtn.classList.contains('is-busy')) return;
+    // A spinner while it switches (Filipino's word list loads the first time).
+    langBtn.classList.add('is-busy');
+    langBtn.disabled = true;
+    try {
+      await setLanguage(lang);
+      langToast(lang === 'fil' ? 'Nasa Filipino na ang portal.' : 'The portal is now in English.');
+    } catch (err) {
+      console.error('Could not switch language:', err);
+      langToast(lang === 'fil' ? 'Couldn’t switch to Filipino. Please try again.' : 'Couldn’t switch to English. Please try again.');
+    } finally {
+      langBtn.classList.remove('is-busy');
+      langBtn.disabled = false;
+      paintLang();
+    }
+  });
+  langMenu.addEventListener('keydown', (e) => {
+    const i = langOptions.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); langOptions[(i + 1) % langOptions.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); langOptions[(i - 1 + langOptions.length) % langOptions.length].focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeMenu({ refocus: true }); }
+    else if (e.key === 'Tab') closeMenu();
+  });
+  document.addEventListener('click', (e) => { if (!group.querySelector('.ui-prefs-lang-wrap').contains(e.target)) closeMenu(); });
+  paintLang();
 
   // Stay in sync when another control (e.g. the My Settings page) changes a preference.
-  document.addEventListener('sacradigit:lang', () => { langSel.value = currentLang(); paintThemeBtn(); paintA11yBtn(); });
+  document.addEventListener('sacradigit:lang', () => { paintLang(); paintThemeBtn(); paintA11yBtn(); });
   document.addEventListener('sacradigit:theme', paintThemeBtn);
   document.addEventListener('sacradigit:a11y', paintA11yBtn);
 

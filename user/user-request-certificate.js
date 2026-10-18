@@ -11,49 +11,16 @@ import { currentUserName } from '../auth.js';
 import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled, formatFullName, isNameEmpty } from '../name-utils.js';
 import { regionOptionsHtml, cityOptionsHtml, OTHER_CITY_VALUE } from '../ph-locations.js';
 import { confirmationNameOptionsHtml, OTHER_NAME_VALUE as OTHER_SAINT_NAME_VALUE } from '../saint-names.js';
+import { createMarriageForm, MARRIAGE_STEPS, GUARDIAN_RELATIONSHIPS, TODAY_ISO, MIN_DATE_ISO, isReasonableDate, guardDateInputRange } from '../marriage-request-form.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   const REQUESTER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
   const PARISH_NAME = 'Our Lady of Fatima Parish';
 
-  // Options for the Baptismal Certificate's "Add Guardian" relationship
-  // dropdown — "Other" reveals a free-text field to specify.
-  const GUARDIAN_RELATIONSHIPS = [
-    'Mother', 'Father', 'Grandfather', 'Grandmother', 'Aunt', 'Uncle',
-    'Cousin', 'Older Brother', 'Older Sister', 'Godmother', 'Godfather', 'Other',
-  ];
-
-  // Shared bounds for every date-of-event field on this form: nothing
-  // can be dated in the future, and a 4-digit-year floor keeps the native
-  // date picker's year spinner (which otherwise accepts up to 6 digits)
-  // from producing garbage dates like "20000-11-11".
-  const TODAY_ISO = new Date().toISOString().slice(0, 10);
-  const MIN_DATE_ISO = '1900-01-01';
-
-  /** True for a real, sensible YYYY-MM-DD date: exactly 4 year digits
-      (rules out the "20000-11-11" overflow bug) and not further in the
-      future than this year or further back than 1900 (rules out typos
-      like "9909" that are syntactically a valid 4-digit year but not a
-      plausible date). */
-  function isReasonableDate(iso) {
-    if (!iso) return true;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
-    const year = Number(iso.slice(0, 4));
-    return year >= 1900 && year <= new Date().getFullYear();
-  }
-
-  /** Clears + flags a date input once it holds a settled, unreasonable
-      value. Listens on 'blur' (not 'change'/'input') so it only judges
-      the value after the user is done editing that field, never mid-type. */
-  function guardDateInputRange(el) {
-    el.addEventListener('blur', () => {
-      if (el.value && !isReasonableDate(el.value)) {
-        el.value = '';
-        window.showToast('Please enter a valid, real date (year between 1900 and this year).', true);
-      }
-    });
-  }
+  // GUARDIAN_RELATIONSHIPS, TODAY_ISO / MIN_DATE_ISO, isReasonableDate()
+  // and guardDateInputRange() — the "Add Guardian" options and the date
+  // checks every date field here uses — come from ../marriage-request-form.js.
 
   const certTypes = [
     { id: 'baptismal', name: 'Baptismal Certificate', desc: 'Proof of baptism recorded at the parish.',
@@ -130,9 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // the requester here.
       //
       // Rendering, validation, and data collection for this type are
-      // custom (see renderMarriageFieldsHtml / validateAndCollectMarriage
-      // below) — the groom's and bride's details are shown in their own
-      // side-by-side columns, and each side gets its own independent
+      // custom: a step-by-step form shared with the admin's walk-in request
+      // (../marriage-request-form.js) — Groom, then Bride, then Sponsors,
+      // then Confirm — and each side gets its own independent
       // "Add Guardian" toggle (mirroring the Baptismal/Confirmation
       // Certificates') plus independent N/A toggles on that side's
       // Father's/Mother's names — the generic field-array renderer used
@@ -328,6 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.cert-type-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
     formTypeLabel.textContent = selectedType.name;
+    marriageWizard = null;
+    setCommonSectionVisible(true); // Marriage's step-by-step form hides it again until its last step
 
     if (selectedType.baptismalCustom) {
       godparentCounter = 2;
@@ -337,8 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dynamicFields.innerHTML = renderConfirmationFieldsHtml();
       wireConfirmationFields();
     } else if (selectedType.marriageCustom) {
-      dynamicFields.innerHTML = renderMarriageFieldsHtml();
-      wireMarriageFields();
+      openMarriageForm();
     } else {
       dynamicFields.innerHTML = selectedType.fields.map(f => {
         if (f.kind === 'name') return nameFieldsHtml(f.id, f.label, { required: f.required, spanFull: true });
@@ -363,6 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function goToMenu() {
     selectedType = null;
     pendingSubmission = null;
+    marriageWizard = null;
+    setCommonSectionVisible(true);
     confirmModal.classList.add('hidden');
     formView.classList.add('hidden');
     menuView.classList.remove('hidden');
@@ -973,320 +943,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------
-     MARRIAGE CERTIFICATE — custom fields
-     (Groom's and Bride's details as a comparison
-     table — one row per field, one column per
-     person — each with its own independent guardian
-     sub-section + N/A toggle on Father's/Mother's
-     names; two required witnesses per Canon 1108 §1)
+     MARRIAGE CERTIFICATE — step-by-step form
+     1 Groom → 2 Bride → 3 Sponsors → 4 Confirm, shared
+     with the admin's walk-in request (see
+     ../marriage-request-form.js). The page's own bottom
+     section (parish check, purpose, notes, Submit) shows
+     only on the last step, "Confirm".
   ------------------------------------------ */
+  let marriageWizard = null; // the open Marriage form (createMarriageForm), else null
 
-  /* Four bare name inputs (no shared label — the table row's <th>
-     already names the field) laid out 2-per-row so they stay readable
-     inside a table cell. `prefix` becomes the details key too. */
-  function marriageCellNameInputs(prefix) {
-    return `
-      <div class="marriage-cell-name-row">
-        <input type="text" id="${prefix}-first" class="form-input" placeholder="First Name" />
-        <input type="text" id="${prefix}-middle" class="form-input" placeholder="Middle Name" />
-        <input type="text" id="${prefix}-last" class="form-input" placeholder="Last Name" />
-        <input type="text" id="${prefix}-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
-      </div>`;
-  }
-
-  /* One side's ("groom" or "bride") Guardian table cell: a checkbox
-     that reveals the relationship dropdown (with "Other" free-text),
-     guardian name, and guardian birthday — same fields as the
-     Baptismal/Confirmation Certificates' guardian sub-section, just
-     laid out for a narrower table cell. `side` doubles as the
-     `details` key prefix (side-guardian) the admin's Generate
-     Certificate modal doesn't map (guardian info is request-only
-     context, same as the other certificate types), and side-name/
-     side-father/side-mother below DO match what it expects (see
-     record-requests.js). */
-  function marriageCellGuardian(side, sideLabel) {
-    return `
-      <label class="field-na-label" style="font-size:0.8125rem;">
-        <input type="checkbox" id="${side}-guardian-toggle" class="checkbox-input" />
-        Add Guardian
-      </label>
-      <div class="marriage-cell-guardian hidden" id="${side}-guardian-fields">
-        <div class="mt-2">
-          <label class="form-label" for="${side}-guardian-relationship">Relationship to the ${sideLabel} <span class="text-red-500">*</span></label>
-          <select id="${side}-guardian-relationship" class="form-input">
-            <option value="">Select relationship…</option>
-            ${GUARDIAN_RELATIONSHIPS.map(r => `<option value="${r}">${r}</option>`).join('')}
-          </select>
-        </div>
-        <div class="mt-2 hidden" id="${side}-guardian-relationship-other-wrap">
-          <label class="form-label" for="${side}-guardian-relationship-other">Specify Relationship <span class="text-red-500">*</span></label>
-          <input type="text" id="${side}-guardian-relationship-other" class="form-input" placeholder="e.g. Family friend" />
-        </div>
-        <div class="mt-2">
-          <label class="form-label">Guardian's Full Name <span class="text-red-500">*</span></label>
-          ${marriageCellNameInputs(`${side}-guardian-name`)}
-        </div>
-        <div class="mt-2">
-          <label class="form-label" for="${side}-guardian-birthdate">Guardian's Birthday <span class="text-red-500">*</span></label>
-          <input type="date" id="${side}-guardian-birthdate" class="form-input" min="${MIN_DATE_ISO}" max="${TODAY_ISO}" />
-        </div>
-      </div>`;
-  }
-
-  /* One side's Father's-Name or Mother's-Maiden-Name table cell: an
-     N/A checkbox above 4 bare name inputs. `who` is 'father' or
-     'mother'; `prefix` (side-father / side-mother) is the details key. */
-  function marriageCellParentName(side, who) {
-    const prefix = `${side}-${who}`;
-    return `
-      <div class="field-na-row">
-        <label class="field-na-label"><input type="checkbox" id="${prefix}-na" class="checkbox-input" /> Not Applicable / Prefer not to say</label>
-      </div>
-      ${marriageCellNameInputs(prefix)}`;
-  }
-
-  function renderMarriageFieldsHtml() {
-    /* "Groom"/"Bride" tag at the top of each cell — hidden on wide screens
-       (the column headers say it), shown on phones where the table stacks
-       into one column (see "Phones" in user-request-certificate.css). */
-    const GROOM_TAG = '<span class="marriage-cell-side">Groom</span>';
-    const BRIDE_TAG = '<span class="marriage-cell-side">Bride</span>';
-    return `
-      <div class="marriage-table-wrap">
-        <table class="marriage-table">
-          <colgroup>
-            <col class="marriage-table-label-col" />
-            <col class="marriage-table-person-col" />
-            <col class="marriage-table-person-col" />
-          </colgroup>
-          <thead>
-            <tr><th></th><th>Groom</th><th>Bride</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th>Full Name <span class="text-red-500">*</span></th>
-              <td>${GROOM_TAG}${marriageCellNameInputs('groom-name')}</td>
-              <td>${BRIDE_TAG}${marriageCellNameInputs('bride-name')}</td>
-            </tr>
-            <tr>
-              <th>Guardian</th>
-              <td>${GROOM_TAG}${marriageCellGuardian('groom', 'Groom')}</td>
-              <td>${BRIDE_TAG}${marriageCellGuardian('bride', 'Bride')}</td>
-            </tr>
-            <tr>
-              <th>Father's Name <span class="text-red-500">*</span></th>
-              <td>${GROOM_TAG}${marriageCellParentName('groom', 'father')}</td>
-              <td>${BRIDE_TAG}${marriageCellParentName('bride', 'father')}</td>
-            </tr>
-            <tr>
-              <th>Mother's Maiden Name <span class="text-red-500">*</span></th>
-              <td>${GROOM_TAG}${marriageCellParentName('groom', 'mother')}</td>
-              <td>${BRIDE_TAG}${marriageCellParentName('bride', 'mother')}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="marriage-table-note">* Required unless checked Not Applicable, or a guardian is added for that person.</p>
-
-      <div>
-        <label class="form-label" for="marriage-date">Date of Marriage</label>
-        <input type="date" id="marriage-date" class="form-input" min="${MIN_DATE_ISO}" max="${TODAY_ISO}" />
-      </div>
-
-      <div>
-        <label class="form-label" for="marriage-place">Place of Marriage</label>
-        <input type="text" id="marriage-place" class="form-input" placeholder="e.g. Our Lady of Fatima Parish" />
-      </div>
-
-      ${nameFieldsHtml('witness-1', 'Witness 1', { required: true, spanFull: true })}
-      ${nameFieldsHtml('witness-2', 'Witness 2', { required: true, spanFull: true })}
-    `;
-  }
-
-  /* Wires one side's guardian toggle, relationship "Other" reveal, and
-     Father's/Mother's N/A toggles — parameterized by `side` so this one
-     function serves both the groom and bride columns instead of two
-     near-duplicate copies (unlike the Baptismal/Confirmation Certificates,
-     which only ever render ONE guardian block at a time and so could get
-     away with copy-pasted, unparameterized logic). */
-  function wireMarriagePersonBlock(side) {
-    const guardianToggle = document.getElementById(`${side}-guardian-toggle`);
-    const guardianFields = document.getElementById(`${side}-guardian-fields`);
-
-    function updateParentFieldsState() {
-      const guardianOn = guardianToggle.checked;
-      [
-        { prefix: `${side}-father`, naId: `${side}-father-na` },
-        { prefix: `${side}-mother`, naId: `${side}-mother-na` },
-      ].forEach(({ prefix, naId }) => {
-        const naCheckbox = document.getElementById(naId);
-        const inputs = [`${prefix}-first`, `${prefix}-middle`, `${prefix}-last`, `${prefix}-ext`]
-          .map(id => document.getElementById(id));
-        const disabled = guardianOn || naCheckbox.checked;
-        inputs.forEach(el => { el.disabled = disabled; });
-        naCheckbox.disabled = guardianOn;
-      });
-    }
-
-    guardianToggle.addEventListener('change', () => {
-      guardianFields.classList.toggle('hidden', !guardianToggle.checked);
-      if (!guardianToggle.checked) {
-        document.getElementById(`${side}-guardian-relationship`).value = '';
-        document.getElementById(`${side}-guardian-relationship-other-wrap`).classList.add('hidden');
-        document.getElementById(`${side}-guardian-relationship-other`).value = '';
-        setNameFields(`${side}-guardian-name`, null);
-        document.getElementById(`${side}-guardian-birthdate`).value = '';
-      }
-      updateParentFieldsState();
+  /* Every other certificate shows the bottom section under its fields. */
+  function setCommonSectionVisible(show, { marriageLastStep = false } = {}) {
+    ['common-fields', 'req-processing-note', 'submit-row'].forEach(id => {
+      document.getElementById(id)?.classList.toggle('hidden', !show);
     });
+    document.getElementById('btn-marriage-back')?.classList.toggle('hidden', !marriageLastStep);
+  }
 
-    const relationshipEl = document.getElementById(`${side}-guardian-relationship`);
-    const relationshipOtherWrap = document.getElementById(`${side}-guardian-relationship-other-wrap`);
-    relationshipEl.addEventListener('change', () => {
-      relationshipOtherWrap.classList.toggle('hidden', relationshipEl.value !== 'Other');
-      if (relationshipEl.value !== 'Other') document.getElementById(`${side}-guardian-relationship-other`).value = '';
+  function openMarriageForm() {
+    dynamicFields.innerHTML = '<div id="marriage-form" class="sm:col-span-2"></div>';
+    marriageWizard = createMarriageForm(document.getElementById('marriage-form'), {
+      confirmHint: 'Almost done — tell us why you need the certificate, then review everything before it\'s sent.',
+      scrollTarget: dynamicFields.closest('.req-form-panel'),
+      onStepChange: (step, isLast) => setCommonSectionVisible(isLast, { marriageLastStep: isLast }),
     });
-
-    function wireNotApplicable(checkboxId, fieldPrefix) {
-      const checkbox = document.getElementById(checkboxId);
-      const inputs = [`${fieldPrefix}-first`, `${fieldPrefix}-middle`, `${fieldPrefix}-last`, `${fieldPrefix}-ext`]
-        .map(id => document.getElementById(id));
-      checkbox.addEventListener('change', () => {
-        if (checkbox.checked) inputs.forEach(el => { el.value = ''; });
-        updateParentFieldsState();
-      });
-    }
-    wireNotApplicable(`${side}-father-na`, `${side}-father`);
-    wireNotApplicable(`${side}-mother-na`, `${side}-mother`);
-    updateParentFieldsState();
   }
 
-  function wireMarriageFields() {
-    [
-      document.getElementById('marriage-date'),
-      document.getElementById('groom-guardian-birthdate'),
-      document.getElementById('bride-guardian-birthdate'),
-    ].forEach(guardDateInputRange);
-
-    wireMarriagePersonBlock('groom');
-    wireMarriagePersonBlock('bride');
-  }
-
-  /* Validates and collects one side's (groom's or bride's) fields into
-     `details`, returning whether that side is complete. Mirrors the
-     guardian/N/A logic in validateAndCollectBaptismal/Confirmation
-     above, parameterized by `side` for the same reason
-     wireMarriagePersonBlock() is. */
-  function validateMarriagePersonBlock(side, sideLabel, flagInvalid, details) {
-    let allFilled = true;
-
-    details[`${side}-name`] = readNameFields(`${side}-name`);
-    if (!nameFieldsFilled(`${side}-name`)) {
-      allFilled = false;
-      flagInvalid(document.getElementById(`${side}-name-first`));
-      flagInvalid(document.getElementById(`${side}-name-last`));
-    }
-
-    const guardianToggle = document.getElementById(`${side}-guardian-toggle`);
-    if (guardianToggle.checked) {
-      const relationshipEl = document.getElementById(`${side}-guardian-relationship`);
-      const relationshipOtherEl = document.getElementById(`${side}-guardian-relationship-other`);
-      const guardianBirthdateEl = document.getElementById(`${side}-guardian-birthdate`);
-
-      let relationship = relationshipEl.value;
-      if (!relationship) { allFilled = false; flagInvalid(relationshipEl); }
-      if (relationship === 'Other') {
-        if (!relationshipOtherEl.value.trim()) { allFilled = false; flagInvalid(relationshipOtherEl); }
-        relationship = relationshipOtherEl.value.trim() || 'Other';
-      }
-
-      const guardianName = readNameFields(`${side}-guardian-name`);
-      if (!nameFieldsFilled(`${side}-guardian-name`)) {
-        allFilled = false;
-        flagInvalid(document.getElementById(`${side}-guardian-name-first`));
-        flagInvalid(document.getElementById(`${side}-guardian-name-last`));
-      }
-
-      // As with the Confirmation Certificate, this form doesn't collect
-      // the groom's/bride's own date of birth, so there's no field to
-      // compare the guardian's birthdate against for an "older than"
-      // check — only a sanity check on the guardian's own birthdate.
-      if (!guardianBirthdateEl.value) {
-        allFilled = false;
-        flagInvalid(guardianBirthdateEl);
-      } else if (!isReasonableDate(guardianBirthdateEl.value)) {
-        allFilled = false;
-        flagInvalid(guardianBirthdateEl);
-      }
-
-      details[`${side}-guardian`] = {
-        relationship,
-        name: guardianName,
-        birthdate: guardianBirthdateEl.value,
-      };
-    } else {
-      details[`${side}-guardian`] = null;
-    }
-
-    const fatherNa = guardianToggle.checked || document.getElementById(`${side}-father-na`).checked;
-    if (fatherNa) {
-      details[`${side}-father`] = null;
-    } else {
-      details[`${side}-father`] = readNameFields(`${side}-father`);
-      if (!nameFieldsFilled(`${side}-father`)) {
-        allFilled = false;
-        flagInvalid(document.getElementById(`${side}-father-first`));
-        flagInvalid(document.getElementById(`${side}-father-last`));
-      }
-    }
-
-    const motherNa = guardianToggle.checked || document.getElementById(`${side}-mother-na`).checked;
-    if (motherNa) {
-      details[`${side}-mother`] = null;
-    } else {
-      details[`${side}-mother`] = readNameFields(`${side}-mother`);
-      if (!nameFieldsFilled(`${side}-mother`)) {
-        allFilled = false;
-        flagInvalid(document.getElementById(`${side}-mother-first`));
-        flagInvalid(document.getElementById(`${side}-mother-last`));
-      }
-    }
-
-    return allFilled;
-  }
-
-  function validateAndCollectMarriage(flagInvalid) {
-    let allFilled = true;
-    const details = {};
-
-    if (!validateMarriagePersonBlock('groom', 'Groom', flagInvalid, details)) allFilled = false;
-    if (!validateMarriagePersonBlock('bride', 'Bride', flagInvalid, details)) allFilled = false;
-
-    const marriageDateEl = document.getElementById('marriage-date');
-    details['marriage-date'] = marriageDateEl.value;
-    if (marriageDateEl.value && !isReasonableDate(marriageDateEl.value)) {
-      allFilled = false;
-      flagInvalid(marriageDateEl);
-    }
-
-    details['marriage-place'] = document.getElementById('marriage-place').value.trim();
-
-    details['witness-1'] = readNameFields('witness-1');
-    if (!nameFieldsFilled('witness-1')) {
-      allFilled = false;
-      flagInvalid(document.getElementById('witness-1-first'));
-      flagInvalid(document.getElementById('witness-1-last'));
-    }
-
-    details['witness-2'] = readNameFields('witness-2');
-    if (!nameFieldsFilled('witness-2')) {
-      allFilled = false;
-      flagInvalid(document.getElementById('witness-2-first'));
-      flagInvalid(document.getElementById('witness-2-last'));
-    }
-
-    return { allFilled, details };
-  }
+  document.getElementById('btn-marriage-back').addEventListener('click', () => marriageWizard?.go(marriageWizard.step - 1));
 
   document.getElementById('btn-back-to-menu').addEventListener('click', goToMenu);
 
@@ -1317,7 +1000,14 @@ document.addEventListener('DOMContentLoaded', () => {
       allFilled = result.allFilled;
       details = result.details;
     } else if (selectedType.marriageCustom) {
-      const result = validateAndCollectMarriage(flagInvalid);
+      const result = marriageWizard.collect(flagInvalid);
+      // Something on an earlier step is missing: take them back to it.
+      const unfinished = marriageWizard.firstUnfinished(flagInvalid);
+      if (unfinished !== undefined) {
+        marriageWizard.go(unfinished);
+        window.showToast(`Please finish the ${MARRIAGE_STEPS[unfinished].label} step first.`, true);
+        return;
+      }
       allFilled = result.allFilled;
       details = result.details;
     } else {

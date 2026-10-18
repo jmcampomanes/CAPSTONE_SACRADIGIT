@@ -324,8 +324,8 @@ const STYLE = `
 
 export function initNotifications() {
   if (!currentUser() || document.querySelector('.pn-wrap')) return;
-  const lang = currentLang();
-  const t = TXT[lang];
+  let lang = currentLang(); // follows the language menu (see 'sacradigit:lang' below)
+  let t = TXT[lang];
 
   const style = document.createElement('style');
   style.textContent = STYLE;
@@ -435,6 +435,19 @@ export function initNotifications() {
   wrap.querySelector('.pn-close').addEventListener('click', close);
   document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) close(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && wrap.classList.contains('pn-open')) { close(); btn.focus(); } });
+
+  // Language switched in the top bar (no page reload): relabel and rebuild the list in the new language.
+  document.addEventListener('sacradigit:lang', () => {
+    lang = currentLang();
+    t = TXT[lang];
+    btn.title = t.open;
+    wrap.querySelector('.pn-panel').setAttribute('aria-label', t.title);
+    wrap.querySelector('.pn-head strong').textContent = t.title;
+    markBtn.textContent = t.markAll;
+    wrap.querySelector('.pn-foot a').textContent = t.settings;
+    paint();
+    refresh();
+  });
 
   markBtn.addEventListener('click', () => { items.forEach(n => readIds.add(n.id)); saveRead(); paint(); });
   listEl.addEventListener('click', (e) => {

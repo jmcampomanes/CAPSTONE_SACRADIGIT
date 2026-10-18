@@ -1052,6 +1052,31 @@ export const FIL = {
 
   "Upcoming Special Masses are listed at the bottom of Date’s Schedule — tap one to open its date.": "Nakalista sa ibaba ng Iskedyul ng Petsa ang mga Paparating na Espesyal na Misa — i-tap ang isa para buksan ang petsa nito.",
 
+  // ---- Sidebar ----
+  "Track Requests": "Subaybayan ang mga Hiling",
+
+  // ---- Marriage Certificate: step-by-step form ----
+  "Sponsors": "Mga Ninong at Ninang",
+  "← Back": "← Bumalik",
+  "Next: Bride →": "Susunod: Babaeng Ikakasal →",
+  "Next: Sponsors →": "Susunod: Mga Ninong at Ninang →",
+  "Next: Confirm →": "Susunod: Kumpirmahin →",
+  "Groom's details": "Detalye ng Lalaking Ikakasal",
+  "Bride's details": "Detalye ng Babaeng Ikakasal",
+  "Sponsors & wedding": "Mga Ninong at Ninang at ang Kasal",
+  "Confirm details": "Kumpirmahin ang detalye",
+  "Guardian": "Tagapag-alaga",
+  "(only if a guardian signs instead of the parents)": "(kung tagapag-alaga ang pipirma sa halip na mga magulang)",
+  "Groom's Father's Name": "Pangalan ng Ama ng Lalaking Ikakasal",
+  "Groom's Mother's Maiden Name": "Pangalan sa Pagkadalaga ng Ina ng Lalaking Ikakasal",
+  "Bride's Father's Name": "Pangalan ng Ama ng Babaeng Ikakasal",
+  "Bride's Mother's Maiden Name": "Pangalan sa Pagkadalaga ng Ina ng Babaeng Ikakasal",
+  "Sponsor / Witness 1": "Ninong/Ninang / Saksi 1",
+  "Sponsor / Witness 2": "Ninong/Ninang / Saksi 2",
+  "The two principal sponsors (ninong and ninang) who witnessed the wedding.": "Ang dalawang pangunahing ninong at ninang na sumaksi sa kasal.",
+  "Almost done — tell us why you need the certificate, then review everything before it's sent.": "Malapit nang matapos — sabihin kung bakit kailangan mo ang sertipiko, saka suriin ang lahat bago ipadala.",
+  "Please fill in the highlighted fields to continue.": "Pakisagutan ang mga naka-highlight para makapagpatuloy.",
+
   // ---- Facility Booking: the parish's two facilities ----
   "3rd Floor Hall": "3rd Floor Hall",
   "Flexible open space for receptions, youth activities, seminars, and community events.": "Malawak na espasyo para sa mga salu-salo, gawain ng kabataan, seminar, at mga kaganapan sa komunidad.",
@@ -1298,7 +1323,6 @@ export const FIL = {
   "Guardian's Full Name": "Buong Pangalan ng Tagapag-alaga",
   "Groom": "Lalaking Ikakasal",
   "Bride": "Babaeng Ikakasal",
-  "Guardian": "Tagapag-alaga",
   "* Required unless checked Not Applicable, or a guardian is added for that person.": "* Kailangan maliban kung may tsek ang Hindi Naaangkop, o may idinagdag na tagapag-alaga para sa taong iyon.",
   "Enter city/municipality": "Ilagay ang lungsod/bayan",
   "e.g. Family friend": "hal. Kaibigan ng pamilya",

@@ -257,8 +257,8 @@ const STYLE = `
 
 export function initParishAssistant() {
   if (document.querySelector('.pa-root')) return;
-  const lang = currentLang();
-  const ui = UI[lang];
+  let lang = currentLang(); // follows the language menu (see 'sacradigit:lang' below)
+  let ui = UI[lang];
 
   const style = document.createElement('style');
   style.textContent = STYLE;
@@ -405,6 +405,23 @@ export function initParishAssistant() {
     launcher.setAttribute('aria-expanded', 'false');
     launcher.focus();
   }
+
+  // Language switched in the top bar (no page reload): relabel the window.
+  // Messages already in the chat stay as they were; new replies follow the new language.
+  document.addEventListener('sacradigit:lang', () => {
+    lang = currentLang();
+    ui = UI[lang];
+    launcher.setAttribute('aria-label', ui.open);
+    launcher.title = ui.open;
+    root.querySelector('.pa-panel').setAttribute('aria-label', ui.title);
+    root.querySelector('.pa-head-text').innerHTML = `<strong>${ui.title}</strong><span>${ui.sub}</span>`;
+    root.querySelector('.pa-close').setAttribute('aria-label', ui.close);
+    input.placeholder = ui.placeholder;
+    input.setAttribute('aria-label', ui.placeholder);
+    send.setAttribute('aria-label', ui.send);
+    root.querySelector('.pa-note').textContent = ui.note;
+    if (log.querySelector('.pa-chips') && !busy) addChips(STARTER_CHIPS[lang]);
+  });
 
   launcher.addEventListener('click', open);
   root.querySelector('.pa-close').addEventListener('click', close);

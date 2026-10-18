@@ -99,8 +99,29 @@ export function syncExtToggle(input, { matchValue = false } = {}) {
   label.classList.toggle('is-disabled', input.disabled);
 }
 
+// Styles travel with the feature so every portal (parishioner, admin, ITech,
+// Media) gets the same phone layout without each stylesheet copying it.
+const EXT_STYLE = `
+  .name-ext-toggle { display: none; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: #4b5563; cursor: pointer; padding: 0.25rem 0; }
+  .name-ext-toggle .checkbox-input { width: 1rem; height: 1rem; accent-color: #8b8fc7; cursor: pointer; flex-shrink: 0; }
+  .name-ext-toggle.is-disabled { opacity: 0.5; cursor: default; }
+  :root[data-theme="dark"] .name-ext-toggle { color: #c4c9d3; }
+  /* Phones: one box per line, and the Ext. box only once its checkbox is ticked. */
+  @media (max-width: 640px) {
+    .name-field-row, .marriage-cell-name-row { grid-template-columns: 1fr !important; }
+    .name-ext-toggle { display: flex; }
+    .name-ext-toggle:not(:has(input:checked)) + .name-ext-input { display: none; }
+  }
+`;
+
 /** Adds the checkbox to every Ext. box on the page, now and as forms are built. */
 export function initExtToggles(root = document.body) {
+  if (!document.getElementById('name-ext-styles')) {
+    const st = document.createElement('style');
+    st.id = 'name-ext-styles';
+    st.textContent = EXT_STYLE;
+    document.head.appendChild(st);
+  }
   root.querySelectorAll('.name-ext-input').forEach(addExtToggle);
   new MutationObserver((muts) => {
     for (const m of muts) {

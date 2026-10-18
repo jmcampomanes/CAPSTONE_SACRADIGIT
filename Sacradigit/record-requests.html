@@ -47,6 +47,7 @@
   <link rel="stylesheet" href="sacradigit-css/admin-shell.css" />
   <link rel="stylesheet" href="sacradigit-css/digital-archives.css" />
   <link rel="stylesheet" href="sacradigit-css/record-requests.css" />
+  <link rel="stylesheet" href="../marriage-request-form.css" />
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
@@ -396,6 +397,13 @@
             <label class="form-label" for="new-date">Date Requested</label>
             <input type="date" id="new-date" class="form-input" />
           </div>
+        </div>
+
+        <!-- Marriage only: Groom → Bride → Sponsors → Confirm (../marriage-request-form.js) -->
+        <div id="new-marriage-form" class="hidden mt-5"></div>
+
+        <!-- Purpose + notes (Marriage: moved into its last step, "Confirm") -->
+        <div id="new-common-fields" class="grid grid-cols-2 gap-3 mt-3">
           <div class="col-span-2">
             <label class="form-label" for="new-purpose">Purpose</label>
             <input type="text" id="new-purpose" class="form-input" placeholder="e.g. School enrollment, employment, marriage application" />
