@@ -12,29 +12,7 @@ import { initUiPrefs } from '../ui-prefs.js';
 import { watchUnreadBadge } from '../chat.js';
 import { initParishAssistant } from '../assistant/parish-assistant.js';
 import { initNotifications } from '../notifications/parish-notifications.js';
-import { initSacredArt } from './sacred-art.js';
-
-/* ------------------------------------------
-   Sacred art on every page's navy header
-   (.req-hero), same rotating artwork as the
-   Dashboard greeting banner. Each header gets
-   the art frame plus a navy tint (so the white
-   text stays readable) as its first children;
-   see "Sacred art on page headers" in
-   user-shell.css for the layering.
-   ------------------------------------------ */
-function addSacredArtToHeaders() {
-  document.querySelectorAll('.req-hero').forEach((hero) => {
-    if (hero.querySelector(':scope > .sacred-art-frame')) return;
-    const tint = document.createElement('div');
-    tint.className = 'req-hero-tint';
-    tint.setAttribute('aria-hidden', 'true');
-    const frame = document.createElement('div');
-    frame.setAttribute('aria-hidden', 'true');
-    hero.prepend(frame, tint);
-    initSacredArt(frame);
-  });
-}
+import { initExtToggles } from '../name-utils.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -87,7 +65,7 @@ const HELP_CONTENT = {
     title: 'Dashboard',
     intro: 'Your at-a-glance overview of parish life and your own requests.',
     steps: [
-      'Check Today’s Mass Schedule and Upcoming Special Masses for what’s coming up.',
+      'Check Today’s Mass Schedule for today’s Masses — press Full schedule to see any other date.',
       'Read Recent Announcements for the latest parish news.',
       'Glance at My Recent Requests to see the status of anything you’ve submitted.',
       'Use the sidebar to jump into Mass Schedule, Request a Service, My Requests, and more.',
@@ -100,15 +78,6 @@ const HELP_CONTENT = {
       'Browse the list of announcements, newest first.',
       'Click an announcement to open its full details.',
       'Use “Clear” to reset any active search or filter.',
-    ],
-  },
-  'user-blessings.html': {
-    title: 'Blessings',
-    intro: 'Track your house, business, and vehicle blessing requests on a calendar.',
-    steps: [
-      'View your blessing requests laid out on the calendar by date.',
-      'Click a date with a request to see its details and status.',
-      'Looking for a sacrament (Baptism, Wedding, First Communion) or a special Mass (Funeral, Anniversary) instead? Submit and track those under “Request a Service.”',
     ],
   },
   'user-donations.html': {
@@ -146,7 +115,7 @@ const HELP_CONTENT = {
     steps: [
       'Check the legend at the top to see what each mass-type badge (Daily, Anticipated, Special, Baptism) means.',
       'Pick a date to see that day’s full schedule.',
-      'Review Upcoming Special Masses for what’s coming up.',
+      'Upcoming Special Masses are listed at the bottom of Date’s Schedule — tap one to open its date.',
       'Check the Regular Weekly Mass Schedule table for the recurring pattern that applies every week.',
     ],
   },
@@ -197,14 +166,17 @@ const HELP_CONTENT = {
     steps: [
       'Browse the three rows — Blessings, Sacraments, and Special Masses — and pick the service you need.',
       'Each service shows its fixed schedule. Pick an open date, then an open time slot (full slots are greyed out).',
-      'Submit to book the slot right away. No waiting for approval. You’ll find it under “Requested Services.”',
+      'Sacraments and special Masses are booked as soon as you submit.',
+      'Blessings are sent to the parish office for approval first — your slot is held while you wait. You can have up to 3 blessing requests waiting at a time.',
+      'Track everything under “Requested Services.”',
     ],
   },
   'user-requested-services.html': {
     title: 'Requested Services',
     intro: 'Track the status of every sacrament, blessing, or special Mass you’ve requested.',
     steps: [
-      'Browse My Requested Services to see each request and its current status.',
+      'Use the chips above the list — All, Blessings, Sacraments, Special Masses — to narrow it down.',
+      'Blessings show “Awaiting Approval” until the parish office approves them (then “Scheduled”) or declines them (“Not Approved,” with the reason).',
       'Open a request to see its full details, including any confirmed date, time, and officiant.',
       'Cancel a booking you no longer need. Its slot is released for other parishioners.',
     ],
@@ -212,8 +184,6 @@ const HELP_CONTENT = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-
-  addSacredArtToHeaders();
 
   /* ------------------------------------------
      1. USER PROFILE — populate name & initials
@@ -308,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
   initParishAssistant(); // floating "Ask" chat (assistant/)
   initNotifications(); // 🔔 bell in the top bar (notifications/)
+  initExtToggles(); // phones: Ext. (Jr., III) box hidden behind an "Add extension" checkbox (name-utils.js)
 
 
   /* ------------------------------------------

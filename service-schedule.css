@@ -252,12 +252,47 @@
   color: #1e2a4a;
 }
 
-/* Fixed-schedule line on each service card */
+/* Fixed schedule on each service card: days, then each time as a chip */
 .svc-type-sched {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.svc-sched-days {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #5b5fa8;
+}
+
+.svc-sched-times { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+.svc-time-chip {
   font-size: 0.6875rem;
-  color: #6c6fb0;
   font-weight: 600;
-  margin-top: 0.25rem;
+  color: #4b5563;
+  background-color: #f3f4f8;
+  border-radius: 0.375rem;
+  padding: 0.15rem 0.45rem;
+  white-space: nowrap;
+}
+
+/* "Needs approval" tag on blessing cards (see needsApproval() in service-catalog.js) */
+.svc-type-approval {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #92400e;
+  background-color: #fef3c7;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  white-space: nowrap;
 }
 
 /* "Open in Google Maps" link for a House Blessing map pin */
@@ -322,6 +357,27 @@
 
 .pin-map-status[data-state="ok"] { color: #15803d; font-weight: 600; }
 .pin-map-status[data-state="error"] { color: #b91c1c; }
+
+/* "Use this address" — offered when the parishioner already typed a different address */
+.pin-map-use-address {
+  font: inherit;
+  font-weight: 700;
+  color: #5b5fa8;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.pin-map-use-address:hover { color: #1e2a4a; }
+
+/* Complete Address box flashes once when it's filled in from the pin */
+.form-input.address-autofilled { animation: address-autofilled 1.6s ease; }
+@keyframes address-autofilled {
+  0%, 30% { background-color: #ecfdf5; border-color: #22c55e; }
+  100% { background-color: inherit; }
+}
+@media (prefers-reduced-motion: reduce) { .form-input.address-autofilled { animation: none; } }
 
 /* ---------- Full-screen service view (Reschedule) ----------
    Same pattern as the Facility Booking / Request a Service screens:

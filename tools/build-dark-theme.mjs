@@ -37,7 +37,8 @@ const SOURCES = [
 ].filter(f => !/print|\/style\.css$/.test(f)); // certificate print pages + the public landing page stay light
 
 // Parts of the page that must keep their light colours.
-const EXCLUDE = /ci-qr|qr-|print|leaflet|scan-canvas|#scan-canvas|sacred-|cert-|certificate-(paper|page)/i;
+// (cert-type-* / cert-icon are the parishioner's "Request a Certificate" picker cards, not certificate paper — they go dark.)
+const EXCLUDE = /ci-qr|qr-|print|leaflet|scan-canvas|#scan-canvas|sacred-|cert-(?!type-|icon\b)|certificate-(paper|page)/i;
 
 /* ---------- colour helpers ---------- */
 const NAMED = { white: [255, 255, 255, 1], black: [0, 0, 0, 1] };
@@ -254,6 +255,14 @@ ${PREFIX} .help-modal-card { background-color: #1a2131; color: #e3e6ec; }
 /* ---- Inline navy text/icons (style="color:#1e2a4a") set directly in markup ---- */
 ${PREFIX} [style*="color:#1e2a4a"], ${PREFIX} [style*="color: #1e2a4a"] { color: #c7cbe8 !important; }
 ${PREFIX} [style*="background-color:rgba(30,42,74"], ${PREFIX} [style*="background-color: rgba(30,42,74"] { background-color: rgba(199, 203, 232, 0.12) !important; }
+
+/* ---- Booking calendar (service-schedule.js): unavailable days read as dim grey ----
+   Their light-mode grey (#d1d5db) is "already light", so the generator keeps it —
+   which on a dark background looks as bright as a bookable day. */
+${PREFIX} .slot-cal-day { color: #4b5466; }
+${PREFIX} .slot-cal-day.closed { color: #4b5466; text-decoration-color: #4b5466; }
+${PREFIX} .slot-cal-day.full { color: #8a5a63; }
+${PREFIX} .slot-cal-day.open.active { color: #ffffff; background-color: #3d4a7a; border-color: #8b8fc7; }
 
 /* ---- Images and maps keep their real colours ---- */
 ${PREFIX} .leaflet-container { background-color: #ddd; }

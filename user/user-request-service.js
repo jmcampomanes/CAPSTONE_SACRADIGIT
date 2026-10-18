@@ -7,8 +7,11 @@
 
    Scheduling uses the parish's fixed slots from
    ../service-schedule.js: the parishioner picks an
-   open slot and the request is saved directly as
-   status 'scheduled' — no admin approval step.
+   open slot. Sacraments and special Masses are saved
+   straight away as 'scheduled'; blessings are saved as
+   'pending' (holding the slot) until the parish office
+   approves or declines them on the admin Blessings
+   page — see needsApproval() in ../service-catalog.js.
    ============================================ */
 
 import { client } from '../amplify-init.js';
@@ -17,8 +20,12 @@ import { currentUserName, currentUser } from '../auth.js';
 import { notifyServiceUpdate } from '../email-notify.js';
 import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, watchClosures, serviceSchedulesReady } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
-import { createPinMap, formatLatLng } from '../pin-map.js';
-import { SERVICE_CATEGORIES, SERVICE_TYPES } from '../service-catalog.js';
+import { createPinMap, formatLatLng, addressFromLatLng } from '../pin-map.js';
+import { SERVICE_CATEGORIES, SERVICE_TYPES, needsApproval } from '../service-catalog.js';
+
+// A pending blessing holds its slot until the office decides, so one person
+// can only have this many waiting at once (keeps spam from filling the calendar).
+const MAX_PENDING_BLESSINGS = 3;
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -86,16 +93,30 @@ document.addEventListener('DOMContentLoaded', () => {
      per category (Blessings, Sacraments, Special Masses) instead of one
      undifferentiated grid, so it's clear at a glance what kind of
      request each card is. --- */
+  // "Mon–Sat · 09:00 AM, 10:30 AM" → days on one line, each time as a small chip
+  const CLOCK_ICON = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+  function schedHtml(name) {
+    const [days, times = ''] = describeSchedule(name).split(' · ');
+    const chips = times.split(', ').filter(Boolean)
+      .map(t => `<span class="svc-time-chip">${escapeHtml(t.replace(/^0(\d)/, '$1'))}</span>`).join('');
+    return `<span class="svc-sched-days">${CLOCK_ICON}${escapeHtml(days)}</span>${chips ? `<span class="svc-sched-times">${chips}</span>` : ''}`;
+  }
+
   function svcCardHtml(s) {
     return `
     <button type="button" class="svc-type-card" data-id="${s.id}">
-      <div class="svc-icon" style="background-color:${s.iconBg};color:${s.iconColor};">${s.icon}</div>
-      <p class="svc-type-name">${escapeHtml(s.name)}</p>
+      <div class="svc-type-head">
+        <div class="svc-icon" style="background-color:${s.iconBg};color:${s.iconColor};">${s.icon}</div>
+        <p class="svc-type-name">${escapeHtml(s.name)}</p>
+      </div>
       <p class="svc-type-desc">${escapeHtml(s.desc)}</p>
-      <p class="svc-type-sched">${escapeHtml(describeSchedule(s.name))}</p>
-      <span class="svc-type-cta">Start request
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-      </span>
+      <div class="svc-type-sched">${schedHtml(s.name)}</div>
+      <div class="svc-type-foot">
+        ${needsApproval(s.name) ? '<span class="svc-type-approval" title="The parish office approves blessing requests first">Needs approval</span>' : '<span></span>'}
+        <span class="svc-type-cta">Start request
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </span>
+      </div>
     </button>`;
   }
 
@@ -117,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     svcTypeGrid.querySelectorAll('.svc-type-card').forEach(card => {
       const svc = serviceTypes.find(s => s.id === card.dataset.id);
       const line = card.querySelector('.svc-type-sched');
-      if (svc && line) line.textContent = describeSchedule(svc.name);
+      if (svc && line) line.innerHTML = schedHtml(svc.name);
     });
   });
 
@@ -138,6 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
     formViewIcon.innerHTML = svc.icon;
     svcContactInput.value = '';
     svcNotesInput.value = '';
+    document.getElementById('svc-booking-note').textContent = needsApproval(svc.name)
+      ? 'These are the parish\'s fixed schedules. Blessing requests are reviewed by the parish office first — your slot is held for you, and you\'ll be notified once it\'s approved. Track it under "Requested Services."'
+      : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "Requested Services."';
     clearFieldError(svcContactInput);
     renderSlotSummary(null);
     slotPicker = createSlotPicker(slotPickerEl, {
@@ -196,9 +220,60 @@ document.addEventListener('DOMContentLoaded', () => {
   function initPinMap(field) {
     const statusEl = document.getElementById(`${field.id}-status`);
     const setStatus = (text, state = '') => { statusEl.textContent = text; statusEl.dataset.state = state; };
+    const addressInput = document.getElementById(field.addressField);
+
+    /* Fill in "Complete Address" from the pin (Use my current location,
+       tapping the map, or dragging the pin). Only an empty box — or one we
+       filled ourselves — is filled; an address the parishioner typed is
+       never overwritten, they get a "Use this address" button instead. */
+    let autoFilled = '';      // the address we last put in the box
+    let lookupTimer = null;
+    let lookupToken = 0;
+    const canAutofill = () => addressInput && (!addressInput.value.trim() || addressInput.value === autoFilled);
+
+    function fillAddress(text) {
+      addressInput.value = text;
+      autoFilled = text;
+      clearFieldError(addressInput);
+      addressInput.classList.remove('address-autofilled');
+      void addressInput.offsetWidth; // restart the highlight
+      addressInput.classList.add('address-autofilled');
+    }
+
+    async function lookupAddress(latlng, { fromLocate = false } = {}) {
+      const myToken = ++lookupToken;
+      if (fromLocate) setStatus('Found you — looking up your address…');
+      try {
+        const found = await addressFromLatLng(latlng);
+        if (myToken !== lookupToken || !pinMap) return; // the pin moved again meanwhile
+        if (!found) {
+          setStatus(`Pinned: ${formatLatLng(latlng)}. We couldn't read a street address here — please type it below.`, 'ok');
+          return;
+        }
+        if (canAutofill()) {
+          fillAddress(found);
+          setStatus('Address filled in from your pin — please check it and add your house/unit number if it’s missing.', 'ok');
+        } else {
+          statusEl.dataset.state = 'ok';
+          statusEl.innerHTML = `Pinned near <strong>${escapeHtml(found)}</strong>. <button type="button" class="pin-map-use-address">Use this address</button>`;
+          statusEl.querySelector('.pin-map-use-address').addEventListener('click', () => {
+            fillAddress(found);
+            setStatus('Address updated from your pin — please check it.', 'ok');
+          });
+        }
+      } catch (err) {
+        if (myToken === lookupToken) setStatus(`Pinned: ${formatLatLng(latlng)}. ${err.message}`, 'ok');
+      }
+    }
 
     pinMap = createPinMap(document.getElementById(field.id), {
-      onChange: (latlng) => { if (latlng) setStatus(`Pinned: ${formatLatLng(latlng)} — drag the pin to adjust.`, 'ok'); },
+      onChange: (latlng) => {
+        if (!latlng) return;
+        setStatus(`Pinned: ${formatLatLng(latlng)} — drag the pin to adjust.`, 'ok');
+        // Keep the address in step with the pin (debounced — the free geocoder allows ~1 lookup a second)
+        clearTimeout(lookupTimer);
+        lookupTimer = setTimeout(() => lookupAddress(latlng), 700);
+      },
     });
     // The screen slides in; re-measure once it has settled so tiles fill the box
     setTimeout(() => pinMap?.resize(), 300);
@@ -211,7 +286,9 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         if (action === 'locate') {
           setStatus('Getting your location…');
-          await pinMap.locateMe();
+          const at = await pinMap.locateMe();
+          clearTimeout(lookupTimer); // look it up now rather than after the drag delay
+          await lookupAddress(at, { fromLocate: true });
         } else {
           const address = document.getElementById(field.addressField)?.value.trim();
           if (!address) { setStatus('Type your Complete Address below first, then tap "Find my address."', 'error'); return; }
@@ -300,8 +377,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     svcSubmitBtn.disabled = true;
+    const approval = needsApproval(svc.name);
+    const status = approval ? 'pending' : 'scheduled';
 
     try {
+      if (approval) {
+        const { data: mine } = await client.models.Blessing.list({
+          filter: { requesterName: { eq: REQUESTER_NAME }, status: { eq: 'pending' } }, limit: 1000,
+        });
+        const waiting = (mine || []).filter(r => needsApproval(r.type)).length;
+        if (waiting >= MAX_PENDING_BLESSINGS) {
+          throw new Error(`You already have ${waiting} blessing requests waiting for approval. Please wait for the parish office to review them first.`);
+        }
+      }
+
       // Last check against the freshest data so two people can't grab
       // the final place in a slot at the same moment.
       const latest = await fetchTakenSlots('blessing');
@@ -320,17 +409,22 @@ document.addEventListener('DOMContentLoaded', () => {
         preferredDate: slot.date,
         date: slot.date,
         time: slot.time,
-        status: 'scheduled',
+        status,
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
-      notifyServiceUpdate({
-        to: currentUser()?.email, name: REQUESTER_NAME, serviceType: svc.name, status: 'scheduled',
-        date: slot.date, time: slot.time, location: locationFor(svc.name, details),
-      });
+      // Blessings get their email once the office approves (or declines) them.
+      if (!approval) {
+        notifyServiceUpdate({
+          to: currentUser()?.email, name: REQUESTER_NAME, serviceType: svc.name, status: 'scheduled',
+          date: slot.date, time: slot.time, location: locationFor(svc.name, details),
+        });
+      }
 
       goToMenu();
-      window.showToast(`${svc.name} booked for ${fmtLongDate(slot.date)} at ${slot.time}. See it under "Requested Services."`);
+      window.showToast(approval
+        ? `${svc.name} requested for ${fmtLongDate(slot.date)} at ${slot.time}. The parish office will approve it soon — track it under "Requested Services."`
+        : `${svc.name} booked for ${fmtLongDate(slot.date)} at ${slot.time}. See it under "Requested Services."`);
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);

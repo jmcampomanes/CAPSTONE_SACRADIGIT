@@ -20,7 +20,8 @@
    changes than this page's fix.
 
    Security's Change Password calls Cognito's real
-   updatePassword(); Notifications/2FA stay session-
+   updatePassword() (shared with the admin and Media
+   profiles — see ../password-change.js); Notifications/2FA stay session-
    local (no backing data model yet).
 
    The My Activity tab IS wired to real data: the
@@ -33,8 +34,8 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { currentUserName, currentUser, friendlyAuthError } from '../auth.js';
-import { updatePassword } from 'aws-amplify/auth';
+import { currentUserName, currentUser } from '../auth.js';
+import { initPasswordChange } from '../password-change.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { getPreference, preferencesReady, saveProfileDetails } from '../mass-checkin.js';
 import { NOTIF_TYPES, loadPrefs, savePrefs, enableDeviceAlerts } from '../notifications/parish-notifications.js';
@@ -271,102 +272,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     5. SECURITY — password strength + change (real Cognito password)
+     5. SECURITY — Change Password (real Cognito password;
+     checklist, show/hide, match check: ../password-change.js)
   ------------------------------------------ */
-  const pwCurrent      = document.getElementById('pw-current');
-  const pwNew            = document.getElementById('pw-new');
-  const pwConfirm           = document.getElementById('pw-confirm');
-  const pwStrengthFill        = document.getElementById('pw-strength-fill');
-  const pwStrengthLabel          = document.getElementById('pw-strength-label');
-  const pwSubmit                    = document.getElementById('pw-submit');
-
-  [pwCurrent, pwNew, pwConfirm].forEach(input => {
-    input.addEventListener('input', () => clearFieldError(input));
-  });
-
-  function passwordStrength(pw) {
-    if (!pw) return { level: '', label: 'Password strength', pct: 0 };
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (pw.length >= 12) score++;
-    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-
-    if (score <= 1) return { level: 'weak', label: 'Weak password', pct: 30 };
-    if (score <= 3) return { level: 'fair', label: 'Fair password', pct: 65 };
-    return { level: 'strong', label: 'Strong password', pct: 100 };
-  }
-
-  pwNew.addEventListener('input', () => {
-    const s = passwordStrength(pwNew.value);
-    pwStrengthFill.className = `pw-strength-fill ${s.level}`;
-    pwStrengthFill.style.width = `${s.pct}%`;
-    pwStrengthLabel.className = `pw-strength-label ${s.level}`;
-    pwStrengthLabel.textContent = s.label;
-  });
-
-  pwSubmit.addEventListener('click', async () => {
-    let hasError = false;
-    [pwCurrent, pwNew, pwConfirm].forEach(clearFieldError);
-
-    if (!pwCurrent.value) {
-      setFieldError(pwCurrent, 'Enter your current password.');
-      hasError = true;
-    }
-
-    if (!pwNew.value) {
-      setFieldError(pwNew, 'Enter a new password.');
-      hasError = true;
-    } else if (pwNew.value.length < 8) {
-      setFieldError(pwNew, 'New password must be at least 8 characters.');
-      hasError = true;
-    } else if (pwNew.value === pwCurrent.value) {
-      setFieldError(pwNew, 'New password must be different from the current one.');
-      hasError = true;
-    }
-
-    if (!pwConfirm.value) {
-      setFieldError(pwConfirm, 'Please confirm your new password.');
-      hasError = true;
-    } else if (pwConfirm.value !== pwNew.value) {
-      setFieldError(pwConfirm, 'Passwords do not match.');
-      hasError = true;
-    }
-
-    if (hasError) {
-      showToast('Please fix the highlighted fields.', true);
-      return;
-    }
-
-    pwSubmit.disabled = true;
-    try {
-      await updatePassword({ oldPassword: pwCurrent.value, newPassword: pwNew.value });
-
-      pwCurrent.value = '';
-      pwNew.value = '';
-      pwConfirm.value = '';
-      pwStrengthFill.className = 'pw-strength-fill';
-      pwStrengthFill.style.width = '0%';
-      pwStrengthLabel.className = 'pw-strength-label';
-      pwStrengthLabel.textContent = 'Password strength';
-
-      showToast('Your password has been updated.');
-    } catch (err) {
-      console.error('Failed to update password:', err);
-      if (err?.name === 'NotAuthorizedException') {
-        setFieldError(pwCurrent, 'Current password is incorrect.');
-        showToast('Current password is incorrect.', true);
-      } else if (err?.name === 'InvalidPasswordException') {
-        setFieldError(pwNew, friendlyAuthError(err));
-        showToast(friendlyAuthError(err), true);
-      } else {
-        showToast(friendlyAuthError(err), true);
-      }
-    } finally {
-      pwSubmit.disabled = false;
-    }
-  });
+  initPasswordChange({ showToast });
 
 
   /* ------------------------------------------

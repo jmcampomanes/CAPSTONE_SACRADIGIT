@@ -8,11 +8,14 @@ import { client } from './amplify-init.js';
 
    Every requestable service has fixed weekly time
    slots with a capacity. A parishioner picks one open
-   slot and the request is saved straight away as
-   status 'scheduled' (date + time filled in) — there
-   is no pending/approve/decline step anymore. The
-   admin can still cancel a booking if the parish
-   can't honour it (status 'declined' + declineReason).
+   slot: sacraments and special Masses are saved
+   straight away as 'scheduled' (date + time filled in);
+   blessings are saved as 'pending' — still holding the
+   slot — until the office approves ('scheduled') or
+   declines them (see needsApproval() in
+   service-catalog.js). The admin can also cancel a
+   booking if the parish can't honour it (status
+   'declined' + declineReason).
 
    Keys match the `type` stored on Blessing records
    (the service's display name in
@@ -264,6 +267,13 @@ export function googleMapsUrl(latLngText) {
  * e.g. "Priest is sick — by Parish Office on Sep 25, 2026".
  */
 export const RESCHEDULE_REASON_LABEL = 'Reschedule Reason';
+
+/**
+ * Request-details key set when the parish office approves a pending blessing,
+ * e.g. "by the Parish Office on Oct 18, 2026" — so a later decline/cancel of
+ * an approved booking reads "Cancelled", not "Not Approved", for the parishioner.
+ */
+export const APPROVED_LABEL = 'Approved';
 
 /** Returns the record's `details` JSON string with the reschedule reason set. */
 export function detailsWithRescheduleReason(detailsJson, reason, byWho) {

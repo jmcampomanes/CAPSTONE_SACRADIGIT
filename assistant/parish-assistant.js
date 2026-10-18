@@ -19,16 +19,34 @@ import { currentLang } from '../ui-prefs.js';
 import { mergeWeeklySchedule } from '../weekly-mass-schedule.js';
 import { closuresFrom } from '../service-schedule.js';
 import { askAssistant } from './ai-chat-client.js';
-import { FACILITIES, FUNDS, REQUIREMENTS, CERTIFICATES, OFFERING_PER_INTENTION } from './assistant-knowledge.js';
+import { FACILITIES, FUNDS, REQUIREMENTS, CERTIFICATES, OFFERING_PER_INTENTION, PORTAL_DIRECTORY } from './assistant-knowledge.js';
 import { loadParishContact } from '../parish-info.js';
 
 const toISO = (d) => d.toISOString().slice(0, 10);
 const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 
 const STARTER_CHIPS = {
-  en: ['What time is Mass on Sunday?', 'What do I need for a baptism?', 'How do I get a certificate?', 'Status of my requests'],
-  fil: ['Anong oras ang Misa sa Linggo?', 'Ano ang kailangan sa binyag?', 'Paano kumuha ng certificate?', 'Status ng mga request ko'],
+  en: ['What time is Mass on Sunday?', 'What do I need for a baptism?', 'How do I get a certificate?', 'Status of my requests', 'Show all pages (directory)'],
+  fil: ['Anong oras ang Misa sa Linggo?', 'Ano ang kailangan sa binyag?', 'Paano kumuha ng certificate?', 'Status ng mga request ko', 'Ipakita lahat ng page (directory)'],
 };
+
+/* ---------- portal directory (answered here, no AI call needed) ---------- */
+
+// "directory", "what pages are there?", "lahat ng tab", "anong mga page"…
+const DIRECTORY_ASK = /\b(directory|direktoryo|site ?map|all (the )?(pages|tabs)|list of (pages|tabs)|(what|which) (pages|tabs)|lahat ng (page|tab|pahina)|(anong|ano ang) mga (page|tab|pahina))\b/i;
+
+const currentPage = () => window.location.pathname.split('/').pop() || 'user-dashboard.html';
+
+// Every name a page goes by (English, Filipino, sidebar wording) → its file.
+const PAGE_BY_NAME = new Map();
+PORTAL_DIRECTORY.forEach(({ pages }) => pages.forEach(p => {
+  [p.en, p.fil, ...(p.also || [])].forEach(name => PAGE_BY_NAME.set(name, p.page));
+}));
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const PAGE_NAME_RE = new RegExp(
+  `(?<![\\w-])(${[...PAGE_BY_NAME.keys()].sort((a, b) => b.length - a.length).map(escapeRe).join('|')})(?![\\w-])`,
+  'g',
+);
 
 /* ---------- live data (fetched on demand, reused for a minute) ---------- */
 
@@ -113,6 +131,12 @@ async function buildContext() {
     facilities: FACILITIES,
     funds: FUNDS,
     offeringPerMassIntention: OFFERING_PER_INTENTION,
+    // All pages of this portal, so the assistant can say where to go. Name pages exactly as listed.
+    portalDirectory: PORTAL_DIRECTORY.map(({ section, pages }) => ({
+      section: section.en,
+      pages: pages.map(p => ({ name: p.en, filipinoName: p.fil, does: p.what.en })),
+    })),
+    currentPage: PORTAL_DIRECTORY.flatMap(s => s.pages).find(p => p.page === currentPage())?.en || null,
     signedIn,
     myRequests: signedIn ? {
       certificates: myCertificates.slice(0, 5).map(r => ({ type: r.certificateType, status: r.status, rejectionReason: r.rejectionReason || null })),
@@ -126,13 +150,15 @@ async function buildContext() {
 const UI = {
   en: {
     open: 'Ask the Parish Assistant', title: 'Parish Assistant', sub: 'Answers from SacraDigit’s parish info',
-    hello: 'Hello! 👋 I can help with Mass times, services and their requirements, certificates, and your requests. What would you like to know?',
+    hello: 'Hello! 👋 I can help with Mass times, services and their requirements, certificates, your requests, and finding your way around the portal. What would you like to know?',
+    dirIntro: 'Here’s every page in the portal. Tap one to open it:', dirHere: 'you are here',
     placeholder: 'Ask about Mass, baptism, certificates…', send: 'Send', close: 'Close',
     note: 'Automated answers. For pastoral concerns, please talk to a priest or the parish office.',
   },
   fil: {
     open: 'Magtanong sa Parish Assistant', title: 'Parish Assistant', sub: 'Sagot mula sa impormasyon ng parokya',
-    hello: 'Magandang araw! 👋 Matutulungan kita sa oras ng Misa, mga serbisyo at kailangan dito, certificate, at iyong mga request. Ano ang gusto mong malaman?',
+    hello: 'Magandang araw! 👋 Matutulungan kita sa oras ng Misa, mga serbisyo at kailangan dito, certificate, iyong mga request, at paghahanap ng page sa portal. Ano ang gusto mong malaman?',
+    dirIntro: 'Narito ang lahat ng page sa portal. I-tap para buksan:', dirHere: 'narito ka',
     placeholder: 'Magtanong tungkol sa Misa, binyag, certificate…', send: 'Ipadala', close: 'Isara',
     note: 'Awtomatikong sagot. Para sa mga pastoral na usapin, kausapin ang pari o ang parish office.',
   },
@@ -288,8 +314,22 @@ export function initParishAssistant() {
     div.textContent = s;
     return div.innerHTML;
   }
+  // Page names in a reply ("Mass Schedule", "Aking mga Hiling"…) become links to that page.
+  const linkPages = (html) => html.replace(PAGE_NAME_RE, (name) =>
+    `<a class="pa-link-inline" href="${PAGE_BY_NAME.get(name)}">${name}</a>`);
   function formatReply(text) {
-    return text.split(/\n{2,}/).map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+    return text.split(/\n{2,}/).map(p => `<p>${linkPages(escapeHtml(p)).replace(/\n/g, '<br>')}</p>`).join('');
+  }
+
+  function directoryHtml(lang) {
+    const here = currentPage();
+    const t = UI[lang];
+    return `<p>${t.dirIntro}</p>` + PORTAL_DIRECTORY.map(({ section, pages }) => `
+      <p class="pa-muted" style="margin-top:0.5rem;font-weight:600">${escapeHtml(section[lang])}</p>
+      <ul class="pa-list">${pages.map(p => `
+        <li><a class="pa-link-inline" href="${p.page}"><strong>${escapeHtml(p[lang])}</strong></a>${p.page === here ? ` <span class="pa-pill">${t.dirHere}</span>` : ''}
+          <br><span class="pa-muted">${escapeHtml(p.what[lang])}</span></li>`).join('')}
+      </ul>`).join('');
   }
 
   function addChips(chips) {
@@ -319,6 +359,16 @@ export function initParishAssistant() {
     const typing = addMessage('bot', '<span class="pa-typing"><i></i><i></i><i></i></span>', { html: true });
     const started = Date.now();
     const uiLang = currentLang();
+    if (DIRECTORY_ASK.test(q)) {
+      await new Promise(r => setTimeout(r, 300));
+      typing.innerHTML = directoryHtml(uiLang);
+      history.push({ role: 'user', content: q }, { role: 'assistant', content: '(Showed the full list of portal pages.)' });
+      scrollDown();
+      addChips(STARTER_CHIPS[uiLang]);
+      busy = false;
+      send.disabled = !input.value.trim();
+      return;
+    }
     try {
       const context = await buildContext();
       const reply = await askAssistant(q, history, context, uiLang);

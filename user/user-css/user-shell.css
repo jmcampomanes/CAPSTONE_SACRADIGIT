@@ -308,10 +308,26 @@ body { background-color: #f7f8fa; }
   min-width: 0;
 }
 
-@media (max-width: 560px) {
-  .name-field-row {
-    grid-template-columns: 1fr 1fr;
+/* "Add extension" checkbox (added by name-utils.js) — phones only. */
+.name-ext-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+.name-ext-toggle.is-disabled { opacity: 0.5; cursor: default; }
+
+/* Phones: one box per line, and the Ext. box only once its checkbox is ticked. */
+@media (max-width: 640px) {
+  .name-field-row,
+  .marriage-cell-name-row {
+    grid-template-columns: 1fr !important;
   }
+  .name-ext-toggle { display: flex; }
+  .name-ext-toggle:not(:has(input:checked)) + .name-ext-input { display: none; }
 }
 
 /* ---------- Checkbox (shared) ---------- */
@@ -644,24 +660,18 @@ a:focus-visible, button:focus-visible {
   .sacred-art-layer .sacred-kb-group { animation: none; }
 }
 
-/* ---------- Sacred art on page headers (.req-hero) ----------
-   user-shell.js prepends an art frame + a navy tint to every navy page
-   header, like the Dashboard greeting banner. Layering, bottom to top:
-   header background → art (z 0) → tint (z 0) → the header's gold/lavender
-   corner glows (::after) → the header's own content (z 2). */
-.req-hero > .req-hero-tint {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 96% -30%, rgba(201, 168, 76, 0.28), transparent 45%),
-    linear-gradient(135deg, rgba(30, 42, 74, 0.86) 0%, rgba(42, 58, 92, 0.8) 100%);
+/* ---------- Page actions ----------
+   The page's main button (Give Now, Book a Facility…), right-aligned
+   under the top bar — the page name is already in the top bar. */
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.req-hero > *:not(.sacred-art-frame):not(.req-hero-tint) {
-  position: relative;
-  z-index: 2;
+@media (max-width: 640px) {
+  .page-actions > a, .page-actions > button { width: 100%; justify-content: center; }
 }
 
 .user-menu-divider {
@@ -781,4 +791,17 @@ a:focus-visible, button:focus-visible {
 
 .chat-unread-badge.hidden {
   display: none;
+}
+
+/* ---------- Top bar: date first, then the buttons ---------- */
+/* The date is grouped with the bell / Aa / theme / language / (?) buttons
+   (see help-tutorial.js); show it on the left of that group. */
+header .help-date-wrap > #current-date {
+  order: -1;
+  margin-right: 0.25rem;
+}
+
+/* No "Install app" (download) button in the parishioner top bar (pwa.js). */
+header .pwa-install-btn {
+  display: none !important;
 }

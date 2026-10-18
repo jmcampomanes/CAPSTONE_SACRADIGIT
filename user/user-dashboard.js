@@ -7,6 +7,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { getUrl } from 'aws-amplify/storage';
 import { currentUser } from '../auth.js';
 import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../weekly-mass-schedule.js';
 import { watchLivestream } from '../livestream-status.js';
@@ -64,15 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (qGrid) {
     qGrid.innerHTML = quickActions.map(a => `
       <a href="${a.href}" class="quick-action-card">
-        <div class="quick-action-icon" style="background-color:${a.iconBg};color:${a.iconColor};">${a.icon}</div>
-        <div><p class="quick-action-label">${a.label}</p><p class="quick-action-sub">${a.sub}</p></div>
+        <div class="quick-action-head">
+          <div class="quick-action-icon" style="background-color:${a.iconBg};color:${a.iconColor};">${a.icon}</div>
+          <p class="quick-action-label">${a.label}</p>
+        </div>
+        <p class="quick-action-sub">${a.sub}</p>
       </a>`).join('');
   }
 
-  function formatLongDate(iso) {
-    const d = new Date(iso + 'T00:00:00');
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  }
   function formatShortDate(input) {
     if (!input) return '';
     const d = input.length === 10 ? new Date(input + 'T00:00:00') : new Date(input);
@@ -144,48 +144,78 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(renderTodaysMasses, 60 * 1000);
   }
 
-  /* --- Upcoming Special Masses --- */
-  const specialList = document.getElementById('special-masses');
-  if (specialList) {
-    client.models.Mass.observeQuery({ filter: { isSpecial: { eq: true }, date: { ge: todayISO } } }).subscribe({
-      next: ({ items }) => {
-        const sorted = items.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
-        specialList.innerHTML = sorted.length === 0
-          ? `<li class="text-sm text-gray-400 px-5 py-4">No upcoming special masses.</li>`
-          : sorted.map(s => `
-              <li><div class="special-mass-row">
-                <div class="special-mass-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg></div>
-                <div class="special-mass-info">
-                  <p class="special-mass-name">${s.title || s.note}</p>
-                  <p class="special-mass-date">${formatLongDate(s.date)}</p>
-                </div>
-              </div></li>`).join('');
-      },
-      error: (err) => console.error(err),
-    });
-  }
-
-  /* --- Recent Announcements --- */
+  /* --- Recent Announcements ---
+     Each card shows the announcement's photo (or video) when it has one.
+     Media lives in a private Storage bucket — the record only holds the S3
+     path, which getUrl() turns into a temporary signed URL (same as the
+     Announcements page). Cards open the full announcement there. */
   const annGrid = document.getElementById('announcements-grid');
   if (annGrid) {
+    const meta = (a) => { try { const m = JSON.parse(a.media || '{}'); return Array.isArray(m) ? { items: m } : m; } catch { return {}; } };
+    const esc = (s) => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
+    const CAMERA_ICON = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-width="2"/></svg>';
+
+    const urlCache = new Map(); // S3 path -> { url, expiresAt } (signed URLs last an hour)
+    async function mediaUrl(path) {
+      if (!path) return '';
+      if (/^(https?:|data:|blob:)/.test(path)) return path;
+      const hit = urlCache.get(path);
+      if (hit && hit.expiresAt > Date.now()) return hit.url;
+      try {
+        const { url } = await getUrl({ path, options: { expiresIn: 3600 } });
+        urlCache.set(path, { url: url.toString(), expiresAt: Date.now() + 55 * 60 * 1000 });
+        return url.toString();
+      } catch (err) {
+        console.error(`Couldn't load announcement media "${path}":`, err);
+        return '';
+      }
+    }
+
+    // A photo is the best cover; fall back to a video if that's all there is.
+    const coverItem = (items = []) => items.find(m => m.type !== 'video') || items[0] || null;
+
+    let renderToken = 0;
     client.models.Announcement.observeQuery({ filter: { published: { eq: true } } }).subscribe({
-      next: ({ items }) => {
+      next: async ({ items }) => {
+        const myToken = ++renderToken;
         const today = new Date().toLocaleDateString('en-CA');
-        const meta = (a) => { try { const m = JSON.parse(a.media || '{}'); return Array.isArray(m) ? {} : m; } catch { return {}; } };
-        const esc = (s) => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
         // Only what's live today (not scheduled for later, not past its End Date)
         const sorted = items
           .filter(a => { const m = meta(a); return (!m.startDate || m.startDate <= today) && (!m.endDate || m.endDate >= today); })
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
-        annGrid.innerHTML = sorted.map(a => `
-          <div class="user-ann-card">
-            <p class="user-ann-title">${meta(a).kind === 'post' ? '<span class="user-ann-kind">Update</span> ' : ''}${esc(a.title)}</p>
-            <p class="user-ann-excerpt">${esc(a.body)}</p>
-            <div class="user-ann-meta">
-              <span class="user-ann-date">${formatShortDate(a.createdAt)}</span>
-              <span class="user-ann-audience">${esc(a.audience || 'All Parishioners')}</span>
+
+        const covers = await Promise.all(sorted.map(async (a) => {
+          const item = coverItem(meta(a).items);
+          const url = item ? await mediaUrl(item.url) : '';
+          return url ? { ...item, url } : null;
+        }));
+        if (myToken !== renderToken) return; // a newer update arrived while URLs were loading
+
+        annGrid.innerHTML = sorted.length === 0
+          ? '<p class="text-sm text-gray-400 px-1 py-4">No announcements right now.</p>'
+          : sorted.map((a, i) => {
+            const m = meta(a);
+            const cover = covers[i];
+            const count = (m.items || []).length;
+            return `
+          <a class="user-ann-card${cover ? ' has-cover' : ''}" href="user-announcements.html?id=${encodeURIComponent(a.id)}">
+            ${cover ? `
+            <div class="user-ann-cover">
+              ${cover.type === 'video'
+                ? `<video src="${cover.url}" muted playsinline preload="metadata"></video>`
+                : `<img src="${cover.url}" alt="${esc(a.title)}" loading="lazy" />`}
+              ${count > 1 ? `<span class="user-ann-media-count">${CAMERA_ICON}${count}</span>` : ''}
+            </div>` : ''}
+            <div class="user-ann-body">
+              <p class="user-ann-title">${m.kind === 'post' ? '<span class="user-ann-kind">Update</span> ' : ''}${esc(a.title)}</p>
+              <p class="user-ann-excerpt">${esc(a.body)}</p>
+              <div class="user-ann-meta">
+                <span class="user-ann-date">${formatShortDate(a.createdAt)}</span>
+                <span class="user-ann-audience">${esc(a.audience || 'All Parishioners')}</span>
+              </div>
             </div>
-          </div>`).join('');
+          </a>`;
+          }).join('');
       },
       error: (err) => console.error(err),
     });

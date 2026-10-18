@@ -22,12 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const REQUESTER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
 
+  // The parish's two bookable facilities — keep in step with
+  // Sacradigit/facility-booking.js and assistant/assistant-knowledge.js.
+  // ⚠ Placeholder photos (the parish exterior and the church) until real
+  // photos of each facility are taken — replace the files in
+  // sacradigit-images/facilities/. `capacity: null` hides "Up to … pax".
   const facilities = [
-    { id: 'parish-hall', name: 'Parish Hall', desc: 'Large multi-purpose hall suitable for receptions, reunions, and parish events.', capacity: 200, availability: 'available', barColor: '#8b8fc7' },
-    { id: 'adoration-chapel', name: 'Adoration Chapel', desc: 'Intimate chapel for prayer meetings, novenas, and small group gatherings.', capacity: 40, availability: 'available', barColor: '#c9a84c' },
-    { id: 'catechetical-a', name: 'Catechetical Room A', desc: 'Classroom-style room ideal for Bible studies, seminars, and formations.', capacity: 30, availability: 'limited', barColor: '#6c91c2' },
-    { id: 'catechetical-b', name: 'Catechetical Room B', desc: 'Smaller discussion room for group meetings and ministry gatherings.', capacity: 20, availability: 'available', barColor: '#9ca3af' },
-    { id: 'multi-purpose', name: 'Multi-Purpose Hall', desc: 'Flexible open space for youth activities, concerts, and community events.', capacity: 150, availability: 'available', barColor: '#16a34a' },
+    { id: 'multi-purpose', name: 'Multi-Purpose Hall', desc: 'Flexible open space for receptions, youth activities, seminars, and community events.', capacity: 150, availability: 'available', barColor: '#16a34a',
+      photo: new URL('../sacradigit-images/facilities/multi-purpose-hall.jpg', import.meta.url).href },
+    { id: 'third-floor', name: '3rd Floor Hall', desc: 'Upper-floor space for prayer meetings, formations, ministry gatherings, and parish activities.', capacity: null, availability: 'available', barColor: '#8b8fc7',
+      photo: new URL('../sacradigit-images/facilities/third-floor.jpg', import.meta.url).href },
   ];
 
   let myBookings = [];
@@ -41,11 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.innerHTML = facilities.map(f => `
       <div class="facility-card">
         <div class="facility-card-bar" style="background-color:${f.barColor};"></div>
+        ${f.photo ? `<div class="facility-photo"><img src="${f.photo}" alt="${escapeHtml(f.name)}" loading="lazy" /></div>` : ''}
         <div class="facility-card-body">
           <p class="facility-name">${f.name}</p>
           <p class="facility-desc">${f.desc}</p>
           <div class="facility-meta">
-            <span class="facility-capacity"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-3.5-5.93"/></svg>Up to ${f.capacity} pax</span>
+            ${f.capacity ? `<span class="facility-capacity"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-3.5-5.93"/></svg>Up to ${f.capacity} pax</span>` : '<span></span>'}
             <span class="facility-avail-badge ${f.availability}">${f.availability === 'available' ? 'Available' : 'Limited Slots'}</span>
           </div>
         </div>
@@ -149,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let cancelTargetId = null;
 
   facilitySelect.innerHTML = '<option value="">Choose a facility…</option>' +
-    facilities.map(f => `<option value="${f.name}">${f.name} (up to ${f.capacity} pax)</option>`).join('');
+    facilities.map(f => `<option value="${f.name}">${f.name}${f.capacity ? ` (up to ${f.capacity} pax)` : ''}</option>`).join('');
 
   /* --- Booking date + time picker ---
      Facilities are booked in whole-hour blocks between 8:00 AM and
@@ -373,11 +378,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!f) { facilitySummary.innerHTML = ''; return; }
     facilitySummary.innerHTML = `
       <div class="booking-facility-summary-bar" style="background-color:${f.barColor};"></div>
+      ${f.photo ? `<div class="facility-photo facility-photo-summary"><img src="${f.photo}" alt="${escapeHtml(f.name)}" /></div>` : ''}
       <div class="booking-facility-summary-body">
         <p class="facility-name">${escapeHtml(f.name)}</p>
         <p class="facility-desc">${escapeHtml(f.desc)}</p>
         <div class="facility-meta">
-          <span class="facility-capacity">Up to ${f.capacity} pax</span>
+          ${f.capacity ? `<span class="facility-capacity">Up to ${f.capacity} pax</span>` : '<span></span>'}
           <span class="facility-avail-badge ${f.availability}">${f.availability === 'available' ? 'Available' : 'Limited Slots'}</span>
         </div>
       </div>`;

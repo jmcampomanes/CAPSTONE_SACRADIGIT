@@ -31,4 +31,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // Stay in sync if changed elsewhere (e.g. the top bar's quick toggles) while this page is open.
   document.addEventListener('sacradigit:theme', paint);
   document.addEventListener('sacradigit:a11y', paint);
+  document.addEventListener('sacradigit:lang', paint);
 });

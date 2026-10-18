@@ -29,12 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const todayISO = toLocalISODate();
 
+  // The parish's two bookable facilities — keep in step with
+  // user/user-facility-booking.js. (Older bookings may still name a
+  // facility that was removed; they keep showing under that name.)
   const facilities = [
-    'Parish Hall',
-    'Adoration Chapel',
-    'Catechetical Room A',
-    'Catechetical Room B',
     'Multi-Purpose Hall',
+    '3rd Floor Hall',
   ];
 
   let bookings = []; // kept in sync via observeQuery, each has .id

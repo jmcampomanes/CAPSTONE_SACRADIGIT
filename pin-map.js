@@ -3,7 +3,8 @@
    Used on Request a Service (House Blessing) so the parishioner
    can mark exactly where the house is. Tap/click the map to drop
    the pin, drag it to fine-tune, or use the two helpers:
-   - "Use my current location" (browser geolocation)
+   - "Use my current location" (browser geolocation; the page can
+     then fill in the street address with addressFromLatLng())
    - "Find my address" (looks up the typed address with
      OpenStreetMap's free Nominatim geocoder, Philippines only)
 
@@ -31,6 +32,34 @@ const PIN_ICON = L.divIcon({
 
 export function formatLatLng({ lat, lng }) {
   return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+}
+
+/**
+ * Street address for a pinned spot, e.g. "12 Mabini Street, Barangay
+ * Immaculate Conception, Cubao, Quezon City" — via Nominatim's reverse
+ * geocoder (same free OpenStreetMap service as "Find my address").
+ * Resolves '' when nothing useful is found.
+ */
+export async function addressFromLatLng({ lat, lng }) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&lat=${lat}&lon=${lng}`;
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error('Address lookup is unavailable right now. Please type your address.');
+  const data = await res.json();
+  const a = data?.address || {};
+  const street = [a.house_number, a.road || a.pedestrian || a.footway].filter(Boolean).join(' ');
+  const parts = [
+    a.building && a.building !== street ? a.building : '',
+    street,
+    a.neighbourhood || a.quarter || a.hamlet,
+    a.suburb || a.village,
+    a.city || a.town || a.municipality,
+    !(a.city || a.town || a.municipality) ? (a.state || a.province || a.region) : '',
+  ];
+  const seen = new Set();
+  const clean = parts.filter(p => p && !seen.has(p.toLowerCase()) && seen.add(p.toLowerCase()));
+  if (clean.length >= 2) return clean.join(', ');
+  // Fall back to the full name, minus the postcode and country
+  return (data?.display_name || '').split(', ').filter(p => !/^\d{4}$/.test(p) && p !== 'Philippines' && p !== 'Pilipinas').join(', ');
 }
 
 /**
@@ -67,7 +96,7 @@ export function createPinMap(container, { onChange = () => {} } = {}) {
       return new Promise((resolve, reject) => {
         if (!navigator.geolocation) { reject(new Error('Location is not available in this browser.')); return; }
         navigator.geolocation.getCurrentPosition(
-          (pos) => { setPin(L.latLng(pos.coords.latitude, pos.coords.longitude), { zoom: true }); resolve(); },
+          (pos) => { const at = L.latLng(pos.coords.latitude, pos.coords.longitude); setPin(at, { zoom: true }); resolve(at); },
           (err) => reject(new Error(err.code === err.PERMISSION_DENIED
             ? 'Location permission was denied. Tap the map to place the pin instead.'
             : "Couldn't get your location. Tap the map to place the pin instead.")),

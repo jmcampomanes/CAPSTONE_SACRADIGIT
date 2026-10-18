@@ -106,13 +106,64 @@ export const SERVICE_KEYWORDS = {
   'Baccalaureate Mass': ['baccalaureate', 'graduation', 'graduating', 'pagtatapos', 'gradweyt'],
 };
 
+/**
+ * Every page (tab) of the parishioner portal, grouped like the sidebar —
+ * keep in step with the sidebar in user/*.html and user/user-shell.js.
+ * The assistant uses this to tell people where to go, links page names in
+ * its replies, and shows it all when someone asks for the directory.
+ * `fil` names match i18n-fil.js so they read the same as the translated sidebar.
+ */
+export const PORTAL_DIRECTORY = [
+  { section: { en: 'Main', fil: 'Pangunahin' }, pages: [
+    { page: 'user-dashboard.html', en: 'Dashboard', fil: 'Dashboard',
+      what: { en: "Overview: today's Masses, latest announcements, your recent requests, and the Mass check-in box.", fil: 'Buod: Misa ngayong araw, pinakabagong anunsyo, iyong mga huling request, at ang check-in sa Misa.' } },
+  ] },
+  { section: { en: 'Parish', fil: 'Parokya' }, pages: [
+    { page: 'user-mass-schedule.html', en: 'Mass Schedule', fil: 'Iskedyul ng Misa',
+      what: { en: 'Regular weekly Mass times and the full schedule (including special Masses) for any date.', fil: 'Regular na oras ng Misa bawat linggo at buong iskedyul (kasama ang espesyal na Misa) sa anumang petsa.' } },
+    { page: 'user-announcements.html', en: 'Announcements', fil: 'Mga Anunsyo',
+      what: { en: 'News and events from the parish, newest first.', fil: 'Mga balita at kaganapan sa parokya, pinakabago muna.' } },
+    { page: 'user-messages.html', en: 'Messages', fil: 'Mga Mensahe',
+      what: { en: 'Chat directly with the parish office (Head Admin or Secretary).', fil: 'Direktang makipag-chat sa parish office (Head Admin o Secretary).' } },
+  ] },
+  { section: { en: 'Services', fil: 'Mga Serbisyo' }, pages: [
+    { page: 'user-request-certificate.html', en: 'Request a Certificate', fil: 'Humiling ng Sertipiko', also: ['Request Certificate'],
+      what: { en: 'Request a Baptismal, Confirmation, First Communion or Marriage certificate.', fil: 'Humiling ng Baptismal, Confirmation, First Communion o Marriage certificate.' } },
+    { page: 'user-my-requests.html', en: 'My Requests', fil: 'Aking mga Hiling',
+      what: { en: 'Track the status of your certificate requests.', fil: 'Subaybayan ang status ng iyong mga request ng certificate.' } },
+    { page: 'user-request-service.html', en: 'Request a Service', fil: 'Humiling ng Serbisyo',
+      what: { en: 'Book a sacrament (Baptism, Wedding, Confirmation…) or a special Mass (Funeral, Anniversary…) — booked right away — or request a blessing, which the parish office approves first.', fil: 'Mag-book ng sakramento (Binyag, Kasal, Kumpil…) o espesyal na Misa (Libing, Anibersaryo…) — agad na naka-book — o humiling ng bendisyon, na aaprubahan muna ng parish office.' } },
+    { page: 'user-requested-services.html', en: 'Requested Services', fil: 'Mga Hiniling na Serbisyo',
+      what: { en: 'Track or cancel your sacraments, special Masses and blessings (filter by category). Blessings show "Awaiting Approval" until the parish office approves them.', fil: 'Subaybayan o kanselahin ang iyong mga sakramento, espesyal na Misa at bendisyon (i-filter ayon sa kategorya). Ang bendisyon ay "Naghihintay ng Pag-apruba" hanggang aprubahan ng parish office.' } },
+    { page: 'user-mass-intentions.html', en: 'Mass Intentions', fil: 'Mga Intensyon sa Misa',
+      what: { en: 'Offer a Mass intention (Thanksgiving, Special Intention, or for a Soul) and track it.', fil: 'Mag-alay ng intensyon sa Misa (Pasasalamat, Espesyal na Intensyon, o para sa Kaluluwa) at subaybayan ito.' } },
+    { page: 'user-facility-booking.html', en: 'Facility Booking', fil: 'Pag-book ng Pasilidad',
+      what: { en: 'Book the Multi-Purpose Hall or the 3rd Floor Hall; see or cancel your bookings.', fil: 'Mag-book ng Multi-Purpose Hall o ng 3rd Floor Hall; tingnan o kanselahin ang iyong booking.' } },
+  ] },
+  { section: { en: 'Finance', fil: 'Pananalapi' }, pages: [
+    { page: 'user-donations.html', en: 'Donations', fil: 'Mga Donasyon',
+      what: { en: 'Give online to a parish fund and see your giving history.', fil: 'Magbigay online sa pondo ng parokya at tingnan ang kasaysayan ng iyong pagbibigay.' } },
+  ] },
+  { section: { en: 'Faith Journey', fil: 'Paglalakbay sa Pananampalataya' }, pages: [
+    { page: 'user-prayer-wall.html', en: 'Prayer Wall', fil: 'Pader ng Panalangin',
+      what: { en: 'Post a prayer request (anonymously if you like) and pray for others.', fil: 'Mag-post ng kahilingan sa panalangin (puwedeng anonymous) at ipanalangin ang iba.' } },
+    { page: 'user-ministry.html', en: 'Ministry Sign-ups', fil: 'Pagpapalista sa Ministeryo',
+      what: { en: 'Volunteer as lector, choir, altar server or usher; ask for or take swaps.', fil: 'Magboluntaryo bilang lector, koro, sakristan o usher; humingi o kumuha ng palit.' } },
+    { page: 'user-badges.html', en: 'My Badges', fil: 'Aking mga Badge',
+      what: { en: 'Your Faith Journey badges for Mass attendance, giving and parish life.', fil: 'Iyong mga badge sa Paglalakbay sa Pananampalataya para sa pagsisimba, pagbibigay at buhay-parokya.' } },
+  ] },
+  { section: { en: 'Account (your name, bottom of the menu)', fil: 'Account (iyong pangalan, sa ibaba ng menu)' }, pages: [
+    { page: 'user-profile.html', en: 'My Profile', fil: 'Aking Profile',
+      what: { en: 'Your details, password, two-factor sign-in and notification preferences.', fil: 'Iyong impormasyon, password, two-factor sign-in at mga abiso.' } },
+    { page: 'user-settings.html', en: 'My Settings', fil: 'Aking Settings',
+      what: { en: 'Light/Dark mode, English/Filipino, and larger text & high contrast.', fil: 'Light/Dark mode, English/Filipino, at mas malaking teksto at mataas na contrast.' } },
+  ] },
+];
+
 /** Bookable facilities — keep in step with the list in user/user-facility-booking.js. */
 export const FACILITIES = [
-  { name: 'Parish Hall', capacity: 200 },
-  { name: 'Adoration Chapel', capacity: 40 },
-  { name: 'Catechetical Room A', capacity: 30 },
-  { name: 'Catechetical Room B', capacity: 20 },
   { name: 'Multi-Purpose Hall', capacity: 150 },
+  { name: '3rd Floor Hall', capacity: null }, // capacity not confirmed yet
 ];
 
 /** Donation funds — keep in step with fundDefs in user/user-donations.js. */

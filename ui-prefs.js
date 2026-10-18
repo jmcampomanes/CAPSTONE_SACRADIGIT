@@ -168,6 +168,7 @@ async function startTranslating() {
   const t = translateText(document.title);
   if (t) document.title = t;
   translateTree(document.body);
+  if (observer) return; // already watching (e.g. Filipino picked again from another control)
   // Keep translating whatever the page adds or changes later (tables, toasts, modals…).
   observer = new MutationObserver((muts) => {
     for (const m of muts) {
@@ -181,6 +182,7 @@ async function startTranslating() {
 
 export async function setLanguage(lang) {
   write(LANG_KEY, lang);
+  document.dispatchEvent(new CustomEvent('sacradigit:lang', { detail: lang }));
   if (lang === 'fil') {
     await startTranslating();
   } else {
@@ -306,7 +308,12 @@ export function initUiPrefs() {
 
   const langSel = group.querySelector('#ui-lang-select');
   langSel.value = currentLang();
-  langSel.addEventListener('change', () => { setLanguage(langSel.value); paintThemeBtn(); paintA11yBtn(); });
+  langSel.addEventListener('change', () => setLanguage(langSel.value));
+
+  // Stay in sync when another control (e.g. the My Settings page) changes a preference.
+  document.addEventListener('sacradigit:lang', () => { langSel.value = currentLang(); paintThemeBtn(); paintA11yBtn(); });
+  document.addEventListener('sacradigit:theme', paintThemeBtn);
+  document.addEventListener('sacradigit:a11y', paintA11yBtn);
 
   // Sit next to the date / (?) help button in the top bar.
   const dateEl = document.getElementById('current-date');

@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const scheduleDateLabel = document.getElementById('schedule-date-label');
   const dateScheduleList = document.getElementById('date-schedule-list');
   const dateScheduleEmpty = document.getElementById('date-schedule-empty');
-  const specialMassesList = document.getElementById('special-masses-list');
   const weeklyTbody = document.getElementById('weekly-tbody');
 
   datePicker.value = todayISO;
@@ -102,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     next: ({ items }) => {
       allMasses = items;
       renderDateSchedule();
-      renderSpecialMasses();
+      renderUpcomingSpecial();
     },
     error: (err) => {
       console.error('Failed to load masses:', err);
@@ -175,8 +174,45 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSeasonBanner(iso);
   }
 
-  datePicker.addEventListener('change', renderDateSchedule);
-  btnToday.addEventListener('click', () => { datePicker.value = todayISO; renderDateSchedule(); });
+  /* --- Upcoming special Masses (bottom of the Date's Schedule box) ---
+     Special Masses already appear in the list above on their own date;
+     this keeps the next few in view for everyone, whatever date is picked.
+     Tapping one opens its date above. */
+  const upcomingSpecialWrap = document.getElementById('upcoming-special-wrap');
+  const upcomingSpecialList = document.getElementById('upcoming-special-list');
+  const MAX_UPCOMING_SPECIAL = 5;
+
+  function renderUpcomingSpecial() {
+    const upcoming = allMasses
+      .filter(m => m.isSpecial && m.date && m.date >= todayISO)
+      .sort((a, b) => a.date.localeCompare(b.date) || to24h(a.time) - to24h(b.time))
+      .slice(0, MAX_UPCOMING_SPECIAL);
+
+    upcomingSpecialWrap.classList.toggle('hidden', upcoming.length === 0);
+    upcomingSpecialList.innerHTML = upcoming.map(m => `
+      <li>
+        <button type="button" class="special-row${m.date === datePicker.value ? ' is-selected' : ''}" data-date="${m.date}">
+          <span class="special-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg></span>
+          <span class="special-info">
+            <span class="special-name">${escapeHtml(m.title || m.note || m.type)}</span>
+            <span class="special-date-text">${formatLongDate(m.date)}${m.time ? ` · ${escapeHtml(m.time)}` : ''}</span>
+          </span>
+          <span class="special-view">View ›</span>
+        </button>
+      </li>`).join('');
+  }
+
+  upcomingSpecialList.addEventListener('click', (e) => {
+    const row = e.target.closest('.special-row');
+    if (!row) return;
+    datePicker.value = row.dataset.date;
+    renderDateSchedule();
+    renderUpcomingSpecial();
+    dateScheduleList.closest('.panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  datePicker.addEventListener('change', () => { renderDateSchedule(); renderUpcomingSpecial(); });
+  btnToday.addEventListener('click', () => { datePicker.value = todayISO; renderDateSchedule(); renderUpcomingSpecial(); });
 
   dateScheduleList.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-reminder');
@@ -195,22 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window.showToast?.(`We'll remind you before ${type} starts.`);
     }
   });
-
-  function renderSpecialMasses() {
-    const today = new Date(todayISO + 'T00:00:00');
-    const upcoming = allMasses
-      .filter(m => m.isSpecial && new Date(m.date + 'T00:00:00') >= today)
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    specialMassesList.innerHTML = upcoming.map(s => `
-      <li><div class="special-row">
-        <div class="special-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg></div>
-        <div class="special-info">
-          <p class="special-name">${escapeHtml(s.title || s.note)}</p>
-          <p class="special-date-text">${formatLongDate(s.date)}</p>
-        </div>
-      </div></li>`).join('');
-  }
 
   function renderWeeklySchedule() {
     weeklyTbody.innerHTML = weeklySchedule.map(w => `

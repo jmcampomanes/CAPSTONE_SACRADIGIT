@@ -240,13 +240,13 @@
 
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Open for Reschedule</p>
+              <p class="stat-label">Awaiting Approval</p>
               <div class="stat-icon stat-icon-amber">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
             </div>
             <p class="stat-value" id="stat-pending">0</p>
-            <p class="stat-sub">up to the day before</p>
+            <p class="stat-sub">blessing requests to review</p>
           </div>
 
           <div class="stat-card">
@@ -320,7 +320,7 @@
 
             <div class="panel" id="requests-panel">
               <div class="panel-header">
-                <h2 class="panel-title">Schedules Open for Reschedule</h2>
+                <h2 class="panel-title">Awaiting Approval &amp; Reschedule</h2>
                 <p id="requests-count" class="text-xs text-gray-400 font-medium"></p>
               </div>
               <ul id="requests-list" class="divide-y divide-gray-100">
@@ -328,8 +328,8 @@
               </ul>
               <div id="requests-empty" class="empty-state hidden">
                 <svg class="w-9 h-9 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
-                <p class="text-sm font-medium text-gray-600">No schedules open for reschedule</p>
-                <p class="text-xs text-gray-400 mt-1">Bookings can be rescheduled up to the day before their date.</p>
+                <p class="text-sm font-medium text-gray-600">Nothing to review</p>
+                <p class="text-xs text-gray-400 mt-1">New blessing requests wait here for approval. Bookings can be rescheduled up to the day before their date.</p>
               </div>
               <div id="requests-pagination" class="pagination-bar">
                 <!-- Injected by blessings.js -->
@@ -438,7 +438,9 @@
       </div>
       <div class="modal-footer">
         <button type="button" id="details-cancel-booking" class="btn-danger hidden">Cancel Booking</button>
-        <button type="button" id="details-reschedule" class="btn-lavender hidden">Reschedule</button>
+        <button type="button" id="details-decline" class="btn-danger hidden">Decline</button>
+        <button type="button" id="details-reschedule" class="btn-secondary hidden">Reschedule</button>
+        <button type="button" id="details-approve" class="btn-lavender hidden">Approve</button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
       </div>
     </div>

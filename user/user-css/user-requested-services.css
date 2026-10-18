@@ -5,97 +5,6 @@
    Extends user-shell.css
    ============================================ */
 
-/* ---------- Hero banner ---------- */
-.req-hero {
-  background: linear-gradient(135deg, #1e2a4a 0%, #2a3a5c 55%, #3d3f7a 100%);
-  border-radius: 1.25rem;
-  padding: 1.75rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 14px 34px rgba(30, 42, 74, 0.22);
-}
-
-.req-hero::before {
-  content: '';
-  position: absolute;
-  top: -45%;
-  right: -8%;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(201, 168, 76, 0.28), transparent 70%);
-  pointer-events: none;
-}
-
-.req-hero::after {
-  content: '';
-  position: absolute;
-  bottom: -60%;
-  left: 8%;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 143, 199, 0.22), transparent 70%);
-  pointer-events: none;
-}
-
-.req-hero-icon {
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #c9a84c;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.req-hero-title {
-  font-size: 1.375rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.01em;
-  position: relative;
-  z-index: 1;
-}
-
-.req-hero-sub {
-  font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.68);
-  margin-top: 0.25rem;
-  max-width: 34rem;
-  line-height: 1.5;
-  position: relative;
-  z-index: 1;
-}
-
-.req-hero-with-cta { flex-wrap: wrap; }
-
-.req-hero-cta {
-  position: relative;
-  z-index: 1;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.req-hero-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
-}
-
-@media (max-width: 640px) {
-  .req-hero { padding: 1.375rem 1.25rem; }
-  .req-hero-with-cta { align-items: flex-start; }
-  .req-hero-cta { width: 100%; justify-content: center; }
-}
-
 /* ---------- Stat cards ---------- */
 .stat-card {
   background: #ffffff;
@@ -272,3 +181,35 @@
 /* "Open in Google Maps" link for a House Blessing map pin */
 .map-pin-link { color: #5b5fa8; font-weight: 600; text-decoration: none; }
 .map-pin-link:hover { color: #1e2a4a; text-decoration: underline; }
+
+/* ---------- Category filter chips (All / Blessings / Sacraments / Special Masses) ---------- */
+.svc-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.875rem 1.25rem 0;
+}
+
+.svc-filter-chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.svc-filter-chip:hover { border-color: #8b8fc7; color: #1e2a4a; }
+
+.svc-filter-chip.active {
+  color: #ffffff;
+  background-color: #1e2a4a;
+  border-color: #1e2a4a;
+}
+
+@media (max-width: 640px) {
+  .svc-filter { padding: 0.75rem 1rem 0; }
+}

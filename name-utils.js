@@ -51,6 +51,67 @@ export function setNameFields(fieldPrefix, name) {
   set('middle', n.middleName);
   set('last', n.lastName);
   set('ext', n.extension);
+  syncExtToggle(document.getElementById(`${fieldPrefix}-ext`), { matchValue: true }); // cleared form → unticked
+}
+
+/* ------------------------------------------
+   "Add extension" checkbox (phones)
+   On small screens the Ext. box (Jr., III) is
+   hidden behind a checkbox — most names don't
+   have one. Tick it and the box appears; untick
+   it and the box is cleared. On wider screens the
+   checkbox is hidden and the box always shows
+   (CSS: "Name field group" in user-shell.css).
+   Works for name groups added later (guardians,
+   Mass intention names) too.
+   ------------------------------------------ */
+
+const EXT_TOGGLE = 'name-ext-toggle';
+
+function addExtToggle(input) {
+  if (!input || input.previousElementSibling?.classList.contains(EXT_TOGGLE)) return;
+  const label = document.createElement('label');
+  label.className = EXT_TOGGLE;
+  label.innerHTML = '<input type="checkbox" class="checkbox-input" /> Add extension (Jr., Sr., III)';
+  const box = label.querySelector('input');
+  box.addEventListener('change', () => {
+    if (box.checked) input.focus();
+    else if (input.value) {
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true })); // let previews/validation catch up
+    }
+  });
+  input.before(label);
+  syncExtToggle(input);
+}
+
+/**
+ * Keeps the checkbox in step with the Ext. box: ticked when it has a value
+ * (and, with matchValue, unticked when it's empty), disabled along with it.
+ */
+export function syncExtToggle(input, { matchValue = false } = {}) {
+  const label = input?.previousElementSibling;
+  if (!label?.classList.contains(EXT_TOGGLE)) return;
+  const box = label.querySelector('input');
+  const hasValue = !!input.value.trim();
+  if (hasValue || matchValue) box.checked = hasValue;
+  box.disabled = input.disabled;
+  label.classList.toggle('is-disabled', input.disabled);
+}
+
+/** Adds the checkbox to every Ext. box on the page, now and as forms are built. */
+export function initExtToggles(root = document.body) {
+  root.querySelectorAll('.name-ext-input').forEach(addExtToggle);
+  new MutationObserver((muts) => {
+    for (const m of muts) {
+      if (m.type === 'attributes') { syncExtToggle(m.target); continue; } // "Not applicable" disables the boxes
+      m.addedNodes.forEach((n) => {
+        if (n.nodeType !== 1) return;
+        if (n.matches('.name-ext-input')) addExtToggle(n);
+        n.querySelectorAll?.('.name-ext-input').forEach(addExtToggle);
+      });
+    }
+  }).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
 }
 
 /** True once both first and last name are filled in (the minimum for a usable name). */

@@ -121,9 +121,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Opened from a Dashboard announcement card (?id=…): show that one straight away.
+  let openOnLoad = new URLSearchParams(location.search).get('id');
+
   client.models.Announcement.observeQuery({ filter: { published: { eq: true } } }).subscribe({
     next: ({ items }) => {
       announcements = items;
+      const target = openOnLoad && items.find(a => a.id === openOnLoad);
+      if (target) {
+        openOnLoad = null;
+        history.replaceState(null, '', location.pathname); // don't reopen it on refresh
+        document.querySelector(`.ann-kind-tab[data-kind="${parseMediaField(target.media).kind}"]`)?.click();
+        openDetailModal(target.id);
+      }
       renderGrid();
     },
     error: (err) => {

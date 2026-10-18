@@ -1046,6 +1046,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderMarriageFieldsHtml() {
+    /* "Groom"/"Bride" tag at the top of each cell — hidden on wide screens
+       (the column headers say it), shown on phones where the table stacks
+       into one column (see "Phones" in user-request-certificate.css). */
+    const GROOM_TAG = '<span class="marriage-cell-side">Groom</span>';
+    const BRIDE_TAG = '<span class="marriage-cell-side">Bride</span>';
     return `
       <div class="marriage-table-wrap">
         <table class="marriage-table">
@@ -1060,23 +1065,23 @@ document.addEventListener('DOMContentLoaded', () => {
           <tbody>
             <tr>
               <th>Full Name <span class="text-red-500">*</span></th>
-              <td>${marriageCellNameInputs('groom-name')}</td>
-              <td>${marriageCellNameInputs('bride-name')}</td>
+              <td>${GROOM_TAG}${marriageCellNameInputs('groom-name')}</td>
+              <td>${BRIDE_TAG}${marriageCellNameInputs('bride-name')}</td>
             </tr>
             <tr>
               <th>Guardian</th>
-              <td>${marriageCellGuardian('groom', 'Groom')}</td>
-              <td>${marriageCellGuardian('bride', 'Bride')}</td>
+              <td>${GROOM_TAG}${marriageCellGuardian('groom', 'Groom')}</td>
+              <td>${BRIDE_TAG}${marriageCellGuardian('bride', 'Bride')}</td>
             </tr>
             <tr>
               <th>Father's Name <span class="text-red-500">*</span></th>
-              <td>${marriageCellParentName('groom', 'father')}</td>
-              <td>${marriageCellParentName('bride', 'father')}</td>
+              <td>${GROOM_TAG}${marriageCellParentName('groom', 'father')}</td>
+              <td>${BRIDE_TAG}${marriageCellParentName('bride', 'father')}</td>
             </tr>
             <tr>
               <th>Mother's Maiden Name <span class="text-red-500">*</span></th>
-              <td>${marriageCellParentName('groom', 'mother')}</td>
-              <td>${marriageCellParentName('bride', 'mother')}</td>
+              <td>${GROOM_TAG}${marriageCellParentName('groom', 'mother')}</td>
+              <td>${BRIDE_TAG}${marriageCellParentName('bride', 'mother')}</td>
             </tr>
           </tbody>
         </table>

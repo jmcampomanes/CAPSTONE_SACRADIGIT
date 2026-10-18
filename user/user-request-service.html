@@ -87,9 +87,6 @@
           <li><a href="user-requested-services.html" data-nav="requested-services" class="sidebar-link">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
             Requested Services</a></li>
-          <li><a href="user-blessings.html" data-nav="blessings" class="sidebar-link">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-            Blessings</a></li>
           <li><a href="user-mass-intentions.html" data-nav="mass-intentions" class="sidebar-link">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
             Mass Intentions</a></li>
@@ -138,30 +135,19 @@
         <!-- ===== MENU VIEW: browse services ===== -->
         <div id="menu-view">
 
-          <!-- Hero + CTA -->
-          <div class="req-hero req-hero-with-cta">
-            <div class="req-hero-icon">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-            </div>
-            <div class="flex-1">
-              <h2 class="req-hero-title">Request a Service</h2>
-              <p class="req-hero-sub">Browse what the parish office offers below, then request one.</p>
-            </div>
-            <a href="user-requested-services.html" class="btn-secondary req-hero-cta shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-              View My Requests
-            </a>
-          </div>
-
-          <!-- Info banner -->
-          <div class="info-banner mt-6">
+          <!-- Info banner, with "View My Requests" beside it -->
+          <div class="info-banner info-banner-with-action">
             <div class="info-banner-icon">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div>
+            <div class="info-banner-body">
               <p class="info-banner-title">What can I request here?</p>
-              <p class="info-banner-text">Sacraments (Baptism, Wedding, First Communion), blessings (house, vehicle, business), and special masses (funeral, anniversary) can all be requested from this page — grouped into rows below. The parish office will review your request and confirm a date, time, and officiant — track any of them under "Requested Services," or see your blessing requests specifically on a calendar under "Blessings."</p>
+              <p class="info-banner-text">Sacraments, blessings, and special Masses — pick one below and choose an open schedule. Sacraments and special Masses are booked right away; blessings are approved by the parish office first. Track everything under "Requested Services."</p>
             </div>
+            <a href="user-requested-services.html" class="btn-secondary info-banner-action">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              View My Requests
+            </a>
           </div>
 
           <!-- Services we offer -->
@@ -211,7 +197,7 @@
               </div>
               <div class="req-info-note">
                 <svg class="w-4 h-4 shrink-0 mt-0.5 text-lavender" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <p class="text-xs text-gray-600 leading-relaxed">These are the parish's fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "Requested Services."</p>
+                <p id="svc-booking-note" class="text-xs text-gray-600 leading-relaxed">These are the parish's fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "Requested Services."</p>
               </div>
             </div>
 

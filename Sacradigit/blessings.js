@@ -5,19 +5,22 @@
    status ('pending'|'scheduled'|'completed'|'declined'),
    preferredDate, date, time, declineReason
 
-   Parishioners now book fixed schedule slots
-   (../service-schedule.js) and land here already
-   'scheduled'. Booked blessings can be rescheduled
-   up to the day before their date (they're listed
-   under "Schedules Open for Reschedule") and
-   cancelled from their Details modal. A leftover
-   'pending' request from before fixed slots shows
-   in that list too — rescheduling books it.
+   Parishioners book fixed schedule slots
+   (../service-schedule.js). Sacraments and special
+   Masses land here already 'scheduled'. Blessings
+   (needsApproval() in ../service-catalog.js) land as
+   'pending' — holding their slot — and wait under
+   "Awaiting Approval & Reschedule" for the office to
+   Approve (books the slot they picked), Decline (frees
+   it, with a reason the parishioner sees) or
+   Reschedule (books a different slot). Booked services
+   can be rescheduled up to the day before their date
+   and cancelled from their Details modal.
    ============================================ */
 
 import { client } from '../amplify-init.js';
 import { printReport, tableHtml, esc } from '../print-report.js';
-import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../service-schedule.js';
+import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, APPROVED_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
 import { notifyServiceUpdate, notifyServiceReminder } from '../email-notify.js';
 
@@ -204,13 +207,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderStats() {
     document.getElementById('stat-scheduled').textContent = upcoming.length;
-    document.getElementById('stat-pending').textContent   = reschedulable().length;
+    document.getElementById('stat-pending').textContent   = requests.length; // awaiting approval
   }
 
 
   /* ------------------------------------------
      STAT CARDS AS QUICK NAVIGATION
-     "Scheduled This Week" and "Open for Reschedule"
+     "Scheduled This Week" and "Awaiting Approval"
      jump to and briefly highlight their matching
      panel below. "Avg. Per Week" and "Slots Open"
      are static placeholders with no backing panel,
@@ -321,6 +324,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="request-actions">
             <div class="request-action-row">
+              ${r.status === 'pending' ? `
+              <button type="button" class="req-approve" data-id="${r.id}">Approve</button>
+              <button type="button" class="req-decline" data-id="${r.id}">Decline</button>` : ''}
               <button type="button" class="req-reschedule" data-id="${r.id}">Reschedule</button>
             </div>
             <button type="button" class="blessing-details-btn" data-section="${r.status === 'pending' ? 'requests' : 'upcoming'}" data-id="${r.id}">Details ›</button>
@@ -332,12 +338,69 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPaginationBar(requestsPagination, filtered.length, requestsPage, totalPages, startIdx, pageItems.length);
   }
 
-  // Reschedule moves the booking to another fixed slot (and books a
-  // leftover pending request) — this replaced the old Approve / Decline actions.
+  // Pending blessing requests: Approve books the slot the parishioner picked,
+  // Decline frees it (with a reason), Reschedule books a different slot.
+  // Booked services only get Reschedule here.
   requestsList.addEventListener('click', (e) => {
+    const approveBtn = e.target.closest('.req-approve');
+    if (approveBtn) { approveRequest(approveBtn.dataset.id, approveBtn); return; }
+    const declineBtn = e.target.closest('.req-decline');
+    if (declineBtn) { openDeclineModal(declineBtn.dataset.id); return; }
     const rescheduleBtn = e.target.closest('.req-reschedule');
     if (rescheduleBtn) openRescheduleScreen(rescheduleBtn.dataset.id);
   });
+
+  /** `details` JSON with an "Approved" note (shown on the parishioner's View window). */
+  function detailsWithApproval(detailsJson) {
+    let details = {};
+    try { details = (typeof detailsJson === 'string' ? JSON.parse(detailsJson) : detailsJson) || {}; } catch { details = {}; }
+    const on = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    details[APPROVED_LABEL] = `by the Parish Office on ${on}`;
+    return JSON.stringify(details);
+  }
+
+  async function approveRequest(id, btn) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+    const date = r.preferredDate || r.date;
+    // No time picked, or the day has already passed: pick a slot instead.
+    if (!date || !r.time || date < todayISO) {
+      showToast('This request has no usable date/time — pick a slot to approve it.', true);
+      openRescheduleScreen(id);
+      return;
+    }
+    // The slot may have filled up or been closed since it was requested.
+    if (!slotHasRoom(r.type, allRecords, date, r.time, { excludeId: r.id, closures })) {
+      showToast('That slot is no longer available — pick another one to approve it.', true);
+      openRescheduleScreen(id);
+      return;
+    }
+    if (btn) btn.disabled = true;
+    try {
+      const result = await client.models.Blessing.update({
+        id: r.id,
+        status: 'scheduled',
+        date,
+        time: r.time,
+        location: r.location || locationFor(r.type),
+        details: detailsWithApproval(r.details),
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      logBookingAction(client, { action: 'Approve', record: { ...r, date } });
+      notifyServiceUpdate({
+        to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'scheduled',
+        date: formatLongDate(date), time: r.time, location: r.location || locationFor(r.type),
+        contact: r.contact, detailsLines: emailDetailLines(r),
+      });
+      closeModal(detailsModal);
+      showToast(`${r.type} for ${r.requesterName} approved — ${formatLongDate(date)} at ${r.time}.`);
+    } catch (err) {
+      console.error('Failed to approve request:', err);
+      showToast("Couldn't approve the request.", true);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
 
 
   function renderCompleted() {
@@ -815,6 +878,16 @@ document.addEventListener('DOMContentLoaded', () => {
     openDeclineModal(detailsTargetId, { cancelBooking: true });
   });
 
+  // Pending blessing requests: Approve / Decline straight from Details
+  const detailsApproveBtn = document.getElementById('details-approve');
+  const detailsDeclineBtn = document.getElementById('details-decline');
+  detailsApproveBtn.addEventListener('click', () => { if (detailsTargetId) approveRequest(detailsTargetId, detailsApproveBtn); });
+  detailsDeclineBtn.addEventListener('click', () => {
+    if (!detailsTargetId) return;
+    closeModal(detailsModal);
+    openDeclineModal(detailsTargetId);
+  });
+
   /* --- Reschedule Screen ---
      Moves a pending request or a booked blessing to another fixed slot,
      on a full-screen view beside the sidebar (current booking on the
@@ -930,7 +1003,10 @@ document.addEventListener('DOMContentLoaded', () => {
         date: slot.date,
         time: slot.time,
         location: r.location || locationFor(r.type),
-        details: detailsWithRescheduleReason(r.details, reason, 'Parish Office'),
+        // Rescheduling a pending request books it — that's the office approving it.
+        details: r.status === 'pending'
+          ? detailsWithApproval(detailsWithRescheduleReason(r.details, reason, 'Parish Office'))
+          : detailsWithRescheduleReason(r.details, reason, 'Parish Office'),
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       const from = r.status === 'scheduled' ? `${formatLongDate(r.date)} ${r.time}` : 'pending request';
@@ -1014,6 +1090,8 @@ document.addEventListener('DOMContentLoaded', () => {
     detailsTargetId = id;
     detailsCancelBtn.classList.toggle('hidden', !(section === 'upcoming' && (record.date || '') >= todayISO));
     detailsRescheduleBtn.classList.toggle('hidden', !(section === 'requests' || canReschedule(record)));
+    detailsApproveBtn.classList.toggle('hidden', section !== 'requests');
+    detailsDeclineBtn.classList.toggle('hidden', section !== 'requests');
 
     detailsBody.innerHTML = `
       <div class="so-detail-grid">

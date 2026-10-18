@@ -11,10 +11,14 @@
    session-local for now. Once RBAC/Cognito groups
    are restored, this is where the Media group's
    real profile record would be read/written instead.
+   Exception: Security's Change Password is real — it
+   changes the signed-in account's Cognito password
+   (../password-change.js).
    ============================================ */
 
+import { initPasswordChange } from '../password-change.js';
+
 const PROFILE_KEY = 'sacradigit_media_profile';
-const DEMO_PASSWORD = 'media123'; // demo-only "current" password, mirrors admin's pattern
 
 function readProfile() {
   try {
@@ -134,54 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Profile updated.');
   });
 
-  /* ---------- Security: password change ---------- */
-  const pwCurrent = document.getElementById('pw-current');
-  const pwNew = document.getElementById('pw-new');
-  const pwConfirm = document.getElementById('pw-confirm');
-  const pwStrengthFill = document.getElementById('pw-strength-fill');
-  const pwStrengthLabel = document.getElementById('pw-strength-label');
-  const pwSubmit = document.getElementById('pw-submit');
-
-  function strengthOf(pw) {
-    if (!pw) return { level: '', label: 'Password strength' };
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-    if (/\d/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    if (score <= 1) return { level: 'weak', label: 'Weak' };
-    if (score <= 2) return { level: 'fair', label: 'Fair' };
-    return { level: 'strong', label: 'Strong' };
-  }
-
-  pwNew.addEventListener('input', () => {
-    const s = strengthOf(pwNew.value);
-    pwStrengthFill.className = 'pw-strength-fill' + (s.level ? ` ${s.level}` : '');
-    pwStrengthLabel.className = 'pw-strength-label' + (s.level ? ` ${s.level}` : '');
-    pwStrengthLabel.textContent = s.level ? s.label : 'Password strength';
-  });
-
-  pwSubmit.addEventListener('click', () => {
-    if (pwCurrent.value !== DEMO_PASSWORD) {
-      showToast('Current password is incorrect.', true);
-      return;
-    }
-    if (pwNew.value.length < 8) {
-      showToast('New password must be at least 8 characters.', true);
-      return;
-    }
-    if (pwNew.value !== pwConfirm.value) {
-      showToast("New passwords don't match.", true);
-      return;
-    }
-    pwCurrent.value = '';
-    pwNew.value = '';
-    pwConfirm.value = '';
-    pwStrengthLabel.textContent = 'Password strength';
-    pwStrengthLabel.className = 'pw-strength-label';
-    pwStrengthFill.className = 'pw-strength-fill';
-    showToast('Password updated.');
-  });
+  /* ---------- Security: Change Password (real Cognito password — ../password-change.js) ---------- */
+  initPasswordChange({ showToast });
 
   /* ---------- Two-Factor Authentication ---------- */
   const twofaToggle = document.getElementById('twofa-toggle');

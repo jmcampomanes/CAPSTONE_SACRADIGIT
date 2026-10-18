@@ -110,7 +110,17 @@
   transform: translateY(-2px);
 }
 
+/* Icon and title side by side; the short description sits underneath. */
+.quick-action-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-width: 0;
+}
+
 .quick-action-icon {
+  flex-shrink: 0;
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.6rem;
@@ -121,16 +131,22 @@
 }
 
 .quick-action-label {
-  font-size: 0.8125rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #111827;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .quick-action-sub {
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   color: #9ca3af;
   line-height: 1.4;
+}
+
+/* Phones (two cards per row): smaller text so titles fit on one line. */
+@media (max-width: 639px) {
+  .quick-action-label { font-size: 0.875rem; }
+  .quick-action-sub { font-size: 0.75rem; }
 }
 
 /* ---------- Mass schedule row (user view) ---------- */
@@ -206,14 +222,57 @@
 .user-ann-card {
   border: 1px solid #eef0f4;
   border-radius: 0.75rem;
-  padding: 1rem;
   background-color: #fafbfc;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
+
+.user-ann-card:focus-visible { outline: 2px solid #8b8fc7; outline-offset: 2px; }
+
+/* Announcement photo (or video) across the top of the card */
+.user-ann-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background-color: #eef0f4;
+}
+
+.user-ann-cover img,
+.user-ann-cover video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.user-ann-media-count {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: rgba(17, 24, 39, 0.65);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+}
+
+.user-ann-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.user-ann-body .user-ann-meta { margin-top: auto; }
 
 .user-ann-card:hover {
   box-shadow: 0 10px 24px rgba(30, 42, 74, 0.1);

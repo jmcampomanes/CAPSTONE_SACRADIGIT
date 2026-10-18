@@ -29,6 +29,11 @@
 import { client } from '../amplify-init.js';
 import { currentUser } from '../auth.js';
 import { currentLang } from '../ui-prefs.js';
+import { needsApproval } from '../service-catalog.js';
+import { APPROVED_LABEL } from '../service-schedule.js';
+
+// Blessings wait for the parish office: approved → "approved", declined before approval → "not approved".
+const wasApproved = (r) => { try { return !!JSON.parse(r.details || '{}')[APPROVED_LABEL]; } catch { return false; } };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WINDOW_DAYS = 30;
@@ -164,9 +169,16 @@ export async function collectNotifications(lang = currentLang()) {
     const name = esc(r.type);
     const when = r.date ? `${fmtDate(r.date, lang)}${r.time ? `, ${esc(r.time)}` : ''}` : '';
     if (recent(r) && changedLater(r)) {
+      const approval = needsApproval(r.type);
+      const notApproved = approval && !wasApproved(r) && !/by the parishioner/i.test(r.declineReason || '');
+      const reason = r.declineReason ? esc(r.declineReason) : (fil ? 'Makipag-ugnayan sa parish office.' : 'Please contact the parish office.');
       const msg = {
-        scheduled: fil ? [`Naka-iskedyul na ang ${name}`, when] : [`${name} is scheduled`, when],
-        declined: fil ? [`Kinansela ang ${name}`, r.declineReason ? esc(r.declineReason) : 'Makipag-ugnayan sa parish office.'] : [`${name} was cancelled`, r.declineReason ? esc(r.declineReason) : 'Please contact the parish office.'],
+        scheduled: approval && wasApproved(r)
+          ? (fil ? [`Aprubado na ang ${name}`, when] : [`Your ${name} was approved`, when])
+          : (fil ? [`Naka-iskedyul na ang ${name}`, when] : [`${name} is scheduled`, when]),
+        declined: notApproved
+          ? (fil ? [`Hindi naaprubahan ang ${name}`, reason] : [`Your ${name} request wasn’t approved`, reason])
+          : (fil ? [`Kinansela ang ${name}`, reason] : [`${name} was cancelled`, reason]),
         completed: fil ? [`Tapos na ang ${name}`, 'Salamat! Pagpalain ka ng Diyos.'] : [`${name} is complete`, 'Thank you — God bless!'],
       }[r.status];
       if (msg) add({ id: `svc-${r.id}-${r.status}-${r.date || ''}`, kind: 'service', at: r.updatedAt, title: msg[0], body: msg[1], href: 'user-requested-services.html' });

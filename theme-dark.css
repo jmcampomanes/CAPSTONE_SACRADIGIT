@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 45 stylesheets.
+   Built by tools/build-dark-theme.mjs from 44 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -47,6 +47,14 @@
 /* ---- Inline navy text/icons (style="color:#1e2a4a") set directly in markup ---- */
 :root[data-theme="dark"] [style*="color:#1e2a4a"], :root[data-theme="dark"] [style*="color: #1e2a4a"] { color: #c7cbe8 !important; }
 :root[data-theme="dark"] [style*="background-color:rgba(30,42,74"], :root[data-theme="dark"] [style*="background-color: rgba(30,42,74"] { background-color: rgba(199, 203, 232, 0.12) !important; }
+
+/* ---- Booking calendar (service-schedule.js): unavailable days read as dim grey ----
+   Their light-mode grey (#d1d5db) is "already light", so the generator keeps it —
+   which on a dark background looks as bright as a bookable day. */
+:root[data-theme="dark"] .slot-cal-day { color: #4b5466; }
+:root[data-theme="dark"] .slot-cal-day.closed { color: #4b5466; text-decoration-color: #4b5466; }
+:root[data-theme="dark"] .slot-cal-day.full { color: #8a5a63; }
+:root[data-theme="dark"] .slot-cal-day.open.active { color: #ffffff; background-color: #3d4a7a; border-color: #8b8fc7; }
 
 /* ---- Images and maps keep their real colours ---- */
 :root[data-theme="dark"] .leaflet-container { background-color: #ddd; }
@@ -145,8 +153,16 @@
 :root[data-theme="dark"] .slot-summary {
     color: #a1b0d9
 }
-:root[data-theme="dark"] .svc-type-sched {
-    color: #a9abd1
+:root[data-theme="dark"] .svc-sched-days {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .svc-time-chip {
+    color: #c4c9d3;
+    background-color: #222635
+}
+:root[data-theme="dark"] .svc-type-approval {
+    color: #eeb18b;
+    background-color: #3f3718
 }
 :root[data-theme="dark"] .map-pin-link {
     color: #a8aad1
@@ -181,6 +197,12 @@
 }
 :root[data-theme="dark"] .pin-map-status[data-state="error"] {
     color: #ee8c8c
+}
+:root[data-theme="dark"] .pin-map-use-address {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .pin-map-use-address:hover {
+    color: #a1b0d9
 }
 :root[data-theme="dark"] .svc-screen {
     background-color: #121827
@@ -2418,10 +2440,6 @@
     color: #ee8c8c
 }
 /*  from user/user-css/user-announcements.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .ann-search-icon {
     color: #8b93a3
 }
@@ -2535,10 +2553,6 @@
     background-color: #39321e
 }
 /*  from user/user-css/user-badges.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .fj-note {
     color: #a0a8b6;
     background-color: #121827
@@ -2626,150 +2640,6 @@
 :root[data-theme="dark"] .fj-celebrate-text {
     color: #a0a8b6
 }
-/*  from user/user-css/user-blessings.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
-:root[data-theme="dark"] .stat-card {
-    background: #1a2131;
-    border: 1px solid #2c3548
-}
-:root[data-theme="dark"] .stat-label {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .stat-icon {
-    color: #a9abd1
-}
-:root[data-theme="dark"] .stat-icon-green {
-    background-color: #1a3d28;
-    color: #8decb1
-}
-:root[data-theme="dark"] .stat-icon-amber {
-    background-color: #3f3718;
-    color: #eeb68b
-}
-:root[data-theme="dark"] .stat-icon-blue {
-    background-color: #18213f;
-    color: #9c96e3
-}
-:root[data-theme="dark"] .stat-value {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .stat-sub {
-    color: #8b93a3
-}
-:root[data-theme="dark"] .blessing-icon {
-    color: #a9abd1
-}
-:root[data-theme="dark"] .blessing-name {
-    color: #aabacf
-}
-:root[data-theme="dark"] .blessing-meta {
-    color: #8b93a3
-}
-:root[data-theme="dark"] .blessing-datetime {
-    color: #c4c9d3
-}
-:root[data-theme="dark"] .request-icon {
-    color: #ddcb9c
-}
-:root[data-theme="dark"] .request-name {
-    color: #aabacf
-}
-:root[data-theme="dark"] .request-meta {
-    color: #8b93a3
-}
-:root[data-theme="dark"] .completed-icon {
-    background-color: #1a3d28;
-    color: #8decb1
-}
-:root[data-theme="dark"] .completed-icon.declined {
-    background-color: #121827;
-    color: #ee8c8c
-}
-:root[data-theme="dark"] .completed-name {
-    color: #aabacf
-}
-:root[data-theme="dark"] .completed-meta {
-    color: #8b93a3
-}
-:root[data-theme="dark"] .completed-date {
-    color: #c4c9d3
-}
-:root[data-theme="dark"] .blessing-details-btn {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .blessing-details-btn:hover {
-    color: #a1b0d9
-}
-:root[data-theme="dark"] .so-detail-grid {
-    background-color: #121827
-}
-:root[data-theme="dark"] .so-detail-label {
-    color: #8b93a3
-}
-:root[data-theme="dark"] .so-detail-value {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .badge-lavender {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .calendar-nav-btn {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .calendar-nav-btn:hover {
-    background-color: #242c3e;
-    color: #a1b0d9
-}
-:root[data-theme="dark"] .calendar-month-label {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .calendar-weekdays {
-    color: #8b93a3
-}
-:root[data-theme="dark"] .calendar-cell {
-    border: 1px solid #434956;
-    background-color: #121827
-}
-:root[data-theme="dark"] .calendar-cell:hover {
-    border-color: #393c60;
-    background-color: #121827
-}
-:root[data-theme="dark"] .calendar-cell.selected {
-    background-color: #121827
-}
-:root[data-theme="dark"] .calendar-date-num {
-    color: #b0bac9
-}
-:root[data-theme="dark"] .calendar-cell-booking {
-    color: #8decb1
-}
-:root[data-theme="dark"] .calendar-cell-booking.scheduled {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .calendar-cell-booking.pending {
-    color: #e7d093
-}
-:root[data-theme="dark"] .calendar-cell-more {
-    color: #8b93a3
-}
-:root[data-theme="dark"] .calendar-legend-item {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .day-plan-item {
-    border: 1px solid #434956;
-    background-color: #121827
-}
-:root[data-theme="dark"] .day-plan-item-time {
-    color: #a1b0d9
-}
-:root[data-theme="dark"] .day-plan-item-facility {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .day-plan-item-purpose {
-    color: #a0a8b6
-}
 /*  from user/user-css/user-dashboard.css  */
 :root[data-theme="dark"] .greeting-icon {
     color: #e0cd99
@@ -2805,6 +2675,9 @@
 :root[data-theme="dark"] .user-ann-card {
     border: 1px solid #434956;
     background-color: #121827
+}
+:root[data-theme="dark"] .user-ann-cover {
+    background-color: #222835
 }
 :root[data-theme="dark"] .user-ann-title {
     color: #a3b3d7
@@ -2844,10 +2717,6 @@
     color: #8decb1
 }
 /*  from user/user-css/user-donations.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .fund-card {
     background: linear-gradient(180deg, #1a2131 0%, #121827 100%);
     border: 1px solid #434956
@@ -2949,16 +2818,15 @@
     color: #a1b0d9
 }
 /*  from user/user-css/user-facility-booking.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .facility-card {
     background: linear-gradient(180deg, #1a2131 0%, #121827 100%);
     border: 1px solid #434956
 }
 :root[data-theme="dark"] .facility-card:hover {
     border-color: #393c60
+}
+:root[data-theme="dark"] .facility-photo {
+    background-color: #222835
 }
 :root[data-theme="dark"] .facility-name {
     color: #a3b3d7
@@ -3141,10 +3009,6 @@
     background-color: #2c3548
 }
 /*  from user/user-css/user-mass-intentions.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .info-banner-icon {
     color: #e0cd99
 }
@@ -3380,10 +3244,6 @@
     color: #a3b3d7
 }
 /*  from user/user-css/user-mass-schedule.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .season-banner {
     background: #1a2131;
     border: 1px solid #2c3548
@@ -3443,6 +3303,16 @@
     background-color: #242c3e;
     color: #c4c9d3
 }
+:root[data-theme="dark"] .upcoming-special {
+    border-top: 1px solid #424857;
+    background-color: #121827
+}
+:root[data-theme="dark"] .upcoming-special-title {
+    color: #ddcb9c
+}
+:root[data-theme="dark"] .special-view {
+    color: #a8aad1
+}
 :root[data-theme="dark"] .special-icon {
     color: #ddcb9c
 }
@@ -3453,10 +3323,6 @@
     color: #8b93a3
 }
 /*  from user/user-css/user-my-requests.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .stat-card {
     background: #1a2131;
     border: 1px solid #2c3548
@@ -3654,12 +3520,24 @@
     color: #ed8d8d
 }
 /*  from user/user-css/user-request-certificate.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .back-btn {
     color: #a8aad1
+}
+:root[data-theme="dark"] .cert-type-card {
+    background: linear-gradient(180deg, #1a2131 0%, #121827 100%);
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .cert-type-card:hover .cert-type-cta {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .cert-type-name {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .cert-type-desc {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .cert-type-cta {
+    color: #8b93a3
 }
 :root[data-theme="dark"] .success-icon {
     color: #8febb0
@@ -3718,14 +3596,20 @@
 :root[data-theme="dark"] .marriage-table tbody tr:nth-child(even) th {
     background-color: #353222
 }
+@media (max-width: 640px) {
+    :root[data-theme="dark"] .marriage-table tbody tr:not(:last-child) td:nth-child(2) {
+        border-bottom: 1px dashed #2c3548
+    }
+}
+@media (max-width: 640px) {
+    :root[data-theme="dark"] .marriage-cell-side {
+        color: #a8aad1
+    }
+}
 :root[data-theme="dark"] .marriage-table-note {
     color: #8b93a3
 }
 /*  from user/user-css/user-request-service.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .req-screen {
     background-color: #121827
 }
@@ -3787,16 +3671,15 @@
     color: #a3b3d7
 }
 :root[data-theme="dark"] .svc-type-desc {
-    color: #8b93a3
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .svc-type-foot {
+    border-top: 1px solid #434956
 }
 :root[data-theme="dark"] .svc-type-cta {
     color: #8b93a3
 }
 /*  from user/user-css/user-requested-services.css  */
-:root[data-theme="dark"] .req-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
-}
 :root[data-theme="dark"] .stat-card {
     background: #1a2131;
     border: 1px solid #2c3548
@@ -3868,6 +3751,14 @@
     color: #a8aad1
 }
 :root[data-theme="dark"] .map-pin-link:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .svc-filter-chip {
+    color: #c4c9d3;
+    background-color: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .svc-filter-chip:hover {
     color: #a1b0d9
 }
 /*  from user/user-css/user-settings.css  */
@@ -4103,6 +3994,9 @@
 }
 :root[data-theme="dark"] .form-input::placeholder {
     color: #8b93a3
+}
+:root[data-theme="dark"] .name-ext-toggle {
+    color: #c4c9d3
 }
 :root[data-theme="dark"] .field-na-label {
     color: #a0a8b6

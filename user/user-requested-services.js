@@ -5,13 +5,16 @@
    split out of user-request-service.js, which now
    only handles browsing services and submitting a
    new request. Backed by the same Blessing model.
-   New requests book a fixed slot and are saved as
-   'scheduled' right away (see ../service-schedule.js).
+   This is also where blessings are tracked (the old
+   separate Blessings page was folded in) — the chips
+   above the list filter by category.
+   New requests book a fixed slot (see ../service-schedule.js):
+   sacraments/special Masses are 'scheduled' right away,
+   blessings wait as 'pending' for the parish office.
    Status mapping: scheduled -> Scheduled, completed ->
-   Completed, declined -> Cancelled (by the parish, or by the
-   parishioner — declineReason says which),
-   pending -> Pending (older requests from before
-   fixed schedules).
+   Completed, declined -> Cancelled / Not Approved (by the
+   parish, or cancelled by the parishioner — declineReason
+   says which), pending -> Awaiting Approval.
    Filters client-side by requesterName === hardcoded
    demo name (matches user-request-service.js).
    ============================================ */
@@ -21,7 +24,8 @@ import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
 import { currentUserName } from '../auth.js';
 import { isPrepKey, checklistHtml, progressChipHtml } from '../sacrament-prep.js';
 import { formatFullName, isNameEmpty } from '../name-utils.js';
-import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../service-schedule.js';
+import { SERVICE_TYPES, needsApproval } from '../service-catalog.js';
+import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, APPROVED_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../service-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -42,37 +46,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const REQUESTER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
 
-  const serviceTypes = [
-    { id: 'baptism', name: 'Baptism',
-      iconBg: 'rgba(139,143,199,0.16)', iconColor: '#5b5fa8',
-      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3C8 3 5 6 5 9c0 4 7 12 7 12s7-8 7-12c0-3-3-6-7-6z"/></svg>` },
-    { id: 'wedding', name: 'Wedding',
-      iconBg: 'rgba(239,68,68,0.1)', iconColor: '#dc2626',
-      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>` },
-    { id: 'funeral', name: 'Funeral Mass',
-      iconBg: 'rgba(107,114,128,0.12)', iconColor: '#6b7280',
-      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>` },
-    { id: 'house-blessing', name: 'House Blessing',
-      iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
-      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
-    { id: 'vehicle-blessing', name: 'Vehicle / Item Blessing',
-      iconBg: 'rgba(21,128,61,0.1)', iconColor: '#15803d',
-      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>` },
-    { id: 'first-communion', name: 'First Communion',
-      iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',
-      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
-    { id: 'business-dedication', name: 'Business Dedication',
-      iconBg: 'rgba(139,143,199,0.16)', iconColor: '#5b5fa8',
-      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l8-4v18M13 21V11l6 4v6M9 9v.01M9 12v.01M9 15v.01"/></svg>` },
-    { id: 'anniversary-mass', name: 'Anniversary Mass',
-      iconBg: 'rgba(239,68,68,0.1)', iconColor: '#dc2626',
-      icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>` },
-  ];
-
-  const serviceByName = name => serviceTypes.find(s => s.name === name);
+  // Every service's name, icon and category comes from the shared catalog.
+  // Older records may say 'Vehicle Blessing' (renamed 'Vehicle / Item Blessing').
+  const serviceByName = name => SERVICE_TYPES.find(s => s.name === name)
+    || (name === 'Vehicle Blessing' ? SERVICE_TYPES.find(s => s.id === 'vehicle-blessing') : null);
+  const categoryOf = (r) => serviceByName(r.type)?.category || (needsApproval(r.type) ? 'blessing' : 'other');
 
   const badgeClass  = { pending: 'badge-amber', scheduled: 'badge-green', declined: 'badge-red', completed: 'badge-blue' };
-  const statusLabel = { pending: 'Pending', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+  const statusLabel = { pending: 'Awaiting Approval', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+
+  // A declined request that the parish never approved reads "Not Approved", not "Cancelled".
+  // (The admin Blessings page notes APPROVED_LABEL in `details` when it approves one.)
+  const notApproved = (r) => r.status === 'declined' && needsApproval(r.type) && !/by the parishioner/i.test(r.declineReason || '') && !detailsWasApproved(r);
+  function detailsWasApproved(r) {
+    try { return !!JSON.parse(r.details || '{}')[APPROVED_LABEL]; } catch { return false; }
+  }
+  const labelFor = (r) => notApproved(r) ? 'Not Approved' : (statusLabel[effectiveStatus(r)] || effectiveStatus(r));
+
+  // Category chips above the list ('' = all)
+  let categoryFilter = new URLSearchParams(location.search).get('filter') || '';
 
   // A scheduled request whose date has passed already happened — nothing ever
   // flips it to 'completed' in the database, so it's shown as Completed here
@@ -138,31 +130,53 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('stat-completed').textContent = myRequests.filter(r => effectiveStatus(r) === 'completed').length;
   }
 
-  function renderList() {
-    requestsCount.textContent = `${myRequests.length} request${myRequests.length === 1 ? '' : 's'}`;
+  const filterBar = document.getElementById('requests-filter');
+  const emptyText = requestsEmpty.querySelector('p');
+  function paintFilter() {
+    filterBar.querySelectorAll('.svc-filter-chip').forEach(chip => {
+      const on = chip.dataset.cat === categoryFilter;
+      chip.classList.toggle('active', on);
+      chip.setAttribute('aria-pressed', String(on));
+    });
+  }
+  filterBar.addEventListener('click', (e) => {
+    const chip = e.target.closest('.svc-filter-chip');
+    if (!chip) return;
+    categoryFilter = chip.dataset.cat;
+    paintFilter();
+    renderList();
+  });
+  paintFilter();
 
-    if (myRequests.length === 0) {
+  function renderList() {
+    const shown = categoryFilter ? myRequests.filter(r => categoryOf(r) === categoryFilter) : myRequests;
+    requestsCount.textContent = `${shown.length} request${shown.length === 1 ? '' : 's'}`;
+
+    if (shown.length === 0) {
       requestsList.innerHTML = '';
+      emptyText.textContent = myRequests.length ? 'Nothing here for this category' : 'No service requests yet';
       requestsEmpty.classList.remove('hidden');
       return;
     }
     requestsEmpty.classList.add('hidden');
 
-    const sorted = myRequests.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const sorted = shown.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     requestsList.innerHTML = sorted.map((r) => {
       const svc = serviceByName(r.type) || { name: r.type, iconBg: '#eee', iconColor: '#888', icon: '' };
-      const scheduleChip = r.date ? `<span class="svc-row-schedule">${fmtDate(r.date)}${r.time ? ` at ${r.time}` : ''}</span>` : '';
+      const when = r.date || r.preferredDate;
+      const scheduleChip = when ? `<span class="svc-row-schedule">${r.status === 'pending' ? 'Requested for ' : ''}${fmtDate(when)}${r.time ? ` at ${r.time}` : ''}</span>` : '';
+      const badge = notApproved(r) ? 'badge-red' : (badgeClass[effectiveStatus(r)] || 'badge-gray');
 
       return `<div class="svc-row">
         <div class="svc-row-icon" style="background-color:${svc.iconBg};color:${svc.iconColor};">${svc.icon}</div>
         <div class="svc-row-body">
           <p class="svc-row-title">${escapeHtml(svc.name)}</p>
-          <p class="svc-row-meta">${r.date ? '' : `Preferred ${fmtDate(r.preferredDate)} · `}Submitted ${fmtDate(r.createdAt)}</p>
+          <p class="svc-row-meta">Submitted ${fmtDate(r.createdAt)}</p>
           <div>${scheduleChip}${r.status === 'declined' ? '' : progressChipHtml(r)}</div>
         </div>
         <div class="svc-row-actions">
-          <span class="badge ${badgeClass[effectiveStatus(r)] || 'badge-gray'}">${statusLabel[effectiveStatus(r)] || effectiveStatus(r)}</span>
+          <span class="badge ${badge}">${labelFor(r)}</span>
           <button type="button" class="btn-view-details" data-id="${r.id}">View ›</button>
         </div>
       </div>`;
@@ -192,8 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
     modalRescheduleBtn.classList.toggle('hidden', !(r.status === 'pending' || canReschedule(r)));
 
     document.getElementById('detail-modal-title').textContent = `${svc.name} Request`;
-    modalStatusBadge.textContent = statusLabel[effectiveStatus(r)] || effectiveStatus(r);
-    modalStatusBadge.className = `badge ${badgeClass[effectiveStatus(r)] || 'badge-gray'}`;
+    modalStatusBadge.textContent = labelFor(r);
+    modalStatusBadge.className = `badge ${notApproved(r) ? 'badge-red' : (badgeClass[effectiveStatus(r)] || 'badge-gray')}`;
     modalSubmittedDate.textContent = `Submitted ${fmtDate(r.createdAt)}`;
 
     modalDetails.innerHTML = Object.entries(details)
@@ -208,13 +222,15 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="grid-column: 1 / -1;"><p class="modal-detail-item-label">Rescheduled</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`
         : `
         <div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('') + `
-      ${r.date ? '' : `<div><p class="modal-detail-item-label">Preferred Date</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate)}</p></div>`}
+      ${r.status === 'pending'
+        ? `<div style="grid-column: 1 / -1;"><p class="modal-detail-item-label">Requested Slot</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate || r.date)}${r.time ? ` at ${escapeHtml(r.time)}` : ''} — waiting for the parish office to approve</p></div>`
+        : r.date ? '' : `<div><p class="modal-detail-item-label">Preferred Date</p><p class="modal-detail-item-value">${fmtDate(r.preferredDate)}</p></div>`}
       <div><p class="modal-detail-item-label">Contact</p><p class="modal-detail-item-value">${escapeHtml(r.contact)}</p></div>`;
 
     // What's still needed for Baptism / Confirmation / First Communion / Wedding
     document.getElementById('modal-checklist').innerHTML = r.status === 'declined' ? '' : checklistHtml(r);
 
-    if (r.date) {
+    if (r.date && r.status !== 'pending') {
       modalScheduleValue.textContent = `${fmtDate(r.date)}${r.time ? ` at ${r.time}` : ''}`;
       modalScheduleWrap.classList.remove('hidden');
     } else modalScheduleWrap.classList.add('hidden');
@@ -282,11 +298,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const svcName = serviceByName(r.type)?.name || r.type;
     const booked = r.status === 'scheduled';
     document.getElementById('reschedule-title').textContent = `Reschedule — ${svcName}`;
-    document.getElementById('reschedule-sub').textContent = 'Pick any open date and time; your booking moves there as soon as you save.';
-    document.getElementById('reschedule-current-label').textContent = booked ? 'Currently booked' : 'Requested (not yet booked)';
+    document.getElementById('reschedule-sub').textContent = booked
+      ? 'Pick any open date and time; your booking moves there as soon as you save.'
+      : 'Pick any open date and time; your request moves there and still waits for the parish office to approve it.';
+    document.getElementById('reschedule-current-label').textContent = booked ? 'Currently booked' : 'Requested (awaiting approval)';
     document.getElementById('reschedule-current').textContent = booked
       ? `${fmtLongDate(r.date)} at ${r.time}`
-      : fmtLongDate(r.preferredDate);
+      : `${fmtLongDate(r.preferredDate || r.date)}${r.time ? ` at ${r.time}` : ''}`;
     // Same label/value rows as the View window, plus contact and location
     const fact = (label, valueHtml) => `<div><p class="svc-screen-fact-label">${escapeHtml(label)}</p><p class="svc-screen-fact-value">${valueHtml}</p></div>`;
     document.getElementById('reschedule-facts').innerHTML = [
@@ -365,7 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const result = await client.models.Blessing.update({
         id: r.id,
-        status: 'scheduled',
+        // A blessing still waiting for approval keeps waiting — moving it mustn't skip the office.
+        status: r.status === 'pending' && needsApproval(r.type) ? 'pending' : 'scheduled',
         preferredDate: slot.date,
         date: slot.date,
         time: slot.time,

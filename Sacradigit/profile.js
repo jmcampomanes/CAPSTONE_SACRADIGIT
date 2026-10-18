@@ -5,9 +5,11 @@
    There is no auth/sign-in system yet (see the
    TODO comments across the admin pages, e.g.
    digital-archives.js's `addedByName: 'Admin User'`),
-   so Profile Info / Security / Notifications have
-   no backing data model and stay session-local —
-   same convention as the rest of this app.
+   so Profile Info / Notifications have no backing
+   data model and stay session-local — same
+   convention as the rest of this app. Security's
+   Change Password is real: it changes the signed-in
+   account's Cognito password (../password-change.js).
 
    The Activity Log tab IS wired to real data: the
    AccessLog model (userName, fileName, action,
@@ -18,13 +20,13 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { initPasswordChange } from '../password-change.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
      0. SESSION-LOCAL ACCOUNT DATA (no backend model)
   ------------------------------------------ */
-  const STORED_PASSWORD = 'admin123'; // demo-only "current" password
 
   const notifTypes = [
     { id: 'record-requests', label: 'New Record Requests', desc: 'A parishioner submits a certificate request.', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`, enabled: true },
@@ -185,86 +187,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     5. SECURITY — password strength + change (session-local demo)
+     5. SECURITY — Change Password (real Cognito password;
+     checklist, show/hide, match check: ../password-change.js)
   ------------------------------------------ */
-  const pwCurrent      = document.getElementById('pw-current');
-  const pwNew            = document.getElementById('pw-new');
-  const pwConfirm           = document.getElementById('pw-confirm');
-  const pwStrengthFill        = document.getElementById('pw-strength-fill');
-  const pwStrengthLabel          = document.getElementById('pw-strength-label');
-
-  [pwCurrent, pwNew, pwConfirm].forEach(input => {
-    input.addEventListener('input', () => clearFieldError(input));
-  });
-
-  function passwordStrength(pw) {
-    if (!pw) return { level: '', label: 'Password strength', pct: 0 };
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (pw.length >= 12) score++;
-    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-
-    if (score <= 1) return { level: 'weak', label: 'Weak password', pct: 30 };
-    if (score <= 3) return { level: 'fair', label: 'Fair password', pct: 65 };
-    return { level: 'strong', label: 'Strong password', pct: 100 };
-  }
-
-  pwNew.addEventListener('input', () => {
-    const s = passwordStrength(pwNew.value);
-    pwStrengthFill.className = `pw-strength-fill ${s.level}`;
-    pwStrengthFill.style.width = `${s.pct}%`;
-    pwStrengthLabel.className = `pw-strength-label ${s.level}`;
-    pwStrengthLabel.textContent = s.label;
-  });
-
-  document.getElementById('pw-submit').addEventListener('click', () => {
-    let hasError = false;
-    [pwCurrent, pwNew, pwConfirm].forEach(clearFieldError);
-
-    if (!pwCurrent.value) {
-      setFieldError(pwCurrent, 'Enter your current password.');
-      hasError = true;
-    } else if (pwCurrent.value !== STORED_PASSWORD) {
-      setFieldError(pwCurrent, 'Current password is incorrect.');
-      hasError = true;
-    }
-
-    if (!pwNew.value) {
-      setFieldError(pwNew, 'Enter a new password.');
-      hasError = true;
-    } else if (pwNew.value.length < 8) {
-      setFieldError(pwNew, 'New password must be at least 8 characters.');
-      hasError = true;
-    } else if (pwNew.value === pwCurrent.value) {
-      setFieldError(pwNew, 'New password must be different from the current one.');
-      hasError = true;
-    }
-
-    if (!pwConfirm.value) {
-      setFieldError(pwConfirm, 'Please confirm your new password.');
-      hasError = true;
-    } else if (pwConfirm.value !== pwNew.value) {
-      setFieldError(pwConfirm, 'Passwords do not match.');
-      hasError = true;
-    }
-
-    if (hasError) {
-      showToast('Please fix the highlighted fields.', true);
-      return;
-    }
-
-    pwCurrent.value = '';
-    pwNew.value = '';
-    pwConfirm.value = '';
-    pwStrengthFill.className = 'pw-strength-fill';
-    pwStrengthFill.style.width = '0%';
-    pwStrengthLabel.className = 'pw-strength-label';
-    pwStrengthLabel.textContent = 'Password strength';
-
-    showToast('Your password has been updated for this session.');
-  });
+  initPasswordChange({ showToast });
 
 
   /* ------------------------------------------

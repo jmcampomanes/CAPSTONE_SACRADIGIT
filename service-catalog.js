@@ -22,6 +22,24 @@ export const SERVICE_CATEGORIES = [
   { key: 'special-mass', label: 'Special Masses', desc: 'A Mass offered for a specific intention or occasion.' },
 ];
 
+// Blessings booked by parishioners wait for the parish office to approve or
+// decline them (status 'pending' → 'scheduled' / 'declined') instead of being
+// booked instantly, so nobody can spam the calendar with fake requests. The
+// pending request still holds its slot until the office decides (see
+// ACTIVE_STATUSES in service-schedule.js). Sacraments and special Masses are
+// still booked right away; walk-ins added by the office are always booked.
+const APPROVAL_CATEGORIES = new Set(['blessing']);
+
+/** True when a parishioner's request for this service (by display name) needs office approval. */
+export function needsApproval(typeName) {
+  const svc = SERVICE_TYPES.find(s => s.name === typeName);
+  // Older records used 'Vehicle Blessing' before it became 'Vehicle / Item Blessing'.
+  return svc ? APPROVAL_CATEGORIES.has(svc.category) : /blessing|dedication/i.test(typeName || '');
+}
+
+/** The catalog entry for a stored `type` (display name), if any. */
+export const serviceByName = (typeName) => SERVICE_TYPES.find(s => s.name === typeName);
+
 // All 7 sacraments of the Catholic Church are listed below, in their
 // traditional order (Baptism, Confirmation, Eucharist, Reconciliation,
 // Anointing of the Sick, Matrimony, Holy Orders) — each with its own
