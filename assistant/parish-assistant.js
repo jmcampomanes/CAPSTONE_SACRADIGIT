@@ -220,7 +220,7 @@ const STYLE = `
   .pa-understood { font-style: italic; margin-bottom: 0.35rem !important; }
   .pa-link { display: inline-block; margin-top: 0.35rem; font-weight: 600; color: #4b50a0; text-decoration: none; }
   .pa-link:hover, .pa-link-inline:hover { text-decoration: underline; }
-  .pa-link-inline { color: #4b50a0; }
+  .pa-link-inline { color: #4b50a0; font-weight: 600; }
   .pa-typing { display: inline-flex; gap: 0.25rem; } .pa-typing i { width: 0.4rem; height: 0.4rem; border-radius: 999px; background: #9ca3af; animation: pa-bounce 1s infinite; }
   .pa-typing i:nth-child(2) { animation-delay: 0.15s; } .pa-typing i:nth-child(3) { animation-delay: 0.3s; }
   @keyframes pa-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
@@ -317,8 +317,11 @@ export function initParishAssistant() {
   // Page names in a reply ("Mass Schedule", "Aking mga Hiling"…) become links to that page.
   const linkPages = (html) => html.replace(PAGE_NAME_RE, (name) =>
     `<a class="pa-link-inline" href="${PAGE_BY_NAME.get(name)}">${name}</a>`);
+  // The model sometimes writes markdown emphasis (**like this**) — render it as real bold
+  // instead of leaking literal asterisks into the chat bubble.
+  const renderBold = (html) => html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   function formatReply(text) {
-    return text.split(/\n{2,}/).map(p => `<p>${linkPages(escapeHtml(p)).replace(/\n/g, '<br>')}</p>`).join('');
+    return text.split(/\n{2,}/).map(p => `<p>${linkPages(renderBold(escapeHtml(p))).replace(/\n/g, '<br>')}</p>`).join('');
   }
 
   function directoryHtml(lang) {
