@@ -239,3 +239,54 @@
   word-break: break-word;
 }
 
+
+/* ---------- Review Your Request: its own page in place of the form ----------
+   (see openConfirmModal in user-request-certificate.js) */
+.view-enter { animation: review-view-in 0.28s ease; }
+@keyframes review-view-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .view-enter { animation: none; } }
+
+.review-header { align-items: flex-start; padding: 1.125rem 1.5rem; }
+.review-kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8b8fc7;
+}
+.review-title { font-size: 1.125rem; font-weight: 700; color: #111827; margin-top: 0.15rem; outline: none; }
+.review-type { font-size: 0.8125rem; font-weight: 600; color: #5b5fa8; margin-top: 0.15rem; }
+
+.review-body { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.review-intro { font-size: 0.8125rem; color: #6b7280; }
+
+/* On its own page the table shows in full (no inner scroll box) */
+.review-view .confirm-table-wrap { max-height: none; overflow: hidden; }
+.review-view .confirm-table .confirm-section th { position: static; }
+
+.review-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #eef0f4;
+}
+.review-actions > button { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+/* Phones: buttons stay in reach at the bottom of the screen */
+@media (max-width: 640px) {
+  .review-header, .review-body { padding-left: 1rem; padding-right: 1rem; }
+  .review-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+    background: #ffffff;
+    box-shadow: 0 -6px 18px rgba(15, 23, 42, 0.08);
+  }
+  .review-actions > button { flex: 1; justify-content: center; }
+}

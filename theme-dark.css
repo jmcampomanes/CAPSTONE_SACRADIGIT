@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 45 stylesheets.
+   Built by tools/build-dark-theme.mjs from 46 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -337,6 +337,48 @@
 }
 :root[data-theme="dark"] .marriage-table-note {
     color: #8b93a3
+}
+/*  from detail-table.css  */
+:root[data-theme="dark"] .modal-detail-grid,
+:root[data-theme="dark"] .so-detail-grid {
+    background-color: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .modal-detail-grid > *,
+:root[data-theme="dark"] .so-detail-grid > * {
+    border-top: 1px solid #454b54
+}
+:root[data-theme="dark"] .modal-detail-grid > *:nth-child(even),
+:root[data-theme="dark"] .so-detail-grid > *:nth-child(even) {
+    background-color: #121827
+}
+:root[data-theme="dark"] .modal-detail-item-label,
+:root[data-theme="dark"] .so-detail-label {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .modal-detail-item-value,
+:root[data-theme="dark"] .so-detail-value {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .confirm-table-wrap {
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .confirm-table th,
+:root[data-theme="dark"] .confirm-table td {
+    border-bottom: 1px solid #454b54
+}
+:root[data-theme="dark"] .confirm-table tbody tr:nth-child(odd):not(.confirm-section) {
+    background-color: #121827
+}
+:root[data-theme="dark"] .confirm-table th {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .confirm-table td {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .confirm-table .confirm-section th {
+    color: #a8aad1;
+    background-color: #212336
 }
 /*  from Sacradigit/sacradigit-css/admin-shell.css  */
 :root[data-theme="dark"] body {
@@ -2236,6 +2278,66 @@
     background-color: #121827;
     border: 1px solid #6b2e2e
 }
+:root[data-theme="dark"] .cert-form-group {
+    color: #a8aad1;
+    border-bottom: 1px solid #3e455b
+}
+:root[data-theme="dark"] .cert-preview-screen {
+    background-color: #222635
+}
+:root[data-theme="dark"] .cert-preview-bar {
+    background-color: #1a2131;
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .cert-preview-kicker {
+    color: #a6a9d4
+}
+:root[data-theme="dark"] .cert-preview-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .cert-preview-link {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .cert-preview-link:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .cert-preview-frame {
+    background: #1a2131
+}
+:root[data-theme="dark"] .cert-preview-loading {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .modal-overlay.gen-page {
+    background: #222635
+}
+:root[data-theme="dark"] .gen-page > .modal-card {
+    background: #222635
+}
+:root[data-theme="dark"] .gen-page .modal-header,
+:root[data-theme="dark"] .gen-page .modal-footer {
+    background: #1a2131
+}
+:root[data-theme="dark"] .gen-page .modal-body > .grid {
+    background: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .gen-page .modal-body > .grid > div {
+    border-top: 1px solid #454b54
+}
+:root[data-theme="dark"] .gen-page .modal-body > .grid > div > label,
+:root[data-theme="dark"] .gen-page .modal-body > .grid > div > .form-label {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .gen-page .modal-body > .grid > .cert-form-group {
+    background: #212336;
+    border-top: 1px solid #2c3548
+}
+:root[data-theme="dark"] .gen-review-intro {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .gen-review .confirm-table-wrap {
+    background: #1a2131
+}
 /*  from Sacradigit/sacradigit-css/schedule-offers.css  */
 :root[data-theme="dark"] .so-detail-grid {
     background-color: #121827
@@ -3603,6 +3705,26 @@
 :root[data-theme="dark"] .confirm-table td {
     color: #a3b3d7
 }
+:root[data-theme="dark"] .review-kicker {
+    color: #a6a9d4
+}
+:root[data-theme="dark"] .review-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .review-type {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .review-intro {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .review-actions {
+    border-top: 1px solid #434956
+}
+@media (max-width: 640px) {
+    :root[data-theme="dark"] .review-actions {
+        background: #1a2131
+    }
+}
 /*  from user/user-css/user-request-service.css  */
 :root[data-theme="dark"] .req-screen {
     background-color: #121827
@@ -3988,9 +4110,6 @@
 }
 :root[data-theme="dark"] .form-input::placeholder {
     color: #8b93a3
-}
-:root[data-theme="dark"] .name-ext-toggle {
-    color: #c4c9d3
 }
 :root[data-theme="dark"] .field-na-label {
     color: #a0a8b6

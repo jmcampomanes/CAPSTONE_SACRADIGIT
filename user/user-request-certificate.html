@@ -38,6 +38,7 @@
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <link rel="stylesheet" href="../detail-table.css" />
   <link rel="stylesheet" href="../theme-dark.css" />
   <link rel="stylesheet" href="../accessibility.css" />
   <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
@@ -204,32 +205,38 @@
             </div>
           </div>
 
-          <!-- Review & Confirm modal — shown after validation passes, before
-               the request is actually submitted, so the requester can catch
-               mistakes and go back to edit instead of submitting blind. -->
-          <div id="confirm-modal" class="modal-overlay hidden">
-            <div class="modal-card modal-card-wide">
-              <div class="modal-header">
-                <h3 class="modal-title">Review Your Request</h3>
-                <button class="modal-close" data-close-confirm-modal aria-label="Close">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+          <!-- Review Your Request — its own page in place of the form (not a
+               pop-up), shown after the form checks out and before anything is
+               sent, so the requester can catch a mistake and go back to edit.
+               "Back to Edit" (or the phone's Back button) returns to the form
+               exactly as it was left. -->
+          <section id="confirm-modal" class="review-view hidden" aria-labelledby="review-title">
+            <div class="panel review-panel">
+              <div class="panel-header review-header">
+                <div class="min-w-0">
+                  <p class="review-kicker">Final step · Review</p>
+                  <h2 id="review-title" class="review-title" tabindex="-1">Review Your Request</h2>
+                  <p class="review-type" id="review-type-label"></p>
+                </div>
               </div>
-              <div class="modal-body space-y-4">
-                <p class="text-xs text-gray-500">Please double-check the details below. If something's wrong, go back and fix it before submitting.</p>
+              <div class="review-body">
+                <p class="review-intro">Please double-check everything below. If something's wrong, go back and fix it before you submit.</p>
                 <div class="confirm-table-wrap">
                   <table id="confirm-details-grid" class="confirm-table"></table>
                 </div>
               </div>
-              <div class="modal-footer">
-                <button type="button" id="btn-back-to-edit" class="btn-secondary">Back to Edit</button>
+              <div class="review-actions">
+                <button type="button" id="btn-back-to-edit" class="btn-secondary">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  Back to Edit
+                </button>
                 <button type="button" id="btn-confirm-submit" class="btn-lavender">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  Confirm & Submit
+                  Confirm &amp; Submit
                 </button>
               </div>
             </div>
-          </div>
+          </section>
 
           <!-- Success banner (shown after submission) -->
           <div id="success-banner" class="hidden mt-5">

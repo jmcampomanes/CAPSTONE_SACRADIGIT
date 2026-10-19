@@ -33,13 +33,16 @@ const PREFIX = ':root[data-theme="dark"]';
 const SOURCES = [
   'service-schedule.css',
   'marriage-request-form.css',
+  'detail-table.css',
   ...['Sacradigit/sacradigit-css', 'user/user-css', 'Sacraitech/itech-css', 'Sacramedia/media-css']
     .flatMap(dir => fs.readdirSync(path.join(ROOT, dir)).filter(f => f.endsWith('.css')).map(f => `${dir}/${f}`)),
 ].filter(f => !/print|\/style\.css$/.test(f)); // certificate print pages + the public landing page stay light
 
 // Parts of the page that must keep their light colours.
-// (cert-type-* / cert-icon are the parishioner's "Request a Certificate" picker cards, not certificate paper — they go dark.)
-const EXCLUDE = /ci-qr|qr-|print|leaflet|scan-canvas|#scan-canvas|sacred-|cert-(?!type-|icon\b)|certificate-(paper|page)/i;
+// (cert-type-* / cert-icon are the parishioner's "Request a Certificate" picker cards and
+//  cert-form-group / cert-preview-* the admin's Generate Certificate headings and preview screen —
+//  not certificate paper, so they go dark. The certificate inside the preview stays white.)
+const EXCLUDE = /ci-qr|qr-|print|leaflet|scan-canvas|#scan-canvas|sacred-|cert-(?!type-|icon\b|form-group|preview-)|certificate-(paper|page)/i;
 
 /* ---------- colour helpers ---------- */
 const NAMED = { white: [255, 255, 255, 1], black: [0, 0, 0, 1] };

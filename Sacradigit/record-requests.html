@@ -52,6 +52,7 @@
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <link rel="stylesheet" href="../detail-table.css" />
   <link rel="stylesheet" href="../theme-dark.css" />
   <link rel="stylesheet" href="../accessibility.css" />
   <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
@@ -446,7 +447,7 @@
   </div>
 
   <!-- ========== GENERATE BAPTISMAL CERTIFICATE MODAL ========== -->
-  <div id="generate-cert-modal" class="modal-overlay hidden">
+  <div id="generate-cert-modal" class="modal-overlay gen-page hidden">
     <div class="modal-card cert-modal-card">
       <div class="modal-header">
         <h3 class="modal-title">Generate Baptismal Certificate</h3>
@@ -547,7 +548,7 @@
   </div>
 
   <!-- ========== GENERATE CONFIRMATION CERTIFICATE MODAL ========== -->
-  <div id="generate-confirmation-cert-modal" class="modal-overlay hidden">
+  <div id="generate-confirmation-cert-modal" class="modal-overlay gen-page hidden">
     <div class="modal-card cert-modal-card">
       <div class="modal-header">
         <h3 class="modal-title">Generate Confirmation Certificate</h3>
@@ -631,7 +632,7 @@
   </div>
 
   <!-- ========== GENERATE FIRST COMMUNION CERTIFICATE MODAL ========== -->
-  <div id="generate-first-communion-cert-modal" class="modal-overlay hidden">
+  <div id="generate-first-communion-cert-modal" class="modal-overlay gen-page hidden">
     <div class="modal-card cert-modal-card">
       <div class="modal-header">
         <h3 class="modal-title">Generate First Communion Certificate</h3>
@@ -696,7 +697,7 @@
   </div>
 
   <!-- ========== GENERATE MARRIAGE CERTIFICATE MODAL ========== -->
-  <div id="generate-marriage-cert-modal" class="modal-overlay hidden">
+  <div id="generate-marriage-cert-modal" class="modal-overlay gen-page hidden">
     <div class="modal-card cert-modal-card">
       <div class="modal-header">
         <h3 class="modal-title">Generate Marriage Certificate</h3>
@@ -710,6 +711,7 @@
           marriage register below. This is a parish-style certificate, not the full civil registrar form.
         </p>
         <div class="grid grid-cols-2 gap-3">
+          <p class="col-span-2 cert-form-group">Groom</p>
           <div class="col-span-2 name-field-group">
             <label class="form-label">Groom's Full Name</label>
             <div class="name-field-row">
@@ -717,15 +719,6 @@
               <input type="text" id="marriage-cert-groom-name-middle" class="form-input" placeholder="Middle Name" />
               <input type="text" id="marriage-cert-groom-name-last" class="form-input" placeholder="Last Name" />
               <input type="text" id="marriage-cert-groom-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
-            </div>
-          </div>
-          <div class="col-span-2 name-field-group">
-            <label class="form-label">Bride's Full Name</label>
-            <div class="name-field-row">
-              <input type="text" id="marriage-cert-bride-name-first" class="form-input" placeholder="First Name" />
-              <input type="text" id="marriage-cert-bride-name-middle" class="form-input" placeholder="Middle Name" />
-              <input type="text" id="marriage-cert-bride-name-last" class="form-input" placeholder="Last Name" />
-              <input type="text" id="marriage-cert-bride-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
             </div>
           </div>
           <div class="col-span-2 name-field-group">
@@ -746,6 +739,16 @@
               <input type="text" id="marriage-cert-groom-mother-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
             </div>
           </div>
+          <p class="col-span-2 cert-form-group">Bride</p>
+          <div class="col-span-2 name-field-group">
+            <label class="form-label">Bride's Full Name</label>
+            <div class="name-field-row">
+              <input type="text" id="marriage-cert-bride-name-first" class="form-input" placeholder="First Name" />
+              <input type="text" id="marriage-cert-bride-name-middle" class="form-input" placeholder="Middle Name" />
+              <input type="text" id="marriage-cert-bride-name-last" class="form-input" placeholder="Last Name" />
+              <input type="text" id="marriage-cert-bride-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
+            </div>
+          </div>
           <div class="col-span-2 name-field-group">
             <label class="form-label">Bride's Father</label>
             <div class="name-field-row">
@@ -764,16 +767,9 @@
               <input type="text" id="marriage-cert-bride-mother-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
             </div>
           </div>
-          <div>
-            <label class="form-label" for="marriage-cert-marriage-date">Date of Marriage</label>
-            <input type="date" id="marriage-cert-marriage-date" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label" for="marriage-cert-marriage-place">Place of Marriage</label>
-            <input type="text" id="marriage-cert-marriage-place" class="form-input" placeholder="e.g. Our Lady of Fatima Parish" />
-          </div>
+          <p class="col-span-2 cert-form-group">Sponsors &amp; Wedding</p>
           <div class="col-span-2 name-field-group">
-            <label class="form-label">Witness 1</label>
+            <label class="form-label">Sponsor / Witness 1</label>
             <div class="name-field-row">
               <input type="text" id="marriage-cert-witness-1-first" class="form-input" placeholder="First Name" />
               <input type="text" id="marriage-cert-witness-1-middle" class="form-input" placeholder="Middle Name" />
@@ -782,7 +778,7 @@
             </div>
           </div>
           <div class="col-span-2 name-field-group">
-            <label class="form-label">Witness 2</label>
+            <label class="form-label">Sponsor / Witness 2</label>
             <div class="name-field-row">
               <input type="text" id="marriage-cert-witness-2-first" class="form-input" placeholder="First Name" />
               <input type="text" id="marriage-cert-witness-2-middle" class="form-input" placeholder="Middle Name" />
@@ -790,6 +786,15 @@
               <input type="text" id="marriage-cert-witness-2-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
             </div>
           </div>
+          <div>
+            <label class="form-label" for="marriage-cert-marriage-date">Date of Marriage</label>
+            <input type="date" id="marriage-cert-marriage-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="marriage-cert-marriage-place">Place of Marriage</label>
+            <input type="text" id="marriage-cert-marriage-place" class="form-input" placeholder="e.g. Our Lady of Fatima Parish" />
+          </div>
+          <p class="col-span-2 cert-form-group">Parish Register</p>
           <div class="col-span-2">
             <label class="form-label" for="marriage-cert-priest">Officiating Priest</label>
             <input type="text" id="marriage-cert-priest" class="form-input" value="Fredrick Edward C. Simon" />
@@ -820,7 +825,7 @@
   </div>
 
   <!-- ========== GENERATE DEATH CERTIFICATE MODAL ========== -->
-  <div id="generate-death-cert-modal" class="modal-overlay hidden">
+  <div id="generate-death-cert-modal" class="modal-overlay gen-page hidden">
     <div class="modal-card cert-modal-card">
       <div class="modal-header">
         <h3 class="modal-title">Generate Death Certificate</h3>
@@ -938,6 +943,34 @@
   </div>
 
   <!-- Toast -->
+  <!-- ========== CERTIFICATE PREVIEW (its own screen, not a new browser tab) ==========
+       "Generate & Preview" opens the print-ready certificate here, beside the
+       sidebar. Its own toolbar (Save as Official Copy, Print) works as before;
+       "Back to Edit" reopens the Generate window with everything still filled in. -->
+  <section id="cert-preview-screen" class="cert-preview-screen hidden" aria-labelledby="cert-preview-title">
+    <div class="cert-preview-bar">
+      <button type="button" id="cert-preview-back" class="btn-secondary cert-preview-btn">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <span>Back to Edit</span>
+      </button>
+      <div class="cert-preview-heading">
+        <p class="cert-preview-kicker">Certificate Preview</p>
+        <h2 id="cert-preview-title" class="cert-preview-title" tabindex="-1"></h2>
+      </div>
+      <div class="cert-preview-actions">
+        <a id="cert-preview-newtab" class="cert-preview-link" href="#" target="_blank" rel="noopener" title="Open this preview in a new browser tab">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          <span>New tab</span>
+        </a>
+        <button type="button" id="cert-preview-done" class="btn-lavender cert-preview-btn">Done</button>
+      </div>
+    </div>
+    <div class="cert-preview-stage">
+      <div id="cert-preview-loading" class="cert-preview-loading">Preparing the certificate…</div>
+      <iframe id="cert-preview-frame" class="cert-preview-frame" title="Certificate preview"></iframe>
+    </div>
+  </section>
+
   <div id="toast" class="toast hidden"></div>
 
   <!-- Scripts -->

@@ -656,6 +656,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* --- Certificate Preview: its own screen here, not a new browser tab ---
+     "Generate & Preview" stashes the draft in sessionStorage (as before) and
+     shows the print page in a frame beside the sidebar. That page's own
+     toolbar (Save as Official Copy, Print) works unchanged; its "Back to
+     Record Requests" link is hidden since we're already here. "Back to Edit"
+     reopens the same Generate window with every field still filled in. */
+  const previewScreen = document.getElementById('cert-preview-screen');
+  const previewFrame  = document.getElementById('cert-preview-frame');
+  const previewLoading = document.getElementById('cert-preview-loading');
+  let previewFromModal = null;
+
+  function openCertPreview({ page, modal, title }) {
+    previewFromModal = modal;
+    closeModal(modal);
+    const src = `${page}?preview=${Date.now()}`; // fresh load every time
+    document.getElementById('cert-preview-title').textContent = title;
+    document.getElementById('cert-preview-newtab').href = src;
+    previewLoading.classList.remove('hidden');
+    previewFrame.classList.add('is-loading');
+    previewFrame.src = src;
+    previewScreen.classList.remove('hidden');
+    previewScreen.classList.remove('view-enter');
+    void previewScreen.offsetWidth;
+    previewScreen.classList.add('view-enter');
+    document.body.classList.add('cert-preview-open');
+    document.getElementById('cert-preview-title').focus({ preventScroll: true });
+  }
+
+  previewFrame.addEventListener('load', () => {
+    if (!previewFrame.src || previewFrame.src === 'about:blank') return;
+    try {
+      // Same site, so we can tidy the embedded page: no "Back to Record Requests" inside the frame.
+      previewFrame.contentDocument?.querySelector('.toolbar-back')?.remove();
+    } catch { /* not reachable — leave it as is */ }
+    previewLoading.classList.add('hidden');
+    previewFrame.classList.remove('is-loading');
+  });
+
+  function closeCertPreview({ backToEdit = false } = {}) {
+    if (previewScreen.classList.contains('hidden')) return;
+    previewScreen.classList.add('hidden');
+    document.body.classList.remove('cert-preview-open');
+    previewFrame.src = 'about:blank';
+    if (backToEdit && previewFromModal) openModal(previewFromModal);
+    previewFromModal = null;
+  }
+
+  document.getElementById('cert-preview-back').addEventListener('click', () => closeCertPreview({ backToEdit: true }));
+  document.getElementById('cert-preview-done').addEventListener('click', () => closeCertPreview());
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !previewScreen.classList.contains('hidden')) closeCertPreview();
+  });
+
+  /** "Marriage Certificate — Juan Santos & Ana Reyes" style title for the preview bar. */
+  const previewTitle = (type, ...nameFieldIds) => {
+    const names = nameFieldIds.map(id => formatFullName(readNameFields(id))).filter(Boolean);
+    return names.length ? `${type} — ${names.join(' & ')}` : type;
+  };
+
   function collectCertFieldsData(fieldIds, nameFieldIds) {
     const data = {};
     fieldIds.forEach(fid => {
@@ -743,8 +802,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    window.open('baptismal-certificate-print.html', '_blank');
-    closeModal(generateCertModal);
+    openCertPreview({ page: 'baptismal-certificate-print.html', modal: generateCertModal, title: previewTitle('Baptismal Certificate', 'cert-child-name') });
   });
 
   /* ------------------------------------------
@@ -820,8 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    window.open('confirmation-certificate-print.html', '_blank');
-    closeModal(generateConfirmationCertModal);
+    openCertPreview({ page: 'confirmation-certificate-print.html', modal: generateConfirmationCertModal, title: previewTitle('Confirmation Certificate', 'confirm-cert-name') });
   });
 
   /* ------------------------------------------
@@ -889,8 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    window.open('first-communion-certificate-print.html', '_blank');
-    closeModal(generateFirstCommunionCertModal);
+    openCertPreview({ page: 'first-communion-certificate-print.html', modal: generateFirstCommunionCertModal, title: previewTitle('First Communion Certificate', 'fc-cert-name') });
   });
 
   /* ------------------------------------------
@@ -973,8 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    window.open('marriage-certificate-print.html', '_blank');
-    closeModal(generateMarriageCertModal);
+    openCertPreview({ page: 'marriage-certificate-print.html', modal: generateMarriageCertModal, title: previewTitle('Marriage Certificate', 'marriage-cert-groom-name', 'marriage-cert-bride-name') });
   });
 
   /* ------------------------------------------
@@ -1047,8 +1102,116 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    window.open('death-certificate-print.html', '_blank');
-    closeModal(generateDeathCertModal);
+    openCertPreview({ page: 'death-certificate-print.html', modal: generateDeathCertModal, title: previewTitle('Death Certificate', 'death-cert-name') });
+  });
+
+  /* ------------------------------------------
+     Generate Certificate pages — same flow as the
+     parishioner's Request a Certificate: the five
+     Generate windows open as a page (.gen-page in
+     record-requests.css), the fields read as a
+     table, and "Review" shows everything as a
+     read-only table before "Generate & Preview".
+     Built from each window's own fields, so the
+     five Generate handlers above are unchanged.
+  ------------------------------------------ */
+  const GENERATE_PAGES = [
+    ['generate-cert-modal', 'cert-generate-submit'],
+    ['generate-confirmation-cert-modal', 'confirm-cert-generate-submit'],
+    ['generate-first-communion-cert-modal', 'fc-cert-generate-submit'],
+    ['generate-marriage-cert-modal', 'marriage-cert-generate-submit'],
+    ['generate-death-cert-modal', 'death-cert-generate-submit'],
+  ];
+
+  const longDate = (iso) => {
+    const d = new Date(`${iso}T00:00:00`);
+    return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  /* Reads the window's field grid into [section, [[label, value], …]] — headings
+     (.cert-form-group) start a new section; name boxes are joined into one name. */
+  function reviewSections(grid, fallbackTitle) {
+    const sections = [];
+    let current = null;
+    const startSection = (title) => { current = [title, []]; sections.push(current); };
+    for (const row of grid.children) {
+      if (row.classList.contains('cert-form-group')) { startSection(row.textContent.trim()); continue; }
+      const label = row.querySelector('label, .form-label')?.textContent.trim();
+      if (!label) continue;
+      let value;
+      const nameRow = row.querySelector('.name-field-row');
+      if (nameRow) {
+        value = [...nameRow.querySelectorAll('input')].map(i => i.value.trim()).filter(Boolean).join(' ');
+      } else {
+        const field = row.querySelector('input, select, textarea');
+        if (!field) continue;
+        value = field.tagName === 'SELECT' ? (field.selectedOptions[0]?.textContent || '') : field.value.trim();
+        if (value && field.type === 'date') value = longDate(value);
+      }
+      if (!current) startSection(fallbackTitle);
+      current[1].push([label, value]);
+    }
+    return sections;
+  }
+
+  GENERATE_PAGES.forEach(([modalId, submitId]) => {
+    const modal = document.getElementById(modalId);
+    const submitBtn = document.getElementById(submitId);
+    if (!modal || !submitBtn) return;
+    const body = modal.querySelector('.modal-body');
+    const grid = body.querySelector(':scope > .grid');
+    const intro = body.querySelector(':scope > p');
+    const footer = modal.querySelector('.modal-footer');
+    const cancelBtn = footer.querySelector('[data-close-modal]');
+    const title = modal.querySelector('.modal-title').textContent.replace(/^Generate\s+/, '');
+
+    const review = document.createElement('div');
+    review.className = 'gen-review hidden';
+    review.innerHTML = `
+      <p class="gen-review-intro">Check everything below before generating. Anything marked — was left blank.</p>
+      <div class="confirm-table-wrap"><table class="confirm-table"></table></div>`;
+    body.appendChild(review);
+
+    const backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.className = 'btn-secondary gen-back hidden';
+    backBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg> Back to Edit';
+    footer.prepend(backBtn);
+
+    let reviewing = false;
+    function setMode(toReview) {
+      reviewing = toReview;
+      grid.classList.toggle('hidden', toReview);
+      intro?.classList.toggle('hidden', toReview);
+      review.classList.toggle('hidden', !toReview);
+      backBtn.classList.toggle('hidden', !toReview);
+      cancelBtn?.classList.toggle('hidden', toReview);
+      submitBtn.textContent = toReview ? 'Generate & Preview' : 'Review';
+      body.scrollTop = 0;
+    }
+
+    function showReview() {
+      review.querySelector('table').innerHTML = reviewSections(grid, title).map(([section, rows]) => `
+        <tbody>
+          <tr class="confirm-section"><th colspan="2" scope="colgroup">${escapeHtml(section)}</th></tr>
+          ${rows.map(([label, value]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${value ? escapeHtml(value) : '<span class="gen-empty">—</span>'}</td></tr>`).join('')}
+        </tbody>`).join('');
+      setMode(true);
+    }
+
+    // "Review" first; in review, the button lets the original Generate handler run.
+    submitBtn.addEventListener('click', (e) => {
+      if (!reviewing) { e.stopImmediatePropagation(); showReview(); return; }
+      // Back to the fields first, so if a required name is missing the
+      // original handler's message and focus land on a visible field.
+      setMode(false);
+    }, true);
+    backBtn.addEventListener('click', () => setMode(false));
+
+    // Every time the page opens (fresh, or "Back to Edit" from the preview): start on the fields.
+    new MutationObserver(() => { if (!modal.classList.contains('hidden')) setMode(false); })
+      .observe(modal, { attributes: true, attributeFilter: ['class'] });
+    setMode(false);
   });
 
 });

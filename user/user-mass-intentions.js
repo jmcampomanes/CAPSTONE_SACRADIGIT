@@ -907,13 +907,13 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="details-label">Name${names.length === 1 ? '' : 's'} (${names.length})</p>
         <div class="name-chip-list">${names.map(n => `<span class="name-chip">${escapeHtml(nameDisplay(n))}</span>`).join('')}</div>
       </div>
-      <div class="details-grid">
-        <div><p class="details-label">Submitted</p><p class="details-value">${formatShort(it.createdAt)}</p></div>
-        <div><p class="details-label">Mass Date</p><p class="details-value">${it.massDate ? formatShort(it.massDate) : 'Awaiting assignment'}</p></div>
-      </div>
-      ${it.status === 'cancelled' ? `
-      <div><p class="details-label">Reason for Cancellation</p><p class="details-value">${escapeHtml(it.cancelReason) || 'No reason given'}</p></div>` : ''}
-      <div><p class="details-label">Offering</p><p class="details-value text-green-700">${formatPeso(it.offering)}</p></div>`;
+      <div class="modal-detail-grid">
+        <div><p class="modal-detail-item-label">Submitted</p><p class="modal-detail-item-value">${formatShort(it.createdAt)}</p></div>
+        <div><p class="modal-detail-item-label">Mass Date</p><p class="modal-detail-item-value">${it.massDate ? formatShort(it.massDate) : 'Awaiting assignment'}</p></div>
+        <div><p class="modal-detail-item-label">Offering</p><p class="modal-detail-item-value text-green-700">${formatPeso(it.offering)}</p></div>
+        ${it.status === 'cancelled' ? `
+        <div><p class="modal-detail-item-label">Reason for Cancellation</p><p class="modal-detail-item-value">${escapeHtml(it.cancelReason) || 'No reason given'}</p></div>` : ''}
+      </div>`;
 
     showModal(detailsModal);
   }

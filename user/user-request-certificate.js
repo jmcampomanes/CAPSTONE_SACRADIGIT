@@ -193,86 +193,116 @@ document.addEventListener('DOMContentLoaded', () => {
   // `details` keys for the review preview — 'birthplace' is skipped since
   // it's just region+city combined into one derived string (kept only
   // for the admin's Generate Certificate prefill; see validateAndCollectBaptismal).
+  // `section` groups the review table under small headings so a long
+  // request isn't one crowded list (see buildPreviewGridHtml).
   const BAPTISMAL_PREVIEW_FIELDS = [
-    { key: 'baptized-name', label: 'Full Name of Baptized Person' },
-    { key: 'birth-date', label: 'Date of Birth', isDate: true },
-    { key: 'birth-region', label: 'Region of Birth' },
-    { key: 'birth-city', label: 'City/Municipality of Birth' },
-    { key: 'baptism-date', label: 'Date of Baptism', isDate: true },
-    { key: 'guardian', label: 'Guardian' },
-    { key: 'father-name', label: "Father's Name" },
-    { key: 'mother-name', label: "Mother's Name" },
-    { key: 'sponsor-1', label: 'Sponsor 1' },
-    { key: 'sponsor-2', label: 'Sponsor 2' },
-    { key: 'extraGodparents', label: 'Additional Godparents' },
+    { section: 'Baptized Person', key: 'baptized-name', label: 'Full Name' },
+    { section: 'Baptized Person', key: 'birth-date', label: 'Date of Birth', isDate: true },
+    { section: 'Baptized Person', key: 'birth-region', label: 'Region of Birth' },
+    { section: 'Baptized Person', key: 'birth-city', label: 'City / Municipality' },
+    { section: 'Baptized Person', key: 'baptism-date', label: 'Date of Baptism', isDate: true },
+    { section: 'Family', key: 'guardian', label: 'Guardian' },
+    { section: 'Family', key: 'father-name', label: "Father's Name" },
+    { section: 'Family', key: 'mother-name', label: "Mother's Name" },
+    { section: 'Godparents', key: 'sponsor-1', label: 'Sponsor 1' },
+    { section: 'Godparents', key: 'sponsor-2', label: 'Sponsor 2' },
+    { section: 'Godparents', key: 'extraGodparents', label: 'Additional Godparents' },
   ];
 
   // Same idea for the Confirmation Certificate — 'baptism-church' is
   // skipped since it's never actually asked of the requester (always
   // Our Lady of Fatima Parish; see validateAndCollectConfirmation).
   const CONFIRMATION_PREVIEW_FIELDS = [
-    { key: 'confirmed-name', label: 'Full Name of Confirmand' },
-    { key: 'baptism-date', label: 'Date of Baptism', isDate: true },
-    { key: 'confirmation-name', label: 'Confirmation Name (Saint Name)' },
-    { key: 'confirmation-date', label: 'Approximate Date of Confirmation', isDate: true },
-    { key: 'guardian', label: 'Guardian' },
-    { key: 'father-name', label: "Father's Name" },
-    { key: 'mother-name', label: "Mother's Name" },
-    { key: 'sponsor-name', label: "Sponsor's Name" },
+    { section: 'Confirmand', key: 'confirmed-name', label: 'Full Name' },
+    { section: 'Confirmand', key: 'baptism-date', label: 'Date of Baptism', isDate: true },
+    { section: 'Confirmand', key: 'confirmation-name', label: 'Confirmation Name' },
+    { section: 'Confirmand', key: 'confirmation-date', label: 'Date of Confirmation (approx.)', isDate: true },
+    { section: 'Family', key: 'guardian', label: 'Guardian' },
+    { section: 'Family', key: 'father-name', label: "Father's Name" },
+    { section: 'Family', key: 'mother-name', label: "Mother's Name" },
+    { section: 'Sponsor', key: 'sponsor-name', label: "Sponsor's Name" },
   ];
 
-  // Groom's and Bride's rows interleaved so the preview reads in the
-  // same "one side, then the other" order as the two-column form.
+  // Same order as the step-by-step form: Groom, Bride, then Sponsors.
   const MARRIAGE_PREVIEW_FIELDS = [
-    { key: 'groom-name', label: "Groom's Full Name" },
-    { key: 'groom-guardian', label: "Groom's Guardian" },
-    { key: 'groom-father', label: "Groom's Father's Name" },
-    { key: 'groom-mother', label: "Groom's Mother's Maiden Name" },
-    { key: 'bride-name', label: "Bride's Full Name" },
-    { key: 'bride-guardian', label: "Bride's Guardian" },
-    { key: 'bride-father', label: "Bride's Father's Name" },
-    { key: 'bride-mother', label: "Bride's Mother's Maiden Name" },
-    { key: 'marriage-date', label: 'Date of Marriage', isDate: true },
-    { key: 'marriage-place', label: 'Place of Marriage' },
-    { key: 'witness-1', label: 'Witness 1' },
-    { key: 'witness-2', label: 'Witness 2' },
+    { section: 'Groom', key: 'groom-name', label: 'Full Name' },
+    { section: 'Groom', key: 'groom-guardian', label: 'Guardian' },
+    { section: 'Groom', key: 'groom-father', label: "Father's Name" },
+    { section: 'Groom', key: 'groom-mother', label: "Mother's Maiden Name" },
+    { section: 'Bride', key: 'bride-name', label: 'Full Name' },
+    { section: 'Bride', key: 'bride-guardian', label: 'Guardian' },
+    { section: 'Bride', key: 'bride-father', label: "Father's Name" },
+    { section: 'Bride', key: 'bride-mother', label: "Mother's Maiden Name" },
+    { section: 'Sponsors & Wedding', key: 'witness-1', label: 'Sponsor / Witness 1' },
+    { section: 'Sponsors & Wedding', key: 'witness-2', label: 'Sponsor / Witness 2' },
+    { section: 'Sponsors & Wedding', key: 'marriage-date', label: 'Date of Marriage', isDate: true },
+    { section: 'Sponsors & Wedding', key: 'marriage-place', label: 'Place of Marriage' },
   ];
 
+  /* The review table: one titled group per part of the form (e.g. Groom,
+     Bride, Sponsors & Wedding, then Request), label | value per row. */
   function buildPreviewGridHtml(details, purpose, notes) {
-    const rows = [];
+    const fallbackSection = selectedType.name.replace(/ Certificate$/, '') === 'First Communion' ? 'Communicant' : 'Details';
     const fieldList = selectedType.baptismalCustom
       ? BAPTISMAL_PREVIEW_FIELDS
       : selectedType.confirmationCustom
         ? CONFIRMATION_PREVIEW_FIELDS
         : selectedType.marriageCustom
           ? MARRIAGE_PREVIEW_FIELDS
-          : selectedType.fields.map(f => ({ key: f.id, label: f.label, isDate: f.type === 'date' }));
+          : selectedType.fields.map(f => ({ section: fallbackSection, key: f.id, label: f.label, isDate: f.type === 'date' }));
 
-    fieldList.forEach(({ key, label, isDate }) => {
+    const sections = new Map(); // section title → [[label, value], …] in form order
+    fieldList.forEach(({ section, key, label, isDate }) => {
       const raw = details[key];
       const value = isDate ? (raw ? formatShortDate(raw) : null) : formatPreviewValue(key, raw);
-      if (value) rows.push([label, value]);
+      if (!value) return;
+      if (!sections.has(section)) sections.set(section, []);
+      sections.get(section).push([label, value]);
     });
+    sections.set('Request', [['Purpose', purpose], ...(notes ? [['Notes', notes]] : [])]);
 
-    rows.push(['Purpose of Request', purpose]);
-    if (notes) rows.push(['Additional Notes', notes]);
+    return [...sections].map(([title, rows]) => `
+      <tbody>
+        <tr class="confirm-section"><th colspan="2" scope="colgroup">${escapeHtml(title)}</th></tr>
+        ${rows.map(([label, value]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('')}
+      </tbody>`).join('');
+  }
 
-    return `<tbody>${rows.map(([label, value]) => `
-      <tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('')}</tbody>`;
+  /* --- Review Your Request: its own page in place of the form ---
+     (confirmModal is the review section; the name is kept from when it
+     was a pop-up.) Opening adds a browser-history step, so the phone's
+     Back button returns to the form instead of leaving the page. */
+  const backToMenuBtn = document.getElementById('btn-back-to-menu');
+  const reviewOpen = () => !confirmModal.classList.contains('hidden');
+
+  function swapView(showReview) {
+    confirmModal.classList.toggle('hidden', !showReview);
+    requestFormWrap.classList.toggle('hidden', showReview);
+    backToMenuBtn?.classList.toggle('hidden', showReview);
+    (showReview ? confirmModal : requestFormWrap).classList.remove('view-enter');
+    void confirmModal.offsetWidth; // restart the slide-in
+    (showReview ? confirmModal : requestFormWrap).classList.add('view-enter');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function openConfirmModal() {
     confirmDetailsGrid.innerHTML = buildPreviewGridHtml(pendingSubmission.details, pendingSubmission.purpose, pendingSubmission.notes);
-    confirmModal.classList.remove('hidden');
+    document.getElementById('review-type-label').textContent = selectedType.name;
+    swapView(true);
+    document.getElementById('review-title').focus({ preventScroll: true });
+    history.pushState({ certReview: true }, '');
   }
 
-  function closeConfirmModal() {
-    confirmModal.classList.add('hidden');
+  /* Back to the form, exactly as it was left. `viaHistory` = the browser's
+     Back button already removed the history step. */
+  function closeConfirmModal({ viaHistory = false } = {}) {
+    if (!reviewOpen()) return;
+    swapView(false);
+    if (!viaHistory && history.state?.certReview) history.back();
   }
 
-  document.querySelectorAll('[data-close-confirm-modal]').forEach(btn => btn.addEventListener('click', closeConfirmModal));
-  document.getElementById('btn-back-to-edit').addEventListener('click', closeConfirmModal);
-  confirmModal.addEventListener('click', (e) => { if (e.target === confirmModal) closeConfirmModal(); });
+  window.addEventListener('popstate', () => { if (reviewOpen()) closeConfirmModal({ viaHistory: true }); });
+  document.getElementById('btn-back-to-edit').addEventListener('click', () => closeConfirmModal());
 
   certTypeGrid.innerHTML = certTypes.map(c => `
     <button type="button" class="cert-type-card" data-id="${c.id}">
@@ -334,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
     marriageWizard = null;
     setCommonSectionVisible(true);
     confirmModal.classList.add('hidden');
+    backToMenuBtn?.classList.remove('hidden');
     formView.classList.add('hidden');
     menuView.classList.remove('hidden');
     successBanner.classList.add('hidden');
