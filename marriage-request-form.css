@@ -148,3 +148,29 @@
   .mstep-fields [style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
   .mstep-bar .mstep-label { font-size: 0.625rem; }
 }
+
+/* Pieces the Baptismal/Confirmation forms use, for pages that don't define them
+   (the admin walk-in) — zero specificity, so the parishioner page's own styles win. */
+:where(.mwiz) :where(.form-subblock) {
+  grid-column: 1 / -1; border: 1px dashed #d8d9e8; border-radius: 0.5rem; padding: 0.875rem;
+  background: #fafafd; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+}
+:where(.mwiz) :where(.repeatable-row) {
+  grid-column: 1 / -1; border: 1px solid #ececf5; border-radius: 0.5rem; padding: 0.875rem;
+  display: grid; grid-template-columns: 1fr; gap: 0.75rem; position: relative;
+}
+:where(.mwiz) :where(.repeatable-row-remove) {
+  position: absolute; top: 0.625rem; right: 0.625rem; background: none; border: none;
+  color: #9ca3af; cursor: pointer; padding: 0.125rem; line-height: 0;
+}
+:where(.mwiz) :where(.btn-add-row) {
+  grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 0.375rem; align-self: start;
+  font-size: 0.8125rem; font-weight: 600; color: #5b5fa8; background: none;
+  border: 1px dashed #b9bce3; border-radius: 0.5rem; padding: 0.5rem 0.75rem; cursor: pointer; width: fit-content;
+}
+:where(.mwiz) :where(.btn-add-row:hover) { background: rgba(139, 143, 199, 0.08); }
+:where(.mwiz) :where(.form-subblock.hidden, .repeatable-row.hidden) { display: none; }
+
+@media (max-width: 640px) {
+  :where(.mwiz) :where(.form-subblock) { grid-template-columns: 1fr; }
+}

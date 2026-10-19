@@ -12,6 +12,7 @@ import { uploadData } from 'aws-amplify/storage';
 import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 import { notifyCertificateReady } from '../email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../marriage-request-form.js';
+import { createCertStepForm } from '../certificate-step-forms.js';
 
 // CertificateRequest has no dedicated email field — a parishioner's own
 // request carries their address in the Cognito "owner" field as
@@ -336,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('new-type').value = '';
     document.getElementById('new-date').value = '';
     ['new-requester', 'new-type', 'new-date'].forEach(id => clearFieldError(document.getElementById(id)));
-    setWalkInMarriage(false);
+    setWalkInForm('');
     openModal(newRequestModal);
   });
 
@@ -457,44 +458,53 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('change', () => clearFieldError(el));
   });
 
-  /* Marriage walk-ins use the same step-by-step form as the parishioner's
-     Request a Certificate page (Groom → Bride → Sponsors → Confirm), so
-     the details are stored the same way and Generate Certificate can
-     prefill them. Purpose/Notes move into its last step, "Confirm", and
-     Log Request only shows there. */
-  const MARRIAGE_TYPE = 'Marriage Certificate';
-  const newMarriageWrap = document.getElementById('new-marriage-form');
+  /* Walk-ins for Baptismal, Confirmation, First Communion and Marriage use
+     the same step-by-step forms as the parishioner's Request a Certificate
+     page (../certificate-step-forms.js, ../marriage-request-form.js), so the
+     details are stored the same way and Generate Certificate can prefill
+     them. Purpose/Notes move into the last step, "Confirm", and Log Request
+     only shows there. (Death certificates have no parishioner form — they
+     keep the simple fields.) */
+  const WALK_IN_FORMS = {
+    'Baptismal Certificate': 'baptismal',
+    'Confirmation Certificate': 'confirmation',
+    'First Communion Certificate': 'first-communion',
+    'Marriage Certificate': 'marriage',
+  };
+  const newMarriageWrap = document.getElementById('new-marriage-form'); // holds whichever step form is open
   const newCommonFields = document.getElementById('new-common-fields');
   const newCommonHome = document.createComment('purpose/notes home'); // where Purpose/Notes go back to
   newCommonFields.before(newCommonHome);
   const newSubmitBtn = document.getElementById('new-request-submit');
-  let walkInMarriage = null; // the open Marriage form (createMarriageForm), else null
+  let walkInForm = null; // { form, labels } for the open step form, else null
 
-  function setWalkInMarriage(on) {
-    newRequestModal.querySelector('.modal-card').classList.toggle('modal-card-wide', on);
-    newMarriageWrap.classList.toggle('hidden', !on);
-    if (on) {
-      walkInMarriage = createMarriageForm(newMarriageWrap, {
-        toast: showToast,
-        lastStepBack: true,
-        confirmHint: 'Add the purpose and any notes, then log the request.',
-        onStepChange: (step, isLast) => newSubmitBtn.classList.toggle('hidden', !isLast),
-      });
-      walkInMarriage.slot.appendChild(newCommonFields);
-      newCommonFields.classList.remove('mt-3');
-    } else {
-      newCommonHome.after(newCommonFields);
-      newCommonFields.classList.add('mt-3');
-      newMarriageWrap.innerHTML = '';
-      walkInMarriage = null;
-      newSubmitBtn.classList.remove('hidden');
-    }
+  /** Opens the step form for a certificate type name ('' / Death → none). */
+  function setWalkInForm(typeName) {
+    // Put Purpose/Notes back and clear any form that's open
+    newCommonHome.after(newCommonFields);
+    newCommonFields.classList.add('mt-3');
+    newMarriageWrap.innerHTML = '';
+    walkInForm = null;
+    newSubmitBtn.classList.remove('hidden');
+
+    const kind = WALK_IN_FORMS[typeName];
+    newRequestModal.querySelector('.modal-card').classList.toggle('modal-card-wide', !!kind);
+    newMarriageWrap.classList.toggle('hidden', !kind);
+    if (!kind) return;
+
+    const opts = {
+      toast: showToast,
+      lastStepBack: true,
+      confirmHint: 'Add the purpose and any notes, then log the request.',
+      onStepChange: (step, isLast) => newSubmitBtn.classList.toggle('hidden', !isLast),
+    };
+    const form = kind === 'marriage' ? createMarriageForm(newMarriageWrap, opts) : createCertStepForm(newMarriageWrap, kind, opts);
+    walkInForm = { form, labels: kind === 'marriage' ? MARRIAGE_STEPS.map(s => s.label) : form.labels };
+    form.slot.appendChild(newCommonFields);
+    newCommonFields.classList.remove('mt-3');
   }
 
-  document.getElementById('new-type').addEventListener('change', (e) => {
-    const wantMarriage = e.target.value === MARRIAGE_TYPE;
-    if (wantMarriage !== !!walkInMarriage) setWalkInMarriage(wantMarriage);
-  });
+  document.getElementById('new-type').addEventListener('change', (e) => setWalkInForm(e.target.value));
 
   document.getElementById('new-request-submit').addEventListener('click', async () => {
     const requesterInput = document.getElementById('new-requester');
@@ -518,16 +528,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Marriage: everything on the steps must be filled in first.
+    // Step forms: everything on the steps must be filled in first.
     let details;
-    if (walkInMarriage) {
-      const unfinished = walkInMarriage.firstUnfinished();
+    if (walkInForm) {
+      const unfinished = walkInForm.form.firstUnfinished();
       if (unfinished !== undefined) {
-        walkInMarriage.go(unfinished);
-        showToast(`Please finish the ${MARRIAGE_STEPS[unfinished].label} step first.`, true);
+        walkInForm.form.go(unfinished);
+        showToast(`Please finish the ${walkInForm.labels[unfinished]} step first.`, true);
         return;
       }
-      details = walkInMarriage.collect().details;
+      details = walkInForm.form.collect().details;
     }
 
     newSubmitBtn.disabled = true;
@@ -550,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       document.getElementById('new-type').value = '';
       document.getElementById('new-date').value = '';
-      setWalkInMarriage(false);
+      setWalkInForm('');
     } catch (err) {
       console.error('Failed to log request:', err);
       showToast(err.message || "Couldn't log the request.", true);

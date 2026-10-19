@@ -338,6 +338,20 @@
 :root[data-theme="dark"] .marriage-table-note {
     color: #8b93a3
 }
+:root[data-theme="dark"] :where(.mwiz) :where(.form-subblock) {
+    border: 1px dashed #414258;
+    background: #121827
+}
+:root[data-theme="dark"] :where(.mwiz) :where(.repeatable-row) {
+    border: 1px solid #3e3e5b
+}
+:root[data-theme="dark"] :where(.mwiz) :where(.repeatable-row-remove) {
+    color: #8b93a3
+}
+:root[data-theme="dark"] :where(.mwiz) :where(.btn-add-row) {
+    color: #a8aad1;
+    border: 1px dashed #393c60
+}
 /*  from detail-table.css  */
 :root[data-theme="dark"] .modal-detail-grid,
 :root[data-theme="dark"] .so-detail-grid {
