@@ -10,7 +10,8 @@ import { client } from '../amplify-init.js';
 import { printReadersSheet } from '../print-report.js';
 import { loadCommunityIntentions } from '../public-data.js';
 import { currentUserName } from '../auth.js';
-import { readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
+import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../name-utils.js';
+import { createWeekendCalendar, formatWeekend } from '../weekend-calendar.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -125,379 +126,322 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn) openDetailsModal(btn.dataset.id);
   });
 
-  /* --- Submit Intention Modal --- */
-  const modal     = document.getElementById('intention-modal');
-  const typeGrid   = document.getElementById('intention-type-grid');
-  const addNameBtn    = document.getElementById('mi-add-name');
-  const dateInput    = document.getElementById('mi-date');
-  const offeringInput = document.getElementById('mi-offering');
-
-  const OFFERING_PER_INTENTION = 300;
-
-  let selectedTypeId = null;
-  let addedIntentions = []; // [{ name, typeId }] — each name keeps whichever
-                             // category was selected on the pill grid at
-                             // the moment it was added, so one submission
-                             // can mix categories. Newest is index 0.
-  let offeringManuallyEdited = false;
-  let editingIndex = null; // index currently in inline-edit mode, or null
-
   /* ------------------------------------------
-     Preferred Mass Date — custom calendar
-     A native <input type="date"> can't restrict which
-     days are pickable, so this renders a small calendar
-     where only weekends from tomorrow on are actual,
-     clickable buttons — every other day is rendered
-     disabled, not just flagged after the fact. Picking a
-     day books its whole Sat–Sun weekend, so a weekend
-     whose Saturday is today (or past) isn't offered.
+     SUBMIT A MASS INTENTION — its own page, 3 numbered steps
+     (same progress bar as Request a Certificate):
+       1 Prayer List — categories (one or more) + name → "Add to
+         prayer list"; repeat for each person ("Add another person")
+       2 Weekend & Offering — optional weekend, offering (₱300 minimum,
+         however many people or categories)
+       3 Confirm — review, then Submit Intention
+     Saved like before: one MassIntention record per person per
+     category, with the offering split evenly across the records.
   ------------------------------------------ */
-  const dateTrigger  = document.getElementById('mi-date-trigger');
-  const dateDisplay    = document.getElementById('mi-date-display');
-  const datePanel        = document.getElementById('mi-date-panel');
-  const dateGrid            = document.getElementById('mi-date-grid');
-  const dateMonthLabel        = document.getElementById('mi-date-month-label');
-  const datePrevBtn              = document.getElementById('mi-date-prev');
-  const dateNextBtn                = document.getElementById('mi-date-next');
-  const dateClearBtn                 = document.getElementById('mi-date-clear');
+  const modal         = document.getElementById('intention-modal');
+  const dateInput     = document.getElementById('mi-date');
+  const offeringInput = document.getElementById('mi-offering');
+  const catGrid       = document.getElementById('mi-cat-grid');
+  const listEl        = document.getElementById('mi-list');
+  const addBtn        = document.getElementById('mi-add-person');
+  const addBtnLabel   = document.getElementById('mi-add-person-label');
+  const presetsEl     = document.getElementById('mi-offer-presets');
+  const offeringHint  = document.getElementById('mi-offering-hint');
+  const reviewEl      = document.getElementById('mi-review');
+  const backBtn       = document.getElementById('mi-back');
+  const nextBtn       = document.getElementById('mi-next');
+  const submitBtn     = document.getElementById('mi-submit');
+  const steps         = [...modal.querySelectorAll('.mi-step')];
+  const dots          = [...modal.querySelectorAll('.mi-step-bar .mstep-dot')];
 
-  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const MIN_OFFERING = 300; // one flat minimum per submission
+  const NAME_IDS = ['mi-name-first', 'mi-name-middle', 'mi-name-last', 'mi-name-ext'];
 
-  let calYear, calMonth; // calMonth is 0-11
-  let selectedWeekend = null; // { sat: 'YYYY-MM-DD', sun: 'YYYY-MM-DD' } or null
+  // Friendlier wording for the category cards (the stored `type` stays t.label).
+  const CAT_TEXT = {
+    soul: ['For a departed soul', 'For the repose of someone who has died'],
+    thanksgiving: ['Thanksgiving', 'Gratitude for blessings received'],
+    healing: ['Healing', 'For someone who is sick or recovering'],
+    birthday: ['Birthday blessing', 'For someone celebrating a birthday'],
+    special: ['Special intention', 'Any other prayer intention'],
+  };
+  const catTitle = (id) => CAT_TEXT[id]?.[0] || typeConfig(id).label;
 
-  function pad2(n) { return String(n).padStart(2, '0'); }
+  let step = 1;
+  let furthest = 1;
+  let chosen = new Set();   // categories for the person being entered
+  let people = [];          // [{ name, typeIds: [] }]
+  let editingIndex = null;  // person being edited, or null when adding
+  let offeringTouched = false;
+  let weekend = null;       // weekend calendar (created on first open)
 
-  function isoFromDate(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+  const intentionCount = () => people.reduce((n, p) => n + p.typeIds.length, 0);
+  // Each intention chip wears its category's colour (same as the category cards)
+  const chipsHtml = (ids) => ids.map(id => { const t = typeConfig(id); return `<span class="mi-chip mi-chip-cat" style="background-color:${t.iconBg};color:${t.iconColor};">${escapeHtml(catTitle(id))}</span>`; }).join('');
+  const nameStarted = () => NAME_IDS.some(id => document.getElementById(id).value.trim());
 
-  function startOfToday() {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
+  function flag(el) {
+    el.classList.add('border-red-400');
+    el.addEventListener('input', () => el.classList.remove('border-red-400'), { once: true });
   }
 
-  function isSelectableDay(y, m, d) {
-    const date = new Date(y, m, d);
-    date.setHours(0, 0, 0, 0);
-    const dow = date.getDay();
-    if (dow !== 0 && dow !== 6) return false;
-    const saturday = new Date(date);
-    if (dow === 0) saturday.setDate(saturday.getDate() - 1);
-    return saturday > startOfToday(); // booked at least a day before the weekend's Mass
-  }
-
-  /* Mass runs Saturday evening through Sunday, so picking either day
-     of a weekend selects the pair — Sat 22 → "Aug 22–23". */
-  function weekendPairFor(iso) {
-    const d = new Date(iso + 'T00:00:00');
-    const dow = d.getDay();
-    if (dow === 6) {
-      const sun = new Date(d);
-      sun.setDate(sun.getDate() + 1);
-      return { sat: iso, sun: isoFromDate(sun) };
-    }
-    const sat = new Date(d);
-    sat.setDate(sat.getDate() - 1);
-    return { sat: isoFromDate(sat), sun: iso };
-  }
-
-  function formatWeekendRangeLabel(satIso, sunIso) {
-    const sat = new Date(satIso + 'T00:00:00');
-    const sun = new Date(sunIso + 'T00:00:00');
-    const satMonth = sat.toLocaleDateString('en-US', { month: 'short' });
-    const sunMonth = sun.toLocaleDateString('en-US', { month: 'short' });
-
-    if (sat.getFullYear() === sun.getFullYear()) {
-      if (satMonth === sunMonth) return `${satMonth} ${sat.getDate()}–${sun.getDate()}, ${sat.getFullYear()}`;
-      return `${satMonth} ${sat.getDate()} – ${sunMonth} ${sun.getDate()}, ${sat.getFullYear()}`;
-    }
-    return `${satMonth} ${sat.getDate()}, ${sat.getFullYear()} – ${sunMonth} ${sun.getDate()}, ${sun.getFullYear()}`;
-  }
-
-  function renderCalendar() {
-    dateMonthLabel.textContent = `${MONTH_NAMES[calMonth]} ${calYear}`;
-
-    const firstWeekday = new Date(calYear, calMonth, 1).getDay();
-    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-    const today = startOfToday();
-
-    let html = '';
-    for (let i = 0; i < firstWeekday; i++) html += `<span class="mi-cal-blank"></span>`;
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const iso = `${calYear}-${pad2(calMonth + 1)}-${pad2(d)}`;
-      const selectable = isSelectableDay(calYear, calMonth, d);
-      const isSelected = !!selectedWeekend && (iso === selectedWeekend.sat || iso === selectedWeekend.sun);
-      const thisDate = new Date(calYear, calMonth, d);
-      thisDate.setHours(0, 0, 0, 0);
-      const isToday = thisDate.getTime() === today.getTime();
-
-      const classes = ['mi-cal-day'];
-      if (!selectable) classes.push('mi-cal-day-disabled');
-      if (isSelected) classes.push('mi-cal-day-selected');
-      if (isToday && !isSelected) classes.push('mi-cal-day-today');
-
-      html += `<button type="button" class="${classes.join(' ')}" data-date="${iso}"${selectable ? '' : ' disabled tabindex="-1"'}>${d}</button>`;
-    }
-
-    dateGrid.innerHTML = html;
-
-    const now = new Date();
-    datePrevBtn.disabled = (calYear === now.getFullYear() && calMonth === now.getMonth());
-  }
-
-  function updateDateDisplay() {
-    if (!selectedWeekend) {
-      dateDisplay.textContent = 'Select a date';
-      dateDisplay.classList.add('mi-date-placeholder');
-    } else {
-      dateDisplay.textContent = formatWeekendRangeLabel(selectedWeekend.sat, selectedWeekend.sun);
-      dateDisplay.classList.remove('mi-date-placeholder');
-    }
-  }
-
-  function openDatePanel() {
-    const base = selectedWeekend ? new Date(selectedWeekend.sat + 'T00:00:00') : new Date();
-    calYear = base.getFullYear();
-    calMonth = base.getMonth();
-    renderCalendar();
-    datePanel.classList.remove('hidden');
-    dateTrigger.setAttribute('aria-expanded', 'true');
-  }
-
-  function closeDatePanel() {
-    datePanel.classList.add('hidden');
-    dateTrigger.setAttribute('aria-expanded', 'false');
-  }
-
-  dateTrigger.addEventListener('click', () => {
-    if (datePanel.classList.contains('hidden')) openDatePanel();
-    else closeDatePanel();
-  });
-
-  dateGrid.addEventListener('click', e => {
-    const btn = e.target.closest('.mi-cal-day');
-    if (!btn || btn.disabled) return;
-    selectedWeekend = weekendPairFor(btn.dataset.date);
-    // The Saturday of the pair is what's actually stored as the
-    // preferred mass date — the Sunday is implied by the parish's
-    // own Sat-evening-through-Sunday mass convention.
-    dateInput.value = selectedWeekend.sat;
-    updateDateDisplay();
-    closeDatePanel();
-  });
-
-  datePrevBtn.addEventListener('click', () => {
-    calMonth -= 1;
-    if (calMonth < 0) { calMonth = 11; calYear -= 1; }
-    renderCalendar();
-  });
-
-  dateNextBtn.addEventListener('click', () => {
-    calMonth += 1;
-    if (calMonth > 11) { calMonth = 0; calYear += 1; }
-    renderCalendar();
-  });
-
-  dateClearBtn.addEventListener('click', () => {
-    selectedWeekend = null;
-    dateInput.value = '';
-    updateDateDisplay();
-    closeDatePanel();
-  });
-
-  document.addEventListener('click', e => {
-    if (!datePanel.classList.contains('hidden') && !e.target.closest('.mi-datepicker')) closeDatePanel();
-  });
-
-  document.addEventListener('keydown', e => {
-    // Registered before the modal-wide Escape handler below, so this
-    // runs first — stopImmediatePropagation keeps a single Escape
-    // press from closing the calendar AND the whole modal at once.
-    if (e.key === 'Escape' && !datePanel.classList.contains('hidden')) {
-      closeDatePanel();
-      e.stopImmediatePropagation();
-    }
-  });
-
-  const addedSection  = document.getElementById('mi-added-section');
-  const addedList       = document.getElementById('mi-added-list');
-  const addedHeading       = document.getElementById('mi-added-heading');
-  const nameLabelSuffix       = document.getElementById('mi-name-label-suffix');
-
-  function updateNameLabelSuffix() {
-    nameLabelSuffix.textContent = ` (for ${typeConfig(selectedTypeId).label})`;
-  }
-
-  function updateOfferingDefault() {
-    if (offeringManuallyEdited) return;
-    const total = addedIntentions.length * OFFERING_PER_INTENTION;
-    offeringInput.value = total > 0 ? total : '';
-  }
-
-  function renderAddedList() {
-    addedHeading.textContent = `Added Intentions (${addedIntentions.length})`;
-    addedSection.classList.toggle('hidden', addedIntentions.length === 0);
-    addedList.innerHTML = addedIntentions.map((item, i) => {
-      if (i === editingIndex) {
-        return `
-          <div class="mi-added-item mi-added-item-editing" data-index="${i}">
-            <div class="mi-added-item-edit-fields">
-              <div class="name-field-row">
-                <input type="text" class="form-input mi-added-edit-name-first" data-index="${i}" value="${escapeHtml(item.name.firstName || '')}" placeholder="First Name" />
-                <input type="text" class="form-input mi-added-edit-name-middle" data-index="${i}" value="${escapeHtml(item.name.middleName || '')}" placeholder="Middle Name" />
-                <input type="text" class="form-input mi-added-edit-name-last" data-index="${i}" value="${escapeHtml(item.name.lastName || '')}" placeholder="Last Name" />
-                <input type="text" class="form-input mi-added-edit-name-ext name-ext-input" data-index="${i}" value="${escapeHtml(item.name.extension || '')}" placeholder="Ext." />
-              </div>
-              <select class="form-input mi-added-edit-type" data-index="${i}">
-                ${intentionTypes.map(t => `<option value="${t.id}" ${t.id === item.typeId ? 'selected' : ''}>${escapeHtml(t.label)}</option>`).join('')}
-              </select>
-            </div>
-            <div class="mi-added-item-edit-actions">
-              <button type="button" class="mi-added-item-save" data-index="${i}" aria-label="Save changes">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
-              </button>
-              <button type="button" class="mi-added-item-cancel" data-index="${i}" aria-label="Cancel editing">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
-            </div>
-          </div>`;
-      }
-      const cfg = typeConfig(item.typeId);
-      const displayName = escapeHtml(nameDisplay(item.name));
-      return `
-        <div class="mi-added-item" data-index="${i}">
-          <div class="mi-added-item-body">
-            <p class="mi-added-item-name">${displayName}</p>
-            <p class="mi-added-item-type" style="color:${cfg.iconColor};">${escapeHtml(cfg.label)}</p>
-          </div>
-          <div class="mi-added-item-actions">
-            <button type="button" class="mi-added-item-edit" data-index="${i}" aria-label="Edit ${displayName}">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            </button>
-            <button type="button" class="mi-added-item-remove" data-index="${i}" aria-label="Remove ${displayName}">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-        </div>`;
-    }).join('');
-    updateOfferingDefault();
-
-    if (editingIndex !== null) {
-      const nameField = addedList.querySelector(`.mi-added-edit-name-first[data-index="${editingIndex}"]`);
-      if (nameField) { nameField.focus(); nameField.select(); }
-    }
-  }
-
-  function saveEdit(index) {
-    const get = (suffix) => addedList.querySelector(`.mi-added-edit-name-${suffix}[data-index="${index}"]`);
-    const firstEl = get('first'), middleEl = get('middle'), lastEl = get('last'), extEl = get('ext');
-    const typeField = addedList.querySelector(`.mi-added-edit-type[data-index="${index}"]`);
-    if (!firstEl || !lastEl || !typeField) return;
-    const name = {
-      firstName: firstEl.value.trim(),
-      middleName: (middleEl?.value || '').trim(),
-      lastName: lastEl.value.trim(),
-      extension: (extEl?.value || '').trim(),
-    };
-    if (!name.firstName || !name.lastName) {
-      [firstEl, lastEl].forEach(el => { if (!el.value.trim()) el.classList.add('border-red-400'); });
-      return;
-    }
-    addedIntentions[index] = { name, typeId: typeField.value };
-    editingIndex = null;
-    renderAddedList();
-  }
-
-  function addName() {
-    if (!nameFieldsFilled('mi-name')) {
-      const firstEl = document.getElementById('mi-name-first');
-      const lastEl = document.getElementById('mi-name-last');
-      if (!firstEl.value.trim()) firstEl.classList.add('border-red-400');
-      if (!lastEl.value.trim()) lastEl.classList.add('border-red-400');
-      return;
-    }
-    // Newest addition goes to the top of the list, so what was just
-    // added is immediately visible without scrolling.
-    addedIntentions.unshift({ name: readNameFields('mi-name'), typeId: selectedTypeId });
-    if (editingIndex !== null) editingIndex += 1;
-    setNameFields('mi-name', {});
-    ['mi-name-first', 'mi-name-middle', 'mi-name-last', 'mi-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
-    renderAddedList();
-    document.getElementById('mi-name-first').focus();
-  }
-
-  addNameBtn.addEventListener('click', addName);
-  ['mi-name-first', 'mi-name-middle', 'mi-name-last', 'mi-name-ext'].forEach(id => {
-    const el = document.getElementById(id);
-    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addName(); } });
-    el.addEventListener('input', () => el.classList.remove('border-red-400'));
-  });
-
-  addedList.addEventListener('click', e => {
-    const editBtn = e.target.closest('.mi-added-item-edit');
-    if (editBtn) { editingIndex = parseInt(editBtn.dataset.index, 10); renderAddedList(); return; }
-
-    const saveBtn = e.target.closest('.mi-added-item-save');
-    if (saveBtn) { saveEdit(parseInt(saveBtn.dataset.index, 10)); return; }
-
-    const cancelBtn = e.target.closest('.mi-added-item-cancel');
-    if (cancelBtn) { editingIndex = null; renderAddedList(); return; }
-
-    const removeBtn = e.target.closest('.mi-added-item-remove');
-    if (removeBtn) {
-      const idx = parseInt(removeBtn.dataset.index, 10);
-      addedIntentions.splice(idx, 1);
-      if (editingIndex !== null) {
-        if (editingIndex === idx) editingIndex = null;
-        else if (idx < editingIndex) editingIndex -= 1;
-      }
-      renderAddedList();
-    }
-  });
-
-  addedList.addEventListener('keydown', e => {
-    if (!e.target.classList.contains('mi-added-edit-name')) return;
-    const index = parseInt(e.target.dataset.index, 10);
-    if (e.key === 'Enter') { e.preventDefault(); saveEdit(index); }
-    if (e.key === 'Escape') { e.preventDefault(); editingIndex = null; renderAddedList(); }
-  });
-
-  offeringInput.addEventListener('input', () => { offeringManuallyEdited = true; });
-
-  typeGrid.innerHTML = intentionTypes.map(t => `
-    <button type="button" class="intention-type-btn" data-type-id="${t.id}">
-      <div class="intention-type-btn-icon" style="background-color:${t.iconBg};color:${t.iconColor};">${t.icon}</div>
-      <span class="intention-type-btn-label">${t.label}</span>
+  /* --- Step 1 · categories --- */
+  const CHECK = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+  catGrid.innerHTML = intentionTypes.map(t => `
+    <button type="button" class="mi-cat" data-type-id="${t.id}" aria-pressed="false">
+      <span class="mi-cat-icon" style="background-color:${t.iconBg};color:${t.iconColor};">${t.icon}</span>
+      <span class="mi-cat-text"><span class="mi-cat-title">${escapeHtml(catTitle(t.id))}</span><span class="mi-cat-hint">${escapeHtml(CAT_TEXT[t.id]?.[1] || '')}</span></span>
+      <span class="mi-cat-check">${CHECK}</span>
     </button>`).join('');
 
-  typeGrid.addEventListener('click', e => {
-    const btn = e.target.closest('.intention-type-btn');
-    if (!btn) return;
-    document.querySelectorAll('.intention-type-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedTypeId = btn.dataset.typeId;
-    updateNameLabelSuffix();
+  function paintCats() {
+    catGrid.querySelectorAll('.mi-cat').forEach(b => {
+      const on = chosen.has(b.dataset.typeId);
+      b.classList.toggle('selected', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
+  catGrid.addEventListener('click', (e) => {
+    const b = e.target.closest('.mi-cat');
+    if (!b) return;
+    const id = b.dataset.typeId;
+    chosen.has(id) ? chosen.delete(id) : chosen.add(id);
+    catGrid.classList.remove('mi-invalid');
+    paintCats();
+  });
+
+  /* --- Step 1 · prayer list --- */
+  function renderPeople() {
+    // Prayer list table: # · Name · Intentions · Edit / Remove (empty message when no one yet)
+    document.getElementById('mi-list-count').textContent = people.length ? `(${people.length})` : '';
+    document.getElementById('mi-list-empty').classList.toggle('hidden', people.length > 0);
+    listEl.closest('table').classList.toggle('hidden', !people.length);
+    listEl.innerHTML = people.map((p, i) => `
+      <tr class="mi-person-row${i === editingIndex ? ' is-editing' : ''}">
+        <td class="mi-td-name">${escapeHtml(nameDisplay(p.name))}</td>
+        <td class="mi-td-cats"><span class="mi-chips">${chipsHtml(p.typeIds)}</span></td>
+        <td class="mi-td-act">
+          <button type="button" class="mi-person-btn" data-edit="${i}">Edit</button>
+          <button type="button" class="mi-person-btn mi-person-btn-remove" data-remove="${i}" aria-label="Remove ${escapeHtml(nameDisplay(p.name))}">Remove</button>
+        </td>
+      </tr>`).join('');
+    addBtnLabel.textContent = editingIndex !== null ? 'Save changes' : 'Add to prayer list';
+    const note = document.getElementById('mi-added-note');
+    if (note) {
+      note.classList.toggle('hidden', !people.length);
+      note.innerHTML = people.length ? `<strong>${people.length}</strong> ${people.length === 1 ? 'person' : 'people'} on your prayer list — add more, or tap <strong>Next</strong> to review the list.` : '';
+    }
+  }
+
+  /** Clears the category + name fields (or loads person `index` to edit). */
+  function startPerson(index = null) {
+    editingIndex = index;
+    const p = index === null ? null : people[index];
+    chosen = new Set(p ? p.typeIds : []);
+    paintCats();
+    setNameFields('mi-name', p ? p.name : {});
+    extToggle.checked = !!(p && (p.name.extension || '').trim());
+    syncExt();
+    NAME_IDS.forEach(id => document.getElementById(id).classList.remove('border-red-400'));
+    catGrid.classList.remove('mi-invalid');
+    renderPeople();
+  }
+
+  /** Adds (or saves) the person in the fields. Returns false if something's missing. */
+  function addPerson() {
+    let ok = true;
+    if (!chosen.size) { catGrid.classList.add('mi-invalid'); ok = false; }
+    if (!nameFieldsFilled('mi-name')) {
+      ['mi-name-first', 'mi-name-last'].forEach(id => { const el = document.getElementById(id); if (!el.value.trim()) flag(el); });
+      ok = false;
+    }
+    if (!ok) {
+      window.showToast(!chosen.size ? 'Please choose at least one intention for this person.' : 'Please enter a first and last name.', true);
+      return false;
+    }
+    const person = { name: readNameFields('mi-name'), typeIds: intentionTypes.map(t => t.id).filter(id => chosen.has(id)) };
+    if (editingIndex === null) people.push(person); else people[editingIndex] = person;
+    startPerson();
+    return true;
+  }
+
+  const extToggle = document.getElementById('mi-ext-toggle');
+  const extInput = document.getElementById('mi-name-ext');
+  function syncExt(focus = false) {
+    extInput.classList.toggle('hidden', !extToggle.checked);
+    if (!extToggle.checked) extInput.value = '';
+    else if (focus) extInput.focus();
+  }
+  extToggle.addEventListener('change', () => syncExt(true));
+
+  // Adding a person stays on step 1 so more can be added; Next moves on when they're ready.
+  // Saving an edit (opened from the list) returns to the list.
+  addBtn.addEventListener('click', () => {
+    const wasEditing = editingIndex !== null;
+    if (!addPerson()) return;
+    if (wasEditing) { go(2); return; }
+    const p = people[people.length - 1];
+    window.showToast(`${nameDisplay(p.name)} added to your prayer list.`);
+    document.getElementById('mi-name-first').focus({ preventScroll: true });
+  });
+  document.getElementById('mi-add-another').addEventListener('click', () => { startPerson(); go(1); });
+  NAME_IDS.forEach(id => {
+    document.getElementById(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); } });
+  });
+
+  listEl.addEventListener('click', (e) => {
+    const edit = e.target.closest('[data-edit]');
+    if (edit) { startPerson(Number(edit.dataset.edit)); go(1); return; }
+    const rm = e.target.closest('[data-remove]');
+    if (rm) {
+      const i = Number(rm.dataset.remove);
+      people.splice(i, 1);
+      if (editingIndex === i) startPerson();
+      else { if (editingIndex !== null && i < editingIndex) editingIndex -= 1; renderPeople(); }
+    }
+  });
+
+  /* --- Step 2 · offering (₱300 minimum, flat) --- */
+  function renderOffering() {
+    offeringHint.textContent = `An offering of ₱${MIN_OFFERING} covers your whole intention, no matter how many names or intentions are on your list.`;
+    if (!offeringTouched) offeringInput.value = MIN_OFFERING;
+    const current = Number(offeringInput.value);
+    presetsEl.innerHTML = [MIN_OFFERING, 500, 1000].map((a) => `
+      <button type="button" class="mi-offer${current === a ? ' selected' : ''}" data-amount="${a}" aria-pressed="${current === a}">
+        ${formatPeso(a)}
+      </button>`).join('');
+  }
+  presetsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('.mi-offer');
+    if (!b) return;
+    offeringInput.value = b.dataset.amount;
+    offeringTouched = true;
+    offeringInput.classList.remove('border-red-400');
+    renderOffering();
+  });
+  offeringInput.addEventListener('input', () => {
+    offeringTouched = true;
+    offeringInput.classList.remove('border-red-400');
+    presetsEl.querySelectorAll('.mi-offer').forEach(b => {
+      const on = Number(b.dataset.amount) === Number(offeringInput.value);
+      b.classList.toggle('selected', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  });
+
+  /* --- Step 3 · review --- */
+  function renderReview() {
+    reviewEl.innerHTML = `
+      <div class="mi-review-card">
+        <div class="mi-review-head"><span>Praying for (${people.length})</span><button type="button" class="mi-link" data-goto="1">Change</button></div>
+        <div class="mi-review-table">
+          <table class="mi-table">
+            <thead><tr><th>Name</th><th>Intentions</th></tr></thead>
+            <tbody>
+              ${people.map((p) => `<tr><td class="mi-td-name">${escapeHtml(nameDisplay(p.name))}</td><td class="mi-td-cats"><span class="mi-chips">${chipsHtml(p.typeIds)}</span></td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="mi-review-card">
+        <div class="mi-review-head"><span>Mass &amp; offering</span><button type="button" class="mi-link" data-goto="2">Change</button></div>
+        <dl class="mi-review-rows">
+          <div><dt>Weekend</dt><dd>${dateInput.value ? escapeHtml(formatWeekend(dateInput.value)) : 'The parish office will choose'}</dd></div>
+          <div><dt>Intentions</dt><dd>${intentionCount()}</dd></div>
+          <div><dt>Offering</dt><dd class="mi-review-total">${formatPeso(Number(offeringInput.value) || 0)}</dd></div>
+        </dl>
+      </div>`;
+  }
+
+  /* --- moving between steps --- */
+  function go(n) {
+    step = Math.max(1, Math.min(3, n));
+    furthest = Math.max(furthest, step);
+    steps.forEach(s => s.classList.toggle('hidden', Number(s.dataset.step) !== step));
+    dots.forEach(d => {
+      const k = Number(d.dataset.step);
+      d.classList.toggle('is-current', k === step);
+      d.classList.toggle('is-done', k < furthest && k !== step);
+      d.disabled = k > furthest;
+      d.setAttribute('aria-current', k === step ? 'step' : 'false');
+    });
+    if (step === 1) renderPeople();
+    if (step === 2) renderOffering();
+    if (step === 3) renderReview();
+
+    // Step 1 after 'Add another person' / 'Edit': the left button returns to the list
+    backBtn.textContent = step === 1 ? (people.length ? '← Back to prayer list' : 'Cancel') : '← Back';
+    nextBtn.classList.toggle('hidden', step === 3);
+    submitBtn.classList.toggle('hidden', step !== 3);
+    nextBtn.textContent = step === 1 ? 'Next: Prayer List →' : 'Next: Confirm →';
+    modal.querySelector('.mi-page-body').scrollTop = 0;
+  }
+
+  /** Can we leave step 1? Adds what's typed in the fields first. */
+  function finishStep1() {
+    // Something typed but not added yet → add it (or say what's missing).
+    if (nameStarted() || (chosen.size && !people.length) || editingIndex !== null) {
+      if (!addPerson()) return false;
+    }
+    if (!people.length) {
+      catGrid.classList.add('mi-invalid');
+      flag(document.getElementById('mi-name-first'));
+      window.showToast('Please add at least one person to the prayer list.', true);
+      return false;
+    }
+    return true;
+  }
+
+  function finishStep2() {
+    if (!people.length) {
+      window.showToast('Please add at least one person to the prayer list.', true);
+      startPerson(); go(1);
+      return false;
+    }
+    const amount = parseInt(offeringInput.value, 10);
+    if (!amount || amount < MIN_OFFERING) {
+      flag(offeringInput);
+      window.showToast(`The offering must be at least ₱${MIN_OFFERING}.`, true);
+      return false;
+    }
+    return true;
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (step === 1 && finishStep1()) go(2);
+    else if (step === 2 && finishStep2()) go(3);
+  });
+
+  backBtn.addEventListener('click', () => {
+    if (step === 1) {
+      if (!people.length) { closeModal(); return; }
+      startPerson(); // drop the unsaved edit/new person
+      go(2);
+    } else go(step - 1);
+  });
+
+  // Progress bar + "Change" links
+  modal.addEventListener('click', (e) => {
+    const target = Number(e.target.closest('[data-goto]')?.dataset.goto || e.target.closest('.mi-step-bar .mstep-dot:not(:disabled)')?.dataset.step || 0);
+    if (!target || target === step) return;
+    if (target < step) { go(target); return; }
+    // forward through the bar: only after the steps in between check out
+    if (step === 1 && !finishStep1()) return;
+    if (target === 3 && step <= 2 && !finishStep2()) { go(2); return; }
+    go(target);
   });
 
   function openModal() {
-    // Default to the first category so a name can always be added right
-    // away — the pill grid always shows one option selected, matching
-    // the "Name (for X)" label always having something to name.
-    selectedTypeId = intentionTypes[0].id;
-    addedIntentions = [];
-    editingIndex = null;
-    offeringManuallyEdited = false;
-    document.querySelectorAll('.intention-type-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
-    updateNameLabelSuffix();
-    setNameFields('mi-name', {});
-    ['mi-name-first', 'mi-name-middle', 'mi-name-last', 'mi-name-ext'].forEach(id => document.getElementById(id).classList.remove('border-red-400'));
-    renderAddedList();
+    people = [];
+    furthest = 1;
+    offeringTouched = false;
+    offeringInput.value = '';
+    offeringInput.classList.remove('border-red-400');
     dateInput.value = '';
-    selectedWeekend = null;
-    updateDateDisplay();
-    closeDatePanel();
+    if (!weekend) weekend = createWeekendCalendar(document.getElementById('mi-date-cal'), { weekendsOnly: true, onChange: (sat) => { dateInput.value = sat; } });
+    else weekend.reset();
+    startPerson();
     showModal(modal);
+    go(1);
   }
 
   function closeModal() { hideModal(modal); }
@@ -514,51 +458,34 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(hideModal); });
 
-  const submitBtn = document.getElementById('mi-submit');
-
   submitBtn.addEventListener('click', async () => {
-    if (!isNameEmpty(readNameFields('mi-name'))) addName();
-
-    if (addedIntentions.length === 0) {
-      ['mi-name-first', 'mi-name-last'].forEach(id => document.getElementById(id).classList.add('border-red-400'));
-      window.showToast('Please add at least one name.', true);
-      return;
-    }
+    if (!people.length) { go(1); return; }
+    if (!finishStep2()) { go(2); return; }
     const offering = parseInt(offeringInput.value, 10);
-    if (!offering || offering <= 0) {
-      offeringInput.classList.add('border-red-400');
-      offeringInput.addEventListener('input', () => offeringInput.classList.remove('border-red-400'), { once: true });
-      window.showToast('Please enter an offering amount.', true);
-      return;
-    }
 
-    // The schema stores one type per record, but a submission here can
-    // mix categories across names — so each added intention becomes its
-    // own record. The total offering is split evenly across them (any
-    // remainder from uneven division goes to the last one) so the sum
-    // across records still matches exactly what the parishioner entered.
-    const count = addedIntentions.length;
+    // The schema stores one type per record, so each person × category
+    // becomes its own record. The offering is split evenly (any remainder
+    // goes to the last record) so the records add up to what was entered.
+    const records = people.flatMap(p => p.typeIds.map(typeId => ({ name: p.name, typeId })));
+    const count = records.length;
     const base = Math.floor(offering / count);
     const remainder = offering - base * count;
 
     submitBtn.disabled = true;
     try {
-      const results = await Promise.all(addedIntentions.map((item, i) => {
-        const cfg = typeConfig(item.typeId);
-        return client.models.MassIntention.create({
-          donor: DONOR_NAME,
-          type: cfg.label,
-          names: JSON.stringify([item.name]),
-          massDate: dateInput.value || undefined,
-          offering: base + (i === count - 1 ? remainder : 0),
-          status: 'scheduled',
-        });
-      }));
+      const results = await Promise.all(records.map((r, i) => client.models.MassIntention.create({
+        donor: DONOR_NAME,
+        type: typeConfig(r.typeId).label,
+        names: JSON.stringify([r.name]),
+        massDate: dateInput.value || undefined,
+        offering: base + (i === count - 1 ? remainder : 0),
+        status: 'scheduled',
+      })));
       const failed = results.find(r => r.errors);
       if (failed) throw new Error(failed.errors.map(e => e.message).join('; '));
 
       closeModal();
-      window.showToast(`Mass intention submitted — ${count} intention${count === 1 ? '' : 's'} for ${formatPeso(offering)}.`);
+      window.showToast(`Mass intention submitted — ${people.length} ${people.length === 1 ? 'person' : 'people'}, ${formatPeso(offering)}.`);
     } catch (err) {
       console.error('Failed to submit intention:', err);
       window.showToast(err.message || "Couldn't submit the intention.", true);

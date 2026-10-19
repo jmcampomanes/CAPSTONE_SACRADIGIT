@@ -387,3 +387,4 @@ body.cert-preview-open { overflow: hidden; }
 .gen-page .modal-body > .grid.hidden,
 .gen-page .modal-footer .gen-back.hidden,
 .gen-page .modal-footer > button.hidden { display: none; }
+.gen-page .modal-body > .grid > div.hidden { display: none; }

@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let selectedTypeId = null;
   let slotPicker = null;
-  let pinMap = null; // House Blessing's location map, while the form is open
+  let pinMap = null; // the location map (House Blessing, Business Dedication), while the form is open
   let allBookings = []; // every booked slot parish-wide (no names — see public-data.js)
 
   watchTakenSlots('blessing', (rows) => {
@@ -195,13 +195,13 @@ document.addEventListener('DOMContentLoaded', () => {
     else svcDynamicFields.querySelector('input')?.focus({ preventScroll: true });
   }
 
-  /* --- Pin location map (House Blessing) --- */
+  /* --- Pin location map (House Blessing, Business Dedication) — `place` words the hints --- */
   function pinMapFieldHtml(f) {
     return `
       <div class="sm:col-span-2 pin-map-field" id="q-${f.id}">
         <p class="form-label">Pin Your Exact Location <span class="pin-map-optional">(recommended)</span></p>
         <div class="pin-map-wrap">
-          <div id="${f.id}" class="pin-map" role="application" aria-label="Map — tap to place a pin on your house"></div>
+          <div id="${f.id}" class="pin-map" role="application" aria-label="Map — tap to place a pin on your ${f.place || 'house'}"></div>
           <div class="pin-map-actions">
             <button type="button" class="pin-map-btn" data-pin-action="locate">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="7" stroke-width="1.6"/></svg>
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
               Find my address
             </button>
-            <span id="${f.id}-status" class="pin-map-status">Tap the map to drop a pin on your house.</span>
+            <span id="${f.id}-status" class="pin-map-status">Tap the map to drop a pin on your ${f.place || 'house'}.</span>
           </div>
         </div>
       </div>`;
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (canAutofill()) {
           fillAddress(found);
-          setStatus('Address filled in from your pin — please check it and add your house/unit number if it’s missing.', 'ok');
+          setStatus(`Address filled in from your pin — please check it and add the ${field.place === 'business' ? 'building/unit' : 'house/unit'} number if it’s missing.`, 'ok');
         } else {
           statusEl.dataset.state = 'ok';
           statusEl.innerHTML = `Pinned near <strong>${escapeHtml(found)}</strong>. <button type="button" class="pin-map-use-address">Use this address</button>`;
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
           await lookupAddress(at, { fromLocate: true });
         } else {
           const address = document.getElementById(field.addressField)?.value.trim();
-          if (!address) { setStatus('Type your Complete Address below first, then tap "Find my address."', 'error'); return; }
+          if (!address) { setStatus(`Type the ${field.place === 'business' ? 'Business Address' : 'Complete Address'} below first, then tap "Find my address."`, 'error'); return; }
           setStatus('Looking up your address…');
           await pinMap.findAddress(address);
         }
@@ -321,6 +321,37 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!document.body.classList.contains('req-screen-open')) finish();
     }, { once: true });
   }
+
+  /* --- Confirmation after submitting (same idea as Request a Certificate) ---
+     Replaces the services list with what was booked and a button to track it. */
+  const menuView = document.getElementById('menu-view');
+  const successView = document.getElementById('svc-success');
+
+  function showServiceSuccess({ svc, slot, approval, location }) {
+    document.getElementById('svc-success-title').textContent = approval ? 'Request Sent!' : 'Request Submitted!';
+    document.getElementById('svc-success-desc').textContent = approval
+      ? `Your ${svc.name} request is waiting for the parish office to approve it — your slot is held for you, and you'll be notified once it's approved.`
+      : `Your ${svc.name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under Requested Services.`;
+    const row = (label, value) => value ? `<div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>` : '';
+    document.getElementById('svc-success-details').innerHTML = [
+      row('Service', svc.name),
+      row(approval ? 'Requested Slot' : 'Schedule', `${fmtLongDate(slot.date)} at ${slot.time}`),
+      row('Location', location),
+      row('Status', approval ? 'Awaiting Approval' : 'Scheduled'),
+    ].join('');
+    // Blessings open Requested Services on the Blessings filter
+    document.getElementById('svc-success-track').href = approval ? 'user-requested-services.html?filter=blessing' : 'user-requested-services.html';
+    menuView.classList.add('hidden');
+    successView.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('svc-success-title').focus({ preventScroll: true });
+  }
+
+  document.getElementById('svc-success-again').addEventListener('click', () => {
+    successView.classList.add('hidden');
+    menuView.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   document.getElementById('btn-back-to-menu').addEventListener('click', goToMenu);
   document.getElementById('btn-cancel-request').addEventListener('click', goToMenu);
@@ -422,9 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       goToMenu();
-      window.showToast(approval
-        ? `${svc.name} requested for ${fmtLongDate(slot.date)} at ${slot.time}. The parish office will approve it soon — track it under "Requested Services."`
-        : `${svc.name} booked for ${fmtLongDate(slot.date)} at ${slot.time}. See it under "Requested Services."`);
+      showServiceSuccess({ svc, slot, approval, location: locationFor(svc.name, details) });
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);

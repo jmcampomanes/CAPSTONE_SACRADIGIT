@@ -214,13 +214,13 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
 
   serviceSel.addEventListener('change', () => { clearFieldError(serviceSel); renderServiceFields(); });
 
-  /* ---------- House Blessing map pin ---------- */
+  /* ---------- Map pin (House Blessing, Business Dedication) ---------- */
   function pinFieldHtml(f) {
     return `
       <div class="sm:col-span-2" id="walkin-q-${f.id}">
         <p class="form-label">Pin the Exact Location <span class="pin-map-optional">(recommended)</span></p>
         <div class="pin-map-wrap">
-          <div id="walkin-f-${f.id}" class="pin-map" role="application" aria-label="Map — click to place a pin on the house"></div>
+          <div id="walkin-f-${f.id}" class="pin-map" role="application" aria-label="Map — click to place a pin on the ${f.place || 'house'}"></div>
           <div class="pin-map-actions">
             <button type="button" class="pin-map-btn" data-pin-action="find">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>

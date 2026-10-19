@@ -430,7 +430,7 @@
   </div>
 
   <!-- ========== ADD / EDIT INTENTION MODAL ========== -->
-  <div id="add-modal" class="modal-overlay hidden">
+  <div id="add-modal" class="modal-overlay gen-page hidden">
     <div class="modal-card modal-card-wide">
       <div class="modal-header">
         <h3 class="modal-title" id="add-modal-title">Add Mass Intention</h3>
@@ -475,34 +475,10 @@
             </select>
           </div>
           <div class="col-span-2">
-            <label class="form-label" for="add-mass-date-trigger">Mass Date Assigned</label>
-            <div class="mi-datepicker">
-              <button type="button" id="add-mass-date-trigger" class="form-input mi-date-trigger" aria-haspopup="dialog" aria-expanded="false">
-                <span id="add-mass-date-display" class="mi-date-display mi-date-placeholder">Select a date</span>
-                <svg class="w-4 h-4 mi-date-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              </button>
-              <input type="hidden" id="add-mass-date" value="" />
-
-              <div id="add-mass-date-panel" class="mi-date-panel hidden" role="dialog" aria-label="Choose the mass date">
-                <div class="mi-date-panel-header">
-                  <button type="button" id="add-mass-date-prev" class="mi-date-nav-btn" aria-label="Previous month">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
-                  </button>
-                  <span id="add-mass-date-month-label" class="mi-date-month-label"></span>
-                  <button type="button" id="add-mass-date-next" class="mi-date-nav-btn" aria-label="Next month">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
-                  </button>
-                </div>
-                <div class="mi-date-weekday-row">
-                  <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                </div>
-                <div id="add-mass-date-grid" class="mi-date-grid"></div>
-                <div class="mi-date-panel-footer">
-                  <button type="button" id="add-mass-date-clear" class="mi-date-clear-btn">Clear</button>
-                  <p class="mi-date-note">Only Saturdays and Sundays are selectable</p>
-                </div>
-              </div>
-            </div>
+            <p class="form-label">Mass Date Assigned</p>
+            <!-- Inline weekend calendar, same look as Facility Booking (../weekend-calendar.js) -->
+            <div id="add-mass-date-cal"></div>
+            <input type="hidden" id="add-mass-date" value="" />
           </div>
           <div>
             <label class="form-label" for="add-mass-time">Mass Time Assigned</label>

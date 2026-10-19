@@ -18,6 +18,7 @@
 import { client } from '../amplify-init.js';
 import { printReport, printReadersSheet, printAltarSheets, tableHtml, esc } from '../print-report.js';
 import { formatFullName } from '../name-utils.js';
+import { createWeekendCalendar } from '../weekend-calendar.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -684,154 +685,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------
-     Mass Date Assigned — custom calendar
-     Same weekend-only restriction as the parishioner-facing
-     Preferred Mass Date picker (only Saturdays and Sundays from
-     tomorrow on are selectable — nothing is booked for the same day). Unlike that picker, this one
-     assigns an exact mass instance rather than a preference, so it
-     stores and displays the single day clicked instead of pairing
-     Saturday+Sunday into one weekend selection.
+     Mass Date Assigned — inline weekend calendar
+     Same look as Facility Booking's and the parishioner's
+     Preferred Mass Date (../weekend-calendar.js). Only
+     Saturdays and Sundays from tomorrow on; this one assigns
+     the exact Mass, so it stores the single day picked.
   ------------------------------------------ */
-  const massDateTrigger    = document.getElementById('add-mass-date-trigger');
-  const massDateDisplay      = document.getElementById('add-mass-date-display');
-  const massDateHiddenInput    = document.getElementById('add-mass-date');
-  const massDatePanel            = document.getElementById('add-mass-date-panel');
-  const massDateGrid                = document.getElementById('add-mass-date-grid');
-  const massDateMonthLabel            = document.getElementById('add-mass-date-month-label');
-  const massDatePrevBtn                  = document.getElementById('add-mass-date-prev');
-  const massDateNextBtn                      = document.getElementById('add-mass-date-next');
-  const massDateClearBtn                        = document.getElementById('add-mass-date-clear');
-
-  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-  let massDateCalYear, massDateCalMonth; // massDateCalMonth is 0-11
-  let selectedMassDateIso = null;
-
-  function pad2(n) { return String(n).padStart(2, '0'); }
-
-  function startOfToday() {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  function isSelectableMassDay(y, m, d) {
-    const date = new Date(y, m, d);
-    date.setHours(0, 0, 0, 0);
-    const dow = date.getDay();
-    return (dow === 0 || dow === 6) && date > startOfToday();
-  }
-
-  function renderMassDateCalendar() {
-    massDateMonthLabel.textContent = `${MONTH_NAMES[massDateCalMonth]} ${massDateCalYear}`;
-
-    const firstWeekday = new Date(massDateCalYear, massDateCalMonth, 1).getDay();
-    const daysInMonth = new Date(massDateCalYear, massDateCalMonth + 1, 0).getDate();
-    const today = startOfToday();
-
-    let html = '';
-    for (let i = 0; i < firstWeekday; i++) html += `<span class="mi-cal-blank"></span>`;
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const iso = `${massDateCalYear}-${pad2(massDateCalMonth + 1)}-${pad2(d)}`;
-      const selectable = isSelectableMassDay(massDateCalYear, massDateCalMonth, d);
-      const isSelected = iso === selectedMassDateIso;
-      const thisDate = new Date(massDateCalYear, massDateCalMonth, d);
-      thisDate.setHours(0, 0, 0, 0);
-      const isToday = thisDate.getTime() === today.getTime();
-
-      const classes = ['mi-cal-day'];
-      if (!selectable) classes.push('mi-cal-day-disabled');
-      if (isSelected) classes.push('mi-cal-day-selected');
-      if (isToday && !isSelected) classes.push('mi-cal-day-today');
-
-      html += `<button type="button" class="${classes.join(' ')}" data-date="${iso}"${selectable ? '' : ' disabled tabindex="-1"'}>${d}</button>`;
-    }
-
-    massDateGrid.innerHTML = html;
-
-    const now = new Date();
-    massDatePrevBtn.disabled = (massDateCalYear === now.getFullYear() && massDateCalMonth === now.getMonth());
-  }
-
-  function updateMassDateDisplay() {
-    if (!selectedMassDateIso) {
-      massDateDisplay.textContent = 'Select a date';
-      massDateDisplay.classList.add('mi-date-placeholder');
-    } else {
-      const d = new Date(selectedMassDateIso + 'T00:00:00');
-      massDateDisplay.textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-      massDateDisplay.classList.remove('mi-date-placeholder');
-    }
-  }
-
-  function openMassDatePanel() {
-    const base = selectedMassDateIso ? new Date(selectedMassDateIso + 'T00:00:00') : new Date();
-    massDateCalYear = base.getFullYear();
-    massDateCalMonth = base.getMonth();
-    renderMassDateCalendar();
-    massDatePanel.classList.remove('hidden');
-    massDateTrigger.setAttribute('aria-expanded', 'true');
-  }
-
-  function closeMassDatePanel() {
-    massDatePanel.classList.add('hidden');
-    massDateTrigger.setAttribute('aria-expanded', 'false');
-  }
-
-  function resetMassDatePicker(iso) {
-    selectedMassDateIso = iso || null;
-    massDateHiddenInput.value = selectedMassDateIso || '';
-    updateMassDateDisplay();
-    closeMassDatePanel();
-  }
-
-  massDateTrigger.addEventListener('click', () => {
-    if (massDatePanel.classList.contains('hidden')) openMassDatePanel();
-    else closeMassDatePanel();
-  });
-
-  massDateGrid.addEventListener('click', (e) => {
-    const btn = e.target.closest('.mi-cal-day');
-    if (!btn || btn.disabled) return;
-    selectedMassDateIso = btn.dataset.date;
-    massDateHiddenInput.value = selectedMassDateIso;
-    updateMassDateDisplay();
-    closeMassDatePanel();
-  });
-
-  massDatePrevBtn.addEventListener('click', () => {
-    massDateCalMonth -= 1;
-    if (massDateCalMonth < 0) { massDateCalMonth = 11; massDateCalYear -= 1; }
-    renderMassDateCalendar();
-  });
-
-  massDateNextBtn.addEventListener('click', () => {
-    massDateCalMonth += 1;
-    if (massDateCalMonth > 11) { massDateCalMonth = 0; massDateCalYear += 1; }
-    renderMassDateCalendar();
-  });
-
-  massDateClearBtn.addEventListener('click', () => {
-    selectedMassDateIso = null;
-    massDateHiddenInput.value = '';
-    updateMassDateDisplay();
-    closeMassDatePanel();
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!massDatePanel.classList.contains('hidden') && !e.target.closest('.mi-datepicker')) closeMassDatePanel();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    // Registered before the modal-wide Escape handler further down, so
-    // this runs first — stopImmediatePropagation keeps a single Escape
-    // press from closing the calendar AND the whole modal at once.
-    if (e.key === 'Escape' && !massDatePanel.classList.contains('hidden')) {
-      closeMassDatePanel();
-      e.stopImmediatePropagation();
-    }
-  });
+  const massDateHiddenInput = document.getElementById('add-mass-date');
+  const massDateCal = createWeekendCalendar(document.getElementById('add-mass-date-cal'), { input: massDateHiddenInput, mode: 'day' });
+  function resetMassDatePicker(iso) { massDateCal.set(iso || null); }
 
   function to24hInput(time12) {
     const [time, meridiem] = time12.split(' ');

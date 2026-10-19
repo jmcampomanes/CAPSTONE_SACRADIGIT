@@ -33,6 +33,7 @@
 
   <link rel="stylesheet" href="user-css/user-shell.css" />
   <link rel="stylesheet" href="user-css/user-mass-intentions.css" />
+  <link rel="stylesheet" href="../marriage-request-form.css" />
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
@@ -293,95 +294,123 @@
     </div>
   </div>
 
-  <!-- ========== SUBMIT INTENTION MODAL ========== -->
-  <div id="intention-modal" class="modal-overlay hidden">
+  <!-- ========== SUBMIT INTENTION — its own page beside the sidebar (not a pop-up) ==========
+       Two cards: 1 who we're praying for, 2 Mass date & offering. Cancel/Submit
+       stay at the bottom. Styles: "Submit Intention page" in user-mass-intentions.css. -->
+  <div id="intention-modal" class="modal-overlay mi-page hidden" role="dialog" aria-modal="true" aria-labelledby="mi-page-title">
     <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">Submit a Mass Intention</h3>
-        <button class="modal-close" data-close-modal aria-label="Close">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <div class="modal-header mi-page-header">
+        <button type="button" class="mi-page-back" data-close-modal>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <span>Back</span>
         </button>
+        <div class="min-w-0">
+          <h3 class="modal-title" id="mi-page-title">Submit a Mass Intention</h3>
+          <p class="mi-page-sub">Offer a Mass for a loved one — living or departed, in thanksgiving or for healing.</p>
+        </div>
       </div>
-      <div class="modal-body space-y-4">
+      <div class="modal-body mi-page-body">
+        <div class="mi-wiz">
 
-        <!-- Intention category -->
-        <div>
-          <label class="form-label">Select Intention Category</label>
-          <div class="intention-type-grid" id="intention-type-grid">
-            <!-- Injected by JS -->
-          </div>
-        </div>
+          <!-- Numbered steps — same bar as Request a Certificate (../marriage-request-form.css) -->
+          <ol class="mstep-bar mi-step-bar" aria-label="Steps" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            <li><button type="button" class="mstep-dot" data-step="1"><span class="mstep-num">1</span><span class="mstep-label">Intention</span></button></li>
+            <li><button type="button" class="mstep-dot" data-step="2"><span class="mstep-num">2</span><span class="mstep-label">Prayer List &amp; Weekend</span></button></li>
+            <li><button type="button" class="mstep-dot" data-step="3"><span class="mstep-num">3</span><span class="mstep-label">Confirm</span></button></li>
+          </ol>
 
-        <!-- Name — added one at a time, tagged with whichever category is
-             currently selected above, so a single submission can mix
-             categories (e.g. one name for Healing, another for a Birthday
-             Blessing). -->
-        <div>
-          <label class="form-label">
-            Name<span id="mi-name-label-suffix"></span> <span class="text-red-500">*</span>
-          </label>
-          <div class="name-field-row">
-            <input type="text" id="mi-name-first" class="form-input" placeholder="First Name" />
-            <input type="text" id="mi-name-middle" class="form-input" placeholder="Middle Name" />
-            <input type="text" id="mi-name-last" class="form-input" placeholder="Last Name" />
-            <input type="text" id="mi-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
-          </div>
-          <button type="button" id="mi-add-name" class="btn-secondary mt-2">Add Name</button>
-          <p class="text-xs text-gray-400 mt-1">Each name is tagged with the category currently selected above.</p>
-        </div>
-
-        <!-- Added intentions -->
-        <div id="mi-added-section" class="hidden">
-          <p class="form-label" id="mi-added-heading">Added Intentions (0)</p>
-          <div id="mi-added-list" class="mi-added-list"></div>
-        </div>
-
-        <!-- Preferred mass date -->
-        <div>
-          <label class="form-label" for="mi-date-trigger">Preferred Mass Date (optional)</label>
-          <div class="mi-datepicker">
-            <button type="button" id="mi-date-trigger" class="form-input mi-date-trigger" aria-haspopup="dialog" aria-expanded="false">
-              <span id="mi-date-display" class="mi-date-display mi-date-placeholder">Select a date</span>
-              <svg class="w-4 h-4 mi-date-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            </button>
-            <input type="hidden" id="mi-date" value="" />
-
-            <div id="mi-date-panel" class="mi-date-panel hidden" role="dialog" aria-label="Choose a preferred Mass date">
-              <div class="mi-date-panel-header">
-                <button type="button" id="mi-date-prev" class="mi-date-nav-btn" aria-label="Previous month">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <span id="mi-date-month-label" class="mi-date-month-label"></span>
-                <button type="button" id="mi-date-next" class="mi-date-nav-btn" aria-label="Next month">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
-                </button>
+          <!-- STEP 1 · Who we're praying for: categories + name → prayer list -->
+          <section class="mi-step" data-step="1">
+            <div class="mi-cols">
+            <div class="mi-col">
+            <h4 class="mi-step-title">What would you like to pray for?</h4>
+            <p class="mi-step-hint">Tap one or more. Tap again to unselect.</p>
+            <div class="mi-cat-grid" id="mi-cat-grid" role="group" aria-label="Intention categories"></div>
+            </div>
+            <div class="mi-col">
+            <h4 class="mi-step-title">Who is this Mass for?</h4>
+            <div class="mi-name-grid">
+              <div class="mi-field mi-field-first">
+                <label class="mi-label" for="mi-name-first">First name <span class="text-red-500">*</span></label>
+                <input type="text" id="mi-name-first" class="form-input mi-input" autocomplete="off" />
               </div>
-              <div class="mi-date-weekday-row">
-                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+              <div class="mi-field mi-field-mi">
+                <label class="mi-label" for="mi-name-middle">Middle name</label>
+                <input type="text" id="mi-name-middle" class="form-input mi-input" autocomplete="off" />
               </div>
-              <div id="mi-date-grid" class="mi-date-grid"></div>
-              <div class="mi-date-panel-footer">
-                <button type="button" id="mi-date-clear" class="mi-date-clear-btn">Clear</button>
-                <p class="mi-date-note">Picking either day selects the whole weekend</p>
+              <div class="mi-field mi-field-last">
+                <label class="mi-label" for="mi-name-last">Last name <span class="text-red-500">*</span></label>
+                <input type="text" id="mi-name-last" class="form-input mi-input" autocomplete="off" />
+              </div>
+              <div class="mi-field mi-field-ext">
+                <label class="mi-ext-toggle"><input type="checkbox" id="mi-ext-toggle" class="checkbox-input" /> Add extension (Jr., Sr., III)</label>
+                <input type="text" id="mi-name-ext" class="form-input mi-input hidden" maxlength="6" placeholder="e.g. Jr., III" aria-label="Extension (Jr., Sr., III)" autocomplete="off" />
               </div>
             </div>
-          </div>
-        </div>
+            <button type="button" class="mi-add-person" id="mi-add-person">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              <span id="mi-add-person-label">Add to prayer list</span>
+            </button>
+            <p id="mi-added-note" class="mi-added-note hidden" aria-live="polite"></p>
 
-        <!-- Offering amount -->
-        <div>
-          <label class="form-label" for="mi-offering">Offering Amount (₱300 / intention) <span class="text-red-500">*</span></label>
-          <div class="offering-input-wrap">
-            <span class="offering-peso">₱</span>
-            <input type="number" id="mi-offering" class="form-input offering-input" placeholder="300" min="0" step="50" />
-          </div>
-          <p class="text-xs text-gray-400 mt-1">Calculated automatically as you add intentions — feel free to adjust the total.</p>
-        </div>
+            </div>
+            </div>
+          </section>
 
+          <!-- STEP 2 · Weekend & offering -->
+          <section class="mi-step hidden" data-step="2">
+            <div class="mi-cols mi-cols-2b">
+            <div class="mi-col mi-col-list">
+              <div id="mi-list-wrap" class="mi-list-wrap">
+                <h4 class="mi-step-title">Prayer list <span id="mi-list-count" class="mi-optional"></span></h4>
+                <p class="mi-step-hint">Everyone the Mass will be offered for.</p>
+                <div class="mi-table-wrap">
+                  <table class="mi-table">
+                    <thead><tr><th>Name</th><th>Intentions</th><th class="mi-th-act"><span class="sr-only">Actions</span></th></tr></thead>
+                    <tbody id="mi-list"></tbody>
+                  </table>
+                  <p id="mi-list-empty" class="mi-list-empty">No one on the list yet.</p>
+                </div>
+                <button type="button" class="mi-add-person mi-add-another" id="mi-add-another">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  Add another person
+                </button>
+              </div>
+            </div>
+            <div class="mi-col">
+            <h4 class="mi-step-title">Which weekend?</h4>
+            <p class="mi-step-hint">Optional — leave it blank and the parish office will choose a weekend for you.</p>
+            <div id="mi-date-cal"></div>
+            <input type="hidden" id="mi-date" value="" />
+
+            <h4 class="mi-step-title mi-step-title-2">Your offering</h4>
+            <p class="mi-step-hint" id="mi-offering-hint"></p>
+            <div class="mi-offer-row" id="mi-offer-presets" role="group" aria-label="Offering amount"></div>
+            <label class="mi-label" for="mi-offering">Amount</label>
+            <div class="offering-input-wrap mi-offer-input">
+              <span class="offering-peso">₱</span>
+              <input type="number" id="mi-offering" class="form-input offering-input mi-input" min="300" step="50" inputmode="numeric" />
+            </div>
+            </div>
+            </div>
+          </section>
+
+          <!-- STEP 3 · Confirm -->
+          <section class="mi-step hidden" data-step="3">
+            <h4 class="mi-step-title">Please check your intention</h4>
+            <p class="mi-step-hint">If something is wrong, tap Change.</p>
+            <div id="mi-review"></div>
+          </section>
+
+        </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="mi-submit" class="btn-lavender">Submit Intention</button>
+      <div class="modal-footer mi-page-footer">
+        <button type="button" class="btn-secondary mi-nav-btn" id="mi-back">Cancel</button>
+        <button type="button" class="btn-lavender mi-nav-btn" id="mi-next">Next →</button>
+        <button type="button" class="btn-lavender mi-nav-btn hidden" id="mi-submit">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
+          Submit Intention
+        </button>
       </div>
     </div>
   </div>

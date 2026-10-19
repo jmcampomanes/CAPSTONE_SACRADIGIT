@@ -124,7 +124,9 @@ export const SERVICE_TYPES = [
     icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l8-4v18M13 21V11l6 4v6M9 9v.01M9 12v.01M9 15v.01"/></svg>`,
     fields: [
       { id: 'business-name', label: 'Business Name', placeholder: 'e.g. Reyes Bakery', required: true, span2: true },
-      { id: 'business-address', label: 'Business Address', placeholder: 'e.g. Aurora Blvd. corner 8th', required: true },
+      // Same map locator as House Blessing: pin the shop, and Business Address fills in.
+      { id: 'map-pin-business', label: MAP_PIN_LABEL, kind: 'map', addressField: 'business-address', place: 'business', required: false, span2: true },
+      { id: 'business-address', label: 'Business Address', placeholder: 'e.g. Aurora Blvd. corner 8th', required: true, span2: true },
     ] },
   { id: 'anniversary-mass', name: 'Anniversary Mass', category: 'special-mass', desc: 'Thanksgiving mass for a wedding or ordination anniversary.',
     iconBg: 'rgba(239,68,68,0.1)', iconColor: '#dc2626',

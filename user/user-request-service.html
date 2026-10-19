@@ -38,6 +38,7 @@
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <link rel="stylesheet" href="../detail-table.css" />
   <link rel="stylesheet" href="../theme-dark.css" />
   <link rel="stylesheet" href="../accessibility.css" />
   <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
@@ -135,6 +136,30 @@
       </header>
 
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
+
+        <!-- ===== CONFIRMATION (after a request is submitted) — same idea as
+             Request a Certificate: what was booked, then where to track it. ===== -->
+        <section id="svc-success" class="svc-success hidden" aria-live="polite">
+          <div class="success-wrap">
+            <div class="success-icon">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="success-title" id="svc-success-title" tabindex="-1">Request Submitted!</p>
+              <p class="success-sub" id="svc-success-desc"></p>
+            </div>
+          </div>
+          <div class="svc-success-card">
+            <div class="modal-detail-grid" id="svc-success-details"></div>
+            <div class="svc-success-actions">
+              <a href="user-requested-services.html" id="svc-success-track" class="btn-lavender">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                Track My Requested Services
+              </a>
+              <button type="button" id="svc-success-again" class="btn-secondary">Request Another Service</button>
+            </div>
+          </div>
+        </section>
 
         <!-- ===== MENU VIEW: browse services ===== -->
         <div id="menu-view">
