@@ -11,15 +11,19 @@
 
    Pages: network first (always the latest), cache
    as a fallback, then offline.html.
+   The site's own scripts and styles (not hashed):
+   network first too — otherwise a phone keeps
+   running the previous version's code after an
+   update until a later visit. Cache only offline.
    Vite's hashed files (/assets/…): cache first —
    their names change whenever their content does.
-   Everything else: serve from cache, refresh in
-   the background.
+   Everything else (images, fonts, Tailwind): serve
+   from cache, refresh in the background.
 
    Bump VERSION to drop every old cache on update.
    ============================================ */
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = `sacradigit-${VERSION}`;
 const BASE = new URL(self.registration.scope).pathname; // e.g. /CAPSTONE_SACRADIGIT/
 const OFFLINE_URL = `${BASE}offline.html`;
@@ -50,6 +54,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(req));
   } else if (sameSite && url.pathname.startsWith(`${BASE}assets/`)) {
     event.respondWith(cacheFirst(req));
+  } else if (sameSite && (['script', 'style'].includes(req.destination) || /\.(m?js|css)$/.test(url.pathname))) {
+    event.respondWith(networkFirstAsset(req));
   } else if (sameSite || CACHEABLE_HOSTS.has(url.hostname)) {
     event.respondWith(staleWhileRevalidate(req, event));
   }
@@ -77,6 +83,18 @@ async function networkFirst(req) {
     return res;
   } catch {
     return (await cache.match(req, { ignoreSearch: true })) || (await cache.match(OFFLINE_URL));
+  }
+}
+
+// Scripts/styles: always the latest when online; the cached copy only when offline.
+async function networkFirstAsset(req) {
+  const cache = await caches.open(CACHE);
+  try {
+    const res = await fetch(req);
+    if (res.ok) cache.put(req, res.clone());
+    return res;
+  } catch {
+    return (await cache.match(req)) || Response.error();
   }
 }
 

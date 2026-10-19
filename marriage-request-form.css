@@ -137,3 +137,14 @@
 @media (max-width: 640px) {
   :where(.mwiz) .name-field-row { grid-template-columns: 1fr; }
 }
+
+/* ---------- Same steps for Baptismal / Confirmation / First Communion ----------
+   (wrapIntoSteps in user/user-request-certificate.js reuses everything above) */
+.mstep-fields > .sm\:col-span-2, .mstep-fields > .name-field-group { min-width: 0; }
+.mstep-fields .btn-add-row { justify-self: start; }
+
+@media (max-width: 480px) {
+  /* Region | City side by side → stacked on narrow phones */
+  .mstep-fields [style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+  .mstep-bar .mstep-label { font-size: 0.625rem; }
+}

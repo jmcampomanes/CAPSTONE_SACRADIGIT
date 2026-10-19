@@ -239,6 +239,11 @@ document.addEventListener('DOMContentLoaded', () => {
     { section: 'Sponsors & Wedding', key: 'marriage-place', label: 'Place of Marriage' },
   ];
 
+  const FIRST_COMMUNION_PREVIEW_FIELDS = [
+    { section: 'Communicant', key: 'fc-name', label: 'Full Name' },
+    { section: 'Communicant', key: 'fc-communion-date', label: 'Date of First Communion (approx.)', isDate: true },
+  ];
+
   /* The review table: one titled group per part of the form (e.g. Groom,
      Bride, Sponsors & Wedding, then Request), label | value per row. */
   function buildPreviewGridHtml(details, purpose, notes) {
@@ -249,7 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ? CONFIRMATION_PREVIEW_FIELDS
         : selectedType.marriageCustom
           ? MARRIAGE_PREVIEW_FIELDS
-          : selectedType.fields.map(f => ({ section: fallbackSection, key: f.id, label: f.label, isDate: f.type === 'date' }));
+          : selectedType.id === 'first-communion'
+            ? FIRST_COMMUNION_PREVIEW_FIELDS
+            : selectedType.fields.map(f => ({ section: fallbackSection, key: f.id, label: f.label, isDate: f.type === 'date' }));
 
     const sections = new Map(); // section title → [[label, value], …] in form order
     fieldList.forEach(({ section, key, label, isDate }) => {
@@ -326,7 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.cert-type-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
     formTypeLabel.textContent = selectedType.name;
     marriageWizard = null;
-    setCommonSectionVisible(true); // Marriage's step-by-step form hides it again until its last step
+    stepForm = null;
+    setCommonSectionVisible(true); // the step-by-step forms hide it again until their last step
 
     if (selectedType.baptismalCustom) {
       godparentCounter = 2;
@@ -350,6 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
       selectedType.fields.filter(f => f.type === 'date').forEach(f => guardDateInputRange(document.getElementById(f.id)));
     }
+    // Baptismal / Confirmation / First Communion: same one-step-at-a-time layout as Marriage
+    if (!selectedType.marriageCustom) openStepsFor(selectedType.id);
 
     menuView.classList.add('hidden');
     formView.classList.remove('hidden');
@@ -362,6 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedType = null;
     pendingSubmission = null;
     marriageWizard = null;
+    stepForm = null;
     setCommonSectionVisible(true);
     confirmModal.classList.add('hidden');
     backToMenuBtn?.classList.remove('hidden');
@@ -1000,7 +1011,167 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  document.getElementById('btn-marriage-back').addEventListener('click', () => marriageWizard?.go(marriageWizard.step - 1));
+  document.getElementById('btn-marriage-back').addEventListener('click', () => (marriageWizard || stepForm)?.go((marriageWizard || stepForm).step - 1));
+
+  /* ------------------------------------------
+     STEP-BY-STEP FOR THE OTHER CERTIFICATES
+     Baptismal, Confirmation and First Communion get the
+     same steps as Marriage (same progress bar, Next/Back,
+     phone layout — styles in ../marriage-request-form.css).
+     Their fields are rendered and wired exactly as before,
+     then each block is moved into its step's panel, so the
+     guardian toggle, Region/City picker, Add Godparent and
+     Confirmation Name all keep working untouched. "Next"
+     runs that certificate's own validator but only blocks
+     on (and highlights) missing fields in the current step.
+  ------------------------------------------ */
+  const CERT_STEPS = {
+    baptismal: [
+      { label: 'Baptized', title: 'Baptized person', hint: 'Who was baptized, and when and where they were born.',
+        ids: ['baptized-name-first', 'birth-date', 'birth-region', 'baptism-date'] },
+      { label: 'Family', title: 'Family', hint: 'Parents, or a guardian if one signs instead.',
+        ids: ['guardian-toggle', 'guardian-fields', 'father-name-first', 'mother-name-first'] },
+      { label: 'Godparents', title: 'Godparents', hint: 'Principal sponsors (ninong and ninang) — optional.',
+        ids: ['sponsor-1-first', 'sponsor-2-first', 'godparents-extra-container', 'btn-add-godparent'] },
+    ],
+    confirmation: [
+      { label: 'Confirmand', title: 'Confirmand', hint: 'Who was confirmed, and their confirmation name.',
+        ids: ['confirmed-name-first', 'baptism-date', 'confirmation-name', 'confirmation-date'] },
+      { label: 'Family', title: 'Family', hint: 'Parents, or a guardian if one signs instead.',
+        ids: ['guardian-toggle', 'guardian-fields', 'father-name-first', 'mother-name-first'] },
+      { label: 'Sponsor', title: 'Sponsor', hint: 'Your confirmation sponsor — optional.',
+        ids: ['sponsor-name-first'] },
+    ],
+    'first-communion': [
+      { label: 'Communicant', title: 'Communicant', hint: 'Who received First Holy Communion, and about when.',
+        ids: ['fc-name-first', 'fc-communion-date'] },
+    ],
+  };
+
+  let stepForm = null; // the open step-by-step form (non-Marriage), else null
+
+  /** Moves the rendered fields in `dynamicFields` into steps (+ a final "Confirm" step). */
+  function wrapIntoSteps(steps, validateAll) {
+    const all = [...steps, { label: 'Confirm', title: 'Confirm details', hint: 'Almost done — tell us why you need the certificate, then review everything before it\'s sent.', ids: [] }];
+    const blocks = [...dynamicFields.children];
+    const owner = (el) => steps.findIndex(s => s.ids.some(id => el.id === id || el.querySelector(`#${CSS.escape(id)}`)));
+
+    const nav = (i) => `
+      <div class="mstep-nav">
+        ${i > 0 ? '<button type="button" class="btn-secondary mstep-back">← Back</button>' : '<span></span>'}
+        <button type="button" class="btn-lavender mstep-next">Next: ${all[i + 1].label} →</button>
+      </div>`;
+    dynamicFields.insertAdjacentHTML('beforeend', `
+      <div class="mwiz sm:col-span-2" id="cert-steps">
+        <ol class="mstep-bar" aria-label="Steps" style="grid-template-columns: repeat(${all.length}, minmax(0, 1fr));">
+          ${all.map((s, i) => `<li><button type="button" class="mstep-dot" data-step="${i}"><span class="mstep-num">${i + 1}</span><span class="mstep-label">${s.label}</span></button></li>`).join('')}
+        </ol>
+        ${all.map((s, i) => `
+        <section class="mstep-panel${i ? ' hidden' : ''}" data-step="${i}" aria-label="${s.label}">
+          <h3 class="mstep-title">${s.title}</h3>
+          <p class="mstep-hint">${s.hint}</p>
+          ${i < steps.length ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mstep-section mstep-fields"></div>${nav(i)}` : ''}
+        </section>`).join('')}
+      </div>`);
+
+    const wiz = dynamicFields.querySelector('#cert-steps');
+    const panels = [...wiz.querySelectorAll('.mstep-panel')];
+    const dots = [...wiz.querySelectorAll('.mstep-dot')];
+    const fieldsOf = (i) => panels[i].querySelector('.mstep-fields');
+    let last = 0;
+    blocks.forEach(el => {
+      const i = owner(el);
+      if (i >= 0) last = i;
+      fieldsOf(i >= 0 ? i : last).appendChild(el); // unlisted blocks stay with the step before them
+    });
+
+    // Which steps still have something missing — without marking later steps red.
+    const missingSteps = () => {
+      const missing = new Set();
+      validateAll((el) => {
+        const p = el?.closest('.mstep-panel');
+        if (p) missing.add(Number(p.dataset.step));
+      });
+      return missing;
+    };
+    const flagIn = (step) => validateAll((el) => {
+      if (el && panels[step].contains(el)) {
+        el.classList.add('border-red-400');
+        el.addEventListener('input', () => el.classList.remove('border-red-400'), { once: true });
+        el.addEventListener('change', () => el.classList.remove('border-red-400'), { once: true });
+      }
+    });
+
+    let current = 0;
+    let furthest = 0;
+    function go(step) {
+      current = Math.max(0, Math.min(step, all.length - 1));
+      furthest = Math.max(furthest, current);
+      panels.forEach((p, i) => p.classList.toggle('hidden', i !== current));
+      dots.forEach((d, i) => {
+        d.classList.toggle('is-current', i === current);
+        d.classList.toggle('is-done', i < furthest && i !== current);
+        d.disabled = i > furthest;
+        d.setAttribute('aria-current', i === current ? 'step' : 'false');
+      });
+      const isLast = current === all.length - 1;
+      setCommonSectionVisible(isLast, { marriageLastStep: isLast });
+      dynamicFields.closest('.req-form-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function tryForward(target) {
+      if (missingSteps().has(current)) {
+        flagIn(current);
+        window.showToast('Please fill in the highlighted fields to continue.', true);
+        panels[current].querySelector('.border-red-400')?.focus();
+        return;
+      }
+      go(target);
+    }
+    wiz.addEventListener('click', (e) => {
+      if (e.target.closest('.mstep-next')) { tryForward(current + 1); return; }
+      if (e.target.closest('.mstep-back')) { go(current - 1); return; }
+      const dot = e.target.closest('.mstep-dot');
+      if (dot && !dot.disabled) {
+        const target = Number(dot.dataset.step);
+        if (target > current) tryForward(target); else go(target);
+      }
+    });
+
+    go(0);
+    return {
+      go,
+      get step() { return current; },
+      labels: all.map(s => s.label),
+      /** First step that's still missing something (marks it), or undefined. */
+      firstUnfinished() {
+        const missing = [...missingSteps()].sort((a, b) => a - b)[0];
+        if (missing !== undefined) flagIn(missing);
+        return missing;
+      },
+    };
+  }
+
+  /* First Communion uses the generic field list — same checks the Submit button does. */
+  function validateGenericFields(flag) {
+    selectedType.fields.forEach(f => {
+      if (f.kind === 'name') {
+        if (f.required && !nameFieldsFilled(f.id)) { flag(document.getElementById(`${f.id}-first`)); flag(document.getElementById(`${f.id}-last`)); }
+        return;
+      }
+      const el = document.getElementById(f.id);
+      if (f.required && (!el || !el.value.trim())) flag(el);
+      else if (f.type === 'date' && el && el.value && !isReasonableDate(el.value)) flag(el);
+    });
+  }
+
+  function openStepsFor(typeId) {
+    const steps = CERT_STEPS[typeId];
+    if (!steps) return;
+    const validateAll = typeId === 'baptismal' ? (flag) => validateAndCollectBaptismal(flag)
+      : typeId === 'confirmation' ? (flag) => validateAndCollectConfirmation(flag)
+        : validateGenericFields;
+    stepForm = wrapIntoSteps(steps, validateAll);
+  }
 
   document.getElementById('btn-back-to-menu').addEventListener('click', goToMenu);
 
@@ -1020,6 +1191,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!el) return;
       el.classList.add('border-red-400');
       el.addEventListener('input', () => el.classList.remove('border-red-400'), { once: true });
+    }
+
+    // Step-by-step forms: something missing on an earlier step → take them back to it.
+    if (stepForm) {
+      const unfinished = stepForm.firstUnfinished();
+      if (unfinished !== undefined) {
+        stepForm.go(unfinished);
+        window.showToast(`Please finish the ${stepForm.labels[unfinished]} step first.`, true);
+        return;
+      }
     }
 
     if (selectedType.baptismalCustom) {
