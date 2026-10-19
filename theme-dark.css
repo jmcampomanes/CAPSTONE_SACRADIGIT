@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 46 stylesheets.
+   Built by tools/build-dark-theme.mjs from 47 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -393,6 +393,224 @@
 :root[data-theme="dark"] .confirm-table .confirm-section th {
     color: #a8aad1;
     background-color: #212336
+}
+/*  from mass-intention-form.css  */
+:root[data-theme="dark"] :where(.mi-page) :where(.offering-peso) {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .modal-overlay.mi-page {
+    background: #222635
+}
+:root[data-theme="dark"] .mi-page > .modal-card {
+    background: #222635
+}
+:root[data-theme="dark"] .mi-page-header {
+    background: #1a2131;
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .mi-page-back {
+    color: #a8aad1;
+    border-right: 1px solid #2c3548
+}
+:root[data-theme="dark"] .mi-page-back:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .mi-page-sub {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mi-progress-text {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mi-progress-text strong {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .mi-progress-dots li {
+    background: #2c3548
+}
+:root[data-theme="dark"] .mi-step {
+    background: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .mi-step-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .mi-step-title-2 {
+    border-top: 1px solid #434956
+}
+:root[data-theme="dark"] .mi-step-hint {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mi-label {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .mi-cat {
+    background: #1a2131;
+    border: 2px solid #2c3548
+}
+:root[data-theme="dark"] .mi-cat:hover {
+    border-color: #3b3d5e
+}
+:root[data-theme="dark"] .mi-cat.selected {
+    background: #121827
+}
+:root[data-theme="dark"] .mi-cat-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .mi-cat-hint {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mi-cat-check {
+    border: 2px solid #2c3548;
+    background: #1a2131
+}
+:root[data-theme="dark"] .mi-cat-grid.mi-invalid .mi-cat {
+    border-color: #6b2e2e
+}
+:root[data-theme="dark"] .mi-link {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .mi-link:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .mi-chosen {
+    background: #121827
+}
+:root[data-theme="dark"] .mi-chosen-label {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mi-person {
+    border: 1px solid #2c3548;
+    background: #1a2131
+}
+:root[data-theme="dark"] .mi-person-name {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .mi-person-btn {
+    color: #a1b0d9;
+    background: #1a2131;
+    border: 1.5px solid #2c3548
+}
+:root[data-theme="dark"] .mi-person-btn:hover {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .mi-person-btn-remove {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .mi-person-btn-remove:hover {
+    color: #ed8d8d;
+    background: #121827
+}
+:root[data-theme="dark"] .mi-add-person {
+    color: #a8aad1;
+    background: #121827;
+    border: 2px dashed #3b3d5e
+}
+:root[data-theme="dark"] .mi-add-person:hover {
+    background: #212136
+}
+:root[data-theme="dark"] .mi-offer {
+    color: #a1b0d9;
+    background: #1a2131;
+    border: 2px solid #2c3548
+}
+:root[data-theme="dark"] .mi-offer:hover {
+    border-color: #3b3d5e
+}
+:root[data-theme="dark"] .mi-offer.selected {
+    background: #121827;
+    color: #a8aad1
+}
+:root[data-theme="dark"] .mi-offer-badge {
+    color: #ddcb9c;
+    background: #1a2131
+}
+:root[data-theme="dark"] .mi-review-card {
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .mi-review-head {
+    background: #121827;
+    border-bottom: 1px solid #434956;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .mi-review-people li + li {
+    border-top: 1px solid #434756
+}
+:root[data-theme="dark"] .mi-review-rows > div + div {
+    border-top: 1px solid #434756
+}
+:root[data-theme="dark"] .mi-review-rows dt {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mi-review-rows dd {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .mi-review-total {
+    color: #a1b0d9 !important
+}
+:root[data-theme="dark"] .mi-page-footer {
+    background: #1a2131
+}
+:root[data-theme="dark"] .mi-optional {
+    color: #8b93a3
+}
+@media (min-width: 768px) {
+    :root[data-theme="dark"] .mi-cols > .mi-col + .mi-col {
+        border-left: 1px solid #434956
+    }
+}
+:root[data-theme="dark"] .mi-ext-toggle {
+    color: #c4c9d3
+}
+@media (min-width: 768px) {
+    :root[data-theme="dark"] .mi-review-people li {
+        border-bottom: 1px solid #434756
+    }
+}
+:root[data-theme="dark"] .mi-table-wrap {
+    border: 1px solid #2c3548;
+    background: #1a2131
+}
+:root[data-theme="dark"] .mi-table thead th {
+    color: #a0a8b6;
+    background: #121827;
+    border-bottom: 1px solid #434956
+}
+:root[data-theme="dark"] .mi-table td {
+    border-bottom: 1px solid #434756
+}
+:root[data-theme="dark"] .mi-table tbody tr:nth-child(even) {
+    background: #121827
+}
+:root[data-theme="dark"] .mi-td-name {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .mi-person-row.is-editing td {
+    background: #121827
+}
+:root[data-theme="dark"] .mi-list-empty {
+    color: #8b93a3
+}
+@media (max-width: 767px) {
+    :root[data-theme="dark"] .mi-table tr {
+        border-bottom: 1px solid #434756
+    }
+}
+:root[data-theme="dark"] .mi-added-note {
+    color: #92e7b2;
+    background: #1b3c25;
+    border: 1px solid #2e6b43
+}
+@media (max-width: 767px) {
+    :root[data-theme="dark"] .mi-table tr,
+:root[data-theme="dark"] .mi-col-list .mi-table tr,
+:root[data-theme="dark"] .mi-review-table .mi-table tr {
+        border-bottom: 1px solid #434756
+    }
+}
+:root[data-theme="dark"] .mi-page .mi-locked-note {
+    color: #eeb18b;
+    background: #3f3718;
+    border: 1px solid #6b5f2e
 }
 /*  from Sacradigit/sacradigit-css/admin-shell.css  */
 :root[data-theme="dark"] body {
@@ -3316,215 +3534,6 @@
 }
 :root[data-theme="dark"] .sheet-closing-line {
     color: #a3b3d7
-}
-:root[data-theme="dark"] .modal-overlay.mi-page {
-    background: #222635
-}
-:root[data-theme="dark"] .mi-page > .modal-card {
-    background: #222635
-}
-:root[data-theme="dark"] .mi-page-header {
-    background: #1a2131;
-    border-bottom: 1px solid #2c3548
-}
-:root[data-theme="dark"] .mi-page-back {
-    color: #a8aad1;
-    border-right: 1px solid #2c3548
-}
-:root[data-theme="dark"] .mi-page-back:hover {
-    color: #a1b0d9
-}
-:root[data-theme="dark"] .mi-page-sub {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .mi-progress-text {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .mi-progress-text strong {
-    color: #a1b0d9
-}
-:root[data-theme="dark"] .mi-progress-dots li {
-    background: #2c3548
-}
-:root[data-theme="dark"] .mi-step {
-    background: #1a2131;
-    border: 1px solid #2c3548
-}
-:root[data-theme="dark"] .mi-step-title {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .mi-step-title-2 {
-    border-top: 1px solid #434956
-}
-:root[data-theme="dark"] .mi-step-hint {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .mi-label {
-    color: #b0bac9
-}
-:root[data-theme="dark"] .mi-cat {
-    background: #1a2131;
-    border: 2px solid #2c3548
-}
-:root[data-theme="dark"] .mi-cat:hover {
-    border-color: #3b3d5e
-}
-:root[data-theme="dark"] .mi-cat.selected {
-    background: #121827
-}
-:root[data-theme="dark"] .mi-cat-title {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .mi-cat-hint {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .mi-cat-check {
-    border: 2px solid #2c3548;
-    background: #1a2131
-}
-:root[data-theme="dark"] .mi-cat-grid.mi-invalid .mi-cat {
-    border-color: #6b2e2e
-}
-:root[data-theme="dark"] .mi-link {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .mi-link:hover {
-    color: #a1b0d9
-}
-:root[data-theme="dark"] .mi-chosen {
-    background: #121827
-}
-:root[data-theme="dark"] .mi-chosen-label {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .mi-person {
-    border: 1px solid #2c3548;
-    background: #1a2131
-}
-:root[data-theme="dark"] .mi-person-name {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .mi-person-btn {
-    color: #a1b0d9;
-    background: #1a2131;
-    border: 1.5px solid #2c3548
-}
-:root[data-theme="dark"] .mi-person-btn:hover {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .mi-person-btn-remove {
-    color: #ee8c8c
-}
-:root[data-theme="dark"] .mi-person-btn-remove:hover {
-    color: #ed8d8d;
-    background: #121827
-}
-:root[data-theme="dark"] .mi-add-person {
-    color: #a8aad1;
-    background: #121827;
-    border: 2px dashed #3b3d5e
-}
-:root[data-theme="dark"] .mi-add-person:hover {
-    background: #212136
-}
-:root[data-theme="dark"] .mi-offer {
-    color: #a1b0d9;
-    background: #1a2131;
-    border: 2px solid #2c3548
-}
-:root[data-theme="dark"] .mi-offer:hover {
-    border-color: #3b3d5e
-}
-:root[data-theme="dark"] .mi-offer.selected {
-    background: #121827;
-    color: #a8aad1
-}
-:root[data-theme="dark"] .mi-offer-badge {
-    color: #ddcb9c;
-    background: #1a2131
-}
-:root[data-theme="dark"] .mi-review-card {
-    border: 1px solid #2c3548
-}
-:root[data-theme="dark"] .mi-review-head {
-    background: #121827;
-    border-bottom: 1px solid #434956;
-    color: #b0bac9
-}
-:root[data-theme="dark"] .mi-review-people li + li {
-    border-top: 1px solid #434756
-}
-:root[data-theme="dark"] .mi-review-rows > div + div {
-    border-top: 1px solid #434756
-}
-:root[data-theme="dark"] .mi-review-rows dt {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .mi-review-rows dd {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .mi-review-total {
-    color: #a1b0d9 !important
-}
-:root[data-theme="dark"] .mi-page-footer {
-    background: #1a2131
-}
-:root[data-theme="dark"] .mi-optional {
-    color: #8b93a3
-}
-@media (min-width: 768px) {
-    :root[data-theme="dark"] .mi-cols > .mi-col + .mi-col {
-        border-left: 1px solid #434956
-    }
-}
-:root[data-theme="dark"] .mi-ext-toggle {
-    color: #c4c9d3
-}
-@media (min-width: 768px) {
-    :root[data-theme="dark"] .mi-review-people li {
-        border-bottom: 1px solid #434756
-    }
-}
-:root[data-theme="dark"] .mi-table-wrap {
-    border: 1px solid #2c3548;
-    background: #1a2131
-}
-:root[data-theme="dark"] .mi-table thead th {
-    color: #a0a8b6;
-    background: #121827;
-    border-bottom: 1px solid #434956
-}
-:root[data-theme="dark"] .mi-table td {
-    border-bottom: 1px solid #434756
-}
-:root[data-theme="dark"] .mi-table tbody tr:nth-child(even) {
-    background: #121827
-}
-:root[data-theme="dark"] .mi-td-name {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .mi-person-row.is-editing td {
-    background: #121827
-}
-:root[data-theme="dark"] .mi-list-empty {
-    color: #8b93a3
-}
-@media (max-width: 767px) {
-    :root[data-theme="dark"] .mi-table tr {
-        border-bottom: 1px solid #434756
-    }
-}
-:root[data-theme="dark"] .mi-added-note {
-    color: #92e7b2;
-    background: #1b3c25;
-    border: 1px solid #2e6b43
-}
-@media (max-width: 767px) {
-    :root[data-theme="dark"] .mi-table tr,
-:root[data-theme="dark"] .mi-col-list .mi-table tr,
-:root[data-theme="dark"] .mi-review-table .mi-table tr {
-        border-bottom: 1px solid #434756
-    }
 }
 /*  from user/user-css/user-mass-schedule.css  */
 :root[data-theme="dark"] .season-banner {

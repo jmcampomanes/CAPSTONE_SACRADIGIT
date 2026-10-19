@@ -34,6 +34,7 @@ const SOURCES = [
   'service-schedule.css',
   'marriage-request-form.css',
   'detail-table.css',
+  'mass-intention-form.css',
   ...['Sacradigit/sacradigit-css', 'user/user-css', 'Sacraitech/itech-css', 'Sacramedia/media-css']
     .flatMap(dir => fs.readdirSync(path.join(ROOT, dir)).filter(f => f.endsWith('.css')).map(f => `${dir}/${f}`)),
 ].filter(f => !/print|\/style\.css$/.test(f)); // certificate print pages + the public landing page stay light

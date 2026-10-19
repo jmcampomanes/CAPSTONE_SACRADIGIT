@@ -48,6 +48,8 @@
   <link rel="stylesheet" href="sacradigit-css/digital-archives.css" />
   <link rel="stylesheet" href="sacradigit-css/record-requests.css" />
   <link rel="stylesheet" href="sacradigit-css/mass-intentions.css" />
+  <link rel="stylesheet" href="../marriage-request-form.css" />
+  <link rel="stylesheet" href="../mass-intention-form.css" />
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
@@ -430,68 +432,9 @@
   </div>
 
   <!-- ========== ADD / EDIT INTENTION MODAL ========== -->
-  <div id="add-modal" class="modal-overlay gen-page hidden">
-    <div class="modal-card modal-card-wide">
-      <div class="modal-header">
-        <h3 class="modal-title" id="add-modal-title">Add Mass Intention</h3>
-        <button class="modal-close" data-close-modal aria-label="Close">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p id="add-locked-note" class="mi-locked-note hidden">This Mass is today or already past, so it's marked Completed automatically — only the status can still be changed here, if something needs correcting.</p>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="form-label" for="add-donor">Donor Name</label>
-            <input type="text" id="add-donor" class="form-input" placeholder="e.g. Santos Family" />
-          </div>
-          <div class="col-span-2">
-            <label class="form-label">Select Intention Category</label>
-            <div class="intention-type-grid" id="add-type-grid">
-              <!-- Injected by JS -->
-            </div>
-          </div>
-          <div class="col-span-2">
-            <label class="form-label">
-              Name<span id="add-name-label-suffix"></span> <span class="text-red-500">*</span>
-            </label>
-            <input type="text" id="add-name-full" class="form-input" placeholder="e.g. Juan M. Santos Jr." />
-            <button type="button" id="add-add-name" class="btn-secondary mt-2">Add Name</button>
-            <p class="text-xs text-gray-400 mt-1">Each name is tagged with the category currently selected above.</p>
-          </div>
-          <div class="col-span-2 hidden" id="add-added-section">
-            <p class="form-label" id="add-added-heading">Added Intentions (0)</p>
-            <div id="add-name-chips" class="mi-added-list"></div>
-          </div>
-          <div>
-            <label class="form-label" for="add-offering">Offering (₱)</label>
-            <input type="number" id="add-offering" class="form-input" placeholder="e.g. 300" min="0" step="50" />
-          </div>
-          <div>
-            <label class="form-label" for="add-status">Status</label>
-            <select id="add-status" class="form-input">
-              <option value="scheduled">Scheduled</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <p class="form-label">Mass Date Assigned</p>
-            <!-- Inline weekend calendar, same look as Facility Booking (../weekend-calendar.js) -->
-            <div id="add-mass-date-cal"></div>
-            <input type="hidden" id="add-mass-date" value="" />
-          </div>
-          <div>
-            <label class="form-label" for="add-mass-time">Mass Time Assigned</label>
-            <input type="time" id="add-mass-time" class="form-input" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="add-submit" class="btn-lavender">Save Intention</button>
-      </div>
-    </div>
-  </div>
+  <!-- Add / Edit Mass Intention — its own page, 3 numbered steps, drawn by ../mass-intention-form.js
+       (same form as the parishioner's Submit a Mass Intention). Styles: ../mass-intention-form.css. -->
+  <div id="add-modal" class="modal-overlay mi-page hidden" role="dialog" aria-modal="true" aria-labelledby="mi-page-title"></div>
 
   <!-- ========== INTENTION DETAILS (VIEW) MODAL ========== -->
   <div id="details-modal" class="modal-overlay hidden">

@@ -35,12 +35,19 @@ export function formatWeekend(satIso) {
   return `${f(satIso, { weekday: 'short', month: 'short', day: 'numeric' })} – ${f(sun, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
-function selectable(d) {
+/** Weekend mode: the whole weekend must still be ahead. Day mode: just that day (tomorrow on). */
+function selectable(d, mode = 'weekend') {
   const dow = d.getDay();
   if (dow !== 0 && dow !== 6) return false;
+  if (mode === 'day') return d > today();
   const sat = new Date(d);
   if (dow === 0) sat.setDate(sat.getDate() - 1);
   return sat > today(); // at least a day before the weekend's Mass
+}
+
+/** "Sunday, Oct 25, 2026" */
+export function formatDay(dayIso) {
+  return dayIso ? new Date(dayIso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
 
 const STYLE = `
@@ -96,10 +103,15 @@ const STYLE = `
 /**
  * Renders the calendar into `container`.
  * @param {HTMLElement} container
- * @param {{ onChange?: (satIso: string) => void, weekendsOnly?: boolean }} [opts]  onChange gets '' when cleared; weekendsOnly shows just Sat | Sun columns
- * @returns {{ getValue(): string, setValue(satIso: string): void, reset(): void }}
+ * @param {object} [opts]
+ * @param {(value: string) => void} [opts.onChange]  '' when cleared
+ * @param {boolean} [opts.weekendsOnly]  show just Sat | Sun pairs (side by side)
+ * @param {'weekend'|'day'} [opts.mode]  'weekend' (default): value is the weekend's Saturday;
+ *        'day': value is the exact Saturday or Sunday picked (the admin assigns the Mass day)
+ * @param {HTMLInputElement} [opts.input]  kept in step with the value (e.g. a hidden input)
+ * @returns {{ getValue(): string, setValue(v: string): void, set(v: string): void, reset(): void }}
  */
-export function createWeekendCalendar(container, { onChange = () => {}, weekendsOnly = false } = {}) {
+export function createWeekendCalendar(container, { onChange = () => {}, weekendsOnly = false, mode = 'weekend', input = null } = {}) {
   if (!document.getElementById('wkcal-styles')) {
     const st = document.createElement('style');
     st.id = 'wkcal-styles';
@@ -107,14 +119,16 @@ export function createWeekendCalendar(container, { onChange = () => {}, weekends
     document.head.appendChild(st);
   }
 
-  let value = '';   // Saturday of the chosen weekend
+  let value = '';   // weekend mode: that weekend's Saturday · day mode: the exact day
+  const isDay = mode === 'day';
+  const changed = () => { if (input) input.value = value; onChange(value); };
   let view = new Date(today().getFullYear(), today().getMonth(), 1);
 
   function dayButton(d, { otherMonth = false } = {}) {
     const key = iso(d);
     const pair = value ? weekendPairFor(value) : null;
-    const on = !!(pair && (key === pair.sat || key === pair.sun));
-    const open = selectable(d);
+    const on = isDay ? key === value : !!(pair && (key === pair.sat || key === pair.sun));
+    const open = selectable(d, mode);
     const cls = ['wkcal-day', open ? 'open' : '', on ? 'selected' : '', d.getTime() === today().getTime() ? 'today' : '', otherMonth ? 'other' : ''].filter(Boolean).join(' ');
     const label = otherMonth && !weekendsOnly ? `${d.toLocaleDateString('en-US', { month: 'short' })} ${d.getDate()}` : d.getDate();
     return `<button type="button" class="${cls}" data-date="${key}" ${open ? '' : 'disabled tabindex="-1"'} aria-pressed="${on}">${label}</button>`;
@@ -135,7 +149,7 @@ export function createWeekendCalendar(container, { onChange = () => {}, weekends
         const sun = new Date(sat.getFullYear(), sat.getMonth(), sat.getDate() + 1);
         if (sat.getMonth() !== m && sun.getMonth() !== m && sat > first) break;
         if (sat.getMonth() === m || sun.getMonth() === m) {
-          const picked = !!pair && pair.sat === iso(sat);
+          const picked = !!pair && pair.sat === iso(sat); // the weekend holding the value
           cells += `
             <div class="wkcal-wk${picked ? ' picked' : ''}">
               <span class="wkcal-dow wk">Sat</span><span class="wkcal-dow wk">Sun</span>
@@ -158,7 +172,7 @@ export function createWeekendCalendar(container, { onChange = () => {}, weekends
         </div>
         <div class="wkcal-grid">${cells}</div>
         <div class="wkcal-foot" aria-live="polite">
-          <span>${value ? `Weekend: <strong>${formatWeekend(value)}</strong>` : 'Tap a Saturday or Sunday.'}</span>
+          <span>${value ? (isDay ? `Mass day: <strong>${formatDay(value)}</strong>` : `Weekend: <strong>${formatWeekend(value)}</strong>`) : 'Tap a Saturday or Sunday.'}</span>
           <button type="button" class="wkcal-clear" ${value ? '' : 'hidden'}>Clear</button>
         </div>
       </div>`;
@@ -168,14 +182,23 @@ export function createWeekendCalendar(container, { onChange = () => {}, weekends
     const nav = e.target.closest('.wkcal-nav');
     if (nav && !nav.disabled) { view = new Date(view.getFullYear(), view.getMonth() + Number(nav.dataset.step), 1); render(); return; }
     const day = e.target.closest('.wkcal-day');
-    if (day && !day.disabled) { value = weekendPairFor(day.dataset.date).sat; render(); onChange(value); return; }
-    if (e.target.closest('.wkcal-clear')) { value = ''; render(); onChange(''); }
+    if (day && !day.disabled) { value = isDay ? day.dataset.date : weekendPairFor(day.dataset.date).sat; render(); changed(); return; }
+    if (e.target.closest('.wkcal-clear')) { value = ''; render(); changed(); }
   });
 
   render();
+  // setValue/set don't call onChange (they load a saved value); they do update `input`.
+  function setValue(v) {
+    value = v ? (isDay ? v : weekendPairFor(v).sat) : '';
+    if (input) input.value = value;
+    const d = value ? new Date(value + 'T00:00:00') : today();
+    view = new Date(d.getFullYear(), d.getMonth(), 1);
+    render();
+  }
   return {
     getValue: () => value,
-    setValue(satIso) { value = satIso || ''; if (value) { const d = new Date(value + 'T00:00:00'); view = new Date(d.getFullYear(), d.getMonth(), 1); } render(); },
-    reset() { value = ''; view = new Date(today().getFullYear(), today().getMonth(), 1); render(); },
+    setValue,
+    set: setValue, // older name the admin page uses
+    reset: () => setValue(''),
   };
 }
