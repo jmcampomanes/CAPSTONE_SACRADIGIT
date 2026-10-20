@@ -237,6 +237,38 @@ body { background-color: #f7f8fa; }
 .user-table tbody tr:last-child td { border-bottom: none; }
 .user-table tbody tr:hover { background-color: #fafbfc; }
 
+/* ---------- Request cards (replaces a 3-column table so Status
+   never gets cut off on narrow screens) ---------- */
+.request-cards { display: flex; flex-direction: column; }
+
+.request-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #f5f6f8;
+}
+.request-row:last-child { border-bottom: none; }
+.request-row:hover { background-color: #fafbfc; }
+
+.request-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.request-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.request-date { font-size: 0.75rem; color: #9ca3af; }
+.request-right { flex-shrink: 0; }
+
 /* ---------- Buttons ---------- */
 .btn-gold,
 .btn-lavender,

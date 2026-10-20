@@ -229,18 +229,20 @@ document.addEventListener('DOMContentLoaded', () => {
       next: ({ items }) => {
         const sorted = items.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
         reqTbody.innerHTML = sorted.length === 0
-          ? `<tr><td colspan="3" class="text-center text-gray-400 text-sm py-8">No requests yet.</td></tr>`
+          ? `<p class="text-center text-gray-400 text-sm py-8">No requests yet.</p>`
           : sorted.map(r => {
               const key = (r.status || '').toLowerCase();
               const label = r.status ? r.status[0].toUpperCase() + r.status.slice(1) : 'Pending';
-              return `<tr>
-                <td class="font-medium text-gray-900">${r.certificateType}</td>
-                <td>${formatShortDate(r.createdAt)}</td>
-                <td><span class="badge ${badgeClass[key] || 'badge-gray'}">${label}</span></td>
-              </tr>`;
+              return `<div class="request-row">
+                <div class="request-left">
+                  <span class="request-name">${r.certificateType}</span>
+                  <span class="request-date">${formatShortDate(r.createdAt)}</span>
+                </div>
+                <div class="request-right"><span class="badge ${badgeClass[key] || 'badge-gray'}">${label}</span></div>
+              </div>`;
             }).join('');
       },
-      error: (err) => { console.error(err); reqTbody.innerHTML = `<tr><td colspan="3" class="text-center text-red-500 text-sm py-8">Couldn't load requests.</td></tr>`; },
+      error: (err) => { console.error(err); reqTbody.innerHTML = `<p class="text-center text-red-500 text-sm py-8">Couldn't load requests.</p>`; },
     });
   }
 

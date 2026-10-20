@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usability Review — Before / After</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f5f7;
+    margin: 0;
+    color: #111827;
+  }
+
+  /* ---------- Layout: sidebar + content ---------- */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    background: #1e2a4a;
+    color: #cbd3e6;
+    padding: 1.25rem 0.75rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar h1 { color: #fff; font-size: 0.95rem; margin: 0 0.5rem 0.25rem; }
+  .sidebar p.note { font-size: 0.7rem; color: #8b95b8; margin: 0 0.5rem 1rem; line-height: 1.4; }
+  .sidebar a {
+    display: block;
+    color: #cbd3e6;
+    text-decoration: none;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.4rem;
+    margin-bottom: 0.1rem;
+  }
+  .sidebar a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .sidebar a.group { font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; color: #7d87ad; margin-top: 0.9rem; padding: 0.4rem 0.6rem 0.1rem; pointer-events: none; }
+  .sidebar .badge-done { background: #15803d; color: #fff; font-size: 0.6rem; padding: 0.05rem 0.4rem; border-radius: 999px; margin-left: 0.4rem; }
+
+  .mobile-jump { display: none; }
+
+  .content { flex: 1; padding: 2rem 2.5rem 6rem; max-width: 1200px; }
+
+  /* ---------- Topic sections ---------- */
+  .topic { margin-bottom: 3.5rem; padding-top: 0.5rem; scroll-margin-top: 1rem; }
+  .topic h2 { font-size: 1.25rem; margin: 0 0 0.1rem; }
+  .topic .for-line { color: #6b7280; font-size: 0.85rem; margin-bottom: 0.75rem; }
+  .meta-box {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #d1a3a3;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+  .fix-box {
+    background: #ecfdf3;
+    border: 1px solid #bbf0cf;
+    border-left: 4px solid #15803d;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: #15542f;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+  .meta-box b, .fix-box b { color: inherit; }
+  .done-tag {
+    display: inline-block;
+    background: #15803d;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  /* ---------- Phone-frame compare ---------- */
+  .compare { display: flex; gap: 1.75rem; flex-wrap: wrap; align-items: flex-start; }
+  .col { width: 300px; }
+  .phone {
+    width: 300px;
+    background: #fff;
+    border: 7px solid #1f2430;
+    border-radius: 1.4rem;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.13);
+  }
+  .phone-label { text-align: center; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.6rem; }
+  .label-bad { color: #b91c1c; }
+  .label-good { color: #15803d; }
+  .caption { font-size: 0.72rem; color: #6b7280; text-align: center; margin-top: 0.6rem; line-height: 1.45; padding: 0 0.3rem; }
+
+  /* ---------- Reused real-app tokens ---------- */
+  .panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.875rem; overflow: hidden; }
+  .panel-noborder { border: none; border-radius: 0; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-bottom: 1px solid #f1f2f5; }
+  .panel-title { font-size: 0.75rem; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.03em; }
+  .panel-link { font-size: 0.7rem; font-weight: 600; color: #6c6fb0; text-decoration: none; }
+
+  .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.625rem; border-radius: 999px; font-size: 0.6875rem; font-weight: 600; white-space: nowrap; }
+  .badge-green  { background-color: #ecfdf3; color: #15803d; }
+  .badge-amber  { background-color: #fffbeb; color: #b45309; }
+  .badge-gray   { background-color: #f3f4f6; color: #6b7280; }
+  .badge-red    { background-color: #fef2f2; color: #b91c1c; }
+
+  .btn-pale { background: #8b8fc7; color: #fff; border: none; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 600; padding: 0.55rem 1rem; cursor: pointer; }
+  .btn-solid { background: #1e2a4a; color: #fff; border: none; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 700; padding: 0.65rem 1rem; cursor: pointer; width: 100%; text-align: center; }
+  .btn-pale-full { background: #8b8fc7; color: #fff; border: none; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 600; padding: 0.55rem 1rem; cursor: pointer; width: 100%; }
+
+  /* generic phone chrome bits reused across mockups */
+  .mock-header { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-bottom: 3px solid #8a3040; }
+  .mock-title { font-size: 0.85rem; font-weight: 700; }
+  .icon-row { display: flex; gap: 0.3rem; }
+  .icon-tiny { width: 20px; height: 20px; border-radius: 999px; background: #eef0f4; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #6b7280; }
+  .icon-big { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; width: 44px; }
+  .icon-big .circle { width: 32px; height: 32px; border-radius: 999px; background: #eef0f4; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+  .icon-big .lbl { font-size: 0.55rem; color: #4b5563; font-weight: 600; }
+
+  .install-banner { background: linear-gradient(90deg,#8b8fc7,#6c6fb0); color: #fff; font-size: 0.68rem; padding: 0.7rem; text-align: center; position: relative; }
+  .install-banner .x { position: absolute; top: 4px; right: 8px; font-size: 0.75rem; opacity: 0.8; }
+
+  .warning-bar { background: #fef2f2; border-top: 1px solid #fecaca; color: #b91c1c; font-size: 0.68rem; padding: 0.55rem 0.75rem; }
+
+  .chat-bubble { position: absolute; bottom: 10px; right: 10px; width: 34px; height: 34px; border-radius: 999px; background: #1e2a4a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; box-shadow: 0 3px 8px rgba(0,0,0,0.25); z-index: 5; }
+
+  .faint-text { color: #c3c7ce; font-size: 0.6rem; }
+  .ok-text { color: #4b5563; font-size: 0.78rem; }
+
+  .mock-body { padding: 0.8rem; position: relative; min-height: 220px; }
+
+  /* ---------- Snippet (text-only) compare rows ---------- */
+  .snippet-row { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .snippet { flex: 1; min-width: 260px; border-radius: 0.6rem; padding: 0.9rem 1rem; font-size: 0.85rem; line-height: 1.5; }
+  .snippet-before { background: #fef2f2; border: 1px solid #fecaca; }
+  .snippet-after { background: #ecfdf3; border: 1px solid #bbf0cf; }
+  .snippet .tag { display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.35rem; }
+  .snippet-before .tag { color: #b91c1c; }
+  .snippet-after .tag { color: #15803d; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .mobile-jump { display: block; position: sticky; top: 0; z-index: 10; background: #1e2a4a; padding: 0.75rem 1rem; }
+    .mobile-jump select { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: none; font-size: 0.85rem; }
+    .content { padding: 1.25rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mobile-jump">
+  <select onchange="if(this.value) location.hash = this.value;">
+    <option value="">Jump to section…</option>
+    <option value="#global">Global issues (every page)</option>
+    <option value="#signin">Sign In</option>
+    <option value="#dashboard">1. Dashboard</option>
+    <option value="#mass-schedule">2. Mass Schedule</option>
+    <option value="#announcements">3. Announcements</option>
+    <option value="#messages">4. Messages</option>
+    <option value="#my-requests">5. My Requests (certificates)</option>
+    <option value="#requested-services">6. Requested Services</option>
+    <option value="#request-certificate">7. Request Certificate</option>
+    <option value="#request-service">8. Request a Service</option>
+    <option value="#mass-intentions">9. Mass Intentions</option>
+    <option value="#facility-booking">10. Facility Booking</option>
+    <option value="#donations">11. Donations</option>
+    <option value="#prayer-wall">12. Prayer Wall</option>
+    <option value="#ministry">13. Ministry Sign-ups</option>
+    <option value="#badges">14. My Badges</option>
+    <option value="#profile">15. My Profile</option>
+    <option value="#settings">16. My Settings</option>
+    <option value="#navigation">Navigation (☰ menu)</option>
+  </select>
+</div>
+
+<div class="app">
+  <nav class="sidebar">
+    <h1>Usability Review</h1>
+    <p class="note">Simulated signed-in parishioner, sample records only. Each section below is one item from the report — tell me which ones you want built for real.</p>
+    <a class="group">Global</a>
+    <a href="#global">Every page (icons, text, overlays)</a>
+    <a class="group">Pages</a>
+    <a href="#signin">Sign In</a>
+    <a href="#dashboard">1. Dashboard <span class="badge-done">partly done</span></a>
+    <a href="#mass-schedule">2. Mass Schedule</a>
+    <a href="#announcements">3. Announcements</a>
+    <a href="#messages">4. Messages</a>
+    <a href="#my-requests">5. My Requests</a>
+    <a href="#requested-services">6. Requested Services</a>
+    <a href="#request-certificate">7. Request Certificate</a>
+    <a href="#request-service">8. Request a Service</a>
+    <a href="#mass-intentions">9. Mass Intentions</a>
+    <a href="#facility-booking">10. Facility Booking</a>
+    <a href="#donations">11. Donations</a>
+    <a href="#prayer-wall">12. Prayer Wall</a>
+    <a href="#ministry">13. Ministry Sign-ups</a>
+    <a href="#badges">14. My Badges</a>
+    <a href="#profile">15. My Profile</a>
+    <a href="#settings">16. My Settings</a>
+    <a class="group">Nav</a>
+    <a href="#navigation">☰ Menu</a>
+  </nav>
+
+  <div class="content">
+
+    <!-- ===================== GLOBAL ===================== -->
+    <section class="topic" id="global">
+      <h2>Global issues — on every page</h2>
+      <p class="for-line">Fixing these once fixes them everywhere.</p>
+      <div class="meta-box">
+        Five tiny round top-bar icons (🔔 Aa ☾ EN ?), each ~28×28px with no label under them. Text as small as 9–10px, pale grey on white. The install banner covers the middle of the screen until closed. The chat bubble sits on top of Next/Submit on step forms. Red warning bars cover the button they're warning about, then vanish. "Switched-off"-looking pale purple/grey buttons (Next, Confirm Offering, Check In, New Request, Volunteer, Start request).
+      </div>
+      <div class="fix-box">
+        <b>Fix:</b> label every top-bar icon and grow it to 44×44px. Raise base text size and darken grey copy. Make the install banner a slim dismissible strip, not an overlay. Move the chat bubble up/away from step-form footers. Turn warning bars into inline text under the field, not a bottom overlay. Make primary buttons solid navy so they read as clickable.
+      </div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-header">
+              <span class="mock-title">Dashboard</span>
+              <div class="icon-row">
+                <div class="icon-tiny">🔔</div><div class="icon-tiny">Aa</div><div class="icon-tiny">☾</div><div class="icon-tiny">EN</div><div class="icon-tiny">?</div>
+              </div>
+            </div>
+            <div class="install-banner">Get the SacraDigit app for faster access<span class="x">✕</span></div>
+            <div class="mock-body">
+              <p class="faint-text" style="margin:0 0 0.4rem;">Status: pending review, usually ready in a few days</p>
+              <p class="faint-text" style="margin:0 0 1.2rem;">Submitted October 14, 2026 at 9:03 AM</p>
+              <button class="btn-pale-full">Next</button>
+              <div class="chat-bubble">💬</div>
+            </div>
+            <div class="warning-bar">⚠ Please complete all required fields</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-header">
+              <span class="mock-title">Dashboard</span>
+            </div>
+            <div style="display:flex; justify-content:space-around; padding:0.5rem 0.25rem; border-bottom:1px solid #f1f2f5;">
+              <div class="icon-big"><div class="circle">🔔</div><span class="lbl">Alerts</span></div>
+              <div class="icon-big"><div class="circle">Aa</div><span class="lbl">Text size</span></div>
+              <div class="icon-big"><div class="circle">☾</div><span class="lbl">Dark mode</span></div>
+              <div class="icon-big"><div class="circle">EN</div><span class="lbl">Language</span></div>
+              <div class="icon-big"><div class="circle">?</div><span class="lbl">Help</span></div>
+            </div>
+            <div class="mock-body">
+              <p class="ok-text" style="margin:0 0 0.4rem;">Status: pending review, usually ready in a few days</p>
+              <p class="ok-text" style="margin:0 0 0.5rem; color:#b91c1c; font-weight:600;">Please enter the last name.</p>
+              <button class="btn-solid">Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">Same screen, same data — only the chrome changes: labeled 44px icons, readable grey, no overlay banner, the warning sits next to the field instead of on top of the button, and the button itself looks pressable.</p>
+    </section>
+
+    <!-- ===================== SIGN IN ===================== -->
+    <section class="topic" id="signin">
+      <h2>Sign In</h2>
+      <p class="for-line">For: getting into the portal.</p>
+      <div class="meta-box"><b>Struggles:</b> "Welcome back" greets someone who has never been here. The download icon and install banner still show on this page.</div>
+      <div class="fix-box"><b>Fix:</b> change the heading to "Sign in to your parish account". Hide the install banner here. Add "Forgot your password? Tap here — or call the parish office at …" under the button.</div>
+      <div class="snippet-row">
+        <div class="snippet snippet-before"><span class="tag">Before</span><strong style="font-size:1.1rem;">Welcome back</strong><br>Sign in to continue.<br><br><button class="btn-pale" disabled>Sign In</button></div>
+        <div class="snippet snippet-after"><span class="tag">After</span><strong style="font-size:1.1rem;">Sign in to your parish account</strong><br>Enter the email and password the office gave you.<br><br><button class="btn-solid" style="width:auto; display:inline-block;">Sign In</button><br><br><a href="#" style="font-size:0.78rem; color:#6c6fb0;">Forgot your password? Tap here — or call the parish office at (02) 8XXX-XXXX</a></div>
+      </div>
+    </section>
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <section class="topic" id="dashboard">
+      <h2>1. Dashboard</h2>
+      <p class="for-line">For: today's Masses, news and your requests at a glance.</p>
+      <div class="meta-box"><b>Struggles:</b> "No more masses today" gives no next step. The Status column of My Recent Requests was cut off at the right edge on a phone. The install banner covers My Faith Journey and Today's Mass Schedule.</div>
+      <div class="fix-box"><b>Fix:</b> replace the empty message with "Next Mass: Tuesday 7:00 AM". <span class="done-tag">Cards for My Recent Requests — already shipped</span> On phones, requests now render as cards instead of a 3-column table (see the live app).</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="panel panel-noborder">
+              <div class="panel-header"><span class="panel-title">Today's Mass Schedule</span></div>
+              <div style="padding:1.5rem 1rem; text-align:center; color:#9ca3af; font-size:0.8rem;">No more masses today.</div>
+            </div>
+          </div>
+          <p class="caption">Dead end — Rosa doesn't know when the next Mass actually is.</p>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="panel panel-noborder">
+              <div class="panel-header"><span class="panel-title">Today's Mass Schedule</span></div>
+              <div style="padding:1.25rem 1rem; text-align:center;">
+                <div style="font-size:0.7rem; color:#9ca3af; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.3rem;">No more Masses today</div>
+                <div style="font-size:1rem; font-weight:700; color:#111827;">Next Mass: Tuesday, 7:00 AM</div>
+              </div>
+            </div>
+          </div>
+          <p class="caption">Same empty state, but it now answers the question Rosa actually came to ask.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MASS SCHEDULE ===================== -->
+    <section class="topic" id="mass-schedule">
+      <h2>2. Mass Schedule</h2>
+      <p class="for-line">For: what time Mass is.</p>
+      <div class="meta-box"><b>Struggles:</b> the weekly times are at the very bottom, under a color legend and "Ordinary Time · Week 22 · Day 149 of 189". The date box shows a raw browser picker. "SET REMINDER" doesn't say what it does.</div>
+      <div class="fix-box"><b>Fix:</b> put the Regular Weekly Mass Schedule first, with today's row highlighted. Move the liturgical season bar below it (or drop it on phones). Rename the button "Remind me (on this phone)".</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="background:#eef0f4; border-radius:0.5rem; padding:0.5rem; font-size:0.65rem; color:#6b7280; margin-bottom:0.6rem;">🟣 Ordinary Time · 🟡 Week 22 · Day 149 of 189</div>
+              <div style="display:flex; gap:0.3rem; margin-bottom:0.7rem;">
+                <span style="width:12px;height:12px;border-radius:999px;background:#c9a84c;"></span>
+                <span style="width:12px;height:12px;border-radius:999px;background:#8b8fc7;"></span>
+                <span style="font-size:0.6rem; color:#9ca3af;">Color legend…</span>
+              </div>
+              <div style="border:1px solid #e5e7eb; border-radius:0.4rem; padding:0.4rem 0.5rem; font-size:0.75rem; color:#374151; margin-bottom:0.7rem;">📅 10/19/2026</div>
+              <button class="btn-pale-full" style="margin-bottom:0.7rem;">SET REMINDER</button>
+              <p style="font-size:0.65rem; color:#9ca3af; margin:0;">↓ weekly schedule is further down ↓</p>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="panel panel-noborder">
+              <div class="panel-header"><span class="panel-title">Regular Weekly Mass Schedule</span></div>
+              <div>
+                <div style="display:flex; justify-content:space-between; padding:0.6rem 1rem; background:#fffbeb; border-bottom:1px solid #f5f6f8;"><b>Today · Mon</b><span>6:00 AM, 7:00 PM</span></div>
+                <div style="display:flex; justify-content:space-between; padding:0.6rem 1rem; border-bottom:1px solid #f5f6f8; color:#4b5563;"><span>Tue</span><span>7:00 AM</span></div>
+                <div style="display:flex; justify-content:space-between; padding:0.6rem 1rem; color:#4b5563;"><span>Wed</span><span>7:00 AM</span></div>
+              </div>
+              <div style="padding:0.5rem 1rem; font-size:0.65rem; color:#9ca3af; border-top:1px solid #f1f2f5;">Ordinary Time · Week 22</div>
+              <div style="padding:0.75rem 1rem;"><button class="btn-solid">Remind me (on this phone)</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== ANNOUNCEMENTS ===================== -->
+    <section class="topic" id="announcements">
+      <h2>3. Announcements</h2>
+      <p class="for-line">For: parish news.</p>
+      <div class="meta-box"><b>Struggles:</b> the audience tag ("All Parishioners") is 10px. The "All Audiences" filter and "Clear" button aren't useful to her. "Updates" vs "Announcements" isn't explained.</div>
+      <div class="fix-box"><b>Fix:</b> hide the audience filter for parishioners. Make the newest announcement a large card, with the date written out in full ("Sunday, October 18").</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="display:flex; gap:0.4rem; margin-bottom:0.6rem;">
+                <select style="font-size:0.65rem; padding:0.2rem;"><option>All Audiences</option></select>
+                <button style="font-size:0.65rem; color:#9ca3af; background:none; border:1px solid #e5e7eb; border-radius:0.3rem;">Clear</button>
+              </div>
+              <div style="border:1px solid #e5e7eb; border-radius:0.5rem; padding:0.6rem;">
+                <span class="faint-text">All Parishioners · 10/18/26</span>
+                <div style="font-size:0.85rem; font-weight:600; margin-top:0.2rem;">Parish Fiesta Schedule</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="border:1px solid #e5e7eb; border-radius:0.75rem; padding:1rem;">
+                <div style="font-size:0.95rem; font-weight:700; margin-bottom:0.3rem;">Parish Fiesta Schedule</div>
+                <div style="font-size:0.78rem; color:#6b7280;">Sunday, October 18</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MESSAGES ===================== -->
+    <section class="topic" id="messages">
+      <h2>4. Messages</h2>
+      <p class="for-line">For: writing to the parish office.</p>
+      <div class="meta-box"><b>Struggles:</b> "Head Admin or the Secretary" is office jargon. "Enter to send · Shift+Enter for a new line" doesn't apply on a phone. The send button is an arrow icon only. A second chat bubble (Parish Assistant) sits right beside it — unclear which one reaches a person.</div>
+      <div class="fix-box"><b>Fix:</b> say "A parish office staff member will reply here, usually within 1 day." Use a big Send button with the word on it. Remove the keyboard hint on phones. Hide the assistant bubble on this page.</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:160px;">
+              <p class="faint-text" style="margin:0 0 1rem;">Chatting with Head Admin or the Secretary</p>
+              <div style="display:flex; gap:0.4rem; align-items:center;">
+                <div style="flex:1; border:1px solid #e5e7eb; border-radius:1.2rem; padding:0.5rem 0.75rem; font-size:0.75rem; color:#9ca3af;">Type a message…</div>
+                <button style="width:32px;height:32px;border-radius:999px;background:#8b8fc7;color:#fff;border:none;">➤</button>
+              </div>
+              <p class="faint-text" style="margin-top:0.3rem;">Enter to send · Shift+Enter for a new line</p>
+              <div class="chat-bubble" style="background:#6c6fb0;">🤖</div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:160px;">
+              <p class="ok-text" style="margin:0 0 1rem;">A parish office staff member will reply here, usually within 1 day.</p>
+              <div style="border:1px solid #e5e7eb; border-radius:0.75rem; padding:0.5rem 0.75rem; font-size:0.78rem; color:#9ca3af; margin-bottom:0.5rem;">Type a message…</div>
+              <button class="btn-solid">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MY REQUESTS ===================== -->
+    <section class="topic" id="my-requests">
+      <h2>5. My Requests (certificates)</h2>
+      <p class="for-line">For: checking whether a certificate is ready.</p>
+      <div class="meta-box"><b>Struggles:</b> the progress tracker's labels are 9px and run together ("SubmittedUnder ReviewApprovedReadyReleased"). Six filter chips is too many.</div>
+      <div class="fix-box"><b>Fix:</b> replace the tracker with one plain sentence in large text, e.g. "Being checked by the parish office. Usually ready in 3–5 working days." Keep only the All / Pending / Ready chips.</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="display:flex; gap:0.25rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+                <span class="badge badge-gray">All</span><span class="badge badge-gray">Pending</span><span class="badge badge-gray">Approved</span><span class="badge badge-gray">Ready</span><span class="badge badge-gray">Released</span><span class="badge badge-gray">Rejected</span>
+              </div>
+              <div style="font-size:0.5625rem; color:#9ca3af; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">SubmittedUnder ReviewApprovedReadyReleased</div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="display:flex; gap:0.3rem; margin-bottom:0.9rem;">
+                <span class="badge badge-amber" style="font-size:0.75rem; padding:0.3rem 0.8rem;">All</span><span class="badge badge-gray" style="font-size:0.75rem; padding:0.3rem 0.8rem;">Pending</span><span class="badge badge-gray" style="font-size:0.75rem; padding:0.3rem 0.8rem;">Ready</span>
+              </div>
+              <p style="font-size:0.9rem; font-weight:600; color:#111827; margin:0;">Being checked by the parish office.</p>
+              <p style="font-size:0.8rem; color:#6b7280; margin:0.25rem 0 0;">Usually ready in 3–5 working days.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== REQUESTED SERVICES ===================== -->
+    <section class="topic" id="requested-services">
+      <h2>6. Requested Services</h2>
+      <p class="for-line">For: checking a booked blessing, baptism and so on.</p>
+      <div class="meta-box"><b>Struggles:</b> four stat cards ("Total Requests, all time…") come before her actual request. "VIEW ›" is small.</div>
+      <div class="fix-box"><b>Fix:</b> list her requests first, each with a large status word and the date ("House Blessing — Waiting for approval — Tue Oct 28, 9:00 AM"). Move the stat cards below the list or drop them.</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; margin-bottom:0.7rem;">
+                <div style="background:#eef0f4; border-radius:0.4rem; padding:0.5rem; font-size:0.6rem; color:#6b7280;">Total Requests<br><b style="font-size:0.85rem; color:#111827;">12</b></div>
+                <div style="background:#eef0f4; border-radius:0.4rem; padding:0.5rem; font-size:0.6rem; color:#6b7280;">Approved<br><b style="font-size:0.85rem; color:#111827;">8</b></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f2f5; padding-top:0.5rem;">
+                <span style="font-size:0.78rem;">House Blessing</span>
+                <span style="font-size:0.65rem; color:#6c6fb0;">VIEW ›</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="border:1px solid #e5e7eb; border-radius:0.6rem; padding:0.7rem;">
+                <div style="font-size:0.85rem; font-weight:700;">House Blessing</div>
+                <div style="font-size:0.85rem; font-weight:700; color:#b45309; margin:0.2rem 0;">Waiting for approval</div>
+                <div style="font-size:0.75rem; color:#6b7280;">Tue, Oct 28 · 9:00 AM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== REQUEST CERTIFICATE ===================== -->
+    <section class="topic" id="request-certificate">
+      <h2>7. Request Certificate</h2>
+      <p class="for-line">For: asking for a baptismal or other certificate.</p>
+      <div class="meta-box"><b>Struggles:</b> pressing Next on an empty step only outlines boxes in red, no words under each box, and the warning bar covers the bottom of the form. Date of Birth uses the browser's mm/dd/yyyy picker — hard for seniors scrolling back 70 years.</div>
+      <div class="fix-box"><b>Fix:</b> under each empty box, add a short message like "Please enter the last name." For birth dates, use three dropdowns: Month (word) / Day / Year.</div>
+
+      <div class="snippet-row">
+        <div class="snippet snippet-before"><span class="tag">Before</span>
+          <div style="border:2px solid #dc2626; border-radius:0.4rem; padding:0.5rem; font-size:0.8rem; color:#9ca3af;">Last Name</div>
+          <div style="margin-top:0.5rem; border:1px solid #e5e7eb; border-radius:0.4rem; padding:0.5rem; font-size:0.8rem; color:#9ca3af;">📅 mm/dd/yyyy</div>
+        </div>
+        <div class="snippet snippet-after"><span class="tag">After</span>
+          <div style="border:2px solid #dc2626; border-radius:0.4rem; padding:0.5rem; font-size:0.8rem; color:#9ca3af;">Last Name</div>
+          <div style="font-size:0.72rem; color:#b91c1c; margin-top:0.25rem;">Please enter the last name.</div>
+          <div style="margin-top:0.6rem; display:flex; gap:0.3rem;">
+            <select style="font-size:0.72rem; flex:1.4;"><option>October</option></select>
+            <select style="font-size:0.72rem; flex:1;"><option>14</option></select>
+            <select style="font-size:0.72rem; flex:1.2;"><option>1956</option></select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== REQUEST A SERVICE ===================== -->
+    <section class="topic" id="request-service">
+      <h2>8. Request a Service</h2>
+      <p class="for-line">For: booking a blessing, baptism, wedding and so on.</p>
+      <div class="meta-box"><b>Struggles:</b> the page is 4.5 phone screens of 14 cards. "Start request" is pale grey, the whole card may not look tappable. The time chips look tappable but aren't. Inside House Blessing, a big map comes before the address, and the date/time picker is at the bottom. Submitting empty says only "Please pick a schedule," over the Submit button.</div>
+      <div class="fix-box"><b>Fix:</b> add a "What do you need?" question with three big buttons (Blessing · Sacrament · Mass for an occasion) that each show only their group. Make "Start request" a real full-width button. Show time chips as plain text. Order the form as address, then date/time, then the optional map.</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
+                <div style="border:1px solid #e5e7eb; border-radius:0.5rem; padding:0.5rem; font-size:0.65rem;">House Blessing<br><button class="btn-pale-full" style="margin-top:0.4rem; font-size:0.6rem; padding:0.3rem;">Start request</button></div>
+                <div style="border:1px solid #e5e7eb; border-radius:0.5rem; padding:0.5rem; font-size:0.65rem;">Baptism<br><button class="btn-pale-full" style="margin-top:0.4rem; font-size:0.6rem; padding:0.3rem;">Start request</button></div>
+                <div style="border:1px solid #e5e7eb; border-radius:0.5rem; padding:0.5rem; font-size:0.65rem;">Wedding<br><button class="btn-pale-full" style="margin-top:0.4rem; font-size:0.6rem; padding:0.3rem;">Start request</button></div>
+                <div style="border:1px solid #e5e7eb; border-radius:0.5rem; padding:0.5rem; font-size:0.65rem;">Funeral Mass<br><button class="btn-pale-full" style="margin-top:0.4rem; font-size:0.6rem; padding:0.3rem;">Start request</button></div>
+              </div>
+              <p class="faint-text" style="margin-top:0.4rem;">…10 more cards below ↓</p>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <p style="font-size:0.85rem; font-weight:700; margin:0 0 0.5rem;">What do you need?</p>
+              <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                <button class="btn-solid">Blessing</button>
+                <button class="btn-solid" style="background:#374151;">Sacrament</button>
+                <button class="btn-solid" style="background:#6b4a8a;">Mass for an occasion</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MASS INTENTIONS ===================== -->
+    <section class="topic" id="mass-intentions">
+      <h2>9. Mass Intentions</h2>
+      <p class="for-line">For: offering a Mass for someone.</p>
+      <div class="meta-box"><b>Struggles:</b> the new 3 steps are the best flow on the site, but pressing Next with no intention picked says "Please add at least one person to the prayer list" — the real problem is "choose what to pray for." The chat bubble and warning bar cover the Next button.</div>
+      <div class="fix-box"><b>Fix:</b> make the message match what's missing ("Tap one of the intentions above first"). Keep the bubble off the step footer (see the global fix above).</div>
+
+      <div class="snippet-row">
+        <div class="snippet snippet-before"><span class="tag">Before</span>⚠ Please add at least one person to the prayer list</div>
+        <div class="snippet snippet-after"><span class="tag">After</span>⚠ Tap one of the intentions above first (For the Living, For the Deceased, Thanksgiving…)</div>
+      </div>
+    </section>
+
+    <!-- ===================== FACILITY BOOKING ===================== -->
+    <section class="topic" id="facility-booking">
+      <h2>10. Facility Booking</h2>
+      <p class="for-line">For: reserving the hall.</p>
+      <div class="meta-box"><b>Struggles:</b> the steps are numbered 1 · 2 · 3 with no names. Next looks pale and switched off. "Please book at least 3 days in advance" is small grey text under the calendar.</div>
+      <div class="fix-box"><b>Fix:</b> add step names like the certificate form ("Facility & date · Time · Confirm"). Make Next solid navy. Put the 3-day rule above the calendar in normal text.</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="display:flex; gap:0.6rem; font-size:0.75rem; color:#9ca3af; margin-bottom:0.6rem;"><b style="color:#111827;">1</b><span>2</span><span>3</span></div>
+              <div style="border:1px solid #e5e7eb; border-radius:0.4rem; height:70px; margin-bottom:0.4rem;"></div>
+              <p class="faint-text" style="margin:0 0 0.6rem;">Please book at least 3 days in advance</p>
+              <button class="btn-pale-full">Next</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="font-size:0.7rem; color:#6b7280; margin-bottom:0.4rem;"><b style="color:#111827;">Facility &amp; date</b> · Time · Confirm</div>
+              <p style="font-size:0.78rem; color:#374151; margin:0 0 0.5rem;">Bookings need at least 3 days' notice.</p>
+              <div style="border:1px solid #e5e7eb; border-radius:0.4rem; height:70px; margin-bottom:0.6rem;"></div>
+              <button class="btn-solid">Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DONATIONS ===================== -->
+    <section class="topic" id="donations">
+      <h2>11. Donations</h2>
+      <p class="for-line">For: giving an offering.</p>
+      <div class="meta-box"><b>Struggles:</b> it's still a pop-up, not a page. "Confirm Offering" doesn't say what happens next with GCash or bank transfer — Rosa won't know whether money has left her account.</div>
+      <div class="fix-box"><b>Fix:</b> after Confirm, show a page saying exactly what to do ("Open GCash and send ₱300 to 0917… — the office will confirm within a day"). Use the same 3-step page layout as Mass Intentions.</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center;">
+              <div style="background:#fff; border-radius:0.6rem; padding:0.9rem; width:85%; text-align:center;">
+                <p style="font-size:0.8rem; font-weight:700; margin:0 0 0.5rem;">Donate ₱300</p>
+                <button class="btn-pale-full">Confirm Offering</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <p style="font-size:0.85rem; font-weight:700; margin:0 0 0.5rem;">Next: send your offering</p>
+              <p style="font-size:0.8rem; color:#374151; line-height:1.5;">Open GCash and send <b>₱300</b> to <b>0917-XXX-XXXX</b>. The parish office will confirm within a day.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PRAYER WALL ===================== -->
+    <section class="topic" id="prayer-wall">
+      <h2>12. Prayer Wall</h2>
+      <p class="for-line">For: posting a prayer request.</p>
+      <div class="meta-box"><b>Struggles:</b> clear and short overall. "0/500" is jargon, and the privacy note is grey.</div>
+      <div class="fix-box"><b>Fix:</b> change "0/500" to "You can write up to 500 letters." Make the privacy line normal dark text.</div>
+
+      <div class="snippet-row">
+        <div class="snippet snippet-before"><span class="tag">Before</span><span class="faint-text">0/500</span><br><span class="faint-text">This will be visible to parish staff only.</span></div>
+        <div class="snippet snippet-after"><span class="tag">After</span><span class="ok-text">You can write up to 500 letters.</span><br><span class="ok-text" style="color:#374151;">This will be visible to parish staff only.</span></div>
+      </div>
+    </section>
+
+    <!-- ===================== MINISTRY ===================== -->
+    <section class="topic" id="ministry">
+      <h2>13. Ministry Sign-ups</h2>
+      <p class="for-line">For: volunteering at Mass.</p>
+      <div class="meta-box"><b>Struggles:</b> the page is 3.9 screens long with 41 tap targets under 44px. Each slot shows "0/2" with no explanation. Volunteer is pale grey. "Anticipated Mass" is jargon.</div>
+      <div class="fix-box"><b>Fix:</b> write "2 lectors needed" instead of "0/2," and "Saturday evening Mass" instead of "Anticipated Mass." Use a solid, full-width Volunteer button. Default the ministry filter to one the person picked before.</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <p style="font-size:0.75rem; color:#6b7280; margin:0 0 0.4rem;">Anticipated Mass · Lector</p>
+              <p style="font-size:0.8rem; margin:0 0 0.5rem;">0/2</p>
+              <button class="btn-pale-full" style="font-size:0.75rem;">Volunteer</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <p style="font-size:0.75rem; color:#6b7280; margin:0 0 0.4rem;">Saturday evening Mass · Lector</p>
+              <p style="font-size:0.85rem; font-weight:600; margin:0 0 0.6rem;">2 lectors needed</p>
+              <button class="btn-solid">Volunteer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MY BADGES ===================== -->
+    <section class="topic" id="badges">
+      <h2>14. My Badges</h2>
+      <p class="for-line">For: the check-in code and faith badges.</p>
+      <div class="meta-box"><b>Struggles:</b> Check In at Mass is the one practical task here but shares the page with stats. "e.g. K7P-Q2M" in a monospace font looks odd, and the Check In button is pale.</div>
+      <div class="fix-box"><b>Fix:</b> add a large "Check in at Mass" button to the Dashboard that opens the camera. Keep badges as the reward page.</div>
+
+      <div class="snippet-row">
+        <div class="snippet snippet-before"><span class="tag">Before (on My Badges, buried)</span><code style="font-family:monospace; font-size:0.8rem;">e.g. K7P-Q2M</code><br><button class="btn-pale-full" style="margin-top:0.5rem; width:auto; display:inline-block;">Check In</button></div>
+        <div class="snippet snippet-after"><span class="tag">After (new, on Dashboard)</span><button class="btn-solid" style="font-size:1rem; padding:0.9rem;">📷 Check in at Mass</button></div>
+      </div>
+    </section>
+
+    <!-- ===================== MY PROFILE ===================== -->
+    <section class="topic" id="profile">
+      <h2>15. My Profile</h2>
+      <p class="for-line">For: contact details and password.</p>
+      <div class="meta-box"><b>Struggles:</b> the four tabs don't fit the phone ("My Activ…" is cut off, no hint to swipe). "Registered Parishioner" and "Two-Factor Authentication" are jargon.</div>
+      <div class="fix-box"><b>Fix:</b> stack the tabs as a list of big buttons on phones. Rename Two-Factor to "Extra sign-in protection (a code sent to your phone)."</div>
+
+      <div class="compare">
+        <div class="col">
+          <div class="phone-label label-bad">✕ Before</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="display:flex; border-bottom:1px solid #e5e7eb; font-size:0.65rem; overflow:hidden;">
+                <span style="padding:0.4rem 0.5rem; border-bottom:2px solid #1e2a4a; white-space:nowrap;">Details</span>
+                <span style="padding:0.4rem 0.5rem; white-space:nowrap;">Security</span>
+                <span style="padding:0.4rem 0.5rem; white-space:nowrap;">My Activ…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="phone-label label-good">✓ After</div>
+          <div class="phone">
+            <div class="mock-body" style="min-height:unset;">
+              <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                <button class="btn-solid" style="text-align:left; background:#f3f4f6; color:#111827;">Details</button>
+                <button class="btn-solid" style="text-align:left; background:#f3f4f6; color:#111827;">Security &amp; sign-in</button>
+                <button class="btn-solid" style="text-align:left; background:#f3f4f6; color:#111827;">My Activity</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MY SETTINGS ===================== -->
+    <section class="topic" id="settings">
+      <h2>16. My Settings</h2>
+      <p class="for-line">For: bigger text, dark mode, language.</p>
+      <div class="meta-box"><b>Struggles:</b> clear, but hidden behind the name at the bottom of the menu. Larger Text (the most important setting) is off by default, and it only enlarges body text, not the tiny top-bar buttons.</div>
+      <div class="fix-box"><b>Fix:</b> covered by the global top-bar fix above — once the icons themselves are 44px and labeled, this page becomes a secondary, not primary, fix.</div>
+    </section>
+
+    <!-- ===================== NAVIGATION ===================== -->
+    <section class="topic" id="navigation">
+      <h2>Navigation (the ☰ menu)</h2>
+      <p class="for-line">For: getting to every page.</p>
+      <div class="meta-box"><b>Struggles:</b> sixteen items in seven groups; the last group (Prayer Wall, Ministry, Badges) is below the fold with no hint to scroll. Profile, Settings and Log Out are hidden behind tapping her own name. "My Requests" and "Requested Services" sound the same.</div>
+      <div class="fix-box"><b>Fix:</b> rename them "My certificate requests" and "My service bookings." Add Settings and Log out as plain items at the bottom of the menu.</div>
+
+      <div class="snippet-row">
+        <div class="snippet snippet-before"><span class="tag">Before</span>My Requests<br>Requested Services<br><span class="faint-text">↓ Profile / Settings / Log out hidden under name ↓</span></div>
+        <div class="snippet snippet-after"><span class="tag">After</span>My certificate requests<br>My service bookings<br>…<br><span style="border-top:1px solid #e5e7eb; display:block; margin-top:0.5rem; padding-top:0.5rem;">Settings</span>Log out</div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</body>
+</html>
