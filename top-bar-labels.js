@@ -21,7 +21,10 @@ const STYLE = `
   header .help-date-wrap .ui-prefs { gap: 0.5rem; }
   header .help-date-wrap ${ICONS} {
     width: auto; min-width: 2.75rem; height: auto; min-height: 2.75rem;
-    flex-wrap: wrap; align-content: center; justify-content: center;
+    flex-wrap: wrap; align-content: flex-start; justify-content: center;
+    /* Same 1.25rem icon row on every button (the "Aa" letters, the globe + EN,
+       the drawn icons), so every word underneath starts on the same line. */
+    line-height: 1.25rem;
     column-gap: 0.2rem; row-gap: 0.15rem; padding: 0.25rem 0.35rem;
     border-radius: 0.6rem; border-color: transparent; background-color: transparent; color: #1e2a4a;
   }
@@ -31,7 +34,11 @@ const STYLE = `
     content: attr(data-label); flex-basis: 100%; text-align: center; font-family: inherit;
     font-size: 0.6875rem; font-weight: 600; letter-spacing: 0; line-height: 1.1; color: #374151; white-space: nowrap;
   }
-  header .help-date-wrap .ui-prefs-a11y { font-size: 1rem !important; }
+  header .help-date-wrap .ui-prefs-a11y { font-size: 1rem !important; line-height: 1.25rem; }
+  /* Bigger text mode draws the icons at 1.5rem (accessibility.css): match the row to it. */
+  :root[data-a11y="on"] header .help-date-wrap ${ICONS},
+  :root[data-a11y="on"] header .help-date-wrap .ui-prefs-a11y { line-height: 1.5rem; }
+  header .help-date-wrap :is(.pn-btn, .ui-prefs-btn, .ui-prefs-lang, .help-icon-btn) > :is(svg, span) { flex-shrink: 0; }
   header .help-date-wrap .ui-prefs-a11y[data-label]::after { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   header .help-date-wrap .ui-prefs-a11y[aria-pressed="true"]::after { color: inherit; }
   header .help-date-wrap .pn-count { top: -0.2rem; right: -0.1rem; }
