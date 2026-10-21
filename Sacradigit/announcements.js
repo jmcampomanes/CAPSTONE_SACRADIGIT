@@ -28,7 +28,7 @@ import { client } from '../amplify-init.js';
 import { isHeadAdmin } from '../auth.js';
 import { createTimePicker, displayTime } from '../time-picker.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
-import { showToast } from './admin-ui.js';
+import { showToast, confirmDialog } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -677,21 +677,23 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo(0, 0);
   }
 
-  const confirmDiscard = () => !editorDirty || confirm('Leave without saving? Your changes will be lost.');
+  const DISCARD = { title: 'Leave without saving?', message: 'Your changes to this announcement will be lost.', confirmLabel: 'Leave without saving', cancelLabel: 'Keep editing', tone: 'danger' };
+  const confirmDiscard = async () => !editorDirty || confirmDialog(DISCARD);
 
   // Back / Cancel / after saving: step back over the #editor history entry.
-  function leaveEditor({ force = false } = {}) {
+  async function leaveEditor({ force = false } = {}) {
     if (editorView.classList.contains('hidden')) return;
-    if (!force && !confirmDiscard()) return;
+    if (!force && !(await confirmDiscard())) return;
     editorDirty = false;
     if (location.hash === EDITOR_HASH) history.back(); // popstate below shows the list
     else showList();
   }
 
-  window.addEventListener('popstate', () => {
+  window.addEventListener('popstate', async () => {
     if (editorView.classList.contains('hidden') || location.hash === EDITOR_HASH) return;
-    if (editorDirty && !confirm('Leave without saving? Your changes will be lost.')) {
-      history.pushState({ annEditor: true }, '', EDITOR_HASH); // stay put
+    if (editorDirty) {
+      history.pushState({ annEditor: true }, '', EDITOR_HASH); // stay put while we ask
+      if (await confirmDialog(DISCARD)) { editorDirty = false; history.back(); } // popstate again → list
       return;
     }
     showList();

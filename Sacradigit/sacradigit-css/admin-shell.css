@@ -690,8 +690,8 @@ input[type="date"].form-input::-webkit-date-and-time-value { text-align: left; }
   font-size: 0.9375rem;
   color: rgba(255, 255, 255, 0.88);
 }
-.admin-hero .btn-lavender { background-color: #c9a84c; color: #1e2a4a; }
-.admin-hero .btn-lavender:hover { background-color: #b5943e; }
+:is(.admin-hero, .ann-hero) .btn-lavender { background-color: #c9a84c; color: #1e2a4a; }
+:is(.admin-hero, .ann-hero) .btn-lavender:hover { background-color: #b5943e; }
 
 /* ---------- Errors stay at the top until closed (admin-ui.js) ---------- */
 .toast.toast-error {
@@ -751,24 +751,24 @@ input[type="date"].form-input::-webkit-date-and-time-value { text-align: left; }
 :root[data-theme="dark"] .adm-dialog-err { color: #fca5a5; }
 
 /* ---------- Row actions: real buttons, not 11px capital words ---------- */
-.records-table .row-actions { gap: 0.5rem; flex-wrap: wrap; }
-.records-table :is(.row-approve, .row-reject, .row-view, .row-cert, .row-btn) {
+:is(.records-table, .acct-table) .row-actions { gap: 0.5rem; flex-wrap: wrap; }
+:is(.records-table, .acct-table) :is(.row-approve, .row-reject, .row-view, .row-cert, .row-btn) {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: 2.25rem; padding: 0.35rem 0.8rem; border-radius: 0.5rem;
   font-size: 0.8125rem; font-weight: 600; letter-spacing: 0; text-transform: none;
   white-space: nowrap; cursor: pointer;
   background: #ffffff; color: #1e2a4a; border: 1.5px solid #c7cad6;
 }
-.records-table :is(.row-view, .row-cert):hover { background: #f3f4f6; color: #1e2a4a; }
-.records-table .row-approve { background: #15803d; color: #ffffff; border-color: #15803d; }
-.records-table .row-approve:hover { background: #166534; color: #ffffff; }
-.records-table .row-release { background: #1e2a4a; border-color: #1e2a4a; }
-.records-table .row-release:hover { background: #2a3963; }
+:is(.records-table, .acct-table) :is(.row-view, .row-cert):hover { background: #f3f4f6; color: #1e2a4a; }
+:is(.records-table, .acct-table) .row-approve { background: #15803d; color: #ffffff; border-color: #15803d; }
+:is(.records-table, .acct-table) .row-approve:hover { background: #166534; color: #ffffff; }
+:is(.records-table, .acct-table) .row-release { background: #1e2a4a; border-color: #1e2a4a; }
+:is(.records-table, .acct-table) .row-release:hover { background: #2a3963; }
 /* Opposite decisions get extra room between them. */
-.records-table .row-reject { color: #b91c1c; border-color: #fca5a5; margin-left: 0.5rem; }
-.records-table .row-reject:hover { background: #fef2f2; color: #991b1b; }
-:root[data-theme="dark"] .records-table :is(.row-view, .row-cert, .row-reject) { background: transparent; color: #e5e8ef; border-color: #3a4459; }
-:root[data-theme="dark"] .records-table .row-reject { color: #fca5a5; border-color: #7f1d1d; }
+:is(.records-table, .acct-table) .row-reject { color: #b91c1c; border-color: #fca5a5; margin-left: 0.5rem; }
+:is(.records-table, .acct-table) .row-reject:hover { background: #fef2f2; color: #991b1b; }
+:root[data-theme="dark"] :is(.records-table, .acct-table) :is(.row-view, .row-cert, .row-reject) { background: transparent; color: #e5e8ef; border-color: #3a4459; }
+:root[data-theme="dark"] :is(.records-table, .acct-table) .row-reject { color: #fca5a5; border-color: #7f1d1d; }
 
 /* ---------- Approve several at once (Record Requests) ---------- */
 .req-bulk-bar {
@@ -785,7 +785,7 @@ input[type="date"].form-input::-webkit-date-and-time-value { text-align: left; }
 .btn-approve:hover { background: #166534; }
 .req-bulk-bar .btn-secondary { background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.25); }
 .records-table .col-select { width: 2.5rem; padding-right: 0; }
-.records-table .row-check { width: 1.1rem; height: 1.1rem; accent-color: #1e2a4a; cursor: pointer; }
+:is(.records-table, .acct-table) .row-check { width: 1.1rem; height: 1.1rem; accent-color: #1e2a4a; cursor: pointer; }
 
 /* ---------- Role notes: what this role can and can't do, up front ---------- */
 .secretary-only { display: none; }
@@ -803,24 +803,24 @@ body .min-swap-tag { font-size: 0.6875rem; }
 
 /* ---------- Phones: each table row as a card (dashboard.js initTableCards) ---------- */
 @media (max-width: 640px) {
-  .records-table.has-cards thead { display: none; }
-  .records-table.has-cards,
-  .records-table.has-cards > tbody,
-  .records-table.has-cards > tbody > tr { display: block; width: 100%; }
-  .records-table.has-cards > tbody > tr { padding: 0.75rem 1rem; border-bottom: 1px solid #eef0f4; }
-  .records-table.has-cards > tbody > tr:last-child { border-bottom: none; }
-  .records-table.has-cards > tbody > tr > td[data-label],
-  .records-table.has-cards > tbody > tr > td.td-actions { display: block; border: 0; padding: 0.125rem 0; white-space: normal; text-align: left; }
-  .records-table.has-cards > tbody > tr > td[data-label]:not(.td-primary)::before {
+  table.has-cards thead { display: none; }
+  table.has-cards,
+  table.has-cards > tbody,
+  table.has-cards > tbody > tr { display: block; width: 100%; }
+  table.has-cards > tbody > tr { padding: 0.75rem 1rem; border-bottom: 1px solid #eef0f4; }
+  table.has-cards > tbody > tr:last-child { border-bottom: none; }
+  table.has-cards > tbody > tr > td[data-label],
+  table.has-cards > tbody > tr > td.td-actions { display: block; border: 0; padding: 0.125rem 0; white-space: normal; text-align: left; }
+  table.has-cards > tbody > tr > td[data-label]:not(.td-primary)::before {
     content: attr(data-label) ": "; font-weight: 600; color: #6b7280;
   }
-  .records-table.has-cards > tbody > tr > td.td-primary { font-size: 0.9375rem; font-weight: 600; color: #111827; padding-bottom: 0.25rem; }
-  .records-table.has-cards > tbody > tr > td.td-actions { padding-top: 0.5rem; }
-  .records-table.has-cards > tbody > tr > td.td-actions .row-actions { justify-content: flex-start; }
-  .records-table.has-cards > tbody > tr > td.col-select { display: block; border: 0; padding: 0 0 0.25rem; }
-  .records-table.has-cards .purpose-cell { max-width: none; }
-  .records-table.has-cards > tbody > tr > td:empty { display: none; }
-  .records-table.has-cards .row-reject { margin-left: 0; }
+  table.has-cards > tbody > tr > td.td-primary { font-size: 0.9375rem; font-weight: 600; color: #111827; padding-bottom: 0.25rem; }
+  table.has-cards > tbody > tr > td.td-actions { padding-top: 0.5rem; }
+  table.has-cards > tbody > tr > td.td-actions .row-actions { justify-content: flex-start; }
+  table.has-cards > tbody > tr > td.col-select { display: block; border: 0; padding: 0 0 0.25rem; }
+  table.has-cards .purpose-cell { max-width: none; }
+  table.has-cards > tbody > tr > td:empty { display: none; }
+  table.has-cards .row-reject { margin-left: 0; }
 }
 
 /* Phones: four labeled top-bar icons leave no room for the page title, and the
@@ -832,5 +832,21 @@ body .min-swap-tag { font-size: 0.6875rem; }
   body header.bg-white:has([data-label]) > div:first-child { flex-basis: 100%; }
   body header:has([data-label]) .help-date-wrap { margin-left: auto; }
 }
-:root[data-theme="dark"] .records-table .row-approve { background: #15803d; border-color: #15803d; color: #ffffff; }
-:root[data-theme="dark"] .records-table .row-release { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] :is(.records-table, .acct-table) .row-approve { background: #15803d; border-color: #15803d; color: #ffffff; }
+:root[data-theme="dark"] :is(.records-table, .acct-table) .row-release { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
+
+/* Dark mode: navy would vanish on the dark page, so main buttons use the
+   light lavender with dark text (about 7:1); navy headers keep gold. */
+:root[data-theme="dark"] .btn-lavender { background-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] .btn-lavender:hover { background-color: #a5a8d6; }
+:root[data-theme="dark"] :is(.admin-hero, .ann-hero) .btn-lavender { background-color: #c9a84c; color: #1e2a4a; }
+:root[data-theme="dark"] .btn-lavender:disabled { background-color: #2c3547; color: #8a93a4; }
+.adm-dialog-preview { margin: 0 0 0.85rem; }
+.adm-dialog-choices { border: 0; padding: 0; margin: 0 0 0.25rem; display: grid; gap: 0.4rem; }
+.adm-dialog-choice { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.55rem 0.7rem; border: 1.5px solid #e5e7eb; border-radius: 0.6rem; cursor: pointer; font-size: 0.875rem; color: #111827; }
+.adm-dialog-choice:has(input:checked) { border-color: #1e2a4a; background: #f5f6fb; }
+.adm-dialog-choice input { margin-top: 0.2rem; accent-color: #1e2a4a; }
+.adm-dialog-choice small { display: block; font-size: 0.8125rem; color: #4b5563; font-weight: 400; margin-top: 0.1rem; }
+:root[data-theme="dark"] .adm-dialog-choice { border-color: #3a4459; color: #f1f3f7; }
+:root[data-theme="dark"] .adm-dialog-choice:has(input:checked) { border-color: #8b8fc7; background: #242c3e; }
+:root[data-theme="dark"] .adm-dialog-choice small { color: #b6bdca; }

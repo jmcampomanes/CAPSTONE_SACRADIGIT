@@ -237,7 +237,7 @@ button:focus-visible { outline-color: var(--itech); }
 
 .form-input.has-error { border-color: #dc2626; }
 
-.form-hint { font-size: 0.6875rem; color: #9ca3af; margin-top: 0.3rem; }
+.form-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 0.3rem; }
 
 /* ---------- Filter bar ---------- */
 .filter-bar {
@@ -269,8 +269,8 @@ button:focus-visible { outline-color: var(--itech); }
 /* ---------- Page intro line under a panel header ---------- */
 .panel-intro {
   padding: 0.75rem 1.25rem 0;
-  font-size: 0.75rem;
-  color: #6b7280;
+  font-size: 0.8125rem;
+  color: #4b5563;
 }
 
 /* ---------- Accounts (itech-accounts.js) ---------- */
@@ -289,7 +289,7 @@ button:focus-visible { outline-color: var(--itech); }
 .acct-table th {
   text-align: left;
   padding: 0.6rem 1.25rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -298,9 +298,32 @@ button:focus-visible { outline-color: var(--itech); }
 }
 .acct-table td { padding: 0.6rem 1.25rem; border-bottom: 1px solid #f3f4f6; color: #111827; vertical-align: middle; }
 .acct-role-select { padding-top: 0.35rem; padding-bottom: 0.35rem; font-size: 0.8125rem; min-width: 11rem; }
-.acct-status { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.6875rem; font-weight: 700; }
+.acct-status { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
 .acct-ok { background: #ecfdf3; color: #15803d; }
 .acct-warn { background: #fffbeb; color: #b45309; }
 .acct-off { background: #f3f4f6; color: #6b7280; }
-.acct-you { margin-left: 0.3rem; padding: 0 0.4rem; border-radius: 999px; background: #0e7490; color: #ffffff; font-size: 0.625rem; font-weight: 700; }
+.acct-you { margin-left: 0.3rem; padding: 0 0.4rem; border-radius: 999px; background: #0e7490; color: #ffffff; font-size: 0.75rem; font-weight: 700; }
 @media (max-width: 640px) { .acct-search { width: 100%; } }
+
+
+/* ---------- Accounts: role as text, deliberate "Change role…" (itech-accounts.js) ---------- */
+.acct-role { display: inline-flex; align-items: center; padding: 0.15rem 0.55rem; border-radius: 999px; background: #f3f4f6; color: #374151; font-size: 0.8125rem; font-weight: 600; white-space: nowrap; }
+.acct-role-elevated { background: #fffbeb; color: #92400e; box-shadow: inset 0 0 0 1px #fcd34d; }
+.acct-self-note { font-size: 0.8125rem; color: #6b7280; }
+:root[data-theme="dark"] .acct-role { background: #2c3547; color: #e5e8ef; }
+:root[data-theme="dark"] .acct-role-elevated { background: #3a2a0f; color: #fcd34d; box-shadow: inset 0 0 0 1px #92400e; }
+:root[data-theme="dark"] .acct-self-note { color: #9aa3b5; }
+
+/* ---------- What each role can do / role notes (itech-roles.js) ---------- */
+.role-access-list { list-style: none; margin: 0; padding: 0.75rem 1.25rem 1.25rem; display: grid; gap: 0.5rem; }
+.role-access-item { display: grid; grid-template-columns: 8.5rem 1fr; gap: 0.75rem; align-items: start; font-size: 0.875rem; color: #374151; line-height: 1.45; }
+.role-access-item .acct-role { justify-self: start; }
+.role-notes-tag { margin-left: 0.4rem; padding: 0.1rem 0.45rem; border-radius: 999px; background: #f3f4f6; color: #4b5563; font-size: 0.6875rem; letter-spacing: 0.02em; vertical-align: middle; }
+.role-notes-warning { margin-top: 0.75rem; background: #fffbeb; border-color: #fcd34d; color: #78350f; font-size: 0.875rem; }
+:root[data-theme="dark"] .role-access-item { color: #cbd3e6; }
+:root[data-theme="dark"] .role-notes-warning { background: #2a210c; border-color: #92400e; color: #fde68a; }
+@media (max-width: 640px) { .role-access-item { grid-template-columns: 1fr; gap: 0.25rem; } }
+
+/* ---------- Backup: when the last full backup was made (itech-backup.js) ---------- */
+.backup-last { margin-top: 0.45rem; font-size: 0.875rem; font-weight: 600; color: rgba(255, 255, 255, 0.92); }
+.backup-last.is-due { color: #fde68a; }

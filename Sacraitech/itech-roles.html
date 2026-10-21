@@ -185,9 +185,16 @@
           </div>
         </div>
 
+        <!-- The only thing that controls access: each account's role (auth.js) -->
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">What each role can do</h2></div>
+          <p class="panel-intro">These five roles are what actually decide access. Change someone’s access with “Change role…” in Accounts above.</p>
+          <ul id="role-access-list" class="role-access-list"></ul>
+        </div>
+
         <div class="panel">
           <div class="panel-header flex-wrap gap-3">
-            <h2 class="panel-title">Roles &amp; Permissions</h2>
+            <h2 class="panel-title">Role notes <span class="role-notes-tag">Reference only</span></h2>
             <div class="flex items-center gap-2">
               <button type="button" id="btn-seed-roles" class="btn-filter btn-sm hidden">Load Default Roles</button>
               <button type="button" id="btn-new-role" class="btn-teal btn-sm">
@@ -196,7 +203,7 @@
               </button>
             </div>
           </div>
-          <p class="panel-intro">Who can do what across SacraDigit. Every change is recorded in Activity Logs.</p>
+          <div class="acct-note role-notes-warning"><strong>These notes don’t change what anyone can do.</strong> Use them to write down duties or who covers what. Access comes only from each account’s role (Accounts, above). Changes are still recorded in Activity Logs.</div>
           <div class="p-5">
             <div id="roles-grid" class="roles-grid"><p class="empty-state">Loading roles…</p></div>
           </div>

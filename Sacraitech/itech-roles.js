@@ -9,7 +9,9 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { escapeHtml, showToast, logItAction, openModal, closeModal, wireModals } from './itech-shell.js';
+import { escapeHtml, showToast, logItAction, openModal, closeModal, wireModals, ROLE_ACCESS, ELEVATED } from './itech-shell.js';
+import { ROLES } from '../auth.js';
+import { confirmDialog } from '../Sacradigit/admin-ui.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -56,12 +58,19 @@ let editingId = null;
 const roleModal = $('role-modal');
 wireModals(roleModal);
 
+/* What each real account role can do (the notes below don't control access). */
+$('role-access-list').innerHTML = Object.entries(ROLE_ACCESS).map(([key, text]) => `
+  <li class="role-access-item">
+    <span class="acct-role${ELEVATED.has(key) ? ' acct-role-elevated' : ''}">${escapeHtml(ROLES[key].label)}</span>
+    <span>${escapeHtml(text)}</span>
+  </li>`).join('');
+
 /* ---------- List ---------- */
 
 function render() {
   $('btn-seed-roles').classList.toggle('hidden', roles.length > 0);
   if (roles.length === 0) {
-    $('roles-grid').innerHTML = '<p class="empty-state" style="grid-column:1/-1;">No roles defined yet. Click “Load Default Roles” for a starter set, or create one.</p>';
+    $('roles-grid').innerHTML = '<p class="empty-state" style="grid-column:1/-1;">No role notes yet. Click “Load Default Roles” for a starter set, or add one.</p>';
     return;
   }
   $('roles-grid').innerHTML = roles.slice().sort((a, b) => a.role.localeCompare(b.role)).map(r => {
@@ -129,7 +138,14 @@ $('roles-grid').addEventListener('click', async (e) => {
   const delId = e.target.closest('[data-delete]')?.dataset.delete;
   if (!delId) return;
   const role = roles.find(r => r.id === delId);
-  if (!role || !confirm(`Delete the “${role.role}” role? Assigned users lose these permissions.`)) return;
+  if (!role) return;
+  const sure = await confirmDialog({
+    title: `Delete the “${role.role}” note?`,
+    message: 'This only removes the note. Nobody’s access changes.',
+    confirmLabel: 'Delete note',
+    tone: 'danger',
+  });
+  if (!sure) return;
   try {
     const { errors } = await client.models.Role.delete({ id: delId });
     if (errors?.length) throw new Error(errors[0].message);

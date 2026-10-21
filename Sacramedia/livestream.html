@@ -178,9 +178,10 @@
               <span id="livestream-status-badge" class="badge badge-draft">Off</span>
             </div>
             <div class="p-5 space-y-4">
-              <div class="flex items-center gap-3">
-                <button id="toggle-live-btn" class="btn-lavender">Go Live</button>
-                <p class="text-xs text-gray-400">Flip this when the stream actually starts/ends so the parishioner dashboard stays accurate.</p>
+              <div id="live-strip" class="live-strip" role="status" aria-live="polite">
+                <span class="live-strip-dot" aria-hidden="true"></span>
+                <span class="live-strip-text" id="live-strip-text">Not live. Parishioners don’t see a “Watch Live” banner.</span>
+                <button id="toggle-live-btn" type="button" class="live-btn">● Go live…</button>
               </div>
               <div>
                 <label class="form-label" for="livestream-platform">Platform</label>
@@ -194,8 +195,11 @@
                 <label class="form-label" for="livestream-url">Stream Link</label>
                 <input type="url" id="livestream-url" class="form-input" placeholder="https://facebook.com/OLFPQC/live" />
               </div>
-              <button id="save-livestream-btn" class="btn-gold">Save</button>
-              <p class="text-xs text-gray-400" id="livestream-updated"></p>
+              <div class="flex flex-wrap items-center gap-3">
+                <button id="save-livestream-btn" type="button" class="btn-secondary">Save link only</button>
+                <p class="text-sm text-gray-600">The link is saved automatically when you go live.</p>
+              </div>
+              <p class="text-sm text-gray-600" id="livestream-updated"></p>
             </div>
           </div>
 

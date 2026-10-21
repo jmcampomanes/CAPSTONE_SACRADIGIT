@@ -75,3 +75,12 @@
 }
 
 .media-file-picker:hover { background: rgba(139, 143, 199, 0.08); }
+
+/* Upload progress (media-library.js uploadWithProgress) */
+.upload-progress { margin-top: 0.6rem; }
+.upload-progress-bar { height: 0.5rem; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
+.upload-progress-bar > span { display: block; height: 100%; width: 0; background: #1e2a4a; transition: width 0.2s ease; }
+.upload-progress-text { margin-top: 0.3rem; font-size: 0.8125rem; color: #374151; }
+:root[data-theme="dark"] .upload-progress-bar { background: #2c3547; }
+:root[data-theme="dark"] .upload-progress-bar > span { background: #8b8fc7; }
+:root[data-theme="dark"] .upload-progress-text { color: #cbd3e6; }

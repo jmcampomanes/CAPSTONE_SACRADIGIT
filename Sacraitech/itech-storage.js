@@ -13,7 +13,7 @@
 
 import { client } from '../amplify-init.js';
 import { list, getUrl, remove } from 'aws-amplify/storage';
-import { escapeHtml, formatBytes, formatDateTime, showToast, logItAction, folderName, isExternalUrl as isExternal, userFiles, listAll } from './itech-shell.js';
+import { escapeHtml, formatBytes, formatDateTime, showToast, logItAction, folderName, isExternalUrl as isExternal, userFiles, listAll, confirmPermanentDelete } from './itech-shell.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -117,7 +117,7 @@ $('file-tbody').addEventListener('click', async (e) => {
   const delId = e.target.closest('[data-delete]')?.dataset.delete;
   if (!delId) return;
   const f = files.find(x => x.id === delId);
-  if (!f || !confirm(`Permanently delete “${f.name}”? This removes it for everyone and can’t be undone.`)) return;
+  if (!f || !(await confirmPermanentDelete(f))) return;
   try {
     if (!isExternal(f.url)) {
       await remove({ path: f.url }).catch(err => console.warn('S3 object not removed (may already be gone):', err));

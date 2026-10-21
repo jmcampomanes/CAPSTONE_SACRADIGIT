@@ -13,11 +13,15 @@ guardPage('media');
 import '../Sacradigit/sacred-art.js';
 import { initUiPrefs } from '../ui-prefs.js';
 import { initExtToggles } from '../name-utils.js';
+import { labelTopBarIcons } from '../top-bar-labels.js';
+import { initTableCards } from '../table-cards.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
   initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
+  labelTopBarIcons(); // a word under each top-bar icon (../top-bar-labels.js)
+  initTableCards(); // phones: rows as cards (../table-cards.js)
 
   /* ------------------------------------------
      1. ACTIVE SIDEBAR LINK

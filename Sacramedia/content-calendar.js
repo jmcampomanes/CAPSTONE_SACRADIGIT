@@ -9,6 +9,7 @@
 
 import { client } from '../amplify-init.js';
 import { importLocalEntries } from './media-local-import.js';
+import { showToast, confirmDialog } from '../Sacradigit/admin-ui.js';
 
 // Read by Sacradigit/announcements.js to prefill (and schedule) a new post
 const ANNOUNCEMENT_PREFILL_KEY = 'sacradigit_announcement_prefill';
@@ -47,21 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusField = document.getElementById('entry-status');
   const notesField = document.getElementById('entry-notes');
 
-  const toast = document.getElementById('toast');
-  let toastTimer = null;
 
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
   const model = client.models.ContentCalendarEntry;
   if (!model) {
@@ -212,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deleteId) {
       const entry = entries.find(x => x.id === deleteId);
       if (!entry) return;
-      if (!confirm(`Remove "${entry.title}" from the calendar?`)) return;
+      if (!(await confirmDialog({ title: `Remove "${entry.title}" from the calendar?`, message: 'It won’t be posted. This can’t be undone.', confirmLabel: 'Remove', tone: 'danger' }))) return;
       try {
         const { errors } = await model.delete({ id: deleteId });
         if (errors) throw new Error(errors.map(er => er.message).join('; '));

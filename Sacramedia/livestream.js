@@ -9,6 +9,7 @@
 
 import { client } from '../amplify-init.js';
 import { watchLivestream, saveLivestream, addLivestreamHistory, watchLivestreamHistory } from '../livestream-status.js';
+import { showToast, confirmDialog } from '../Sacradigit/admin-ui.js';
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -35,21 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   [platformField, urlField].forEach(el => el.addEventListener('input', () => { fieldsDirty = true; }));
   platformField.addEventListener('change', () => { fieldsDirty = true; });
 
-  const toast = document.getElementById('toast');
-  let toastTimer = null;
 
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
   function renderStatus() {
     const state = current || { isLive: false, platform: 'Facebook', url: '', updatedAt: '' };
@@ -58,16 +45,21 @@ document.addEventListener('DOMContentLoaded', () => {
       urlField.value = state.url || '';
     }
 
+    const strip = document.getElementById('live-strip');
+    const stripText = document.getElementById('live-strip-text');
+    strip.classList.toggle('is-live', !!state.isLive);
     if (state.isLive) {
       statusBadge.textContent = 'Live Now';
       statusBadge.className = 'badge badge-live';
-      toggleBtn.textContent = 'End Stream';
-      toggleBtn.classList.add('is-live');
+      const since = liveSince || state.updatedAt;
+      const at = since ? new Date(since).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+      stripText.textContent = `LIVE${at ? ` since ${at}` : ''} · ${state.platform || 'Facebook'}. Parishioners see the “Watch Live” banner.`;
+      toggleBtn.textContent = 'End stream…';
     } else {
       statusBadge.textContent = 'Off';
       statusBadge.className = 'badge badge-draft';
-      toggleBtn.textContent = 'Go Live';
-      toggleBtn.classList.remove('is-live');
+      stripText.textContent = 'Not live. Parishioners don’t see a “Watch Live” banner.';
+      toggleBtn.textContent = '● Go live…';
     }
 
     updatedEl.textContent = state.updatedAt
@@ -91,8 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
     `).join('');
   }
 
+  let liveSince = null; // start of the latest session, for "LIVE since 9:02 AM"
   watchLivestream(client, (status) => { current = status; renderStatus(); });
-  watchLivestreamHistory(client, renderHistory);
+  watchLivestreamHistory(client, (history) => {
+    liveSince = history[0]?.startedAt || null;
+    renderHistory(history);
+    renderStatus();
+  });
 
   toggleBtn.addEventListener('click', async () => {
     const goingLive = !(current && current.isLive);
@@ -106,6 +103,26 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('The stream link must start with http:// or https://', true);
       return;
     }
+
+    // Every parishioner sees the result at once, so check before switching either way.
+    const platform = platformField.value;
+    const sure = goingLive
+      ? await confirmDialog({
+          title: 'Go live now?',
+          message: 'Parishioners will see this banner on their Dashboard straight away:',
+          previewHtml: `
+            <div class="live-preview">● We’re live now<span>Join us online on ${escapeHtml(platform)}</span></div>
+            <a class="live-preview-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>
+            <p class="text-sm text-gray-600 mt-1">Open the link first to check it’s the right stream.</p>`,
+          confirmLabel: 'Go live',
+          tone: 'danger',
+        })
+      : await confirmDialog({
+          title: 'End the stream?',
+          message: 'The “Watch Live” banner disappears for parishioners right away.',
+          confirmLabel: 'End stream',
+        });
+    if (!sure) return;
 
     toggleBtn.disabled = true;
     try {

@@ -11,6 +11,7 @@
 import { client } from '../amplify-init.js';
 import { currentUserName } from '../auth.js';
 import { importLocalEntries } from './media-local-import.js';
+import { showToast, confirmDialog } from '../Sacradigit/admin-ui.js';
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -42,21 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const contactField = document.getElementById('request-contact');
   const notesField = document.getElementById('request-notes');
 
-  const toast = document.getElementById('toast');
-  let toastTimer = null;
 
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
   const model = client.models.EventCoverageRequest;
   if (!model) {
@@ -203,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deleteId) {
       const r = requests.find(x => x.id === deleteId);
       if (!r) return;
-      if (!confirm(`Remove "${r.eventName}" from the list?`)) return;
+      if (!(await confirmDialog({ title: `Remove "${r.eventName}" from the list?`, message: 'The coverage request is deleted for everyone on the Media team.', confirmLabel: 'Remove', tone: 'danger' }))) return;
       try {
         const { errors } = await model.delete({ id: deleteId });
         if (errors) throw new Error(errors.map(er => er.message).join('; '));
