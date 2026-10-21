@@ -50,16 +50,19 @@
   accent-color: #6c6fb0;
 }
 
+/* "You can write up to 500 letters." — a plain sentence under the box */
 .pw-counter {
-  font-size: 0.6875rem;
-  color: #9ca3af;
-  margin-left: 0.5rem;
+  font-size: 0.8125rem;
+  color: #4b5563;
+  margin-top: 0.35rem;
 }
 
+/* Privacy line: normal dark body text, not grey small print */
 .pw-help {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #1f2937;
+  margin-top: 0.5rem;
 }
 
 /* ---------- Prayer Wall: my requests ---------- */
@@ -296,14 +299,18 @@
   gap: 0.4rem;
 }
 
+/* 44px tall tap targets (chips, Withdraw / Ask for swap, Volunteer) */
 .min-chip {
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #4b5563;
+  color: #374151;
   background-color: #ffffff;
   border: 1px solid #d1d5db;
   border-radius: 999px;
-  padding: 0.3rem 0.75rem;
+  padding: 0.4rem 1rem;
   cursor: pointer;
 }
 
@@ -392,13 +399,14 @@
 }
 
 .min-name {
-  font-size: 0.8125rem;
+  font-size: 0.9375rem; /* 15px */
   font-weight: 600;
   color: #1f2937;
 }
 
+/* "2 lectors needed" / "Full — thank you!" */
 .min-filled {
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: #b45309;
 }
@@ -436,12 +444,15 @@
 }
 
 .min-link {
-  font-size: 0.6875rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #6c6fb0;
+  color: #5b5fa8;
   background: none;
   border: none;
-  padding: 0;
+  padding: 0 0.35rem;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -451,10 +462,14 @@
   color: #15803d;
 }
 
-.min-volunteer {
+/* Solid navy, full width (navy/full-width base: user-shell.css "real buttons"). */
+.min-row .min-volunteer {
+  width: 100%;
   margin-top: 0.4rem;
-  font-size: 0.75rem !important;
-  padding: 0.35rem 0.8rem !important;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.875rem;
+  font-size: 0.875rem;
+  justify-content: center;
 }
 
 /* ---------- Ministry: office roster table ---------- */

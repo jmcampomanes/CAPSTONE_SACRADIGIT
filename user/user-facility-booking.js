@@ -331,9 +331,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const isSelected = h === bkSelectedStartHour;
       html += `
-        <button type="button" class="bktime-slot ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}" data-hour="${h}" ${isBooked ? 'disabled' : ''}>
+        <button type="button" class="bktime-slot ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}" data-hour="${h}" aria-pressed="${isSelected}" ${isBooked ? 'disabled' : ''}>
           <span class="bktime-slot-label">${formatHourLabel(h)}–${formatHourLabel(h + duration)}</span>
-          <span class="bktime-slot-status">${isBooked ? 'Booked' : 'Available'}</span>
+          <span class="bktime-slot-status">${isBooked ? 'Booked' : isSelected ? '✓ Your pick' : 'Available'}</span>
         </button>
       `;
     }
@@ -397,10 +397,24 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollToQuestion('q-date');
   });
 
+  // Changing the duration keeps the start time already picked (still
+  // highlighted, now showing the new end time) as long as it still fits —
+  // inside opening hours and not running into someone else's booking.
   bkDurationSelect.addEventListener('change', () => {
-    bkSelectedStartHour = null;
+    if (bkSelectedStartHour !== null) {
+      const duration = parseInt(bkDurationSelect.value, 10);
+      const blocked = bkSelectedDateIso ? getBookedHours(bkSelectedDateIso) : new Set();
+      let fits = bkSelectedStartHour + duration <= BOOKING_DAY_END;
+      for (let k = bkSelectedStartHour; fits && k < bkSelectedStartHour + duration; k++) {
+        if (blocked.has(k)) fits = false;
+      }
+      if (!fits) {
+        window.showToast(`${formatHourLabel(bkSelectedStartHour)} doesn't fit a ${duration}-hour booking — please pick another start time.`, true);
+        bkSelectedStartHour = null;
+      }
+    }
     renderBkTimeSlots();
-    scrollToQuestion('q-time');
+    if (bkSelectedStartHour === null) scrollToQuestion('q-time');
   });
 
   /* --- Booking wizard: 3 steps (Facility & Date → Details → Confirm) --- */

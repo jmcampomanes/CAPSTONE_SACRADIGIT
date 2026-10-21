@@ -198,7 +198,7 @@
             <p id="header-role-line" class="profile-header-role">Parishioner</p>
             <span class="profile-header-badge">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-              Registered Parishioner
+              Parish member
             </span>
           </div>
         </div>
@@ -237,8 +237,8 @@
                   <input type="text" id="pf-address" class="form-input" value="" placeholder="e.g. Don Manuel, Quezon City" />
                 </div>
                 <div>
-                  <label class="form-label" for="pf-status">Membership Status</label>
-                  <input type="text" id="pf-status" class="form-input" value="Registered Parishioner" disabled />
+                  <label class="form-label" for="pf-status">Membership</label>
+                  <input type="text" id="pf-status" class="form-input" value="Member of the parish" disabled />
                 </div>
                 <div>
                   <label class="form-label" for="pf-joined">Parishioner Since</label>
@@ -289,16 +289,16 @@
 
           <div class="panel mt-4">
             <div class="panel-header">
-              <h2 class="panel-title">Two-Factor Authentication</h2>
+              <h2 class="panel-title">Extra sign-in protection (a code sent to your phone)</h2>
             </div>
             <div class="p-6">
               <div class="twofa-card">
                 <div>
-                  <p class="font-semibold text-sm text-gray-900">Authenticator App 2FA</p>
-                  <p class="text-xs text-gray-500 mt-1 max-w-md">Add an extra layer of security by requiring a one-time code from an authenticator app whenever you sign in.</p>
+                  <p class="font-semibold text-sm text-gray-900">Ask for a code when I sign in</p>
+                  <p class="text-xs text-gray-500 mt-1 max-w-md">Besides your password, you'll type a short code from your phone each time you sign in — so no one else can get in with just your password.</p>
                   <span id="twofa-status" class="twofa-status off">Off</span>
                 </div>
-                <label class="toggle-switch shrink-0" aria-label="Toggle two-factor authentication">
+                <label class="toggle-switch shrink-0" aria-label="Ask for a code from my phone when I sign in">
                   <input type="checkbox" id="twofa-toggle" />
                   <span class="toggle-slider"></span>
                 </label>

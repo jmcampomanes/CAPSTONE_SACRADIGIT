@@ -5,20 +5,24 @@
 
 
 /* ---------- Check-in ---------- */
+/* The page's own font (the monospace "e.g. K7P-Q2M" looked odd) */
 .fj-code-input {
-  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  min-height: 2.75rem;
 }
 
 .fj-code-input::placeholder {
-  font-family: inherit;
   font-weight: 400;
-  letter-spacing: normal;
-  text-transform: none;
+  letter-spacing: 0.06em;
 }
+
+/* "Scan the QR code" — opens the camera (checkin-scanner.js) */
+.fj-scan-btn { width: 100%; gap: 0.5rem; min-height: 3rem; font-size: 1rem; }
+.fj-or { margin: 0.75rem 0 0.4rem; font-size: 0.8125rem; color: #6b7280; text-align: center; }
+:root[data-theme="dark"] .fj-or { color: #a0a8b6; }
 
 .fj-note {
   font-size: 0.8125rem;

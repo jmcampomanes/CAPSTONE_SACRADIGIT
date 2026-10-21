@@ -19,6 +19,7 @@ import { loadFaithfulGivers } from '../public-data.js';
 import { currentUserName, currentUser } from '../auth.js';
 import { computeBadges, badgeIconSvg, BADGES, parishionerKey, monthStreak, streakLabel } from '../badges.js';
 import { checkInReady, preferencesReady, submitCheckIn, listCheckInsFor, optedOutKeys, getPreference, setShowOnHonorRoll, formatCode, normalizeCode, checkInErrorMessage } from '../mass-checkin.js';
+import { openCheckInScanner } from './checkin-scanner.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -192,6 +193,19 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------
      Check-in
   ------------------------------------------ */
+  // "Scan the QR code" — camera scanner; afterwards refresh the badges (and celebrate new ones)
+  $('checkin-scan').addEventListener('click', () => {
+    const before = new Set(computeBadges(data).filter(b => b.earned).map(b => b.id));
+    openCheckInScanner({
+      onCheckedIn: async (res) => {
+        await loadCheckIns();
+        render();
+        const newly = computeBadges(data).filter(b => b.earned && !before.has(b.id));
+        if (newly.length && !res.already) celebrate(newly);
+      },
+    });
+  });
+
   const codeInput = $('checkin-code');
   // Uppercase as they type, dash after 3 — and check in by itself at 6 characters
   codeInput.addEventListener('input', () => {

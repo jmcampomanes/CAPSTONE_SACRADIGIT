@@ -28,7 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const now = new Date();
   let year = now.getFullYear();
   let month = now.getMonth();
-  let filter = 'all';
+  // The ministry filter remembers the last one picked on this device.
+  const FILTER_KEY = 'sacradigit_ministry_filter';
+  const savedFilter = (() => { try { return localStorage.getItem(FILTER_KEY); } catch { return null; } })();
+  let filter = savedFilter && (savedFilter === 'all' || ministryById(savedFilter)) ? savedFilter : 'all';
+  let filterChosen = !!savedFilter; // false → first visit: pick their usual ministry once sign-ups load
   let masses = [];
   let signups = [];
   let stops = [];
@@ -48,18 +52,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Ministry filter chips
   $('min-filter').innerHTML = [{ id: 'all', label: 'All ministries' }, ...MINISTRIES]
-    .map(m => `<button type="button" class="min-chip${m.id === 'all' ? ' active' : ''}" data-filter="${m.id}">${escapeHtml(m.label)}</button>`).join('');
+    .map(m => `<button type="button" class="min-chip" data-filter="${m.id}" aria-pressed="false">${escapeHtml(m.label)}</button>`).join('');
   $('min-show-past').addEventListener('change', render);
+
+  function paintFilter() {
+    $('min-filter').querySelectorAll('.min-chip').forEach(c => {
+      const on = c.dataset.filter === filter;
+      c.classList.toggle('active', on);
+      c.setAttribute('aria-pressed', String(on));
+    });
+  }
+  paintFilter();
 
   $('min-filter').addEventListener('click', (e) => {
     const chip = e.target.closest('[data-filter]');
     if (!chip) return;
     filter = chip.dataset.filter;
-    $('min-filter').querySelectorAll('.min-chip').forEach(c => c.classList.toggle('active', c === chip));
+    filterChosen = true;
+    try { localStorage.setItem(FILTER_KEY, filter); } catch { /* private mode */ }
+    paintFilter();
     render();
   });
 
+  // First visit with no saved choice: start on the ministry they serve in most.
+  function guessFilter() {
+    if (filterChosen) return;
+    const counts = new Map();
+    signups.filter(s => s.volunteerId === me.id).forEach(s => counts.set(s.ministry, (counts.get(s.ministry) || 0) + 1));
+    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (top && ministryById(top)) { filter = top; filterChosen = true; paintFilter(); }
+  }
+
+  // Plain words: "2 lectors needed" (was "0/2"), and no "Anticipated Mass" jargon.
+  const lower = (s) => s.charAt(0).toLowerCase() + s.slice(1);
+  function neededText(m, open) {
+    if (open === 0) return 'Full — thank you!';
+    return `${open} ${lower(m.one)}${open === 1 ? '' : 's'} needed`;
+  }
+  const friendlyTitle = (title) => /anticipated/i.test(title || '') ? 'Saturday evening Mass (for Sunday)' : title;
+
   function render() {
+    guessFilter();
     const grouped = groupSignups(signups);
     const shownMinistries = filter === 'all' ? MINISTRIES : MINISTRIES.filter(m => m.id === filter);
 
@@ -101,17 +134,17 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="min-row">
             <div class="min-row-head">
               <span class="min-name">${escapeHtml(m.label)}</span>
-              <span class="min-filled${open === 0 ? ' full' : ''}">${list.length}/${m.perMass}</span>
+              ${past ? '' : `<span class="min-filled${open === 0 ? ' full' : ''}">${neededText(m, open)}</span>`}
             </div>
             <ul class="min-people">${people || '<li class="min-person none">No one yet</li>'}</ul>
-            ${canJoin ? `<button type="button" class="btn-secondary min-volunteer" data-act="volunteer" data-mass="${escapeHtml(mass.key)}" data-ministry="${m.id}">Volunteer</button>` : ''}
+            ${canJoin ? `<button type="button" class="btn-lavender min-volunteer" data-act="volunteer" data-mass="${escapeHtml(mass.key)}" data-ministry="${m.id}">Volunteer</button>` : ''}
           </div>`;
       }).join('');
       return `
         <section class="min-mass${past ? ' past' : ''}">
           <header class="min-mass-head">
             <div><p class="min-mass-day">${escapeHtml(fmtMassDay(mass.date))} · ${escapeHtml(fmtTime(mass.time))}</p>
-            <p class="min-mass-title">${escapeHtml(mass.title)}</p></div>
+            <p class="min-mass-title">${escapeHtml(friendlyTitle(mass.title))}</p></div>
             ${past ? '<span class="min-past-tag">Done</span>' : mass.date === todayIso() ? '<span class="min-past-tag min-today-tag">Today</span>' : ''}
           </header>
           <div class="min-rows">${rows}</div>

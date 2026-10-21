@@ -33,6 +33,9 @@
 
   <link rel="stylesheet" href="user-css/user-shell.css" />
   <link rel="stylesheet" href="user-css/user-donations.css" />
+  <!-- Give an Offering uses the same 3-step page as Mass Intentions -->
+  <link rel="stylesheet" href="../marriage-request-form.css" />
+  <link rel="stylesheet" href="../mass-intention-form.css" />
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
   <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
@@ -221,76 +224,102 @@
     </div>
   </div>
 
-  <!-- ========== DONATE MODAL ========== -->
-  <div id="donate-modal" class="modal-overlay hidden">
+  <!-- ========== GIVE AN OFFERING — its own page, same 3-step layout as
+       Mass Intentions (styles: ../mass-intention-form.css). After Confirm,
+       the "Now send your offering" screen says exactly what to do next. ========== -->
+  <div id="donate-modal" class="modal-overlay mi-page hidden" role="dialog" aria-modal="true" aria-labelledby="donate-page-title">
     <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">Give an Offering</h3>
-        <button class="modal-close" data-close-modal aria-label="Close">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <div class="modal-header mi-page-header">
+        <button type="button" class="mi-page-back" data-close-modal>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <span>Back</span>
         </button>
+        <div class="min-w-0">
+          <h3 class="modal-title" id="donate-page-title">Give an Offering</h3>
+          <p class="mi-page-sub">Choose a fund and amount — then we'll show you how to send it.</p>
+        </div>
       </div>
-      <div class="modal-body space-y-4">
 
-        <!-- Fund selector -->
-        <div>
-          <label class="form-label">Fund / Purpose <span class="text-red-500">*</span></label>
-          <div class="donate-fund-selector" id="donate-fund-selector">
-            <!-- Injected by JS -->
-          </div>
+      <div class="modal-body mi-page-body">
+        <div class="mi-wiz">
+          <ol class="mstep-bar mi-step-bar" id="donate-step-bar" aria-label="Steps" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            <li><button type="button" class="mstep-dot" data-step="1"><span class="mstep-num">1</span><span class="mstep-label">Fund</span></button></li>
+            <li><button type="button" class="mstep-dot" data-step="2"><span class="mstep-num">2</span><span class="mstep-label">Amount &amp; Payment</span></button></li>
+            <li><button type="button" class="mstep-dot" data-step="3"><span class="mstep-num">3</span><span class="mstep-label">Confirm</span></button></li>
+          </ol>
+
+          <!-- Step 1: which fund -->
+          <section class="mi-step" data-step="1">
+            <h4 class="mi-step-title">What would you like to give to?</h4>
+            <p class="mi-step-hint">Tap one.</p>
+            <div class="donate-fund-selector" id="donate-fund-selector" role="group" aria-label="Fund"></div>
+          </section>
+
+          <!-- Step 2: how much, and how you'll send it -->
+          <section class="mi-step hidden" data-step="2">
+            <div class="mi-cols">
+              <div class="mi-col">
+                <h4 class="mi-step-title">How much?</h4>
+                <p class="mi-step-hint">Tap an amount, or type your own.</p>
+                <div class="quick-amounts" id="quick-amounts" role="group" aria-label="Amount">
+                  <button type="button" class="quick-amount-btn" data-amount="100">₱100</button>
+                  <button type="button" class="quick-amount-btn" data-amount="200">₱200</button>
+                  <button type="button" class="quick-amount-btn" data-amount="300">₱300</button>
+                  <button type="button" class="quick-amount-btn" data-amount="500">₱500</button>
+                  <button type="button" class="quick-amount-btn" data-amount="1000">₱1,000</button>
+                </div>
+                <label class="mi-label mt-3 block" for="donate-amount">Amount</label>
+                <div class="offering-input-wrap">
+                  <span class="offering-peso">₱</span>
+                  <input type="number" id="donate-amount" class="form-input offering-input" placeholder="Other amount" min="1" step="50" inputmode="numeric" />
+                </div>
+              </div>
+              <div class="mi-col">
+                <h4 class="mi-step-title">How will you send it?</h4>
+                <p class="mi-step-hint">After you confirm, we'll show you the steps.</p>
+                <div class="payment-method-grid" id="payment-method-grid" role="group" aria-label="Payment method">
+                  <button type="button" class="payment-method-btn selected" data-method="GCash" aria-pressed="true">
+                    <span class="payment-method-label">GCash</span>
+                  </button>
+                  <button type="button" class="payment-method-btn" data-method="Maya" aria-pressed="false">
+                    <span class="payment-method-label">Maya</span>
+                  </button>
+                  <button type="button" class="payment-method-btn" data-method="Bank Transfer" aria-pressed="false">
+                    <span class="payment-method-label">Bank Transfer</span>
+                  </button>
+                  <button type="button" class="payment-method-btn" data-method="Cash" aria-pressed="false">
+                    <span class="payment-method-label">Cash at the office</span>
+                  </button>
+                </div>
+                <div class="flex items-center gap-2.5 mt-4">
+                  <input type="checkbox" id="donate-anonymous" class="checkbox-input" />
+                  <label for="donate-anonymous" class="text-sm text-gray-600 font-medium cursor-pointer">Give anonymously (your name isn't shown)</label>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Step 3: check, then confirm -->
+          <section class="mi-step hidden" data-step="3">
+            <h4 class="mi-step-title">Please check your offering</h4>
+            <p class="mi-step-hint">If something is wrong, tap Change.</p>
+            <div id="donate-review"></div>
+            <p class="donate-no-charge">
+              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Tapping <strong>Confirm Offering</strong> does not take any money. It records your offering, then shows you how to send it.</span>
+            </p>
+          </section>
+
+          <!-- After Confirm: exactly what to do next (filled in by user-donations.js) -->
+          <section class="mi-step donate-next hidden" id="donate-next" aria-live="polite" tabindex="-1"></section>
         </div>
-
-        <!-- Quick amounts -->
-        <div>
-          <label class="form-label">Amount (₱) <span class="text-red-500">*</span></label>
-          <div class="quick-amounts" id="quick-amounts">
-            <button type="button" class="quick-amount-btn" data-amount="100">₱100</button>
-            <button type="button" class="quick-amount-btn" data-amount="200">₱200</button>
-            <button type="button" class="quick-amount-btn" data-amount="300">₱300</button>
-            <button type="button" class="quick-amount-btn" data-amount="500">₱500</button>
-            <button type="button" class="quick-amount-btn" data-amount="1000">₱1,000</button>
-          </div>
-          <div class="offering-input-wrap mt-2">
-            <span class="offering-peso">₱</span>
-            <input type="number" id="donate-amount" class="form-input offering-input" placeholder="Or enter custom amount" min="1" step="50" />
-          </div>
-        </div>
-
-        <!-- Payment method -->
-        <div>
-          <label class="form-label">Payment Method <span class="text-red-500">*</span></label>
-          <div class="payment-method-grid" id="payment-method-grid">
-            <button type="button" class="payment-method-btn selected" data-method="GCash">
-              <span class="payment-method-label">GCash</span>
-            </button>
-            <button type="button" class="payment-method-btn" data-method="Maya">
-              <span class="payment-method-label">Maya</span>
-            </button>
-            <button type="button" class="payment-method-btn" data-method="Bank Transfer">
-              <span class="payment-method-label">Bank Transfer</span>
-            </button>
-            <button type="button" class="payment-method-btn" data-method="Cash">
-              <span class="payment-method-label">Cash</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Anonymous toggle -->
-        <div class="flex items-center gap-2.5">
-          <input type="checkbox" id="donate-anonymous" class="checkbox-input" />
-          <label for="donate-anonymous" class="text-sm text-gray-600 font-medium cursor-pointer">Give anonymously</label>
-        </div>
-
-        <!-- Security note -->
-        <div class="donate-security-note">
-          <svg class="w-4 h-4 text-green-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          <p class="text-xs text-gray-600">All transactions are recorded and acknowledged by the parish office. Your giving supports the parish community.</p>
-        </div>
-
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-        <button type="button" id="donate-submit" class="btn-lavender">Confirm Offering</button>
+
+      <div class="modal-footer mi-page-footer" id="donate-footer">
+        <button type="button" class="btn-secondary mi-nav-btn" id="donate-back">Cancel</button>
+        <button type="button" class="btn-lavender mi-nav-btn" id="donate-next-btn">Next →</button>
+        <button type="button" class="btn-lavender mi-nav-btn hidden" id="donate-submit">Confirm Offering</button>
+        <button type="button" class="btn-lavender mi-nav-btn hidden" id="donate-done">Done</button>
       </div>
     </div>
   </div>

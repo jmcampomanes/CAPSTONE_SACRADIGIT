@@ -76,7 +76,8 @@ function clearFieldError(input) {
 function pinMapFieldHtml(f) {
   return `
     <div class="sm:col-span-2 pin-map-field" id="q-${f.id}">
-      <p class="form-label">Pin Your Exact Location <span class="pin-map-optional">(recommended)</span></p>
+      <p class="form-label">Pin your location on the map <span class="pin-map-optional">(optional)</span></p>
+      <p class="pin-map-why">Helps the priest find your ${f.place === 'business' ? 'business' : 'house'}. You can skip this.</p>
       <div class="pin-map-wrap">
         <div id="${f.id}" class="pin-map" role="application" aria-label="Map — tap to place a pin on your ${f.place || 'house'}"></div>
         <div class="pin-map-actions">
@@ -129,8 +130,8 @@ export function initServiceRequestPage(serviceId) {
   formViewIcon.style.color = svc.iconColor;
   formViewIcon.innerHTML = svc.icon;
   document.getElementById('svc-booking-note').textContent = needsApproval(svc.name)
-    ? 'These are the parish\'s fixed schedules. Blessing requests are reviewed by the parish office first — your slot is held for you, and you\'ll be notified once it\'s approved. Track it under "Requested Services."'
-    : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "Requested Services."';
+    ? 'These are the parish\'s fixed schedules. Blessing requests are reviewed by the parish office first — your slot is held for you, and you\'ll be notified once it\'s approved. Track it under "My service bookings."'
+    : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "My service bookings."';
 
   const slotPicker = createSlotPicker(slotPickerEl, {
     type: svc.name,
@@ -149,9 +150,17 @@ export function initServiceRequestPage(serviceId) {
     slotPicker.setClosures(closures);
   });
 
+  // "Back" / "Cancel" return to the same group on Request a Service (Blessings, Sacraments, …).
+  ['btn-back-to-menu', 'btn-cancel-request'].forEach(id => {
+    const link = document.getElementById(id);
+    if (link && svc.category) link.href = `user-request-service.html?need=${encodeURIComponent(svc.category)}`;
+  });
+
+  // Order on the page: the address and other details first, then the date and
+  // time, then the optional map — it goes under the schedule, not above the address.
   svcDynamicFields.innerHTML = svc.fields.map(f => {
     if (f.kind === 'name') return nameFieldsHtml(f.id, escapeHtml(f.label), { required: f.required, spanFull: !!f.span2 });
-    if (f.kind === 'map') return pinMapFieldHtml(f);
+    if (f.kind === 'map') return '';
     return `
     <div class="${f.span2 ? 'sm:col-span-2' : ''}">
       <label class="form-label" for="${f.id}">${escapeHtml(f.label)}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
@@ -163,8 +172,11 @@ export function initServiceRequestPage(serviceId) {
   document.body.classList.add('req-screen-open');
   const mapField = svc.fields.find(f => f.kind === 'map');
   formView.classList.toggle('svc-has-map', !!mapField);
-  if (mapField) initPinMap(mapField);
-  else svcDynamicFields.querySelector('input')?.focus({ preventScroll: true });
+  if (mapField) {
+    slotSummaryEl.parentElement.insertAdjacentHTML('afterend', pinMapFieldHtml(mapField));
+    initPinMap(mapField);
+  }
+  svcDynamicFields.querySelector('input')?.focus({ preventScroll: true });
 
   function initPinMap(field) {
     const statusEl = document.getElementById(`${field.id}-status`);
@@ -240,7 +252,7 @@ export function initServiceRequestPage(serviceId) {
           await lookupAddress(at, { fromLocate: true });
         } else {
           const address = document.getElementById(field.addressField)?.value.trim();
-          if (!address) { setStatus(`Type the ${field.place === 'business' ? 'Business Address' : 'Complete Address'} below first, then tap "Find my address."`, 'error'); return; }
+          if (!address) { setStatus(`Type the ${field.place === 'business' ? 'Business Address' : 'Complete Address'} first, then tap "Find my address."`, 'error'); return; }
           setStatus('Looking up your address…');
           await pinMap.findAddress(address);
         }
@@ -262,7 +274,7 @@ export function initServiceRequestPage(serviceId) {
     document.getElementById('svc-success-title').textContent = approval ? 'Request Sent!' : 'Request Submitted!';
     document.getElementById('svc-success-desc').textContent = approval
       ? `Your ${svc.name} request is waiting for the parish office to approve it — your slot is held for you, and you'll be notified once it's approved.`
-      : `Your ${svc.name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under Requested Services.`;
+      : `Your ${svc.name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under My service bookings.`;
     const row = (label, value) => value ? `<div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>` : '';
     document.getElementById('svc-success-details').innerHTML = [
       row('Service', svc.name),
@@ -280,30 +292,42 @@ export function initServiceRequestPage(serviceId) {
   svcContactInput.addEventListener('input', () => clearFieldError(svcContactInput));
 
   svcSubmitBtn.addEventListener('click', async () => {
-    let hasError = false;
+    const missing = []; // [label, element] in page order, for the summary and scrolling
+    const ask = (label) => `Please enter the ${label.replace(/\s*\(.*?\)/g, '').toLowerCase()}.`;
     svc.fields.filter(f => f.required && f.kind !== 'map').forEach(f => {
       if (f.kind === 'name') {
         const firstEl = document.getElementById(`${f.id}-first`);
         const lastEl = document.getElementById(`${f.id}-last`);
         [firstEl, lastEl].forEach(clearFieldError);
         if (!nameFieldsFilled(f.id)) {
-          setFieldError(lastEl, `${f.label} is required.`);
-          hasError = true;
+          setFieldError(lastEl, ask(f.label));
+          missing.push([f.label, lastEl]);
         }
         return;
       }
       const el = document.getElementById(f.id);
       clearFieldError(el);
-      if (!el.value.trim()) { setFieldError(el, `${f.label} is required.`); hasError = true; }
+      if (!el.value.trim()) { setFieldError(el, ask(f.label)); missing.push([f.label, el]); }
     });
 
-    const slot = slotPicker.getValue();
-    if (!slot) { slotPickerEl.classList.add('has-error'); hasError = true; }
-
     clearFieldError(svcContactInput);
-    if (!svcContactInput.value.trim()) { setFieldError(svcContactInput, 'Contact number is required.'); hasError = true; }
+    if (!svcContactInput.value.trim()) { setFieldError(svcContactInput, 'Please enter a contact number.'); missing.push(['Contact Number', svcContactInput]); }
 
-    if (hasError) { window.showToast(slot ? 'Please fix the highlighted fields.' : 'Please pick a schedule.', true); return; }
+    // The schedule's own message ("Please pick a date and time.") is written
+    // under the calendar by field-messages.js when it turns red.
+    const slot = slotPicker.getValue();
+    if (!slot) { slotPickerEl.classList.add('has-error'); missing.push(['date and time', slotPickerEl]); }
+
+    if (missing.length) {
+      // Say exactly what's missing, then bring the first one into view.
+      const names = missing.map(([label]) => label === 'date and time' ? 'a date and time' : label.replace(/\s*\(.*?\)/g, ''));
+      const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0];
+      window.showToast(`Still needed: ${list}. See the red notes on the form.`, true);
+      const first = missing[0][1];
+      first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (first.matches('input, textarea, select')) first.focus({ preventScroll: true });
+      return;
+    }
 
     const details = {};
     svc.fields.forEach(f => {

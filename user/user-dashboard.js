@@ -13,6 +13,8 @@ import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../w
 import { watchLivestream } from '../livestream-status.js';
 import { mountBadgeStrip } from './faith-journey-widgets.js';
 import { mountCheckInCard } from './checkin-card.js';
+import { openCheckInScanner } from './checkin-scanner.js';
+import { checkInReady } from '../mass-checkin.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   mountCheckInCard(document.getElementById('checkin-card'));
@@ -47,6 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('sacradigit:user', (e) => paintGreeting(e.detail));
 
   const quickActions = [
+    // First: opens the camera to scan the church screen's QR code
+    // (checkin-scanner.js). Only once the parish has check-in set up.
+    ...(checkInReady() ? [{ label: 'Check in at Mass', sub: 'Scan the QR code at church', action: 'checkin',
+      iconBg: 'rgba(29,78,216,0.12)', iconColor: '#1d4ed8',
+      icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-width="1.8"/></svg>` }] : []),
     { label: 'Request Certificate', sub: 'Baptismal, Marriage, etc.', href: 'user-request-certificate.html',
       iconBg: 'rgba(139,143,199,0.16)', iconColor: '#5b5fa8',
       icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>` },
@@ -63,14 +70,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const qGrid = document.getElementById('quick-actions-grid');
   if (qGrid) {
-    qGrid.innerHTML = quickActions.map(a => `
-      <a href="${a.href}" class="quick-action-card">
+    // Five cards with Check in: it takes a full row on phones, then 3 / 5 across.
+    if (quickActions.length === 5) qGrid.className = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3';
+    qGrid.innerHTML = quickActions.map(a => {
+      const inner = `
         <div class="quick-action-head">
           <div class="quick-action-icon" style="background-color:${a.iconBg};color:${a.iconColor};">${a.icon}</div>
           <p class="quick-action-label">${a.label}</p>
         </div>
-        <p class="quick-action-sub">${a.sub}</p>
-      </a>`).join('');
+        <p class="quick-action-sub">${a.sub}</p>`;
+      return a.action
+        ? `<button type="button" class="quick-action-card quick-action-btn col-span-2 sm:col-span-1" data-action="${a.action}">${inner}</button>`
+        : `<a href="${a.href}" class="quick-action-card">${inner}</a>`;
+    }).join('');
+    qGrid.addEventListener('click', (e) => {
+      if (!e.target.closest('[data-action="checkin"]')) return;
+      openCheckInScanner({ onCheckedIn: () => window.dispatchEvent(new CustomEvent('sacradigit:checked-in')) });
+    });
   }
 
   function formatShortDate(input) {

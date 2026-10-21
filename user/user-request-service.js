@@ -25,13 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
      per category (Blessings, Sacraments, Special Masses) instead of one
      undifferentiated grid, so it's clear at a glance what kind of
      request each card is. --- */
-  // "Mon–Sat · 09:00 AM, 10:30 AM" → days on one line, each time as a small chip
+  // "Mon–Sat · 09:00 AM, 10:30 AM" → days on one line, times as plain text
+  // underneath (they used to be little chips that looked tappable but weren't).
   const CLOCK_ICON = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
   function schedHtml(name) {
     const [days, times = ''] = describeSchedule(name).split(' · ');
-    const chips = times.split(', ').filter(Boolean)
-      .map(t => `<span class="svc-time-chip">${escapeHtml(t.replace(/^0(\d)/, '$1'))}</span>`).join('');
-    return `<span class="svc-sched-days">${CLOCK_ICON}${escapeHtml(days)}</span>${chips ? `<span class="svc-sched-times">${chips}</span>` : ''}`;
+    const list = times.split(', ').filter(Boolean).map(t => t.replace(/^0(\d)/, '$1')).join(', ');
+    return `<span class="svc-sched-days">${CLOCK_ICON}${escapeHtml(days)}</span>${list ? `<span class="svc-sched-times">${escapeHtml(list)}</span>` : ''}`;
   }
 
   function svcCardHtml(s) {
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p class="svc-type-desc">${escapeHtml(s.desc)}</p>
       <div class="svc-type-sched">${schedHtml(s.name)}</div>
       <div class="svc-type-foot">
-        ${needsApproval(s.name) ? '<span class="svc-type-approval" title="The parish office approves blessing requests first">Needs approval</span>' : '<span></span>'}
+        ${needsApproval(s.name) ? '<span class="svc-type-approval" title="The parish office approves blessing requests first">Needs approval</span>' : ''}
         <span class="svc-type-cta">Start request
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         </span>
@@ -56,14 +56,64 @@ document.addEventListener('DOMContentLoaded', () => {
     const items = SERVICE_TYPES.filter(s => s.category === cat.key && SERVICE_PAGES[s.id]);
     if (!items.length) return '';
     return `
-    <div class="svc-category-block">
+    <div class="svc-category-block hidden" data-cat="${cat.key}">
       <div class="svc-category-header">
-        <h3 class="svc-category-title">${escapeHtml(cat.label)}</h3>
         <p class="svc-category-desc">${escapeHtml(cat.desc)}</p>
       </div>
       <div class="svc-type-row">${items.map(svcCardHtml).join('')}</div>
     </div>`;
   }).join('');
+
+  /* --- "What do you need?" — one big button per group. Choosing one
+     shows only that group's services. The choice is kept in the URL
+     (?need=blessing), so Back from a service page returns to the same list. --- */
+  const NEEDS = [
+    { key: 'blessing', label: 'Blessing', title: 'Blessings', hint: 'House, vehicle, business, or pet',
+      icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>' },
+    { key: 'sacrament', label: 'Sacrament', title: 'Sacraments', hint: 'Baptism, confirmation, wedding, and more',
+      icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3C8 3 5 6 5 9c0 4 7 12 7 12s7-8 7-12c0-3-3-6-7-6z"/>' },
+    { key: 'special-mass', label: 'Mass for an occasion', title: 'Masses for an occasion', hint: 'Funeral, anniversary, or graduation',
+      icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>' },
+  ];
+  const needOptions = document.getElementById('svc-need-options');
+  const listPanel   = document.getElementById('svc-list-panel');
+  const listTitle   = document.getElementById('svc-list-title');
+
+  needOptions.innerHTML = NEEDS.map(n => `
+    <button type="button" class="svc-need-btn" data-need="${n.key}" aria-pressed="false" aria-controls="svc-list-panel">
+      <svg class="svc-need-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">${n.icon}</svg>
+      <span class="svc-need-text">
+        <span class="svc-need-label">${escapeHtml(n.label)}</span>
+        <span class="svc-need-hint">${escapeHtml(n.hint)}</span>
+      </span>
+    </button>`).join('');
+
+  function showNeed(key, { scroll = false } = {}) {
+    const need = NEEDS.find(n => n.key === key);
+    needOptions.querySelectorAll('.svc-need-btn').forEach(b => {
+      const on = b.dataset.need === key;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    svcTypeGrid.querySelectorAll('.svc-category-block').forEach(block => {
+      block.classList.toggle('hidden', block.dataset.cat !== key);
+    });
+    listPanel.classList.toggle('hidden', !need);
+    if (!need) return;
+    listTitle.textContent = need.title;
+    const url = new URL(location.href);
+    url.searchParams.set('need', key);
+    history.replaceState(null, '', url);
+    if (scroll) listPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  needOptions.addEventListener('click', (e) => {
+    const btn = e.target.closest('.svc-need-btn');
+    if (btn) showNeed(btn.dataset.need, { scroll: true });
+  });
+
+  const startNeed = new URLSearchParams(location.search).get('need');
+  if (NEEDS.some(n => n.key === startNeed)) showNeed(startNeed);
 
   // Refresh the day/time line once any schedule edits saved by ITech have loaded.
   serviceSchedulesReady.then(() => {

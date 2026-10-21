@@ -325,14 +325,38 @@
   margin-top: 0.3rem;
 }
 
-/* Phones: tabs scroll sideways on one line instead of wrapping. */
+/* Phones: the four tabs become a list of big buttons, one per line —
+   nothing cut off ("My Activ…"), nothing to swipe. */
 @media (max-width: 640px) {
   .profile-tabs {
-    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
-    /* fade the right edge so it's clear more tabs are there */
-    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
-    mask-image: linear-gradient(to right, #000 85%, transparent);
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    border-bottom: 0;
   }
-  .profile-tabs::-webkit-scrollbar { display: none; }
-  .profile-tab { flex-shrink: 0; padding: 0.65rem 0.75rem; }
+  .profile-tab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 3.25rem;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    font-size: 1rem;
+    color: #1f2937;
+    text-align: left;
+  }
+  .profile-tab::after { content: "›"; font-size: 1.375rem; line-height: 1; color: #9ca3af; }
+  .profile-tab.active {
+    border-color: #1e2a4a;
+    background-color: #1e2a4a;
+    color: #ffffff;
+  }
+  .profile-tab.active::after { content: "✓"; font-size: 1rem; color: #ffffff; }
+  :root[data-theme="dark"] .profile-tabs .profile-tab { background-color: #1a2131; border-color: #2c3548; color: #e3e6ec; }
+  :root[data-theme="dark"] .profile-tabs .profile-tab.active { background-color: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
+  :root[data-theme="dark"] .profile-tabs .profile-tab.active::after { color: #0f1420; }
 }

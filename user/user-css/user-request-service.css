@@ -173,7 +173,6 @@ body.req-screen-open { overflow: hidden; }
   /* House Blessing (has the map): address + household share a row, the
      pin status sits beside the map buttons, and the map/notes are shorter */
   .req-screen.svc-has-map #svc-dynamic-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.625rem 0.75rem; }
-  .req-screen.svc-has-map #svc-dynamic-fields > .pin-map-field { grid-column: 1 / -1; }
   .req-screen.svc-has-map .pin-map { height: 122px; }
   .req-screen.svc-has-map .pin-map-actions { padding: 0.375rem 0.5rem; gap: 0.375rem; }
   .req-screen.svc-has-map .pin-map-status { flex-basis: 7rem; line-height: 1.3; }
@@ -217,12 +216,25 @@ body.req-screen-open { overflow: hidden; }
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }
 
+/* Same size and look as the shared .field-msg (user-shell.css) — was 11px */
 .form-error-msg {
-  font-size: 0.6875rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #dc2626;
-  margin-top: 0.3rem;
+  line-height: 1.35;
+  color: #b91c1c;
+  margin-top: 0.35rem;
 }
+.form-error-msg::before { content: "⚠"; flex-shrink: 0; }
+:root[data-theme="dark"] .form-error-msg { color: #fca5a5; }
+
+/* Optional map, under the date and time */
+.req-screen .pin-map-field { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eef0f4; }
+.pin-map-why { font-size: 0.8125rem; color: #6b7280; margin: -0.15rem 0 0.5rem; }
+:root[data-theme="dark"] .req-screen .pin-map-field { border-top-color: #2c3548; }
+:root[data-theme="dark"] .pin-map-why { color: #a0a8b6; }
 
 /* ---------- Info banner ---------- */
 .info-banner {
@@ -291,11 +303,9 @@ body.req-screen-open { overflow: hidden; }
   flex-direction: column;
 }
 
-.svc-category-block + .svc-category-block {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #f1f2f5;
-}
+/* Only one group is shown at a time now ("What do you need?"), so no divider
+   above it — the hidden groups before Sacraments / Masses would otherwise add one. */
+.svc-category-block { margin-top: 0; padding-top: 0; border-top: 0; }
 
 .svc-category-header {
   margin-bottom: 0.875rem;
@@ -394,15 +404,94 @@ body.req-screen-open { overflow: hidden; }
   overflow: hidden;
 }
 
-/* Approval tag (left) + "Start request" (right), pinned to the bottom */
+/* Approval tag on its own line, then a full-width "Start request" button,
+   pinned to the bottom of the card. */
 .svc-type-foot {
   margin-top: auto;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.75rem 0 0.875rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0.75rem 0 1rem;
   border-top: 1px solid #eef0f4;
+}
+.svc-type-foot .svc-type-cta { align-self: stretch; gap: 0.4rem; }
+
+/* Times as plain text, not chip-shaped (they aren't buttons) */
+.svc-type-sched .svc-sched-times {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #4b5563;
+  line-height: 1.45;
+}
+:root[data-theme="dark"] .svc-type-sched .svc-sched-times { color: #c4c9d3; }
+:root[data-theme="dark"] body .svc-type-card:hover .svc-type-cta { background-color: #a3a6d6; color: #0f1420; }
+
+/* ---------- "What do you need?" — three big choices ---------- */
+.svc-need-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.875rem;
+}
+
+.svc-need-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.875rem;
+}
+
+.svc-need-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-height: 5rem;
+  padding: 1rem 1.125rem;
+  border: 2px solid #e2e4ec;
+  border-radius: 1rem;
+  background-color: #ffffff;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.svc-need-btn:hover { border-color: #8b8fc7; box-shadow: 0 6px 16px rgba(30, 42, 74, 0.08); }
+.svc-need-btn:focus-visible { outline: 3px solid #8b8fc7; outline-offset: 2px; }
+.svc-need-btn.active {
+  border-color: #1e2a4a;
+  background-color: #f5f5fc;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.25);
+}
+
+.svc-need-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.55rem;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  background-color: rgba(139, 143, 199, 0.16);
+  color: #5b5fa8;
+}
+.svc-need-btn.active .svc-need-icon { background-color: #1e2a4a; color: #ffffff; }
+
+.svc-need-text { display: flex; flex-direction: column; min-width: 0; }
+.svc-need-label { font-size: 1.0625rem; font-weight: 700; color: #111827; line-height: 1.3; }
+.svc-need-hint { font-size: 0.8125rem; color: #6b7280; margin-top: 0.15rem; line-height: 1.35; }
+
+:root[data-theme="dark"] .svc-need-title,
+:root[data-theme="dark"] .svc-need-label { color: #e3e6ec; }
+:root[data-theme="dark"] .svc-need-hint { color: #a0a8b6; }
+:root[data-theme="dark"] .svc-need-btn { background-color: #1a2131; border-color: #2c3548; }
+:root[data-theme="dark"] .svc-need-btn:hover { border-color: #8b8fc7; }
+:root[data-theme="dark"] .svc-need-btn.active { background-color: #242c3e; border-color: #a3a6d6; }
+:root[data-theme="dark"] .svc-need-btn.active .svc-need-icon { background-color: #8b8fc7; color: #0f1420; }
+
+/* Phones / small tablets: one big button per row */
+@media (max-width: 900px) {
+  .svc-need-options { grid-template-columns: minmax(0, 1fr); gap: 0.625rem; }
+  .svc-need-btn { min-height: 4.25rem; }
 }
 
 .svc-type-cta {

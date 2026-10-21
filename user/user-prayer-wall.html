@@ -142,8 +142,9 @@
 
         <div id="pw-main" class="space-y-5">
           <div class="panel pw-compose">
-            <label class="form-label" for="pw-body">Share a prayer request <span id="pw-counter" class="pw-counter"></span></label>
-            <textarea id="pw-body" class="form-input" placeholder="e.g. Please pray for my mother's recovery from surgery."></textarea>
+            <label class="form-label" for="pw-body">Share a prayer request</label>
+            <textarea id="pw-body" class="form-input" placeholder="e.g. Please pray for my mother's recovery from surgery." aria-describedby="pw-counter"></textarea>
+            <p id="pw-counter" class="pw-counter">You can write up to 500 letters.</p>
             <div class="pw-compose-foot">
               <label class="pw-anon"><input type="checkbox" id="pw-anonymous" /> Post anonymously</label>
               <button type="button" id="pw-submit" class="btn-lavender">Post Request</button>

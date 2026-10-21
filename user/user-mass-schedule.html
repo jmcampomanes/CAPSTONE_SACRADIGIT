@@ -135,8 +135,11 @@
 
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
-        <!-- Regular Weekly Mass Schedule — first, since "what time is Mass?"
-             is why people open this page. Today's row is highlighted. -->
+        <!-- Mass type legend — what each type of Mass means (Daily/Sunday,
+             Anticipated, Special, Baptism), right above the weekly schedule. -->
+        <div class="mass-legend" id="mass-type-legend"></div>
+
+        <!-- Regular Weekly Mass Schedule — today's row is highlighted. -->
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">Regular Weekly Mass Schedule</h2>
@@ -197,10 +200,6 @@
             <ul id="upcoming-special-list" class="divide-y divide-gray-100"></ul>
           </div>
         </div>
-
-        <!-- Mass type legend — explains the color-coded badges in the
-             Date's Schedule above (Daily/Sunday, Anticipated, Special, Baptism). -->
-        <div class="mass-legend" id="mass-type-legend"></div>
 
         <!-- Liturgical season banner — background info, so it goes last
              (hidden on phones, see user-mass-schedule.css). -->

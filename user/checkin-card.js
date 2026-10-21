@@ -26,14 +26,15 @@ export function mountCheckInCard(box) {
   let busy = false;
   let message = null; // { ok, text }
 
-  watchOpenSessions(async (list) => {
-    sessions = list;
-    // Already checked in (e.g. on another device, or by the QR link)?
-    await Promise.all(list.filter(s => !checkedIn.has(s.id)).map(async (s) => {
+  // Already checked in (e.g. on another device, by the QR link, or the camera scanner)?
+  async function refreshCheckedIn() {
+    await Promise.all(sessions.filter(s => !checkedIn.has(s.id)).map(async (s) => {
       if (await alreadyCheckedIn(s.id, name).catch(() => false)) checkedIn.add(s.id);
     }));
     render();
-  });
+  }
+  watchOpenSessions((list) => { sessions = list; refreshCheckedIn(); });
+  window.addEventListener('sacradigit:checked-in', refreshCheckedIn);
 
   function render() {
     box.classList.toggle('hidden', !sessions.length);

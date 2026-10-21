@@ -288,11 +288,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (twofaToggle.checked) {
       twofaStatus.textContent = 'On';
       twofaStatus.className = 'twofa-status on';
-      showToast('Two-factor authentication enabled.');
+      showToast('Extra sign-in protection turned on.');
     } else {
       twofaStatus.textContent = 'Off';
       twofaStatus.className = 'twofa-status off';
-      showToast('Two-factor authentication disabled.');
+      showToast('Extra sign-in protection turned off.');
     }
   });
 

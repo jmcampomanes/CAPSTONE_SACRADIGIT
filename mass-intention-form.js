@@ -423,7 +423,15 @@ export function createIntentionForm(modal, {
 
   function finishStep2() {
     if (locked) return true;
-    if (!people.length) { toast('Please add at least one person to the prayer list.', true); startPerson(); go(1); return false; }
+    if (!people.length) {
+      // Empty list: back to step 1, where the first thing to do is pick an intention.
+      startPerson();
+      go(1);
+      catGrid.classList.add('mi-invalid');
+      toast('Tap one of the intentions above first, then enter the person’s name.', true);
+      catGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    }
     const amount = parseInt(offeringInput.value, 10);
     if (!amount || amount < minOffering) {
       flag(offeringInput);

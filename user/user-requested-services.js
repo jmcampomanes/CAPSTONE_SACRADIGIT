@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const categoryOf = (r) => serviceByName(r.type)?.category || (needsApproval(r.type) ? 'blessing' : 'other');
 
   const badgeClass  = { pending: 'badge-amber', scheduled: 'badge-green', declined: 'badge-red', completed: 'badge-blue' };
-  const statusLabel = { pending: 'Awaiting Approval', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+  const statusLabel = { pending: 'Waiting for approval', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
 
   // A declined request that the parish never approved reads "Not Approved", not "Cancelled".
   // (The admin Blessings page notes APPROVED_LABEL in `details` when it approves one.)
@@ -107,6 +107,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!input) return '—';
     const d = new Date(input);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  // "Tue Oct 28, 9:00 AM" — the year only when it isn't this year.
+  function fmtWhen(iso, time) {
+    if (!iso) return '';
+    const d = new Date(String(iso).slice(0, 10) + 'T00:00:00');
+    const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+    if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+    const date = d.toLocaleDateString('en-US', opts).replace(/^(\w+),/, '$1'); // "Tue, Oct 28" -> "Tue Oct 28"
+    return time ? `${date}, ${String(time).replace(/^0(\d)/, '$1')}` : date;
   }
   function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
@@ -165,27 +174,31 @@ document.addEventListener('DOMContentLoaded', () => {
     requestsList.innerHTML = sorted.map((r) => {
       const svc = serviceByName(r.type) || { name: r.type, iconBg: '#eee', iconColor: '#888', icon: '' };
       const when = r.date || r.preferredDate;
-      const scheduleChip = when ? `<span class="svc-row-schedule">${r.status === 'pending' ? 'Requested for ' : ''}${fmtDate(when)}${r.time ? ` at ${r.time}` : ''}</span>` : '';
-      const badge = notApproved(r) ? 'badge-red' : (badgeClass[effectiveStatus(r)] || 'badge-gray');
+      // Big status word + the date: "House Blessing / Waiting for approval / Tue Oct 28, 9:00 AM"
+      const tone = notApproved(r) ? 'declined' : effectiveStatus(r);
+      const prep = r.status === 'declined' ? '' : progressChipHtml(r);
 
-      return `<div class="svc-row">
+      return `<div class="svc-row" data-id="${r.id}">
         <div class="svc-row-icon" style="background-color:${svc.iconBg};color:${svc.iconColor};">${svc.icon}</div>
         <div class="svc-row-body">
           <p class="svc-row-title">${escapeHtml(svc.name)}</p>
+          <p class="svc-row-status tone-${tone}">${labelFor(r)}</p>
+          ${when ? `<p class="svc-row-when">${fmtWhen(when, r.time)}</p>` : ''}
+          ${prep ? `<div>${prep}</div>` : ''}
           <p class="svc-row-meta">Submitted ${fmtDate(r.createdAt)}</p>
-          <div>${scheduleChip}${r.status === 'declined' ? '' : progressChipHtml(r)}</div>
         </div>
         <div class="svc-row-actions">
-          <span class="badge ${badge}">${labelFor(r)}</span>
-          <button type="button" class="btn-view-details" data-id="${r.id}">View ›</button>
+          <button type="button" class="btn-view-details" data-id="${r.id}">View details ›</button>
         </div>
       </div>`;
     }).join('');
   }
 
+  // Tapping anywhere on a row opens it (the button is just the obvious target).
   requestsList.addEventListener('click', (e) => {
-    const btn = e.target.closest('.btn-view-details');
-    if (btn) openDetailModal(btn.dataset.id);
+    if (e.target.closest('a')) return; // e.g. a link inside the prep chip
+    const row = e.target.closest('.svc-row');
+    if (row) openDetailModal(row.dataset.id);
   });
 
   function openDetailModal(id) {

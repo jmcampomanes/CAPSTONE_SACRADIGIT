@@ -4,11 +4,15 @@
    ============================================ */
 
 /* ---------- Fund card grid ---------- */
+/* The four funds share the full width: 4 across on desktop, 2 on tablets, 1 on phones
+   (auto-fill used to leave empty columns on the right of wide screens). */
 .donation-fund-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
+@media (min-width: 640px) { .donation-fund-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .donation-fund-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 .fund-card {
   background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
@@ -69,7 +73,7 @@
 /* ---------- Fundraising Goal cards ---------- */
 .donation-goal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* auto-fit: one or two goals stretch across */
   gap: 1rem;
 }
 
@@ -400,3 +404,116 @@
   border-color: #8b8fc7;
   color: #1e2a4a;
 }
+/* ============================================
+   Give an Offering page (3 steps, layout from ../mass-intention-form.css)
+   Bigger choices than the old pop-up: fund, amount and method are each
+   one tap on a large button.
+   ============================================ */
+.mi-page .donate-fund-selector { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.625rem; }
+.mi-page .donate-fund-btn,
+.mi-page .payment-method-btn {
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  color: #1f2937;
+}
+.mi-page .donate-fund-btn.selected,
+.mi-page .payment-method-btn.selected {
+  border-color: #1e2a4a;
+  background-color: #f5f5fc;
+  color: #1e2a4a;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.25);
+}
+.mi-page .payment-method-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; }
+.mi-page .quick-amount-btn { min-height: 2.75rem; padding: 0.5rem 1.1rem; font-size: 1rem; }
+.mi-page .quick-amount-btn.selected { background-color: #1e2a4a; border-color: #1e2a4a; }
+.mi-page .offering-input { font-size: 1.0625rem !important; min-height: 3rem; }
+.donate-fund-selector.has-error { outline: 2px solid #dc2626; outline-offset: 6px; border-radius: 0.75rem; }
+.donate-inline-change { font-size: 0.8125rem; margin-left: 0.25rem; }
+
+/* Step 3: "Confirm does not take any money" */
+.donate-no-charge {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* After Confirm: "Thank you! Now send your offering." */
+.donate-next:focus { outline: none; }
+.donate-next-head { display: flex; gap: 0.875rem; align-items: flex-start; margin-bottom: 1rem; }
+.donate-next-icon {
+  width: 2.75rem; height: 2.75rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px; background-color: #dcfce7; color: #15803d;
+}
+.donate-next-icon svg { width: 1.5rem; height: 1.5rem; }
+.donate-next-status { margin-top: 0.35rem; font-size: 1rem; line-height: 1.5; color: #374151; }
+
+.donate-next-steps {
+  counter-reset: dstep;
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.donate-next-steps li {
+  counter-increment: dstep;
+  position: relative;
+  padding: 0.875rem 1rem 0.875rem 3.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  background-color: #ffffff;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: #1f2937;
+}
+.donate-next-steps li::before {
+  content: counter(dstep);
+  position: absolute; left: 0.875rem; top: 0.8rem;
+  width: 1.75rem; height: 1.75rem; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  background-color: #1e2a4a; color: #ffffff; font-size: 0.875rem; font-weight: 700;
+}
+.donate-next-steps a, .donate-next-after a { color: #1e2a4a; font-weight: 700; text-decoration: underline; }
+.donate-next-after { margin-top: 1rem; font-size: 0.9375rem; line-height: 1.55; color: #4b5563; }
+
+.donate-copy {
+  margin-left: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid #c9cbe6;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #5b5fa8;
+  cursor: pointer;
+  vertical-align: 0.05em;
+}
+.donate-copy:hover { border-color: #8b8fc7; }
+
+@media (max-width: 767px) {
+  .mi-page .donate-fund-selector { grid-template-columns: minmax(0, 1fr); }
+  .donate-next-steps li { font-size: 1rem; }
+}
+
+:root[data-theme="dark"] .mi-page :is(.donate-fund-btn, .payment-method-btn) { color: #e3e6ec; }
+:root[data-theme="dark"] .mi-page :is(.donate-fund-btn, .payment-method-btn).selected { background-color: #242c3e; border-color: #a3a6d6; color: #f1f3f7; }
+:root[data-theme="dark"] .mi-page .quick-amount-btn.selected { background-color: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] .donate-no-charge { background-color: #1a2740; border-color: #2c4a7a; color: #c7d7fe; }
+:root[data-theme="dark"] .donate-next-icon { background-color: #15301f; color: #8decb1; }
+:root[data-theme="dark"] .donate-next-status { color: #c4c9d3; }
+:root[data-theme="dark"] .donate-next-steps li { background-color: #1a2131; border-color: #2c3548; color: #e3e6ec; }
+:root[data-theme="dark"] .donate-next-steps li::before { background-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] :is(.donate-next-steps, .donate-next-after) a { color: #c7cbe8; }
+:root[data-theme="dark"] .donate-next-after { color: #a0a8b6; }
+:root[data-theme="dark"] .donate-copy { background-color: #1a2131; border-color: #2c3548; color: #c7cbe8; }

@@ -473,3 +473,6 @@
 
 .ci-card-msg.err { color: #b91c1c; }
 .ci-card-msg.ok { color: #15803d; }
+
+/* "Check in at Mass" Quick Action is a <button> (opens the camera) — same look as the link cards. */
+.quick-action-btn { font: inherit; }

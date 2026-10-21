@@ -92,16 +92,28 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeFilter = 'All';
   let currentDetailId = null;
 
+  // Just All / Pending / Ready — released and rejected ones are under All.
   const filterMap = {
     'Pending':  ['pending'],
-    'Approved': ['approved'],
-    'Ready':    ['approved'], // schema has no separate "ready" status yet
-    'Released': ['released'],
-    'Rejected': ['rejected'],
+    'Ready':    ['approved'], // schema has no separate "ready" status yet: approved = ready at the office
   };
 
   const badgeClass = { pending: 'badge-amber', approved: 'badge-green', released: 'badge-gray', rejected: 'badge-red' };
-  const statusLabel = { pending: 'Pending', approved: 'Approved', released: 'Released', rejected: 'Rejected' };
+  const statusLabel = { pending: 'Pending', approved: 'Ready', released: 'Released', rejected: 'Not approved' };
+
+  /* One plain sentence per status on each card, in place of the old
+     5-step dot tracker (its 9px labels ran together on phones). */
+  function statusSentence(r) {
+    switch (r.status) {
+      case 'pending':  return 'Being checked by the parish office. Usually ready in 3–5 working days.';
+      case 'approved': return 'Ready! Pick it up at the parish office during office hours.';
+      case 'released': return hasOfficialCopy(r)
+        ? 'Released. You can also view your certificate online.'
+        : 'Released — you have received this certificate.';
+      case 'rejected': return 'Not approved. Tap Details to see why.';
+      default:         return '';
+    }
+  }
 
   const list        = document.getElementById('requests-list');
   const emptyState   = document.getElementById('requests-empty');
@@ -196,16 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
     emptyState.classList.add('hidden');
 
     sorted.forEach((r) => {
-      const isRejected = r.status === 'rejected';
-      const stepIdx = stepIndexFor[r.status] ?? 0;
-
-      const stepDotsHtml = STEPS.map((step, i) => {
-        let cls = '';
-        if (isRejected) cls = i === 0 ? 'done' : i === 1 ? 'rejected' : '';
-        else { if (i < stepIdx) cls = 'done'; else if (i === stepIdx) cls = 'current'; }
-        return `<div class="req-step ${cls}"><div class="req-step-dot"></div><span class="req-step-label">${step.replace(' for Pick-up', '')}</span></div>`;
-      }).join('');
-
       const card = document.createElement('div');
       card.className = 'req-card';
       card.innerHTML = `
@@ -221,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span>
           </div>
-          <div class="req-progress-wrap"><div class="req-progress-steps">${stepDotsHtml}</div></div>
+          <p class="req-status-line status-${r.status}">${statusSentence(r)}</p>
         </div>
         <div class="req-card-actions">
           ${hasOfficialCopy(r) ? `<button type="button" class="btn-view-cert" data-id="${r.id}">View Certificate</button>` : ''}

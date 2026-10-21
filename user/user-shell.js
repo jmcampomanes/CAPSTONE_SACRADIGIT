@@ -15,6 +15,8 @@ import { initParishAssistant } from '../assistant/parish-assistant.js';
 import { initNotifications } from '../notifications/parish-notifications.js';
 import { initExtToggles } from '../name-utils.js';
 import { watchFieldErrors, FIELD_ERROR_SELECTOR } from './field-messages.js';
+import { initBirthDateDropdowns } from '../date-dropdowns.js';
+import { mountPageInfo } from './page-info.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -137,7 +139,7 @@ const HELP_CONTENT = {
     steps: [
       'Update your Profile Information, then save to keep the changes.',
       'Use Change Password to update your login password.',
-      'Turn on Two-Factor Authentication for extra account security.',
+      'Turn on Extra sign-in protection (a code sent to your phone) to keep your account safer.',
       'Adjust Notification Preferences to control what you’re alerted about.',
       'Export your Recent Activity if you’d like a copy for your records.',
     ],
@@ -383,6 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!PAGES_WITHOUT_ASSISTANT.has(currentPage)) initParishAssistant();
   initNotifications(); // 🔔 bell in the top bar (notifications/)
   initExtToggles(); // phones: Ext. (Jr., III) box hidden behind an "Add extension" checkbox (name-utils.js)
+  initBirthDateDropdowns(); // birth dates: Month / Day / Year dropdowns instead of the mm/dd/yyyy calendar (../date-dropdowns.js)
+  mountPageInfo(pageFile); // "What can I do here?" box at the top of each page, main button on the right (page-info.js)
   labelTopBarIcons();
   addSkipLink();
   askAboutTextSize();

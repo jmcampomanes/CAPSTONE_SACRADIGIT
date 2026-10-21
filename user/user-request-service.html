@@ -147,7 +147,7 @@
             </div>
             <div class="info-banner-body">
               <p class="info-banner-title">What can I request here?</p>
-              <p class="info-banner-text">Sacraments, blessings, and special Masses — pick one below and choose an open schedule. Sacraments and special Masses are booked right away; blessings are approved by the parish office first. Track everything under "Requested Services."</p>
+              <p class="info-banner-text">Pick what you need, then choose an open date. Blessings are approved by the parish office first; sacraments and Masses are booked right away.</p>
             </div>
             <a href="user-requested-services.html" class="btn-secondary info-banner-action">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
@@ -155,10 +155,18 @@
             </a>
           </div>
 
-          <!-- Services we offer -->
-          <div class="panel mt-5">
+          <!-- "What do you need?" — three big choices; each shows only its own
+               services, instead of all 14 cards at once (buttons built by
+               user-request-service.js). -->
+          <section class="svc-need mt-5" aria-labelledby="svc-need-title">
+            <h2 class="svc-need-title" id="svc-need-title">What do you need?</h2>
+            <div class="svc-need-options" id="svc-need-options" role="group" aria-labelledby="svc-need-title"></div>
+          </section>
+
+          <!-- Services in the chosen group -->
+          <div class="panel mt-5 hidden" id="svc-list-panel">
             <div class="panel-header">
-              <h2 class="panel-title">Services We Offer</h2>
+              <h2 class="panel-title" id="svc-list-title">Services</h2>
               <p class="text-xs text-gray-400 font-medium">Tap a service to request it</p>
             </div>
             <div class="p-4">

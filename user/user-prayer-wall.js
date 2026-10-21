@@ -36,7 +36,13 @@ document.addEventListener('DOMContentLoaded', () => {
   watchReactions((items) => { reactions = items; render(); });
 
   input.maxLength = MAX_PRAYER_LENGTH;
-  const updateCounter = () => { counter.textContent = `${input.value.length}/${MAX_PRAYER_LENGTH}`; };
+  // Plain words instead of "0/500"; how many are left only appears near the limit.
+  const updateCounter = () => {
+    const left = MAX_PRAYER_LENGTH - input.value.length;
+    counter.textContent = left <= 100
+      ? `You can write up to ${MAX_PRAYER_LENGTH} letters — ${left} left.`
+      : `You can write up to ${MAX_PRAYER_LENGTH} letters.`;
+  };
   input.addEventListener('input', updateCounter);
   updateCounter();
 
