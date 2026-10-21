@@ -8,11 +8,13 @@ import { guardPage, currentUser } from '../auth.js';
 // Only signed-in people with the right role get past this (see auth.js).
 guardPage('parishioner');
 import { initPageHelp } from '../help-tutorial.js';
-import { initUiPrefs } from '../ui-prefs.js';
+import { initUiPrefs, currentLang, setAccessibility } from '../ui-prefs.js';
+import { labelTopBarIcons } from '../top-bar-labels.js';
 import { watchUnreadBadge } from '../chat.js';
 import { initParishAssistant } from '../assistant/parish-assistant.js';
 import { initNotifications } from '../notifications/parish-notifications.js';
 import { initExtToggles } from '../name-utils.js';
+import { watchFieldErrors, FIELD_ERROR_SELECTOR } from './field-messages.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -120,7 +122,7 @@ const HELP_CONTENT = {
     ],
   },
   'user-my-requests.html': {
-    title: 'My Requests',
+    title: 'My certificate requests',
     intro: 'Track the status of your certificate requests.',
     steps: [
       'Browse your submitted certificate requests and their current status.',
@@ -172,7 +174,7 @@ const HELP_CONTENT = {
     ],
   },
   'user-requested-services.html': {
-    title: 'Requested Services',
+    title: 'My service bookings',
     intro: 'Track the status of every sacrament, blessing, or special Mass you’ve requested.',
     steps: [
       'Use the chips above the list — All, Blessings, Sacraments, Special Masses — to narrow it down.',
@@ -182,6 +184,67 @@ const HELP_CONTENT = {
     ],
   },
 };
+
+const PAGES_WITHOUT_ASSISTANT = new Set([
+  'user-messages.html',
+  'user-request-certificate.html',
+  'user-request-service.html',
+  'user-facility-booking.html',
+  'user-mass-intentions.html',
+]);
+
+
+function addSkipLink() {
+  const main = document.querySelector('main');
+  if (!main || document.querySelector('.skip-link')) return;
+  if (!main.id) main.id = 'main-content';
+  main.setAttribute('tabindex', '-1');
+  const link = document.createElement('a');
+  link.className = 'skip-link';
+  link.href = `#${main.id}`;
+  link.textContent = currentLang() === 'fil' ? 'Lumaktaw sa nilalaman' : 'Skip to main content';
+  document.body.prepend(link);
+}
+
+/* First sign-in on this device: offer bigger letters once, up front,
+   instead of leaving it switched off behind the "Aa" button. */
+const TEXT_SIZE_ASKED = 'sacradigit_textsize_asked';
+
+function askAboutTextSize() {
+  try {
+    if (localStorage.getItem('sacradigit_a11y') !== null || localStorage.getItem(TEXT_SIZE_ASKED)) return;
+  } catch { return; }
+
+  const fil = currentLang() === 'fil';
+  const overlay = document.createElement('div');
+  overlay.className = 'textsize-ask-overlay';
+  overlay.setAttribute('data-no-translate', '');
+  overlay.innerHTML = `
+    <div class="textsize-ask-card" role="dialog" aria-modal="true" aria-labelledby="textsize-ask-title">
+      <p class="textsize-ask-sample" aria-hidden="true">Aa</p>
+      <h2 id="textsize-ask-title">${fil ? 'Gusto mo ba ng mas malalaking letra?' : 'Would you like bigger letters?'}</h2>
+      <p>${fil
+        ? 'Lalaki rin ang mga button. Mapapalitan mo ito anumang oras gamit ang “Mas malaki” sa itaas.'
+        : 'Buttons get bigger too. You can change this any time with “Bigger text” at the top of the screen.'}</p>
+      <div class="textsize-ask-actions">
+        <button type="button" class="btn-lavender" data-choice="yes">${fil ? 'Oo, palakihin' : 'Yes, bigger'}</button>
+        <button type="button" class="btn-secondary" data-choice="no">${fil ? 'Hindi na, salamat' : 'No thanks'}</button>
+      </div>
+    </div>`;
+
+  const close = (bigger) => {
+    try { localStorage.setItem(TEXT_SIZE_ASKED, '1'); } catch { /* private mode */ }
+    setAccessibility(bigger);
+    overlay.remove();
+  };
+  overlay.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-choice]');
+    if (btn) close(btn.dataset.choice === 'yes');
+  });
+  overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(false); });
+  document.body.appendChild(overlay);
+  overlay.querySelector('[data-choice="yes"]').focus();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -241,6 +304,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  /* "My Requests" and "Requested Services" sounded like the same thing. */
+  const NAV_NAMES = { 'my-requests': 'My certificate requests', 'requested-services': 'My service bookings' };
+  document.querySelectorAll('#sidebar .sidebar-link[data-nav]').forEach(link => {
+    const name = NAV_NAMES[link.dataset.nav];
+    const textNode = name && [...link.childNodes].reverse().find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+    if (textNode) textNode.textContent = ` ${name} `;
+  });
+
+  /* Profile, Settings and Log out as plain menu items — not only behind the name. */
+  if (sidebarNav && !sidebarNav.querySelector('[data-nav="settings"]')) {
+    sidebarNav.insertAdjacentHTML('beforeend', `
+        <p class="sidebar-label mt-5">Account</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="user-profile.html" data-nav="profile" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              My Profile
+            </a>
+          </li>
+          <li>
+            <a href="user-settings.html" data-nav="settings" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Settings
+            </a>
+          </li>
+          <li>
+            <a href="../index.html" data-nav="logout" data-action="logout" class="sidebar-link sidebar-link-logout">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 16l4-4m0 0l-4-4m4 4H7m6 5v1a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h5a2 2 0 012 2v1"/></svg>
+              Log out
+            </a>
+          </li>
+        </ul>`);
+  }
+
   /* "Parish → Messages" — chat with the parish office (../chat.js),
      with a count of office replies not read yet. */
   const annLink = document.querySelector('#sidebar a.sidebar-link[href="user-announcements.html"]');
@@ -276,9 +373,14 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   initPageHelp(HELP_CONTENT[currentPage]);
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
-  initParishAssistant(); // floating "Ask" chat (assistant/)
+  // The floating "Ask" bubble would sit on top of Next/Submit on step forms,
+  // and next to the real office chat on Messages it's unclear which one reaches a person.
+  if (!PAGES_WITHOUT_ASSISTANT.has(currentPage)) initParishAssistant();
   initNotifications(); // 🔔 bell in the top bar (notifications/)
   initExtToggles(); // phones: Ext. (Jr., III) box hidden behind an "Add extension" checkbox (name-utils.js)
+  labelTopBarIcons();
+  addSkipLink();
+  askAboutTextSize();
 
 
   /* ------------------------------------------
@@ -331,21 +433,47 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------
      5. TOAST helper (globally available)
   ------------------------------------------ */
+  /* Good news ("Request sent") fades after 3s at the bottom. Warnings sit at
+     the top, clear of the Next/Submit buttons, and stay until closed or
+     replaced — a 3-second warning vanishes before a slow reader finishes it. */
   const toast = document.getElementById('toast');
   let toastTimer = null;
+
+  function hideToast() {
+    clearTimeout(toastTimer);
+    toast.classList.remove('show');
+    setTimeout(() => toast.classList.add('hidden'), 200);
+  }
 
   window.showToast = function (message, isError = false) {
     if (!toast) return;
     clearTimeout(toastTimer);
-    toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
+    toast.classList.toggle('toast-error', isError);
+    toast.setAttribute('role', isError ? 'alert' : 'status');
+    toast.style.backgroundColor = '';
+    // Just under the top bar (so it doesn't hide the title and icons); at the very top once scrolled past it.
+    const headerBottom = document.querySelector('header')?.getBoundingClientRect().bottom || 0;
+    toast.style.top = isError ? `${Math.max(12, Math.round(headerBottom) + 8)}px` : '';
+    if (isError) {
+      toast.innerHTML = `
+        <svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m0 3.75h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <span class="toast-text"></span>
+        <button type="button" class="toast-close" aria-label="${currentLang() === 'fil' ? 'Isara' : 'Close'}">×</button>`;
+      toast.querySelector('.toast-text').textContent = message;
+      toast.querySelector('.toast-close').addEventListener('click', hideToast);
+    } else {
+      toast.textContent = message;
+    }
+    // A "fill in the boxes" warning closes itself once every box is fixed.
+    toast.dataset.fieldError = isError && document.querySelector(FIELD_ERROR_SELECTOR) ? '1' : '';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
+    if (!isError) toastTimer = setTimeout(hideToast, 3000);
   };
+
+  watchFieldErrors(() => {
+    if (toast?.dataset.fieldError === '1' && toast.classList.contains('show')) hideToast();
+  });
 
 
   /* ------------------------------------------

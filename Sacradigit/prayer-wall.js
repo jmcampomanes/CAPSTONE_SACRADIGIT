@@ -12,6 +12,7 @@ import {
   prayerReady, watchRequests, watchReactions, moderateRequest, deleteRequest, tallyReactions,
   displayName, timeAgo, escapeHtml,
 } from '../prayer-wall.js';
+import { showToast, confirmDialog, reasonDialog } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
@@ -79,15 +80,28 @@ document.addEventListener('DOMContentLoaded', () => {
         await moderateRequest(r.id, 'approved');
         showToast('Approved — it’s on the wall now.');
       } else if (act === 'reject' || act === 'remove') {
-        const note = prompt(act === 'reject'
-          ? 'Why isn’t this being posted? (The person who asked will see this.)'
-          : 'Why is this being taken down? (The person who asked will see this.)');
+        const who = displayName(r);
+        const note = await reasonDialog({
+          title: act === 'reject' ? 'Don’t post this prayer request?' : 'Take this request off the wall?',
+          detail: `“${r.body.length > 220 ? `${r.body.slice(0, 220)}…` : r.body}”\n— ${who}`,
+          confirmLabel: act === 'reject' ? 'Don’t post' : 'Take down',
+          input: {
+            label: `Reason (${r.anonymous ? 'the person who asked' : who} will see this)`,
+            placeholder: 'e.g. Please remove the phone number, then post it again.',
+          },
+        });
         if (note === null) return;
-        if (!note.trim()) { showToast('Please give a short reason.', true); return; }
-        await moderateRequest(r.id, act === 'reject' ? 'rejected' : 'removed', note.trim());
+        await moderateRequest(r.id, act === 'reject' ? 'rejected' : 'removed', note);
         showToast(act === 'reject' ? 'Request not posted.' : 'Request taken down.');
       } else if (act === 'delete') {
-        if (!confirm('Delete this prayer request for good?')) return;
+        const sure = await confirmDialog({
+          title: 'Delete this prayer request for good?',
+          detail: r.body.length > 220 ? `${r.body.slice(0, 220)}…` : r.body,
+          message: 'It can’t be brought back.',
+          confirmLabel: 'Delete',
+          tone: 'danger',
+        });
+        if (!sure) return;
         await deleteRequest(r.id);
         showToast('Request deleted.');
       }
@@ -98,17 +112,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const toast = $('toast');
-  let toastTimer = null;
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 });

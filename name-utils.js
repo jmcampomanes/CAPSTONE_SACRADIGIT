@@ -114,15 +114,49 @@ const EXT_STYLE = `
   }
 `;
 
+/* A visible "First / Middle / Last / Ext." label over each box, so it's
+   still clear which box is which once they're filled in (placeholders
+   vanish as soon as you type). */
+const NAME_PARTS = { first: 'First', middle: 'Middle', last: 'Last', ext: 'Ext. (Jr., III)' };
+
+function labelNameParts(row) {
+  if (row.classList.contains('has-part-labels')) return;
+  const inputs = [...row.querySelectorAll(':scope > input')];
+  const parts = inputs.map(i => (i.id.match(/-(first|middle|last|ext)$/) || [])[1]);
+  if (!inputs.length || parts.some(p => !p)) return;
+  inputs.forEach((input, n) => {
+    const label = document.createElement('label');
+    label.className = `name-part-label name-part-${parts[n]}`;
+    label.htmlFor = input.id;
+    label.textContent = NAME_PARTS[parts[n]];
+    // The phone "Add extension" checkbox must stay right before the Ext. box.
+    const anchor = input.previousElementSibling?.classList.contains(EXT_TOGGLE) ? input.previousElementSibling : input;
+    anchor.before(label);
+  });
+  row.classList.add('has-part-labels');
+}
+
+const PART_STYLE = `
+  .name-field-row.has-part-labels { grid-auto-flow: column; grid-template-rows: auto auto; row-gap: 0.2rem; }
+  .name-part-label { font-size: 0.75rem; font-weight: 600; color: #4b5563; }
+  :root[data-theme="dark"] .name-part-label { color: #b6bdca; }
+  @media (max-width: 640px) {
+    .name-field-row.has-part-labels { grid-auto-flow: row; grid-template-rows: none; }
+    .name-field-row.has-part-labels > input:not(:last-child) { margin-bottom: 0.4rem; }
+    .name-part-label.name-part-ext { display: none; }
+  }
+`;
+
 /** Adds the checkbox to every Ext. box on the page, now and as forms are built. */
 export function initExtToggles(root = document.body) {
   if (!document.getElementById('name-ext-styles')) {
     const st = document.createElement('style');
     st.id = 'name-ext-styles';
-    st.textContent = EXT_STYLE;
+    st.textContent = EXT_STYLE + PART_STYLE;
     document.head.appendChild(st);
   }
   root.querySelectorAll('.name-ext-input').forEach(addExtToggle);
+  root.querySelectorAll('.name-field-row').forEach(labelNameParts);
   new MutationObserver((muts) => {
     for (const m of muts) {
       if (m.type === 'attributes') { syncExtToggle(m.target); continue; } // "Not applicable" disables the boxes
@@ -130,6 +164,8 @@ export function initExtToggles(root = document.body) {
         if (n.nodeType !== 1) return;
         if (n.matches('.name-ext-input')) addExtToggle(n);
         n.querySelectorAll?.('.name-ext-input').forEach(addExtToggle);
+        if (n.matches('.name-field-row')) labelNameParts(n);
+        n.querySelectorAll?.('.name-field-row').forEach(labelNameParts);
       });
     }
   }).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });

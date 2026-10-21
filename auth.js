@@ -214,9 +214,9 @@ function paintUserCard(user) {
   if (avatarInitials) avatarInitials.textContent = initials;
 }
 
-// Every portal's user menu has a "Log Out" item; make it really sign out.
+// Every portal's user menu (and the parishioner sidebar) has a "Log Out" item; make it really sign out.
 document.addEventListener('click', (e) => {
-  const item = e.target.closest('.user-menu-item[data-action="logout"]');
+  const item = e.target.closest('.user-menu-item[data-action="logout"], .sidebar-link[data-action="logout"]');
   if (!item) return;
   e.preventDefault();
   e.stopImmediatePropagation();

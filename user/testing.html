@@ -147,6 +147,25 @@
   .snippet-before .tag { color: #b91c1c; }
   .snippet-after .tag { color: #15803d; }
 
+  /* ---------- Top-5 section extras ---------- */
+  .priority-item { margin-bottom: 2.75rem; padding-bottom: 2.25rem; border-bottom: 1px dashed #d8dce3; }
+  .priority-item:last-child { border-bottom: none; }
+  .priority-item h3 { font-size: 1rem; margin: 0 0 0.6rem; display: flex; align-items: center; gap: 0.5rem; }
+  .priority-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: #1e2a4a; color: #fff; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+  .overlay-wrap { position: relative; }
+  .onboard-card {
+    position: absolute; left: 8%; right: 8%; top: 35%;
+    background: #fff; border-radius: 0.75rem; padding: 0.9rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2); text-align: center;
+    border: 1px solid #e5e7eb;
+  }
+  .onboard-card p { font-size: 0.78rem; margin: 0 0 0.6rem; color: #111827; font-weight: 600; }
+  .onboard-card .row { display: flex; gap: 0.4rem; }
+  .onboard-card button { flex: 1; font-size: 0.72rem; padding: 0.4rem; border-radius: 0.4rem; border: none; cursor: pointer; }
+  .icon-row-mini { display: flex; justify-content: space-around; padding: 0.5rem 0.25rem; border-bottom: 1px solid #f1f2f5; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.9rem; font-size: 0.75rem; border-bottom: 1px solid #f5f6f8; color: #374151; }
+  .warn-top { background: #fef2f2; border-bottom: 1px solid #fecaca; color: #b91c1c; font-size: 0.68rem; padding: 0.5rem 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+
   @media (max-width: 900px) {
     .sidebar { display: none; }
     .mobile-jump { display: block; position: sticky; top: 0; z-index: 10; background: #1e2a4a; padding: 0.75rem 1rem; }
@@ -160,6 +179,7 @@
 <div class="mobile-jump">
   <select onchange="if(this.value) location.hash = this.value;">
     <option value="">Jump to section…</option>
+    <option value="#top5">★ Top 5 fixes (priority order)</option>
     <option value="#global">Global issues (every page)</option>
     <option value="#signin">Sign In</option>
     <option value="#dashboard">1. Dashboard</option>
@@ -186,6 +206,8 @@
   <nav class="sidebar">
     <h1>Usability Review</h1>
     <p class="note">Simulated signed-in parishioner, sample records only. Each section below is one item from the report — tell me which ones you want built for real.</p>
+    <a class="group">Priority</a>
+    <a href="#top5">★ Top 5 fixes (do these first)</a>
     <a class="group">Global</a>
     <a href="#global">Every page (icons, text, overlays)</a>
     <a class="group">Pages</a>
@@ -211,6 +233,167 @@
   </nav>
 
   <div class="content">
+
+    <!-- ===================== TOP 5 (PRIORITY) ===================== -->
+    <section class="topic" id="top5">
+      <h2>★ Top 5 fixes — biggest difference first</h2>
+      <p class="for-line">These supersede the generic "Global issues" below — they're the specific, orderable version of the same problems.</p>
+
+      <div class="priority-item">
+        <h3><span class="priority-num">1</span> Ask about larger text on first visit — and make it enlarge buttons too</h3>
+        <div class="fix-box" style="margin-top:0;">Show a one-time card on first sign-in: "Would you like bigger letters? [Yes, bigger] [No thanks]". Extend Larger Text mode so it also raises the minimum text size to 16px and makes all buttons and icons at least 44×44px — not just body copy.</div>
+        <div class="compare">
+          <div class="col">
+            <div class="phone-label label-bad">✕ Today</div>
+            <div class="phone overlay-wrap">
+              <div class="mock-header"><span class="mock-title">Dashboard</span></div>
+              <div class="mock-body" style="min-height:160px;">
+                <p class="faint-text">No prompt — Larger Text sits off by default inside Settings, several taps away.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="phone-label label-good">✓ First sign-in</div>
+            <div class="phone overlay-wrap">
+              <div class="mock-header"><span class="mock-title">Dashboard</span></div>
+              <div class="mock-body" style="min-height:160px; background:rgba(0,0,0,0.25);">
+                <div class="onboard-card">
+                  <p>Would you like bigger letters?</p>
+                  <div class="row">
+                    <button style="background:#1e2a4a; color:#fff;">Yes, bigger</button>
+                    <button style="background:#f3f4f6; color:#374151;">No thanks</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="phone-label label-good">✓ After "Yes, bigger"</div>
+            <div class="phone">
+              <div class="mock-header" style="padding:0.8rem 0.9rem;"><span class="mock-title" style="font-size:1.05rem;">Dashboard</span></div>
+              <div class="mock-body" style="min-height:160px;">
+                <p style="font-size:1rem; color:#111827; margin:0 0 0.6rem;">Welcome back, Rosa</p>
+                <button class="btn-solid" style="min-height:48px; font-size:1rem;">Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption">Larger Text mode now scales the button and icon targets, not only the paragraph text.</p>
+      </div>
+
+      <div class="priority-item">
+        <h3><span class="priority-num">2</span> Get things out of the way of the buttons</h3>
+        <div class="fix-box" style="margin-top:0;">Hide the chat bubble on step pages (Mass Intention, certificate, booking, service forms) and on Messages, or raise it above the footer. Show the install banner only on the Dashboard, once, after the second visit. Move warning bars to the top of the screen and keep them until dismissed.</div>
+        <div class="snippet-row">
+          <div class="snippet snippet-before"><span class="tag">Before</span>Chat bubble floats bottom-right on <em>every</em> page, including step-form footers → sits on top of Next/Submit.</div>
+          <div class="snippet snippet-after"><span class="tag">After</span>Bubble is hidden on: Mass Intentions, Request Certificate, Facility Booking, Request a Service, Messages. Elsewhere it's raised clear of any footer button.</div>
+        </div>
+        <div class="snippet-row">
+          <div class="snippet snippet-before"><span class="tag">Before</span>Install banner shows on every page, every visit, until manually closed.</div>
+          <div class="snippet snippet-after"><span class="tag">After</span>Install banner shows only on the Dashboard, only starting the parishioner's 2nd visit.</div>
+        </div>
+        <div class="compare">
+          <div class="col">
+            <div class="phone-label label-bad">✕ Before — warning at the bottom</div>
+            <div class="phone">
+              <div class="mock-header"><span class="mock-title">Request Certificate</span></div>
+              <div class="mock-body" style="min-height:110px;">
+                <p class="ok-text">Last Name: <span style="color:#dc2626;">[empty]</span></p>
+              </div>
+              <div class="warning-bar">⚠ Please complete all required fields</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="phone-label label-good">✓ After — pinned to the top, stays until dismissed</div>
+            <div class="phone">
+              <div class="warn-top">⚠ Please enter the last name. <span style="font-weight:700;">✕</span></div>
+              <div class="mock-header"><span class="mock-title">Request Certificate</span></div>
+              <div class="mock-body" style="min-height:110px;">
+                <p class="ok-text">Last Name: <span style="color:#dc2626;">[empty]</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <h3><span class="priority-num">3</span> Label the top-bar icons</h3>
+        <div class="fix-box" style="margin-top:0;">Under each icon, add a word: "Alerts", "Bigger text", "Dark", "Language", "Help". On phones, move Dark and Language into Settings to make room.</div>
+        <div class="compare">
+          <div class="col">
+            <div class="phone-label label-bad">✕ Before — 5 unlabeled icons</div>
+            <div class="phone">
+              <div class="mock-header">
+                <span class="mock-title">Dashboard</span>
+                <div class="icon-row">
+                  <div class="icon-tiny">🔔</div><div class="icon-tiny">Aa</div><div class="icon-tiny">☾</div><div class="icon-tiny">EN</div><div class="icon-tiny">?</div>
+                </div>
+              </div>
+              <div class="mock-body" style="min-height:120px;"></div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="phone-label label-good">✓ After — phone width, only 3 stay up top</div>
+            <div class="phone">
+              <div class="mock-header"><span class="mock-title">Dashboard</span></div>
+              <div class="icon-row-mini">
+                <div class="icon-big"><div class="circle">🔔</div><span class="lbl">Alerts</span></div>
+                <div class="icon-big"><div class="circle">Aa</div><span class="lbl">Bigger text</span></div>
+                <div class="icon-big"><div class="circle">?</div><span class="lbl">Help</span></div>
+              </div>
+              <div class="mock-body" style="min-height:90px;">
+                <p class="faint-text" style="margin-bottom:0.3rem;">Dark mode and Language moved here ↓</p>
+              </div>
+              <div class="settings-row"><span>☾ Dark mode</span><span class="faint-text">Off</span></div>
+              <div class="settings-row"><span>🌐 Language</span><span class="faint-text">English</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <h3><span class="priority-num">4</span> One look for "you can press this"</h3>
+        <div class="fix-box" style="margin-top:0;">Every main action becomes solid navy with white text and at least 48px tall: Next, Submit, Confirm Offering, Check In, Volunteer, Start request. Keep the pale styles only for buttons that really are disabled.</div>
+        <div class="compare">
+          <div class="col">
+            <div class="phone-label label-bad">✕ Before — pale used for both</div>
+            <div class="phone">
+              <div class="mock-body" style="min-height:unset;">
+                <p class="faint-text" style="margin:0 0 0.3rem;">Enabled, ready to tap:</p>
+                <button class="btn-pale-full" style="margin-bottom:0.7rem;">Confirm Offering</button>
+                <p class="faint-text" style="margin:0 0 0.3rem;">Actually disabled (missing fields):</p>
+                <button class="btn-pale-full" disabled>Confirm Offering</button>
+                <p class="faint-text" style="margin-top:0.3rem;">↑ identical — no way to tell them apart</p>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="phone-label label-good">✓ After — only true "look" for pressable</div>
+            <div class="phone">
+              <div class="mock-body" style="min-height:unset;">
+                <p class="faint-text" style="margin:0 0 0.3rem;">Enabled, ready to tap:</p>
+                <button class="btn-solid" style="min-height:48px; margin-bottom:0.7rem;">Confirm Offering</button>
+                <p class="faint-text" style="margin:0 0 0.3rem;">Actually disabled (missing fields):</p>
+                <button class="btn-pale-full" style="min-height:48px; opacity:0.55;" disabled>Confirm Offering</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <h3><span class="priority-num">5</span> Messages next to the box that's wrong, in plain words</h3>
+        <div class="fix-box" style="margin-top:0;">Bring the House Blessing style (a message under each box) to Request Certificate, Facility Booking and Donations. Make each message match the real problem ("Tap one of the intentions above first").</div>
+        <div class="snippet-row">
+          <div class="snippet snippet-before"><span class="tag">Facility Booking — before</span>Calendar left blank → generic small grey text under the whole calendar: "Please book at least 3 days in advance."</div>
+          <div class="snippet snippet-after"><span class="tag">Facility Booking — after</span>Calendar left blank → red text right under the date field: "Please pick a date at least 3 days from today."</div>
+        </div>
+        <div class="snippet-row">
+          <div class="snippet snippet-before"><span class="tag">Donations — before</span>Amount left blank → nothing happens, or a bar at the bottom of the screen.</div>
+          <div class="snippet snippet-after"><span class="tag">Donations — after</span>Amount left blank → red text under the amount box: "Please enter how much you'd like to give."</div>
+        </div>
+      </div>
+    </section>
 
     <!-- ===================== GLOBAL ===================== -->
     <section class="topic" id="global">

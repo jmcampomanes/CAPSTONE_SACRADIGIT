@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin UX Review — SacraDigit</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; margin: 0; color: #111827; }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 260px; flex-shrink: 0; background: #1e2a4a; color: #cbd3e6; padding: 1.25rem 0.75rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar h1 { color: #fff; font-size: 0.95rem; margin: 0 0.5rem 0.25rem; }
+  .sidebar p.note { font-size: 0.7rem; color: #8b95b8; margin: 0 0.5rem 1rem; line-height: 1.4; }
+  .sidebar a { display: flex; justify-content: space-between; gap: 0.4rem; color: #cbd3e6; text-decoration: none; font-size: 0.78rem; padding: 0.4rem 0.6rem; border-radius: 0.4rem; margin-bottom: 0.1rem; }
+  .sidebar a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .sidebar a.group { font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; color: #7d87ad; margin-top: 0.9rem; padding: 0.4rem 0.6rem 0.1rem; pointer-events: none; }
+  .sidebar .who { font-size: 0.6rem; font-weight: 700; padding: 0.05rem 0.35rem; border-radius: 999px; align-self: center; white-space: nowrap; }
+  .mobile-jump { display: none; }
+  .content { flex: 1; padding: 2rem 2.5rem 6rem; max-width: 1180px; }
+
+  .masthead { background: #fff; border: 1px solid #e5e7eb; border-left: 4px solid #1e2a4a; border-radius: 0.6rem; padding: 1rem 1.25rem; font-size: 0.82rem; color: #4b5563; line-height: 1.55; margin-bottom: 1.25rem; }
+  .masthead b { color: #111827; }
+  .masthead code { background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.78rem; }
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+  .role-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.8rem 1rem; font-size: 0.8rem; color: #4b5563; line-height: 1.5; }
+  .role-card strong { display: block; color: #111827; font-size: 0.88rem; margin-bottom: 0.2rem; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.72rem; color: #6b7280; margin-bottom: 2rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+  .who-both { background: #eef2ff; color: #4338ca; }
+  .who-sec { background: #ecfeff; color: #0e7490; }
+  .who-head { background: #fdf2f8; color: #9d174d; }
+
+  .cat { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+  .cat h2 { font-size: 1.15rem; margin: 0 0 0.15rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .impact-tag { font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .impact-critical { background: #fef2f2; color: #b91c1c; }
+  .impact-high { background: #fffbeb; color: #b45309; }
+  .impact-medium { background: #eef2ff; color: #4338ca; }
+  .impact-low { background: #f3f4f6; color: #6b7280; }
+  .cat-sub { font-size: 0.78rem; color: #6b7280; margin: 0 0 1.1rem; }
+
+  .finding { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.65rem; padding: 0.9rem 1.1rem; margin-bottom: 0.9rem; }
+  .finding-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }
+  .finding-title { font-size: 0.92rem; font-weight: 700; color: #111827; }
+  .tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .tag { font-size: 0.62rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: 999px; text-transform: uppercase; }
+  .sev-high { background: #fef2f2; color: #b91c1c; }
+  .sev-medium { background: #fffbeb; color: #b45309; }
+  .sev-low { background: #f3f4f6; color: #6b7280; }
+  .desc { font-size: 0.82rem; color: #4b5563; margin: 0 0 0.5rem; line-height: 1.5; }
+  .where { font-size: 0.76rem; color: #374151; background: #f9fafb; border-left: 3px solid #8b8fc7; padding: 0.45rem 0.65rem; border-radius: 0.3rem; margin-top: 0.4rem; }
+  .where code { font-size: 0.72rem; }
+  .source { font-size: 0.65rem; color: #9ca3af; margin-top: 0.4rem; }
+  .source.fallback { color: #b45309; }
+
+  .mini-compare { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 0.7rem 0 0.4rem; }
+  .mini-box { flex: 1; min-width: 280px; border-radius: 0.5rem; padding: 0.6rem 0.7rem 0.75rem; background: #fff; }
+  .mini-before { border: 2px solid #fecaca; }
+  .mini-after { border: 2px solid #bbf0cf; }
+  .mini-label { display: block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .mini-before .mini-label { color: #b91c1c; }
+  .mini-after .mini-label { color: #15803d; }
+  .scr { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.4rem; padding: 0.6rem; position: relative; overflow: hidden; font-size: 0.75rem; }
+  .note { font-size: 0.68rem; color: #6b7280; margin-top: 0.4rem; line-height: 1.4; }
+
+  /* mock building blocks (real admin tokens) */
+  .m-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; overflow: hidden; }
+  .m-ph { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0.65rem; border-bottom: 1px solid #f1f2f5; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .m-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.65rem; border-bottom: 1px solid #f5f6f8; font-size: 0.72rem; }
+  .m-row:last-child { border-bottom: none; }
+  .m-grow { flex: 1; min-width: 0; }
+  .m-sub { font-size: 0.62rem; color: #6b7280; }
+  .m-link-g { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #15803d; }
+  .m-link-r { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #b91c1c; }
+  .m-link-y { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #9c7d2e; }
+  .m-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; border: none; border-radius: 0.45rem; font-size: 0.72rem; font-weight: 600; padding: 0.42rem 0.7rem; min-height: 2rem; cursor: default; font-family: inherit; }
+  .m-pale { background: #8b8fc7; color: #fff; }
+  .m-gold { background: #c9a84c; color: #1e2a4a; }
+  .m-navy { background: #1e2a4a; color: #fff; }
+  .m-sec { background: #f3f4f6; color: #374151; }
+  .m-out { background: #fff; color: #1e2a4a; border: 1.5px solid #c7cad6; }
+  .m-green { background: #15803d; color: #fff; }
+  .m-red-out { background: #fff; color: #b91c1c; border: 1.5px solid #fca5a5; }
+  .m-badge { display: inline-flex; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.62rem; font-weight: 600; white-space: nowrap; }
+  .b-amber { background: #fffbeb; color: #b45309; }
+  .b-green { background: #ecfdf3; color: #15803d; }
+  .b-gray { background: #f3f4f6; color: #4b5563; }
+  .b-blue { background: #eef2ff; color: #4338ca; }
+  .m-input { border: 1px solid #d1d5db; background: #fff; border-radius: 0.35rem; padding: 0.35rem 0.45rem; font-size: 0.68rem; color: #9ca3af; }
+  .m-lbl { font-size: 0.64rem; font-weight: 600; color: #374151; margin-bottom: 0.15rem; }
+  .m-toast-old { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: #b91c1c; color: #fff; border-radius: 0.4rem; padding: 0.35rem 0.6rem; font-size: 0.64rem; font-weight: 600; white-space: nowrap; }
+  .m-toast-new { background: #fef2f2; color: #991b1b; border: 1.5px solid #fca5a5; border-radius: 0.45rem; padding: 0.4rem 0.55rem; font-size: 0.68rem; font-weight: 600; display: flex; justify-content: space-between; gap: 0.5rem; }
+  .m-dialog { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; box-shadow: 0 10px 24px rgba(15,23,42,0.18); padding: 0.7rem; }
+  .m-native { background: #fff; border: 1px solid #9ca3af; border-radius: 0.2rem; box-shadow: 0 6px 16px rgba(0,0,0,0.25); padding: 0.55rem; font-family: "Segoe UI", Tahoma, sans-serif; font-size: 0.68rem; }
+  .m-native .t { font-size: 0.62rem; color: #6b7280; margin-bottom: 0.3rem; }
+  .m-native .b { border: 1px solid #6b7280; background: #f3f4f6; border-radius: 0.15rem; padding: 0.15rem 0.6rem; font-size: 0.64rem; }
+  .m-topbar { display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 2px solid #8a3040; padding: 0.4rem 0.6rem; }
+  .m-ico-s { width: 18px; height: 18px; border-radius: 999px; border: 1.5px solid #c7cad6; display: inline-flex; align-items: center; justify-content: center; font-size: 0.5rem; color: #4b5563; }
+  .m-ico-l { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 40px; }
+  .m-ico-l svg { width: 16px; height: 16px; stroke: #1e2a4a; }
+  .m-ico-l span { font-size: 0.55rem; font-weight: 600; color: #374151; }
+  .m-stat { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.45rem 0.55rem; }
+  .m-stat .l { font-size: 0.58rem; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+  .m-stat .v { font-size: 1rem; font-weight: 700; }
+  .strike { text-decoration: line-through; color: #b91c1c; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .mobile-jump { display: block; position: sticky; top: 0; z-index: 10; background: #1e2a4a; padding: 0.75rem 1rem; }
+    .mobile-jump select { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: none; font-size: 0.85rem; }
+    .content { padding: 1.25rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mobile-jump">
+  <select onchange="if(this.value) location.hash = this.value;">
+    <option value="">Jump to a finding…</option>
+    <option value="#trust">1. Can I trust what the screen says?</option>
+    <option value="#secretary">2. Secretary role</option>
+    <option value="#headadmin">3. Head Admin role</option>
+    <option value="#buttons">4. Buttons &amp; dialogs</option>
+    <option value="#forms">5. Forms &amp; feedback</option>
+    <option value="#layout">6. Layout, tables &amp; text</option>
+    <option value="#design">7. Design direction (optional)</option>
+  </select>
+</div>
+
+<div class="app">
+  <nav class="sidebar">
+    <h1>Admin UX Review</h1>
+    <p class="note">Head Admin &amp; Secretary portal (<code style="color:#cbd3e6;background:rgba(255,255,255,.1)">Sacradigit/</code>). Each card shows today vs. after the fix. Tell me which numbers to build.</p>
+    <a class="group">1 · Trust</a>
+    <a href="#f1">1.1 Fake cloud status <span class="who who-both">Both</span></a>
+    <a href="#f2">1.2 "Welcome back, Admin" <span class="who who-sec">Sec.</span></a>
+    <a class="group">2 · Secretary</a>
+    <a href="#f3">2.1 Pending rows can't be opened <span class="who who-sec">Sec.</span></a>
+    <a href="#f4">2.2 "Only the Head Admin…" after the fact <span class="who who-sec">Sec.</span></a>
+    <a class="group">3 · Head Admin</a>
+    <a href="#f5">3.1 One-tap Approve, no confirm <span class="who who-head">Head</span></a>
+    <a href="#f6">3.2 Approve beside Reject <span class="who who-head">Head</span></a>
+    <a href="#f7">3.3 Approve many, one by one <span class="who who-head">Head</span></a>
+    <a class="group">4 · Buttons &amp; dialogs</a>
+    <a href="#f8">4.1 Pale main buttons <span class="who who-both">Both</span></a>
+    <a href="#f9">4.2 Two "main" buttons <span class="who who-both">Both</span></a>
+    <a href="#f10">4.3 Browser pop-ups <span class="who who-both">Both</span></a>
+    <a href="#f11">4.4 Unlabeled top-bar icons <span class="who who-both">Both</span></a>
+    <a class="group">5 · Forms &amp; feedback</a>
+    <a href="#f12">5.1 3-second red warning <span class="who who-both">Both</span></a>
+    <a href="#f13">5.2 Placeholder-only name boxes <span class="who who-both">Both</span></a>
+    <a href="#f14">5.3 Empty search results <span class="who who-both">Both</span></a>
+    <a class="group">6 · Layout &amp; text</a>
+    <a href="#f15">6.1 Tiny row actions <span class="who who-both">Both</span></a>
+    <a href="#f16">6.2 Title shown twice <span class="who who-both">Both</span></a>
+    <a href="#f17">6.3 Actions off-screen on phones <span class="who who-both">Both</span></a>
+    <a href="#f18">6.4 9px calendar text <span class="who who-both">Both</span></a>
+    <a class="group">7 · Direction</a>
+    <a href="#design">Design system suggestion</a>
+  </nav>
+
+  <div class="content">
+
+    <div class="masthead">
+      <b>How this was tested:</b> I read the admin portal's code and pages (Dashboard, Record Requests, Blessings, Digital Archives, Prayer Wall, Masses, Ministry Roster, Announcements and the shared styles) and checked what each role is allowed to do (<code>head-admin-only</code> and <code>isHeadAdmin()</code>). I didn't sign in as either role. Each finding is backed by the <code>ui-ux-pro-max</code> skill's guideline database (<code>search.py --domain ux</code>, plus a <code>--design-system</code> query) and names its source. Where the database had no match, the card says so and the advice is general good practice.<br>
+      Companion pages: <a href="../user/ui-ux-pro-max-review.html">parishioner review</a> · <a href="../user/testing.html">parishioner mockups</a>.
+    </div>
+
+    <div class="roles">
+      <div class="role-card"><strong>Head Admin</strong>Approves and rejects certificate requests and blessings, publishes announcements, edits and deletes archive records, and changes Mass schedules and Parish Info.</div>
+      <div class="role-card"><strong>Secretary</strong>Logs walk-in and phone requests, generates certificates, releases approved ones, and drafts announcements. Head-Admin buttons are hidden from this role.</div>
+    </div>
+
+    <div class="legend">
+      <span><span class="tag who-both">Both</span> affects both roles</span>
+      <span><span class="tag who-sec">Secretary</span> mostly the Secretary</span>
+      <span><span class="tag who-head">Head Admin</span> mostly the Head Admin</span>
+      <span><span class="tag sev-high">High</span> / <span class="tag sev-medium">Medium</span> / <span class="tag sev-low">Low</span> severity, from the guideline database</span>
+    </div>
+
+    <!-- ================= 1. TRUST ================= -->
+    <section class="cat" id="trust">
+      <h2>1. Can I trust what the screen says? <span class="impact-tag impact-critical">Critical</span></h2>
+      <p class="cat-sub">An office dashboard is only useful if every number on it is real.</p>
+
+      <div class="finding" id="f1">
+        <div class="finding-head"><span class="finding-title">1.1 The Dashboard's "Cloud Status" and storage figures are fixed text, not real data</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">"Firestore: Operational", "Storage Bucket 6.8 / 10 GB", "Last Backup: 2 hrs ago" and "Auth Service: Operational" are written into the page, so they never change. The app doesn't even use Firestore; it runs on AWS Amplify. If the storage really fills up or a backup fails, this panel will still say everything is fine.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — always the same</span>
+            <div class="scr"><div class="m-panel"><div class="m-ph">Cloud Status <span style="color:#6c6fb0;text-transform:none;font-weight:600">Managed by IT ›</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem;padding:0.5rem">
+                <div class="m-stat"><div class="l">Firestore</div><div style="font-weight:700;color:#15803d">✓ Operational</div></div>
+                <div class="m-stat"><div class="l">Storage</div><div style="font-weight:700">6.8 / 10 GB</div></div>
+                <div class="m-stat"><div class="l">Last backup</div><div style="font-weight:700">2 hrs ago</div></div>
+                <div class="m-stat"><div class="l">Auth</div><div style="font-weight:700;color:#15803d">✓ Operational</div></div>
+              </div></div></div>
+            <div class="note">Shows exactly this on every day, whatever is actually happening.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — real, or not shown</span>
+            <div class="scr"><div class="m-panel"><div class="m-ph">System <span style="color:#6c6fb0;text-transform:none;font-weight:600">IT dashboard ›</span></div>
+              <div class="m-row"><span class="m-grow">Records digitized</span><b>1,284</b></div>
+              <div class="m-row"><span class="m-grow">Files uploaded this month</span><b>312</b></div>
+              <div class="m-row"><span class="m-grow m-sub">Updated just now</span></div></div></div>
+            <div class="note">Either load real figures (counts the app already has) or drop the panel and leave server health to the IT portal.</div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacradigit/dashboard.html</code> lines ~256–335 (Cloud Storage stat card and the Cloud Status panel).</div>
+        <div class="source fallback">No database match for "hard-coded status data". This is general guidance; the nearest database rule is "Loading Indicators: preserve layout and an accessible busy status" (High).</div>
+      </div>
+
+      <div class="finding" id="f2">
+        <div class="finding-head"><span class="finding-title">1.2 The banner says "Welcome back, Admin" to everyone, including the Secretary</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-sec">Secretary</span></span></div>
+        <p class="desc">The greeting is fixed text. The sidebar card also shows "Admin User · System Admin" until the sign-in check finishes. The Secretary is never greeted by name or role, which makes it feel like a borrowed account.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="background:#1e2a4a;color:#fff"><div style="font-size:0.6rem;opacity:.75">Our Lady of Fatima Parish</div><div style="font-size:1rem;font-weight:700">Welcome back, Admin</div><div style="font-size:0.65rem;opacity:.8">Here's what's happening across the parish today.</div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr" style="background:#1e2a4a;color:#fff"><div style="font-size:0.6rem;opacity:.75">Our Lady of Fatima Parish · Secretary</div><div style="font-size:1rem;font-weight:700">Good morning, Maria</div><div style="font-size:0.65rem;opacity:.8">3 walk-in requests are waiting to be logged · 2 certificates ready to release</div></div>
+            <div class="note">The name and role come from the signed-in account (<code>currentUser()</code>), and the sub-line can show today's to-dos.</div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacradigit/dashboard.html</code> line ~212; the sidebar card is filled in by <code>auth.js paintUserCard()</code>.</div>
+        <div class="source fallback">No database match. General guidance (personalised, role-aware greeting).</div>
+      </div>
+    </section>
+
+    <!-- ================= 2. SECRETARY ================= -->
+    <section class="cat" id="secretary">
+      <h2>2. Secretary role <span class="impact-tag impact-high">High</span></h2>
+      <p class="cat-sub">The Secretary's Head-Admin buttons are hidden, but nothing takes their place. The result is rows and pages where the Secretary can't tell what to do or who acts next.</p>
+
+      <div class="finding" id="f3">
+        <div class="finding-head"><span class="finding-title">2.1 A pending request has no "View" button, so the Secretary can't open it</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-sec">Secretary</span></span></div>
+        <p class="desc">For a <b>pending</b> request the row offers Generate Certificate, Approve and Reject, but not View. Approve and Reject are hidden for the Secretary. So a Secretary sees only "Generate Certificate" on a pending row, and can't read the requester's details or tell that the request is waiting for the Head Admin.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — Secretary's view of the table</span>
+            <div class="scr"><div class="m-panel">
+              <div class="m-row"><span class="m-grow"><b>Dela Cruz, Juan</b><div class="m-sub">Baptismal · Oct 20</div></span><span class="m-badge b-amber">Pending</span><span class="m-link-y">Generate Certificate</span></div>
+              <div class="m-row"><span class="m-grow"><b>Santos, Ana</b><div class="m-sub">Baptismal · Oct 19</div></span><span class="m-badge b-green">Approved</span><span class="m-link-g">Release</span><span style="font-size:.62rem;color:#6c6fb0">View ›</span></div>
+            </div></div>
+            <div class="note">Pending row: no way to see what Juan asked for, and no hint that it's the Head Admin's turn.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr"><div class="m-panel">
+              <div class="m-row"><span class="m-grow"><b>Dela Cruz, Juan</b><div class="m-sub">Baptismal · Oct 20</div></span><span class="m-badge b-blue">Waiting for Head Admin</span><button class="m-btn m-out">View</button></div>
+              <div class="m-row"><span class="m-grow"><b>Santos, Ana</b><div class="m-sub">Baptismal · Oct 19</div></span><span class="m-badge b-green">Approved</span><button class="m-btn m-navy">Release</button><button class="m-btn m-out">View</button></div>
+            </div></div>
+            <div class="note">View is on every row. For the Secretary, "Pending" reads as "Waiting for Head Admin".</div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacradigit/record-requests.js</code> lines ~224–239 (the pending branch builds no <code>.row-view</code> button).</div>
+        <div class="source">Source: ux-guidelines.csv: Disabled States ("Clearly indicate non-interactive elements… Don't confuse disabled with normal state", Medium); Empty States ("Show helpful message and action", Medium).</div>
+      </div>
+
+      <div class="finding" id="f4">
+        <div class="finding-head"><span class="finding-title">2.2 "Only the Head Admin can…" appears after the Secretary has already tried</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-sec">Secretary</span></span></div>
+        <p class="desc">On Announcements the Secretary can tick "Published", fill in the whole post, press Save, and only then see "Only the Head Admin can publish. Save it as a draft instead." Digital Archives does the same for Edit and Delete. The rule should be visible before the work is done.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="height:118px">
+              <div class="m-lbl">Status</div>
+              <div style="display:flex;gap:.35rem;margin-bottom:.45rem"><span class="m-badge b-gray">Draft</span><span class="m-badge b-green" style="outline:2px solid #15803d">Published ✓</span></div>
+              <button class="m-btn m-pale">Save Announcement</button>
+              <div class="m-toast-old">Only the Head Admin can publish. Save it as a draft instead.</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — said up front</span>
+            <div class="scr" style="height:118px">
+              <div class="m-lbl">Status</div>
+              <div style="font-size:.7rem;color:#374151;margin-bottom:.45rem">Saved as a <b>draft</b>. The Head Admin reviews and publishes it.</div>
+              <button class="m-btn m-navy">Send to Head Admin for review</button>
+              <div class="note">The button says what will actually happen for this role.</div>
+            </div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>announcements.js</code> ~882; <code>digital-archives.js</code> ~239, ~385, ~408; <code>record-requests.js</code> ~284.</div>
+        <div class="source fallback">The database had no match for role-based permissions (that search came back off-topic). Closest rule: Disabled States ("Clearly indicate non-interactive elements", Medium). The rest is general guidance: explain a restriction where it applies, before the action.</div>
+      </div>
+    </section>
+
+    <!-- ================= 3. HEAD ADMIN ================= -->
+    <section class="cat" id="headadmin">
+      <h2>3. Head Admin role <span class="impact-tag impact-high">High</span></h2>
+      <p class="cat-sub">The Head Admin's decisions email parishioners and can't be taken back from the screen.</p>
+
+      <div class="finding" id="f5">
+        <div class="finding-head"><span class="finding-title">3.1 Approve and Release act on one tap, with no confirmation and no undo</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-head">Head Admin</span><span class="tag who-sec">Secretary (Release)</span></span></div>
+        <p class="desc">Tapping Approve immediately marks the request approved <b>and emails the parishioner</b> that the certificate is ready. Release is the same. A slip of the finger, or the wrong row on a long list, can't be undone, and the parishioner has already been emailed.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — one tap</span>
+            <div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Dela Cruz, Juan</b></span><span class="m-link-g" style="outline:2px dashed #15803d;outline-offset:2px">Approve</span><span class="m-link-r">Reject</span></div></div>
+              <div style="margin-top:.4rem;font-size:.64rem;color:#b91c1c">↳ status changed + email sent, immediately</div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — a short check (or an undo window)</span>
+            <div class="scr"><div class="m-dialog">
+              <div style="font-weight:700;font-size:.78rem;margin-bottom:.2rem">Approve Juan Dela Cruz's Baptismal Certificate?</div>
+              <div style="font-size:.66rem;color:#4b5563;margin-bottom:.45rem">We'll email <b>juan@…</b> that it's ready to pick up.</div>
+              <div style="display:flex;gap:.4rem;justify-content:flex-end"><button class="m-btn m-sec">Cancel</button><button class="m-btn m-green">Approve &amp; email</button></div>
+            </div>
+            <div class="note">Alternative: approve at once, but hold the email for 10 seconds behind an "Undo" toast.</div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacradigit/record-requests.js</code> ~287–302. The page already has a proper Reject modal (lines ~429–444) that can serve as the pattern.</div>
+        <div class="source">Source: ux-guidelines.csv: Confirmation Dialogs ("Confirm before delete/irreversible actions… Bad: direct delete on click", High). No database match for "undo"; the undo-window alternative is general guidance.</div>
+      </div>
+
+      <div class="finding" id="f6">
+        <div class="finding-head"><span class="finding-title">3.2 Approve and Reject are small text links 10px apart</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-head">Head Admin</span></span></div>
+        <p class="desc">Both are 11px uppercase words with no button shape, side by side. The two opposite decisions are one small mis-tap apart, and on a phone they're tiny targets.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Santos, Ana</b><div class="m-sub">Confirmation</div></span><span class="m-link-y">Generate Certificate</span><span class="m-link-g">Approve</span><span class="m-link-r">Reject</span></div></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Santos, Ana</b><div class="m-sub">Confirmation</div></span><button class="m-btn m-out">View</button><button class="m-btn m-green">Approve</button><button class="m-btn m-red-out" style="margin-left:.6rem">Reject…</button></div></div>
+            <div class="note">Real buttons, extra space before Reject, and "Reject…" signals that a reason will be asked. Generate Certificate moves inside View.</div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>sacradigit-css/record-requests.css</code> <code>.row-approve</code> / <code>.row-reject</code> (0.6875rem, no padding) and <code>.row-actions</code> gap 0.625rem. Facility Booking reuses them as "Approve" beside "Cancel" (<code>facility-booking.js</code> ~145).</div>
+        <div class="source">Source: ux-guidelines.csv: Touch Spacing ("Minimum 8px gap between touch targets", Medium); Target Size Minimum ("24 CSS px… Bad: tiny adjacent icon buttons", High).</div>
+      </div>
+
+      <div class="finding" id="f7">
+        <div class="finding-head"><span class="finding-title">3.3 After a weekend, every pending request is approved one by one</span>
+          <span class="tags"><span class="tag sev-low">Low</span><span class="tag who-head">Head Admin</span></span></div>
+        <p class="desc">There's no way to select several requests and approve them together. Combined with 3.1 (a confirm per approval), clearing a backlog becomes slow. A checkbox column with one confirm for the batch keeps both safety and speed.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr"><div class="m-panel">
+              <div class="m-row"><span class="m-grow">Reyes, Paolo</span><span class="m-link-g">Approve</span><span class="m-link-r">Reject</span></div>
+              <div class="m-row"><span class="m-grow">Garcia, Liza</span><span class="m-link-g">Approve</span><span class="m-link-r">Reject</span></div>
+              <div class="m-row"><span class="m-grow">Bautista, Rey</span><span class="m-link-g">Approve</span><span class="m-link-r">Reject</span></div></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr"><div style="display:flex;justify-content:space-between;align-items:center;background:#1e2a4a;color:#fff;border-radius:.4rem;padding:.35rem .5rem;margin-bottom:.35rem;font-size:.68rem"><span>3 selected</span><button class="m-btn m-green" style="min-height:1.6rem">Approve 3…</button></div>
+              <div class="m-panel">
+              <div class="m-row"><input type="checkbox" checked> <span class="m-grow">Reyes, Paolo</span></div>
+              <div class="m-row"><input type="checkbox" checked> <span class="m-grow">Garcia, Liza</span></div>
+              <div class="m-row"><input type="checkbox" checked> <span class="m-grow">Bautista, Rey</span></div></div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> Record Requests, Blessings and Facility Booking tables.</div>
+        <div class="source">Source: ux-guidelines.csv: Bulk Actions ("Allow multi-select and bulk edit… Good: checkbox column + action bar", Low).</div>
+      </div>
+    </section>
+
+    <!-- ================= 4. BUTTONS & DIALOGS ================= -->
+    <section class="cat" id="buttons">
+      <h2>4. Buttons &amp; dialogs <span class="impact-tag impact-high">High</span></h2>
+      <p class="cat-sub">The same "pale means switched off" problem the parishioner side had, plus browser pop-ups.</p>
+
+      <div class="finding" id="f8">
+        <div class="finding-head"><span class="finding-title">4.1 Main buttons are pale lavender: white text on #8b8fc7 is about 3:1 contrast</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">"New Request", "Log Request", "Generate &amp; Preview", "Save" and others use <code>.btn-lavender</code>. White on that purple is about 3:1, under the 4.5:1 minimum for text, and it looks switched off. The parishioner portal now uses solid navy, so the admin portal is the odd one out.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="m-btn m-pale">+ New Request</button><button class="m-btn m-pale">Log Request</button><button class="m-btn m-pale">Generate &amp; Preview</button></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — same as the parishioner side</span>
+            <div class="scr" style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="m-btn m-navy">+ New Request</button><button class="m-btn m-navy">Log Request</button><button class="m-btn m-navy">Generate &amp; Preview</button></div>
+            <div class="note">Navy #1e2a4a on white text is about 14:1. Grey is kept only for buttons that really are disabled.</div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>.btn-lavender</code> in <code>sacradigit-css/digital-archives.css</code> line ~45 (loaded by 16 admin pages). One change fixes them all.</div>
+        <div class="source">Source: ux-guidelines.csv: Color Contrast ("Minimum 4.5:1 ratio for normal text", High); Disabled States (Medium).</div>
+      </div>
+
+      <div class="finding" id="f9">
+        <div class="finding-head"><span class="finding-title">4.2 Two equally loud buttons side by side: gold "Upload" and lavender "New Request"</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Record Requests, Digital Archives and others put a gold and a purple filled button next to each other, so neither reads as the main action. Pick one main action per page and make the other an outline button.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:.85rem">Record Requests</b><span style="display:flex;gap:.4rem"><button class="m-btn m-gold">⇪ Upload</button><button class="m-btn m-pale">+ New Request</button></span></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr" style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:.85rem">Record Requests</b><span style="display:flex;gap:.4rem"><button class="m-btn m-out">⇪ Upload certificate</button><button class="m-btn m-navy">+ New walk-in request</button></span></div>
+            <div class="note">One filled button, plus clearer names: "Upload" what? "New Request" from whom?</div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>record-requests.html</code> ~212–219; similar pairs in <code>digital-archives.html</code> and <code>masses.html</code>.</div>
+        <div class="source fallback">No exact database match. General guidance (one primary action per view); related rule: Disabled States / Hover States (Medium).</div>
+      </div>
+
+      <div class="finding" id="f10">
+        <div class="finding-head"><span class="finding-title">4.3 Browser pop-ups (<code>prompt()</code> / <code>confirm()</code>) for rejecting and deleting</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Rejecting a prayer request asks for the reason in the browser's own one-line box. Deleting a record, removing a volunteer and closing check-in use the browser's OK/Cancel box. These can't show which record is affected or be styled, are cramped on phones, and some installed-app modes suppress them. Record Requests already has a proper in-page Reject dialog to copy.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — Prayer Wall "Reject"</span>
+            <div class="scr" style="background:#e5e7eb"><div class="m-native"><div class="t">localhost says</div>Why isn't this being posted? (The person who asked will see this.)<div style="border:1px solid #6b7280;height:16px;margin:.35rem 0;background:#fff"></div><div style="display:flex;gap:.3rem;justify-content:flex-end"><span class="b">OK</span><span class="b">Cancel</span></div></div></div>
+            <div class="note">One-line box for a message the parishioner will read, and the request itself isn't shown.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — in-page dialog</span>
+            <div class="scr"><div class="m-dialog">
+              <div style="font-weight:700;font-size:.78rem">Don't post this prayer request?</div>
+              <div style="font-size:.64rem;color:#6b7280;margin:.15rem 0 .35rem">"Please pray for my mother's surgery on Friday…" by <b>Ana S.</b></div>
+              <div class="m-lbl">Reason (Ana will see this)</div>
+              <div class="m-input" style="height:34px">e.g. Please remove the phone number, then post again.</div>
+              <div style="display:flex;gap:.4rem;justify-content:flex-end;margin-top:.4rem"><button class="m-btn m-sec">Cancel</button><button class="m-btn m-red-out">Don't post</button></div></div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>prayer-wall.js</code> ~82 (<code>prompt</code>), ~90; <code>digital-archives.js</code> ~243; <code>ministry-roster.js</code> ~79; <code>mass-checkin-display.js</code> ~102, ~138; <code>record-duplicates.js</code> ~77.</div>
+        <div class="source">Source: ux-guidelines.csv: Confirmation Dialogs ("Good: Are you sure modal", High); Form Labels ("Inputs must have associated labels", High).</div>
+      </div>
+
+      <div class="finding" id="f11">
+        <div class="finding-head"><span class="finding-title">4.4 The admin top bar still has small, unlabeled icons</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">The labeled 44px icons were added to the parishioner portal only. Admin pages still show 28px circles (Aa, moon, EN, ?) with no words. A Secretary who isn't technical has the same "what does Aa do?" problem.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="padding:0"><div class="m-topbar"><b>Record Requests</b><span style="display:flex;gap:4px;align-items:center"><span style="font-size:.58rem;color:#9ca3af;margin-right:4px">Wed, Oct 21</span><span class="m-ico-s">Aa</span><span class="m-ico-s">☾</span><span class="m-ico-s">EN</span><span class="m-ico-s">?</span></span></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — same as the parishioner side</span>
+            <div class="scr" style="padding:0"><div class="m-topbar"><b>Record Requests</b><span style="display:flex;gap:6px;align-items:center">
+              <span class="m-ico-l"><b style="font-family:Georgia;font-size:.8rem">Aa</b><span>Bigger text</span></span>
+              <span class="m-ico-l"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg><span>Dark</span></span>
+              <span class="m-ico-l"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg><span>Language</span></span>
+              <span class="m-ico-l"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 115.8 1c0 2-3 2-3 4m0 4h.01"/></svg><span>Help</span></span></span></div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> the styles live in <code>user/user-css/user-shell.css</code> (parishioner only). They can be copied to <code>sacradigit-css/admin-shell.css</code>, with the same <code>data-label</code> code in each admin page's shell script.</div>
+        <div class="source">Source: icons.csv: icon-context-accessibility ("give the control an accessible name"); priority table: "Icon-only buttons without labels" is a Critical accessibility anti-pattern.</div>
+      </div>
+    </section>
+
+    <!-- ================= 5. FORMS & FEEDBACK ================= -->
+    <section class="cat" id="forms">
+      <h2>5. Forms &amp; feedback <span class="impact-tag impact-medium">Medium</span></h2>
+      <p class="cat-sub">Long data-entry forms (certificate generation, walk-in requests) are where office staff spend their time.</p>
+
+      <div class="finding" id="f12">
+        <div class="finding-head"><span class="finding-title">5.1 Warnings are a red bar at the bottom that vanishes after 3 seconds</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Each admin page has its own copy of <code>showToast()</code> (10+ copies) that fades after 3 seconds, errors included. A message like "Only the Head Admin can delete records" or "Couldn't update the request" disappears before it's read. The parishioner side now keeps errors until closed.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="height:90px"><div style="font-size:.68rem;color:#6b7280">…3 seconds later, gone.</div><div class="m-toast-old">Couldn't update the request.</div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr" style="height:90px"><div class="m-toast-new"><span>⚠ Couldn't update the request. Check your connection and try again.</span><b>×</b></div><div class="note">Errors stay until closed; success messages still fade. One shared copy instead of ten.</div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>showToast</code> in announcements.js, blessings.js, digital-archives.js, donations.js, facility-booking.js, mass-intentions.js, masses.js, messages.js, ministry-roster.js, checkin-shortcut.js.</div>
+        <div class="source">Source: ux-guidelines.csv: Toast Notifications ("Auto-dismiss after 3–5 seconds", for non-critical info only); Error Messages ("Use aria-live or role=alert", High).</div>
+      </div>
+
+      <div class="finding" id="f13">
+        <div class="finding-head"><span class="finding-title">5.2 Certificate forms label each name box only with placeholder text</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">The Generate Certificate forms have rows of four boxes (child, father, mother, sponsor 1, sponsor 2) labelled only "First Name / Middle Name / Last Name / Ext." <i>inside</i> the box. Once typed in, nothing says which box is which. That's how a middle name ends up in the last-name box on a printed certificate.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — after typing</span>
+            <div class="scr"><div class="m-lbl">Father's Name</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem"><div class="m-input" style="color:#111827">Jose</div><div class="m-input" style="color:#111827">Reyes</div><div class="m-input" style="color:#111827">Santos</div><div class="m-input">Ext.</div></div><div class="note">Is "Reyes" the middle or the last name? Nothing says.</div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr"><div class="m-lbl">Father's Name</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem">
+              <div><div class="m-sub">First</div><div class="m-input" style="color:#111827">Jose</div></div><div><div class="m-sub">Middle</div><div class="m-input" style="color:#111827">Reyes</div></div><div><div class="m-sub">Last</div><div class="m-input" style="color:#111827">Santos</div></div><div><div class="m-sub">Ext.</div><div class="m-input">—</div></div></div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>record-requests.html</code> ~467–622 (every <code>cert-*-name-*</code> input); <code>name-utils.js nameFieldsHtml()</code> builds the same rows elsewhere.</div>
+        <div class="source">Source: ux-guidelines.csv: Form Labels ("Use label with for attribute… Don't: placeholder-only inputs", High).</div>
+      </div>
+
+      <div class="finding" id="f14">
+        <div class="finding-head"><span class="finding-title">5.3 "No requests match your filters" offers no way out</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">With a search word plus Status and Type filters set, an empty list just says there are no matches. The results count beside "All Requests" is small grey text, and the Clear button is up in the filter bar.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="text-align:center;padding:1rem .6rem"><div style="font-size:1.1rem;color:#d1d5db">⌕</div><div style="font-size:.72rem;color:#4b5563">No requests match your filters</div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr" style="text-align:center;padding:1rem .6rem"><div style="font-size:.74rem;color:#111827;font-weight:600">No pending Marriage requests for "Dela Crus"</div><div class="m-sub" style="margin:.2rem 0 .45rem">Check the spelling, or search all statuses.</div><button class="m-btn m-out">Clear search &amp; filters</button></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>record-requests.html</code> ~327 (empty state); same pattern on Digital Archives, Blessings, Donations.</div>
+        <div class="source">Source: ux-guidelines.csv: No Results ("Show 'No results' with suggestions", Medium); Empty States ("Show helpful message and action", Medium).</div>
+      </div>
+    </section>
+
+    <!-- ================= 6. LAYOUT & TEXT ================= -->
+    <section class="cat" id="layout">
+      <h2>6. Layout, tables &amp; text <span class="impact-tag impact-medium">Medium</span></h2>
+      <p class="cat-sub">Admin pages carry 90 rules at 11px, 24 at 10px and 9 at 9px.</p>
+
+      <div class="finding" id="f15">
+        <div class="finding-head"><span class="finding-title">6.1 Row actions are 11px uppercase words crammed into one cell</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">"GENERATE CERTIFICATE · APPROVE · REJECT" all fit into the last column as small capitals with no button shape. They're hard to read, hard to hit, and the most important action doesn't stand out.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow">Reyes, Paolo</span><span class="m-link-y">Generate Certificate</span><span class="m-link-g">Approve</span><span class="m-link-r">Reject</span></div></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow">Reyes, Paolo</span><button class="m-btn m-navy">Open</button><span style="font-size:.9rem;color:#6b7280;padding:0 .2rem" title="More actions">⋯</span></div></div>
+            <div class="note">One clear main action per row ("Open" leads to the details, where Approve, Reject and Generate live), plus a "more" menu for the rest. Text is at least 13px.</div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>record-requests.css</code> <code>.row-cert/.row-approve/.row-reject</code> (0.6875rem); the same row links are used on Facility Booking and Schedule Offers.</div>
+        <div class="source">Source: ux-guidelines.csv: Readable Font Size ("Don't: text-xs for body text", High); Font Size Scale ("Use consistent modular scale", Medium).</div>
+      </div>
+
+      <div class="finding" id="f16">
+        <div class="finding-head"><span class="finding-title">6.2 Every page shows its title twice</span>
+          <span class="tags"><span class="tag sev-low">Low</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">The top bar says "Record Requests", and right under it a large hero says "Record Requests" again, as an h1 followed by an h2 with the same words. On a laptop that pushes the stat cards and table down by about 120px.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="padding:0"><div class="m-topbar"><b>Record Requests</b></div><div style="padding:.5rem .6rem"><div style="font-size:1rem;font-weight:700">Record Requests</div><div class="m-sub">Review and process incoming certificate requests.</div></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr" style="padding:0"><div class="m-topbar"><b>Record Requests</b><span style="display:flex;gap:.35rem"><button class="m-btn m-out" style="min-height:1.5rem">Upload</button><button class="m-btn m-navy" style="min-height:1.5rem">+ New</button></span></div><div style="padding:.5rem .6rem" class="m-sub">Review and process incoming certificate requests.</div></div>
+            <div class="note">Keep one title. The page's buttons move up next to it.</div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> the <code>.admin-hero</code> block on 13 admin pages (Attendance, Blessings, Digital Archives, Donations, Facility Booking, Mass Intentions, Masses, Messages, Ministry Roster, Prayer Wall, Record Requests, Schedule Offers, Special Schedules).</div>
+        <div class="source">Source: ux-guidelines.csv: Heading Hierarchy ("Use sequential heading levels", Medium); design-system style "Data-Dense Dashboard" ("minimal padding, maximum data visibility").</div>
+      </div>
+
+      <div class="finding" id="f17">
+        <div class="finding-head"><span class="finding-title">6.3 On a phone, the Action column is off the right edge of every table</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Tables have 5–6 columns inside a sideways-scrolling wrapper, so the table itself doesn't break. But Status and Action are the <i>last</i> columns, so on a phone they're exactly what's hidden, as on the parishioner Dashboard before its fix.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — 360px phone</span>
+            <div class="scr" style="width:200px;overflow:hidden"><div style="display:flex;gap:.8rem;white-space:nowrap;font-size:.66rem"><b>Requester</b><b>Certificate Type</b><b>Date Requested</b><b>Purpose</b><b>Status</b><b>Action</b></div><div style="display:flex;gap:.8rem;white-space:nowrap;font-size:.66rem;margin-top:.25rem"><span>Dela Cruz, Juan</span><span>Baptismal</span><span>Oct 20</span><span>School</span></div></div>
+            <div class="note">Status and Action are past the edge.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — cards on phones only</span>
+            <div class="scr" style="width:200px"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Dela Cruz, Juan</b><div class="m-sub">Baptismal · Oct 20</div></span><span class="m-badge b-amber">Pending</span></div><div style="padding:.35rem .6rem .5rem"><button class="m-btn m-navy" style="width:100%">Open</button></div></div></div>
+            <div class="note">Desktop keeps the table; phones get one card per row.</div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>.records-table</code> on Dashboard, Record Requests, Digital Archives, Donations, Mass Intentions, Facility Booking.</div>
+        <div class="source">Source: ux-guidelines.csv: Table Handling ("Use horizontal scroll or card layout", Medium); stacks/html-tailwind.csv: Compact label layout (High).</div>
+      </div>
+
+      <div class="finding" id="f18">
+        <div class="finding-head"><span class="finding-title">6.4 Calendar "+3 more" labels are 9px</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">The month calendars on Masses, Blessings, Facility Booking and Special Schedules squeeze extra events into a 9px "+N more". That's where a busy day hides, and it's the smallest text in the app.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr" style="width:120px"><div style="font-weight:700;font-size:.7rem">18</div><div style="font-size:.6rem;background:#eef2ff;border-radius:.2rem;padding:0 .2rem;margin:.1rem 0">7:00 Mass</div><div style="font-size:9px;color:#6b7280">+3 more</div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr" style="width:120px"><div style="font-weight:700;font-size:.7rem">18</div><div style="font-size:.6rem;background:#eef2ff;border-radius:.2rem;padding:0 .2rem;margin:.1rem 0">7:00 Mass</div><div style="font-size:12px;font-weight:600;color:#1e2a4a">+3 more</div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>.calendar-cell-more</code> (0.5625rem) in masses.css, blessings.css, facility-booking.css, special-schedules.css; <code>.min-swap-tag</code> in community.css.</div>
+        <div class="source">Source: ux-guidelines.csv: Readable Font Size (High); Font Size Scale ("12 14 16 18 24 32", Medium).</div>
+      </div>
+    </section>
+
+    <!-- ================= 7. DESIGN ================= -->
+    <section class="cat" id="design">
+      <h2>7. Design direction <span class="impact-tag impact-low">Optional</span></h2>
+      <p class="cat-sub">From <code>--design-system</code>. The first query ("parish office admin records dashboard") returned an off-target event-landing style, so I retried once with "admin dashboard records management data-dense".</p>
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Style match: "Data-Dense Dashboard"</span></div>
+        <p class="desc">Best for operational and enterprise dashboards: data tables, KPI cards, minimal padding, maximum data visibility. Accessibility needs: 4.5:1 text contrast, keyboard use, visible focus, reduced motion. Anti-patterns to avoid: ornate design, no filtering. For SacraDigit that means keeping the maroon, navy and gold brand, but tighter: one title per page (6.2), real buttons in rows (6.1), and the sacred-art hero only on the Dashboard.</p>
+        <p class="desc">The suggested font pairing (Fira Sans / Fira Code) is optional. The current Inter font is already a good data-screen font.</p>
+        <div class="source">Source: styles.csv + typography.csv + colors.csv via --design-system (retry).</div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</body>
+</html>

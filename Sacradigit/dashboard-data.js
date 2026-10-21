@@ -7,6 +7,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
+import { currentUser, isHeadAdmin } from '../auth.js';
 import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../weekly-mass-schedule.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -101,14 +102,56 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('WeeklyMassSchedule model not found on this backend yet — Today\'s Masses will only show individually-scheduled masses.');
   }
 
+  /* --- Greeting: the signed-in person's name and role, and today's to-dos --- */
+  const counts = { pending: null, approved: null };
+  function paintGreeting() {
+    const me = currentUser() || {};
+    const head = isHeadAdmin(me);
+    const first = me.firstName || (me.name || '').split(' ')[0];
+    const hour = new Date().getHours();
+    const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('dash-greeting').textContent = first ? `${hello}, ${first}` : hello;
+    document.getElementById('dash-eyebrow').textContent = `Our Lady of Fatima Parish · ${head ? 'Head Admin' : 'Secretary'}`;
+    if (counts.pending === null || counts.approved === null) return;
+    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+    const waiting = head
+      ? plural(counts.pending, 'request is waiting for your approval', 'requests are waiting for your approval')
+      : plural(counts.pending, 'request is waiting for the Head Admin', 'requests are waiting for the Head Admin');
+    const ready = plural(counts.approved, 'certificate is ready to release', 'certificates are ready to release');
+    const todo = head ? [waiting, ready] : [ready, waiting];
+    document.getElementById('dash-todo').textContent = counts.pending + counts.approved === 0
+      ? 'Nothing is waiting on you right now.'
+      : `${todo.join(' · ')}.`;
+  }
+  paintGreeting();
+  document.addEventListener('sacradigit:user', paintGreeting);
+
+  /* --- Ready to Release (approved, not yet handed over) --- */
+  client.models.CertificateRequest.observeQuery({
+    filter: { status: { eq: 'approved' } },
+  }).subscribe({
+    next: ({ items }) => {
+      counts.approved = items.length;
+      document.getElementById('stat-ready-release').textContent = items.length;
+      document.getElementById('stat-ready-release-sub').textContent = 'approved, not yet released';
+      paintGreeting();
+    },
+    error: (err) => {
+      console.error('Failed to load approved requests:', err);
+      document.getElementById('stat-ready-release-sub').textContent = 'Couldn’t load';
+    },
+  });
+
   /* --- Pending Requests --- */
   const pendingList = document.getElementById('pending-requests-list');
   client.models.CertificateRequest.observeQuery({
     filter: { status: { eq: 'pending' } },
   }).subscribe({
     next: ({ items }) => {
+      counts.pending = items.length;
+      paintGreeting();
       document.getElementById('stat-pending-requests').textContent = items.length;
-      document.getElementById('stat-pending-requests-sub').textContent = 'Awaiting review';
+      document.getElementById('stat-pending-requests-sub').textContent = isHeadAdmin() ? 'Awaiting your review' : 'Awaiting the Head Admin';
 
       const shown = items.slice(0, 4);
       pendingList.innerHTML = shown.length === 0

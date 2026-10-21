@@ -674,3 +674,163 @@ input[type="date"].form-input::-webkit-date-and-time-value { text-align: left; }
    Fatima Parish") wrap instead of being cut off on phones. */
 #common-fields .field-na-label,
 .field-na-label:has(> span) { white-space: normal; }
+
+/* ============================================
+   Admin UX fixes (see admin-ux-review.html)
+   ============================================ */
+
+/* ---------- Page header: one title, one main button ----------
+   The top bar already names the page, so the big navy header only
+   keeps its icon, description and buttons. Its main button is gold
+   (a navy button would vanish on the navy header). */
+.admin-hero { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+.admin-hero h2.text-2xl { display: none; }
+.admin-hero h2.text-2xl + p {
+  margin-top: 0;
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.88);
+}
+.admin-hero .btn-lavender { background-color: #c9a84c; color: #1e2a4a; }
+.admin-hero .btn-lavender:hover { background-color: #b5943e; }
+
+/* ---------- Errors stay at the top until closed (admin-ui.js) ---------- */
+.toast.toast-error {
+  top: calc(0.75rem + env(safe-area-inset-top));
+  bottom: auto;
+  background-color: #fef2f2 !important;
+  color: #991b1b;
+  border: 1.5px solid #fca5a5;
+  font-size: 0.9rem;
+  transform: translateX(-50%) translateY(-10px);
+}
+.toast.toast-error.show { transform: translateX(-50%) translateY(0); }
+.toast.toast-error .toast-message::before { content: "\26A0  "; }
+.toast .toast-dismiss { width: 2rem; height: 2rem; font-size: 1.25rem; }
+.toast.toast-error .toast-dismiss { background: transparent; color: #991b1b; }
+.toast.toast-error .toast-dismiss:hover { background: #fee2e2; }
+:root[data-theme="dark"] .toast.toast-error { background-color: #3b1219 !important; color: #fecaca; border-color: #7f1d1d; }
+:root[data-theme="dark"] .toast.toast-error .toast-dismiss { color: #fecaca; }
+
+/* ---------- In-page confirm / reason dialog (admin-ui.js) ---------- */
+.adm-dialog-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem; background: rgba(15, 23, 42, 0.5);
+}
+.adm-dialog {
+  width: 100%; max-width: 30rem; max-height: calc(100vh - 2rem); overflow-y: auto;
+  background: #ffffff; border-radius: 1rem; padding: 1.25rem 1.375rem;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
+}
+.adm-dialog-title { font-size: 1.0625rem; font-weight: 700; color: #111827; margin: 0 0 0.4rem; line-height: 1.35; }
+.adm-dialog-msg { font-size: 0.875rem; color: #374151; margin: 0 0 0.75rem; line-height: 1.5; }
+.adm-dialog-detail {
+  margin: 0 0 0.85rem; padding: 0.6rem 0.8rem; border-left: 3px solid #c7cad6; border-radius: 0.4rem;
+  background: #f7f8fa; font-size: 0.8125rem; color: #374151; line-height: 1.5;
+}
+.adm-dialog-label { display: block; font-size: 0.8125rem; font-weight: 600; color: #374151; margin-bottom: 0.3rem; }
+.adm-dialog-input { width: 100%; }
+.adm-dialog-err { font-size: 0.8125rem; font-weight: 600; color: #b91c1c; margin: 0.35rem 0 0; }
+.adm-dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 0.625rem; margin-top: 1.1rem; }
+.adm-dialog-ok {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.5rem;
+  padding: 0.55rem 1.1rem; border: none; border-radius: 0.6rem;
+  font-size: 0.875rem; font-weight: 600; color: #ffffff; cursor: pointer;
+}
+.adm-dialog-ok-primary { background-color: #1e2a4a; }
+.adm-dialog-ok-primary:hover { background-color: #2a3963; }
+.adm-dialog-ok-danger { background-color: #b91c1c; }
+.adm-dialog-ok-danger:hover { background-color: #991b1b; }
+.adm-dialog-ok-approve { background-color: #15803d; }
+.adm-dialog-ok-approve:hover { background-color: #166534; }
+.adm-dialog-actions .btn-secondary { min-height: 2.5rem; }
+:root[data-theme="dark"] .adm-dialog { background: #1a2131; }
+:root[data-theme="dark"] .adm-dialog-title { color: #f1f3f7; }
+:root[data-theme="dark"] .adm-dialog-msg, :root[data-theme="dark"] .adm-dialog-label { color: #cbd3e6; }
+:root[data-theme="dark"] .adm-dialog-detail { background: #121826; border-color: #3a4459; color: #cbd3e6; }
+:root[data-theme="dark"] .adm-dialog-err { color: #fca5a5; }
+
+/* ---------- Row actions: real buttons, not 11px capital words ---------- */
+.records-table .row-actions { gap: 0.5rem; flex-wrap: wrap; }
+.records-table :is(.row-approve, .row-reject, .row-view, .row-cert, .row-btn) {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 2.25rem; padding: 0.35rem 0.8rem; border-radius: 0.5rem;
+  font-size: 0.8125rem; font-weight: 600; letter-spacing: 0; text-transform: none;
+  white-space: nowrap; cursor: pointer;
+  background: #ffffff; color: #1e2a4a; border: 1.5px solid #c7cad6;
+}
+.records-table :is(.row-view, .row-cert):hover { background: #f3f4f6; color: #1e2a4a; }
+.records-table .row-approve { background: #15803d; color: #ffffff; border-color: #15803d; }
+.records-table .row-approve:hover { background: #166534; color: #ffffff; }
+.records-table .row-release { background: #1e2a4a; border-color: #1e2a4a; }
+.records-table .row-release:hover { background: #2a3963; }
+/* Opposite decisions get extra room between them. */
+.records-table .row-reject { color: #b91c1c; border-color: #fca5a5; margin-left: 0.5rem; }
+.records-table .row-reject:hover { background: #fef2f2; color: #991b1b; }
+:root[data-theme="dark"] .records-table :is(.row-view, .row-cert, .row-reject) { background: transparent; color: #e5e8ef; border-color: #3a4459; }
+:root[data-theme="dark"] .records-table .row-reject { color: #fca5a5; border-color: #7f1d1d; }
+
+/* ---------- Approve several at once (Record Requests) ---------- */
+.req-bulk-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.625rem;
+  padding: 0.6rem 1rem; background: #1e2a4a; color: #ffffff; font-size: 0.875rem; font-weight: 600;
+}
+.req-bulk-bar.hidden { display: none; }
+.req-bulk-bar > span { margin-right: auto; }
+.btn-approve {
+  display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0.4rem 0.9rem;
+  border: none; border-radius: 0.5rem; background: #15803d; color: #ffffff;
+  font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+}
+.btn-approve:hover { background: #166534; }
+.req-bulk-bar .btn-secondary { background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.25); }
+.records-table .col-select { width: 2.5rem; padding-right: 0; }
+.records-table .row-check { width: 1.1rem; height: 1.1rem; accent-color: #1e2a4a; cursor: pointer; }
+
+/* ---------- Role notes: what this role can and can't do, up front ---------- */
+.secretary-only { display: none; }
+html[data-role="staff"] .secretary-only { display: block; }
+.role-note { margin: 0 auto 0 0; font-size: 0.8125rem; color: #4b5563; line-height: 1.4; max-width: 22rem; }
+.ann-review-note { margin: 0; padding: 0.75rem 1.375rem 0; font-size: 0.8125rem; color: #4b5563; line-height: 1.4; }
+.modal-footer:has(.role-note) { flex-wrap: wrap; align-items: center; }
+:root[data-theme="dark"] .role-note,
+:root[data-theme="dark"] .ann-review-note { color: #b6bdca; }
+
+/* ---------- Calendar "+3 more" and small tags: readable size ---------- */
+body .calendar-cell-more { font-size: 0.75rem; font-weight: 600; color: #1e2a4a; }
+body .min-swap-tag { font-size: 0.6875rem; }
+:root[data-theme="dark"] body .calendar-cell-more { color: #c7cbe8; }
+
+/* ---------- Phones: each table row as a card (dashboard.js initTableCards) ---------- */
+@media (max-width: 640px) {
+  .records-table.has-cards thead { display: none; }
+  .records-table.has-cards,
+  .records-table.has-cards > tbody,
+  .records-table.has-cards > tbody > tr { display: block; width: 100%; }
+  .records-table.has-cards > tbody > tr { padding: 0.75rem 1rem; border-bottom: 1px solid #eef0f4; }
+  .records-table.has-cards > tbody > tr:last-child { border-bottom: none; }
+  .records-table.has-cards > tbody > tr > td[data-label],
+  .records-table.has-cards > tbody > tr > td.td-actions { display: block; border: 0; padding: 0.125rem 0; white-space: normal; text-align: left; }
+  .records-table.has-cards > tbody > tr > td[data-label]:not(.td-primary)::before {
+    content: attr(data-label) ": "; font-weight: 600; color: #6b7280;
+  }
+  .records-table.has-cards > tbody > tr > td.td-primary { font-size: 0.9375rem; font-weight: 600; color: #111827; padding-bottom: 0.25rem; }
+  .records-table.has-cards > tbody > tr > td.td-actions { padding-top: 0.5rem; }
+  .records-table.has-cards > tbody > tr > td.td-actions .row-actions { justify-content: flex-start; }
+  .records-table.has-cards > tbody > tr > td.col-select { display: block; border: 0; padding: 0 0 0.25rem; }
+  .records-table.has-cards .purpose-cell { max-width: none; }
+  .records-table.has-cards > tbody > tr > td:empty { display: none; }
+  .records-table.has-cards .row-reject { margin-left: 0; }
+}
+
+/* Phones: four labeled top-bar icons leave no room for the page title, and the
+   admin portal has no settings page to move Dark/Language into, so the icons
+   get their own row under the title. Only top bars with labels (Media and
+   ITech load this stylesheet too). */
+@media (max-width: 640px) {
+  body header.bg-white:has([data-label]) { flex-wrap: wrap; row-gap: 0.25rem; }
+  body header.bg-white:has([data-label]) > div:first-child { flex-basis: 100%; }
+  body header:has([data-label]) .help-date-wrap { margin-left: auto; }
+}
+:root[data-theme="dark"] .records-table .row-approve { background: #15803d; border-color: #15803d; color: #ffffff; }
+:root[data-theme="dark"] .records-table .row-release { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }

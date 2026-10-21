@@ -173,11 +173,11 @@
       <div class="px-3 py-4 border-t border-gray-100">
         <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
           <div class="w-9 h-9 rounded-full bg-navy flex items-center justify-center shrink-0">
-            <span class="text-white font-semibold text-xs">AD</span>
+            <span class="text-white font-semibold text-xs"></span>
           </div>
           <div class="leading-tight min-w-0">
-            <p class="font-medium text-gray-900 text-sm truncate">Admin User</p>
-            <p class="text-gray-400 text-xs truncate">System Admin</p>
+            <p class="font-medium text-gray-900 text-sm truncate"></p>
+            <p class="text-gray-400 text-xs truncate"></p>
           </div>
         </button>
       </div>
@@ -208,9 +208,9 @@
         <div class="sacred-dashboard-banner">
           <div id="sacred-art-dashboard" class="absolute inset-0" data-sacred-art aria-hidden="true"></div>
           <div>
-            <p class="sacred-dashboard-banner-eyebrow">Our Lady of Fatima Parish</p>
-            <h2 class="sacred-dashboard-banner-title">Welcome back, Admin</h2>
-            <p class="sacred-dashboard-banner-sub">Here's what's happening across the parish today.</p>
+            <p class="sacred-dashboard-banner-eyebrow" id="dash-eyebrow">Our Lady of Fatima Parish</p>
+            <h2 class="sacred-dashboard-banner-title" id="dash-greeting">Welcome back</h2>
+            <p class="sacred-dashboard-banner-sub" id="dash-todo">Here's what's happening across the parish today.</p>
           </div>
         </div>
 
@@ -255,13 +255,13 @@
 
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Cloud Storage</p>
+              <p class="stat-label">Ready to Release</p>
               <div class="stat-icon">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg>
               </div>
             </div>
-            <p class="stat-value">6.8 GB</p>
-            <p class="stat-sub">of 10 GB used</p>
+            <p class="stat-value" id="stat-ready-release">–</p>
+            <p class="stat-sub" id="stat-ready-release-sub">Loading…</p>
           </div>
         </div>
 
@@ -288,49 +288,6 @@
             <ul class="divide-y divide-gray-100" id="pending-requests-list">
               <li class="list-row text-sm text-gray-400">Loading…</li>
             </ul>
-          </div>
-        </div>
-
-        <!-- Cloud Status -->
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Cloud Status</h2>
-            <a href="../Sacraitech/itech-dashboard.html" class="panel-link">Managed by IT ›</a>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4">
-
-            <div class="cloud-box">
-              <div class="cloud-box-icon bg-green-50 text-green-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              </div>
-              <p class="cloud-box-label">Firestore</p>
-              <p class="cloud-box-value">Operational</p>
-            </div>
-
-            <div class="cloud-box">
-              <div class="cloud-box-icon bg-green-50 text-green-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              </div>
-              <p class="cloud-box-label">Storage Bucket</p>
-              <p class="cloud-box-value">6.8 / 10 GB</p>
-            </div>
-
-            <div class="cloud-box">
-              <div class="cloud-box-icon bg-amber-50 text-amber-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-8.93 4.93h.01"/></svg>
-              </div>
-              <p class="cloud-box-label">Last Backup</p>
-              <p class="cloud-box-value">2 hrs ago</p>
-            </div>
-
-            <div class="cloud-box">
-              <div class="cloud-box-icon bg-green-50 text-green-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              </div>
-              <p class="cloud-box-label">Auth Service</p>
-              <p class="cloud-box-value">Operational</p>
-            </div>
-
           </div>
         </div>
 

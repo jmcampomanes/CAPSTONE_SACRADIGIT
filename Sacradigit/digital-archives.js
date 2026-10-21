@@ -9,6 +9,7 @@ import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from 
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { initScanScreen, SCAN_SUFFIX } from './scanner/scan-screen.js';
 import { confirmNotDuplicate, duplicateIds } from './record-duplicates.js';
+import { showToast, confirmDialog } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -240,7 +241,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!ids.length) return false;
     const first = records.find(r => r.id === ids[0]);
     const what = ids.length === 1 ? `the record for "${first?.fullName || 'this person'}"` : `${ids.length} records`;
-    if (!confirm(`Delete ${what}? This can't be undone.`)) return false;
+    const sure = await confirmDialog({
+      title: `Delete ${what}?`,
+      message: 'This can’t be undone. The scanned files stay in storage.',
+      confirmLabel: ids.length === 1 ? 'Delete record' : `Delete ${ids.length} records`,
+      tone: 'danger',
+    });
+    if (!sure) return false;
 
     bulkDeleteBtn.disabled = true;
     const results = await Promise.all(ids.map(async (id) => {
@@ -411,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const officiant = document.getElementById('edit-officiant').value.trim();
 
     if (!fullName || !type) { showToast('Please fill in name and type.', true); return; }
-    if (!confirmNotDuplicate(records, { fullName, type, dateOfEvent: document.getElementById('edit-date').value }, { excludeId: editingId })) return;
+    if (!(await confirmNotDuplicate(records, { fullName, type, dateOfEvent: document.getElementById('edit-date').value }, { excludeId: editingId }))) return;
 
     const submitBtn = document.getElementById('edit-record-submit');
     submitBtn.disabled = true;
@@ -472,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!type || !nameFieldsFilled('upload-name')) { showToast('Please fill in record type and name.', true); return; }
 
     const fullName = formatFullName(name);
-    if (!confirmNotDuplicate(records, { fullName, type: type.toLowerCase() })) return;
+    if (!(await confirmNotDuplicate(records, { fullName, type: type.toLowerCase() }))) return;
     const file = fileInput.files[0];
     const submitBtn = document.getElementById('upload-submit');
     submitBtn.disabled = true;
@@ -517,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!nameFieldsFilled('new-name') || !type || !date) { showToast('Please fill in name, type, and date.', true); return; }
 
     const fullName = formatFullName(name);
-    if (!confirmNotDuplicate(records, { fullName, type: type.toLowerCase(), dateOfEvent: date })) return;
+    if (!(await confirmNotDuplicate(records, { fullName, type: type.toLowerCase(), dateOfEvent: date }))) return;
 
     try {
       const result = await client.models.ParishRecord.create({
@@ -543,19 +550,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  const toast = document.getElementById('toast');
-  let toastTimer = null;
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
 });

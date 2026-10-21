@@ -13,6 +13,7 @@ import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFul
 import { notifyCertificateReady } from '../email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../marriage-request-form.js';
 import { createCertStepForm } from '../certificate-step-forms.js';
+import { showToast, confirmDialog } from './admin-ui.js';
 
 // CertificateRequest has no dedicated email field — a parishioner's own
 // request carries their address in the Cognito "owner" field as
@@ -76,10 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewPurpose                 = document.getElementById('view-purpose');
   const viewLinkedWrap                = document.getElementById('view-linked-wrap');
 
-  const toast = document.getElementById('toast');
+
+  const bulkBar = document.getElementById('req-bulk-bar');
+  const selectAll = document.getElementById('req-select-all');
 
   let rejectTargetId = null;
-  let toastTimer = null;
+  const selectedIds = new Set();   // pending requests ticked for "Approve selected"
+  let shownPendingIds = [];
 
   /* ------------------------------------------
      2. HELPERS
@@ -111,19 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
     [uploadModal, newRequestModal, rejectModal, viewModal, generateCertModal, generateConfirmationCertModal, generateFirstCommunionCertModal, generateMarriageCertModal, generateDeathCertModal].forEach(closeModal);
   }
 
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
   /* ------------------------------------------
      3. LIVE DATA
@@ -136,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     error: (err) => {
       console.error('Failed to load requests:', err);
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 text-sm py-8">Couldn't load requests.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-red-500 text-sm py-8">Couldn't load requests.</td></tr>`;
     },
   });
 
@@ -208,51 +199,131 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     tbody.innerHTML = '';
+    const headAdmin = isHeadAdmin();
+    shownPendingIds = filtered.filter(r => r.status === 'pending').map(r => r.id);
+    selectedIds.forEach(id => { if (!shownPendingIds.includes(id)) selectedIds.delete(id); });
 
     if (filtered.length === 0) {
+      paintEmptyState(query, statusVal, typeVal);
       emptyState.classList.remove('hidden');
     } else {
       emptyState.classList.add('hidden');
       filtered.forEach((r) => {
         const tr = document.createElement('tr');
+        const who = escapeHtml(r.requesterName);
 
+        // Every row can be opened. The Head Admin approves/rejects pending ones;
+        // the Secretary sees that it's waiting for the Head Admin instead.
         const certBtn = GENERATABLE_CERT_TYPES.has(r.certificateType)
-          ? `<button type="button" class="row-cert" data-id="${r.id}" data-cert-type="${escapeHtml(r.certificateType)}">Generate Certificate</button>`
+          ? `<button type="button" class="row-btn row-cert" data-id="${r.id}" data-cert-type="${escapeHtml(r.certificateType)}">Generate</button>`
           : '';
-
-        let actionsHtml = '';
-        if (r.status === 'pending') {
-          actionsHtml = `
-            <div class="row-actions">
-              ${certBtn}
-              <button type="button" class="row-approve head-admin-only" data-id="${r.id}">Approve</button>
-              <button type="button" class="row-reject head-admin-only" data-id="${r.id}">Reject</button>
-            </div>`;
+        const viewBtn = `<button type="button" class="row-btn row-view" data-id="${r.id}" aria-label="View ${who}'s request">View</button>`;
+        let decision = '';
+        if (r.status === 'pending' && headAdmin) {
+          decision = `
+            <button type="button" class="row-btn row-approve" data-id="${r.id}">Approve</button>
+            <button type="button" class="row-btn row-reject" data-id="${r.id}">Reject…</button>`;
         } else if (r.status === 'approved') {
-          actionsHtml = `
-            <div class="row-actions">
-              ${certBtn}
-              <button type="button" class="row-approve" data-id="${r.id}" data-release="1">Release</button>
-              <button type="button" class="row-view" data-id="${r.id}">View ›</button>
-            </div>`;
-        } else {
-          actionsHtml = `<div class="row-actions">${certBtn}<button type="button" class="row-view" data-id="${r.id}">View ›</button></div>`;
+          decision = `<button type="button" class="row-btn row-release row-approve" data-id="${r.id}" data-release="1">Release</button>`;
         }
 
+        const label = r.status === 'pending' && !headAdmin ? 'Waiting for Head Admin' : (statusLabel[r.status] || r.status);
+        const select = r.status === 'pending'
+          ? `<input type="checkbox" class="row-check req-check" data-id="${r.id}" aria-label="Select ${who}'s request" ${selectedIds.has(r.id) ? 'checked' : ''} />`
+          : '';
+
         tr.innerHTML = `
-          <td class="font-medium text-gray-900">${escapeHtml(r.requesterName)}</td>
+          <td class="col-select head-admin-only">${select}</td>
+          <td class="font-medium text-gray-900">${who}</td>
           <td>${escapeHtml(r.certificateType)}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td class="purpose-cell" title="${escapeHtml(r.purpose)}">${escapeHtml(r.purpose) || '—'}</td>
-          <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span></td>
-          <td class="text-right">${actionsHtml}</td>
+          <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}">${label}</span></td>
+          <td class="text-right"><div class="row-actions">${certBtn}${viewBtn}${decision}</div></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
     resultsCount.textContent = `${filtered.length} request${filtered.length === 1 ? '' : 's'}`;
+    paintBulkBar();
     refreshUploadDropdown();
+  }
+
+  /* No results: say what was searched for, and offer the way out. */
+  function paintEmptyState(query, statusVal, typeVal) {
+    const filtersOn = !!(query || statusVal || typeVal);
+    const title = document.getElementById('empty-title');
+    const hint = document.getElementById('empty-hint');
+    document.getElementById('empty-clear').classList.toggle('hidden', !filtersOn);
+    if (!filtersOn) {
+      title.textContent = 'No certificate requests yet';
+      hint.textContent = 'Requests from parishioners appear here. To log one made in person or by phone, use “New walk-in request”.';
+      return;
+    }
+    const status = statusVal ? `${(statusLabel[statusVal] || statusVal).toLowerCase()} ` : '';
+    const type = typeVal ? `${typeVal.replace(/ Certificate$/, '')} ` : '';
+    title.textContent = `No ${status}${type}requests${query ? ` for “${searchInput.value.trim()}”` : ''}`;
+    hint.textContent = query ? 'Check the spelling, or search all statuses and types.' : 'Try another status or type.';
+  }
+
+  /* ------------------------------------------
+     5b. HEAD ADMIN: APPROVE SEVERAL AT ONCE
+  ------------------------------------------ */
+  function paintBulkBar() {
+    const n = selectedIds.size;
+    bulkBar.classList.toggle('hidden', n === 0);
+    document.getElementById('req-bulk-count').textContent = `${n} selected`;
+    document.getElementById('req-bulk-approve').textContent = `Approve ${n}…`;
+    selectAll.checked = shownPendingIds.length > 0 && shownPendingIds.every(id => selectedIds.has(id));
+    selectAll.indeterminate = n > 0 && !selectAll.checked;
+    selectAll.disabled = shownPendingIds.length === 0;
+  }
+
+  tbody.addEventListener('change', (e) => {
+    const box = e.target.closest('.req-check');
+    if (!box) return;
+    box.checked ? selectedIds.add(box.dataset.id) : selectedIds.delete(box.dataset.id);
+    paintBulkBar();
+  });
+  selectAll.addEventListener('change', () => {
+    shownPendingIds.forEach(id => (selectAll.checked ? selectedIds.add(id) : selectedIds.delete(id)));
+    tbody.querySelectorAll('.req-check').forEach(b => { b.checked = selectedIds.has(b.dataset.id); });
+    paintBulkBar();
+  });
+  document.getElementById('req-bulk-clear').addEventListener('click', () => { selectedIds.clear(); renderRequests(); });
+  document.getElementById('req-bulk-approve').addEventListener('click', async () => {
+    if (!isHeadAdmin()) return;
+    const picked = requests.filter(r => selectedIds.has(r.id) && r.status === 'pending');
+    if (!picked.length) return;
+    const sure = await confirmDialog({
+      title: `Approve ${picked.length} request${picked.length === 1 ? '' : 's'}?`,
+      message: 'Each requester gets an email that their certificate is ready to pick up.',
+      detail: picked.slice(0, 8).map(r => `• ${r.requesterName} — ${r.certificateType}`).join('\n') + (picked.length > 8 ? `\n…and ${picked.length - 8} more` : ''),
+      confirmLabel: `Approve ${picked.length} & email`,
+      tone: 'approve',
+    });
+    if (!sure) return;
+    const results = await Promise.all(picked.map(r => approveRequest(r, { quiet: true })));
+    const done = results.filter(Boolean).length;
+    selectedIds.clear();
+    renderRequests();
+    if (done === picked.length) showToast(`${done} request${done === 1 ? '' : 's'} approved.`);
+    else showToast(`${done} of ${picked.length} approved. The rest couldn’t be updated — please try them again.`, true);
+  });
+
+  async function approveRequest(r, { quiet = false } = {}) {
+    try {
+      const result = await client.models.CertificateRequest.update({ id: r.id, status: 'approved' });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      notifyCertificateReady({ to: recipientEmail(r), name: r.requesterName, certificateType: r.certificateType });
+      if (!quiet) showToast(`${r.requesterName}’s ${r.certificateType} approved. We’ve emailed them.`);
+      return true;
+    } catch (err) {
+      console.error('Failed to approve request:', err);
+      if (!quiet) showToast(err.message || "Couldn't approve the request.", true);
+      return false;
+    }
   }
 
   function refreshUploadDropdown() {
@@ -284,17 +355,32 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isHeadAdmin()) { showToast('Only the Head Admin can approve or reject requests.', true); return; }
     }
 
+    // Approving emails the parishioner, and neither step can be undone here — check first.
     if (approveBtn) {
-      const id = approveBtn.dataset.id;
-      const r = requests.find(x => x.id === id);
-      const nextStatus = approveBtn.dataset.release ? 'released' : 'approved';
+      const r = requests.find(x => x.id === approveBtn.dataset.id);
+      if (!r) return;
+      if (!approveBtn.dataset.release) {
+        const to = recipientEmail(r);
+        const sure = await confirmDialog({
+          title: `Approve ${r.requesterName}’s ${r.certificateType}?`,
+          message: `We’ll email ${to || 'the requester'} that it’s ready to pick up.`,
+          detail: r.purpose ? `Purpose: ${r.purpose}` : '',
+          confirmLabel: 'Approve & email',
+          tone: 'approve',
+        });
+        if (sure) await approveRequest(r);
+        return;
+      }
+      const sure = await confirmDialog({
+        title: `Mark ${r.requesterName}’s ${r.certificateType} as released?`,
+        message: 'Do this once the certificate has been handed over or picked up.',
+        confirmLabel: 'Mark released',
+      });
+      if (!sure) return;
       try {
-        const result = await client.models.CertificateRequest.update({ id, status: nextStatus });
+        const result = await client.models.CertificateRequest.update({ id: r.id, status: 'released' });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(`Request for ${r ? r.requesterName : 'requester'} marked ${statusLabel[nextStatus].toLowerCase()}.`);
-        if (nextStatus === 'approved' && r) {
-          notifyCertificateReady({ to: recipientEmail(r), name: r.requesterName, certificateType: r.certificateType });
-        }
+        showToast(`${r.requesterName}’s ${r.certificateType} marked released.`);
       } catch (err) {
         console.error('Failed to update request:', err);
         showToast(err.message || "Couldn't update the request.", true);
@@ -312,12 +398,14 @@ document.addEventListener('DOMContentLoaded', () => {
   statusFilter.addEventListener('change', renderRequests);
   typeFilter.addEventListener('change', renderRequests);
 
-  clearFiltersBtn.addEventListener('click', () => {
+  const clearFilters = () => {
     searchInput.value = '';
     statusFilter.value = '';
     typeFilter.value = '';
     renderRequests();
-  });
+  };
+  clearFiltersBtn.addEventListener('click', clearFilters);
+  document.getElementById('empty-clear').addEventListener('click', () => { clearFilters(); searchInput.focus(); });
 
   /* ------------------------------------------
      8. MODAL OPEN BUTTONS

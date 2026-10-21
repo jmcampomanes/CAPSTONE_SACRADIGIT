@@ -8,6 +8,7 @@
    ============================================ */
 
 import QRCode from 'qrcode';
+import { confirmDialog } from './admin-ui.js';
 import {
   checkInReady, startSession, closeSession, watchSessionCheckIns,
   codeFor, rotateCode, checkInUrl, formatCode, massStart,
@@ -99,7 +100,7 @@ export function initCheckInDisplay({ showToast }) {
   });
   document.getElementById('ci-close').addEventListener('click', async () => {
     if (!session) return;
-    if (!confirm('Close check-in for this Mass? Parishioners won’t be able to check in after this.')) return;
+    if (!(await confirmDialog({ title: 'Close check-in for this Mass?', message: 'Parishioners won’t be able to check in after this.', confirmLabel: 'Close check-in', tone: 'danger' }))) return;
     try {
       await closeSession(session.id);
       showToast('Check-in closed.');
@@ -135,7 +136,7 @@ export function initCheckInDisplay({ showToast }) {
         let code = await codeFor(sess.id);
         if (!code) {
           // Opened before codes were shared between devices: make a new one.
-          if (!confirm('This check-in’s code isn’t saved for other devices. Show a new code? Any screen still showing the old code will need this new one.')) return false;
+          if (!(await confirmDialog({ title: 'Show a new check-in code?', message: 'This check-in’s code isn’t saved for other devices. Any screen still showing the old code will need the new one.', confirmLabel: 'Show new code' }))) return false;
           const fresh = await rotateCode(sess.id);
           sess = fresh.session || sess;
           code = fresh.code;

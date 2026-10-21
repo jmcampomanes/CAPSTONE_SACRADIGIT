@@ -26,6 +26,7 @@ import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled } from 
 import { regionOptionsHtml, cityOptionsHtml, OTHER_CITY_VALUE } from './ph-locations.js';
 import { confirmationNameOptionsHtml, OTHER_NAME_VALUE as OTHER_SAINT_NAME_VALUE } from './saint-names.js';
 import { GUARDIAN_RELATIONSHIPS, TODAY_ISO, MIN_DATE_ISO, isReasonableDate, guardDateInputRange } from './marriage-request-form.js';
+import { stepHistory } from './step-history.js';
 
 const PARISH_NAME = 'Our Lady of Fatima Parish';
 let godparentCounter = 2; // Sponsor 1 & 2 are the first two; "Add More Godparents" continues from here.
@@ -779,6 +780,7 @@ export function createCertStepForm(container, typeId, {
 
   let current = 0;
   let furthest = 0;
+  const backNav = stepHistory(`cert-${typeId}`, (s) => go(s), () => wiz.isConnected);
   function go(step) {
     current = Math.max(0, Math.min(step, all.length - 1));
     furthest = Math.max(furthest, current);
@@ -791,6 +793,7 @@ export function createCertStepForm(container, typeId, {
     });
     onStepChange(current, current === all.length - 1);
     (scrollTarget || wiz).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    backNav.moved(current);
   }
   function tryForward(target) {
     if (missingSteps().has(current)) {

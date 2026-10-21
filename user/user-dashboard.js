@@ -103,6 +103,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return nowMinutesLocal() >= timeToMinutes(mass.time) + MASS_DURATION_MINUTES;
     }
 
+    // When today is done, point to the next Mass in the weekly pattern
+    // instead of ending on "No more masses today."
+    function nextMassText() {
+      for (let i = 1; i <= 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const [first] = recurringMassesForDate(weeklySchedule, iso)
+          .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+        if (first) {
+          const day = i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'long' });
+          return `<p class="next-mass-when">Next Mass: ${day}, ${first.time}</p>
+                  <a href="user-mass-schedule.html" class="panel-link">See the full schedule →</a>`;
+        }
+      }
+      return '<a href="user-mass-schedule.html" class="panel-link">See the full schedule →</a>';
+    }
+
     function renderTodaysMasses() {
       const sorted = [
         ...todaysMassRecords,
@@ -112,7 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const upcoming = sorted.filter(m => !isMassDone(m));
 
       massesList.innerHTML = upcoming.length === 0
-        ? `<li class="text-sm text-gray-400 py-4">${sorted.length === 0 ? 'No masses scheduled today.' : 'No more masses today.'}</li>`
+        ? `<li class="next-mass-empty">
+             <p class="next-mass-note">${sorted.length === 0 ? 'No Masses scheduled today' : 'No more Masses today'}</p>
+             ${nextMassText()}
+           </li>`
         : upcoming.map(m => `
             <li><div class="mass-row">
               <span class="mass-time">${m.time}</span>

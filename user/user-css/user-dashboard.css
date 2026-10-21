@@ -173,9 +173,16 @@
 
 .mass-note {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #6b7280;
   margin-top: 0.05rem;
 }
+
+/* Today's Masses are over: say when the next one is */
+.next-mass-empty { padding: 1.25rem 1.25rem 1.1rem; text-align: center; }
+.next-mass-note { font-size: 0.8125rem; color: #6b7280; margin: 0 0 0.3rem; }
+.next-mass-when { font-size: 1.125rem; font-weight: 700; color: #111827; margin: 0 0 0.4rem; }
+:root[data-theme="dark"] .next-mass-when { color: #f1f3f7; }
+:root[data-theme="dark"] .next-mass-note { color: #b6bdca; }
 
 /* ---------- Special mass row ---------- */
 .special-mass-row {

@@ -378,7 +378,7 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
 
     let fullName = formatFullName(name);
     if (docTypeSel.value === 'marriage' && nameFieldsFilled('scan-spouse')) fullName += ` & ${formatFullName(readNameFields('scan-spouse'))}`;
-    if (!confirmNotDuplicate(getRecords(), { fullName, type, dateOfEvent: $('scan-date').value })) return;
+    if (!(await confirmNotDuplicate(getRecords(), { fullName, type, dateOfEvent: $('scan-date').value }))) return;
 
     const fields = {};
     fieldsWrap.querySelectorAll('input[data-key]').forEach(i => {

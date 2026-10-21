@@ -290,7 +290,7 @@ export function createIntentionForm(modal, {
       ok = false;
     }
     if (!ok) {
-      toast(!chosen.size ? 'Please choose at least one intention for this person.' : 'Please enter a first and last name.', true);
+      toast(!chosen.size ? 'Tap one of the intentions above first.' : 'Please enter a first and last name.', true);
       return false;
     }
     const person = { name: readNameFields('mi-name'), typeIds: intentionTypes.map(t => t.id).filter(id => chosen.has(id)) };
@@ -415,7 +415,7 @@ export function createIntentionForm(modal, {
     if (!people.length) {
       catGrid.classList.add('mi-invalid');
       flag($('mi-name-first'));
-      toast('Please add at least one person to the prayer list.', true);
+      toast('Tap one of the intentions above first, then enter the person’s name.', true);
       return false;
     }
     return true;

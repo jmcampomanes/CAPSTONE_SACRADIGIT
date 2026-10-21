@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI/UX Pro Max Review — SacraDigit</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f5f7;
+    margin: 0;
+    color: #111827;
+  }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 250px; flex-shrink: 0; background: #1e2a4a; color: #cbd3e6;
+    padding: 1.25rem 0.75rem; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .sidebar h1 { color: #fff; font-size: 0.95rem; margin: 0 0.5rem 0.25rem; }
+  .sidebar p.note { font-size: 0.7rem; color: #8b95b8; margin: 0 0.5rem 1rem; line-height: 1.4; }
+  .sidebar a { display: block; color: #cbd3e6; text-decoration: none; font-size: 0.8rem; padding: 0.4rem 0.6rem; border-radius: 0.4rem; margin-bottom: 0.1rem; }
+  .sidebar a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .sidebar a.group { font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; color: #7d87ad; margin-top: 0.9rem; padding: 0.4rem 0.6rem 0.1rem; pointer-events: none; }
+  .sidebar .impact { font-size: 0.62rem; opacity: 0.75; margin-left: 0.3rem; }
+
+  .mobile-jump { display: none; }
+  .content { flex: 1; padding: 2rem 2.5rem 6rem; max-width: 1150px; }
+
+  .masthead { background: #fff; border: 1px solid #e5e7eb; border-left: 4px solid #1e2a4a; border-radius: 0.6rem; padding: 1rem 1.25rem; font-size: 0.82rem; color: #4b5563; line-height: 1.55; margin-bottom: 2rem; }
+  .masthead b { color: #111827; }
+  .masthead code { background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.78rem; }
+
+  .cat { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+  .cat h2 { font-size: 1.15rem; margin: 0 0 0.15rem; display: flex; align-items: center; gap: 0.5rem; }
+  .cat .impact-tag { font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .impact-critical { background: #fef2f2; color: #b91c1c; }
+  .impact-high { background: #fffbeb; color: #b45309; }
+  .impact-medium { background: #eef2ff; color: #4338ca; }
+  .impact-low { background: #f3f4f6; color: #6b7280; }
+  .cat .cat-sub { font-size: 0.78rem; color: #6b7280; margin: 0 0 1.1rem; }
+
+  .finding { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.65rem; padding: 0.9rem 1.1rem; margin-bottom: 0.9rem; }
+  .finding-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }
+  .finding-title { font-size: 0.9rem; font-weight: 700; color: #111827; }
+  .tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .sev { font-size: 0.62rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: 999px; text-transform: uppercase; }
+  .sev-high { background: #fef2f2; color: #b91c1c; }
+  .sev-medium { background: #fffbeb; color: #b45309; }
+  .sev-low { background: #f3f4f6; color: #6b7280; }
+  .status { font-size: 0.62rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: 999px; }
+  .status-new { background: #eef2ff; color: #4338ca; }
+  .status-fixed { background: #ecfdf3; color: #15803d; }
+  .status-flagged { background: #f3e8ff; color: #7e22ce; }
+
+  .finding p.desc { font-size: 0.82rem; color: #4b5563; margin: 0 0 0.5rem; line-height: 1.5; }
+  .dodont { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .code-box { flex: 1; min-width: 220px; border-radius: 0.4rem; padding: 0.5rem 0.65rem; font-size: 0.74rem; font-family: "SF Mono", Consolas, monospace; }
+  .code-good { background: #ecfdf3; border: 1px solid #bbf0cf; color: #15542f; }
+  .code-bad { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; }
+  .code-box .lbl { display: block; font-family: -apple-system, sans-serif; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem; }
+  .code-good .lbl { color: #15803d; }
+  .code-bad .lbl { color: #b91c1c; }
+
+  .in-project { font-size: 0.78rem; color: #374151; background: #f9fafb; border-left: 3px solid #8b8fc7; padding: 0.45rem 0.65rem; border-radius: 0.3rem; margin-top: 0.4rem; }
+  .in-project b { color: #1e2a4a; }
+  .source { font-size: 0.65rem; color: #9ca3af; margin-top: 0.4rem; }
+
+  .na-note { background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.8rem; color: #6b7280; }
+
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.72rem; color: #6b7280; margin-bottom: 1.5rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .legend .dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
+
+  .design-token-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin: 0.6rem 0; }
+  .design-token-table th, .design-token-table td { text-align: left; padding: 0.35rem 0.6rem; border-bottom: 1px solid #f1f2f5; }
+  .swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 0.4rem; border: 1px solid rgba(0,0,0,0.1); }
+
+  /* ---------- Before / After mini mockups ---------- */
+  .mini-compare { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 0.7rem 0 0.4rem; }
+  .mini-box { flex: 1; min-width: 230px; border-radius: 0.5rem; padding: 0.6rem 0.7rem 0.75rem; background: #fff; }
+  .mini-before { border: 2px solid #fecaca; }
+  .mini-after { border: 2px solid #bbf0cf; }
+  .mini-label { display: block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .mini-before .mini-label { color: #b91c1c; }
+  .mini-after .mini-label { color: #15803d; }
+  .mini-screen { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.4rem; padding: 0.6rem; position: relative; overflow: hidden; }
+  .mini-note { font-size: 0.68rem; color: #6b7280; margin-top: 0.4rem; line-height: 1.4; }
+  .m-bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #8a3040; padding-bottom: 0.35rem; margin-bottom: 0.45rem; font-size: 0.72rem; font-weight: 700; }
+  .m-ico-s { width: 18px; height: 18px; border-radius: 999px; background: #e5e7eb; display: inline-flex; align-items: center; justify-content: center; font-size: 0.55rem; color: #6b7280; }
+  .m-ico-l { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; width: 44px; }
+  .m-ico-l svg { width: 22px; height: 22px; stroke: #1e2a4a; }
+  .m-ico-l span { font-size: 0.55rem; font-weight: 600; color: #374151; }
+  .m-btn-pale { display: block; width: 100%; background: #8b8fc7; color: #fff; border: none; border-radius: 0.4rem; font-size: 0.72rem; font-weight: 600; padding: 0.4rem; }
+  .m-btn-solid { display: block; width: 100%; background: #1e2a4a; color: #fff; border: none; border-radius: 0.4rem; font-size: 0.8rem; font-weight: 700; padding: 0.7rem; min-height: 44px; }
+  .m-input { border: 1px solid #d1d5db; border-radius: 0.35rem; background: #fff; padding: 0.4rem 0.5rem; font-size: 0.72rem; color: #9ca3af; }
+  .m-input-err { border: 2px solid #dc2626; }
+  .m-err { font-size: 0.68rem; color: #b91c1c; font-weight: 600; margin-top: 0.2rem; display: flex; gap: 0.25rem; align-items: center; }
+  .m-sr { font-family: "SF Mono", Consolas, monospace; font-size: 0.66rem; background: #111827; color: #a7f3d0; border-radius: 0.35rem; padding: 0.45rem 0.55rem; line-height: 1.5; }
+  .m-sr .bad { color: #fca5a5; }
+  .m-step { display: inline-block; font-size: 0.62rem; padding: 0.2rem 0.4rem; border-radius: 0.3rem; background: #e5e7eb; color: #374151; margin: 0.1rem; }
+  .m-step.hl { background: #1e2a4a; color: #fff; }
+  .m-arrow { font-size: 0.7rem; color: #9ca3af; }
+
+  @keyframes bounce-demo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .m-bounce { display: inline-block; animation: bounce-demo 0.7s infinite; }
+  @media (prefers-reduced-motion: reduce) { .m-bounce { animation: none; } }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .mobile-jump { display: block; position: sticky; top: 0; z-index: 10; background: #1e2a4a; padding: 0.75rem 1rem; }
+    .mobile-jump select { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: none; font-size: 0.85rem; }
+    .content { padding: 1.25rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mobile-jump">
+  <select onchange="if(this.value) location.hash = this.value;">
+    <option value="">Jump to section…</option>
+    <option value="#design">Design direction (optional)</option>
+    <option value="#accessibility">1. Accessibility</option>
+    <option value="#touch">2. Touch &amp; Interaction</option>
+    <option value="#performance">3. Performance</option>
+    <option value="#style">4. Style Selection</option>
+    <option value="#layout">5. Layout &amp; Responsive</option>
+    <option value="#typography">6. Typography &amp; Color</option>
+    <option value="#animation">7. Animation</option>
+    <option value="#forms">8. Forms &amp; Feedback</option>
+    <option value="#navigation">9. Navigation Patterns</option>
+    <option value="#charts">10. Charts &amp; Data</option>
+  </select>
+</div>
+
+<div class="app">
+  <nav class="sidebar">
+    <h1>UI/UX Pro Max Review</h1>
+    <p class="note">Generated by querying the <code style="background:rgba(255,255,255,0.1); color:#cbd3e6;">ui-ux-pro-max</code> skill's local guideline database and matching results against this project's real pages. Each card below cites its source file.</p>
+    <a class="group">Direction</a>
+    <a href="#design">Design system suggestion</a>
+    <a class="group">Priority order</a>
+    <a href="#accessibility">1. Accessibility <span class="impact">CRITICAL</span></a>
+    <a href="#touch">2. Touch &amp; Interaction <span class="impact">CRITICAL</span></a>
+    <a href="#performance">3. Performance <span class="impact">HIGH</span></a>
+    <a href="#style">4. Style Selection <span class="impact">HIGH</span></a>
+    <a href="#layout">5. Layout &amp; Responsive <span class="impact">HIGH</span></a>
+    <a href="#typography">6. Typography &amp; Color <span class="impact">MEDIUM</span></a>
+    <a href="#animation">7. Animation <span class="impact">MEDIUM</span></a>
+    <a href="#forms">8. Forms &amp; Feedback <span class="impact">MEDIUM</span></a>
+    <a href="#navigation">9. Navigation Patterns <span class="impact">HIGH</span></a>
+    <a href="#charts">10. Charts &amp; Data <span class="impact">LOW</span></a>
+  </nav>
+
+  <div class="content">
+
+    <div class="masthead">
+      <b>How this page was built:</b> I ran the <code>ui-ux-pro-max</code> skill's search tool (<code>scripts/search.py</code>) from
+      <code>C:\Users\minim\Downloads\uirepo\ui-ux-pro-max-skill</code> against this project — a <code>--design-system</code> query for a parish/community portal, then targeted <code>--domain</code> queries for accessibility, touch, forms, navigation, layout and typography, plus one <code>--stack html-tailwind</code> query (this project loads Tailwind via CDN with vanilla JS, no framework). Every card quotes the tool's real Do/Don't output and names its source CSV — nothing here is invented. Where a finding overlaps the earlier persona-based <a href="testing.html">testing.html</a> review, it's tagged below.
+    </div>
+
+    <div class="legend">
+      <span><span class="dot" style="background:#4338ca;"></span> New finding — not in the earlier review</span>
+      <span><span class="dot" style="background:#15803d;"></span> Already fixed (Dashboard card layout)</span>
+      <span><span class="dot" style="background:#7e22ce;"></span> Deepens an item already flagged in testing.html</span>
+    </div>
+
+    <!-- ===================== DESIGN DIRECTION ===================== -->
+    <section class="cat" id="design">
+      <h2>Design system suggestion <span class="impact-tag impact-medium">OPTIONAL</span></h2>
+      <p class="cat-sub">From <code>--design-system "parish community senior-friendly portal"</code>. This is a direction to consider, not a mandate — your maroon/navy/gold identity can stay; treat the color table as a contrast-checked reference, not a forced repaint.</p>
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Style match: "Accessible &amp; Ethical"</span><span class="status status-new">NEW</span></div>
+        <p class="desc">Best for: government, healthcare, education, inclusive products, large/mixed-age audience, legal compliance, public services — a strong fit for a parish portal used by seniors like Rosa. Keywords: high contrast, large text (16px+), keyboard navigation, screen-reader friendly, visible focus.</p>
+        <div class="in-project"><b>Typography suggestion:</b> Atkinson Hyperlegible (free, Google Fonts) — designed specifically for low-vision and dyslexic readers. Could replace or supplement the current body font without touching your brand colors.</div>
+        <table class="design-token-table">
+          <tr><th>Role</th><th>Hex</th><th>Use</th></tr>
+          <tr><td><span class="swatch" style="background:#0369A1;"></span>Primary</td><td>#0369A1</td><td>Reference "calm trust" blue — compare against your current maroon for contrast only</td></tr>
+          <tr><td><span class="swatch" style="background:#16A34A;"></span>Accent/CTA</td><td>#16A34A</td><td>Reassuring green for confirmations (paid, approved, released)</td></tr>
+          <tr><td><span class="swatch" style="background:#DC2626;"></span>Destructive</td><td>#DC2626</td><td>Already close to your existing badge-red</td></tr>
+        </table>
+        <p class="desc"><b>Anti-patterns to avoid</b> (flagged directly by the tool): small text, complex navigation, AI purple/pink gradients.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — current body font</span>
+            <div class="mini-screen" style="font-family:-apple-system,'Segoe UI',sans-serif;">
+              <div style="font-size:0.7rem; color:#9ca3af;">Il1 | 0O | rn m</div>
+              <div style="font-size:0.75rem; color:#4b5563;">Baptismal Certificate — Pending</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — Atkinson Hyperlegible</span>
+            <div class="mini-screen" style="font-family:'Atkinson Hyperlegible',Verdana,sans-serif;">
+              <div style="font-size:0.85rem; color:#374151;">Il1 | 0O | rn m</div>
+              <div style="font-size:0.95rem; color:#111827;">Baptismal Certificate — Pending</div>
+            </div>
+            <div class="mini-note">Look-alike letters (I/l/1, 0/O, rn/m) are drawn distinct. Brand colors stay the same. (Shows as Verdana here unless the font is installed.)</div>
+          </div>
+        </div>
+        <div class="source">Source: ui-reasoning.csv + styles.csv + typography.csv + colors.csv (via --design-system)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 1. ACCESSIBILITY ===================== -->
+    <section class="cat" id="accessibility">
+      <h2>1. Accessibility <span class="impact-tag impact-critical">CRITICAL</span></h2>
+      <p class="cat-sub">Contrast 4.5:1 · Alt text · Keyboard nav · ARIA labels. Avoid: removing focus rings, icon-only buttons without labels.</p>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Icon-only buttons need an accessible name</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-flagged">DEEPENS EARLIER FLAG</span></span></div>
+        <p class="desc">The five top-bar icons (🔔 Aa ☾ EN ?) and the Messages send arrow are emoji/icon-only — a screen reader announces nothing useful for "Aa" or "☾". This is the same bug the earlier report called "label the icons," but the deeper fix is accessible-name-first, visible-label-second.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>aria-label on the control itself; aria-hidden="true" on the decorative glyph</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Emoji as the only icon, with no aria-label and no visible text</div>
+        </div>
+        <div class="in-project"><b>In this project:</b> top-bar icons in <code>user-shell.js</code>/<code>user-shell.html</code>, send button in <code>user-messages.html</code>.</div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — what a screen reader says</span>
+            <div class="mini-screen">
+              <div class="m-bar"><span>Dashboard</span><span style="display:flex;gap:3px;"><span class="m-ico-s">🔔</span><span class="m-ico-s">Aa</span><span class="m-ico-s">☾</span><span class="m-ico-s">EN</span><span class="m-ico-s">?</span></span></div>
+              <div class="m-sr"><span class="bad">"button"</span><br><span class="bad">"A a, button"</span><br><span class="bad">"last quarter moon, button"</span></div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="mini-screen">
+              <div class="m-bar" style="font-weight:700;"><span>Dashboard</span></div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:0.45rem;">
+                <span class="m-ico-l"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 01-6 0"/></svg><span>Alerts</span></span>
+                <span class="m-ico-l"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 7V5h10v2M9 5v14M14 12v-1h6v1M17 11v8"/></svg><span>Bigger text</span></span>
+                <span class="m-ico-l"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg><span>Dark</span></span>
+                <span class="m-ico-l"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg><span>Language</span></span>
+              </div>
+              <div class="m-sr">"Alerts, button"<br>"Bigger text, button"<br>"Dark mode, button"</div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: icons.csv (icon-context-accessibility guideline)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Keyboard focus must stay visible — including behind sticky footers</span><span class="tags"><span class="sev sev-medium">Medium (AAA)</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">WCAG 2.2's "Focus Not Obscured" criterion: a sticky warning bar or chat bubble that covers the currently-focused button is a real accessibility failure for keyboard users, not just a visual annoyance.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>Close/retract persistent overlays before focus would move behind them</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Let a sticky footer or warning bar cover half the focused control</div>
+        </div>
+        <div class="in-project"><b>In this project:</b> directly backs the Top-5 fix #2 already proposed in <a href="testing.html#top5">testing.html</a> (warning bar + chat bubble over step-form buttons) — this gives it a formal WCAG citation.</div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — focused button is covered</span>
+            <div class="mini-screen" style="height:120px;">
+              <div style="font-size:0.7rem; color:#4b5563; margin-bottom:0.4rem;">Step 2 of 3 · Your details</div>
+              <button class="m-btn-pale" style="outline:3px solid #2563eb; outline-offset:2px;">Next</button>
+              <div style="position:absolute; left:0; right:0; bottom:0; background:#fef2f2; border-top:1px solid #fecaca; color:#b91c1c; font-size:0.65rem; padding:0.55rem;">⚠ Please complete all fields</div>
+              <div style="position:absolute; right:8px; bottom:30px; width:30px; height:30px; border-radius:999px; background:#1e2a4a; color:#fff; font-size:0.8rem; display:flex; align-items:center; justify-content:center;">💬</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — nothing on top of it</span>
+            <div class="mini-screen" style="height:120px;">
+              <div style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; font-size:0.65rem; padding:0.35rem 0.5rem; border-radius:0.3rem; margin-bottom:0.4rem;">⚠ Please enter the last name. ✕</div>
+              <div style="font-size:0.7rem; color:#4b5563; margin-bottom:0.4rem;">Step 2 of 3 · Your details</div>
+              <button class="m-btn-solid" style="outline:3px solid #2563eb; outline-offset:2px;">Next</button>
+            </div>
+            <div class="mini-note">Warning moved to the top; chat bubble hidden on step pages.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Focus Not Obscured, Enhanced)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Visible focus ring on every interactive control</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">Not yet audited in this project. Worth a quick pass: tab through the Dashboard, a step form, and the ☰ menu to confirm nothing uses <code>outline: none</code> without a replacement ring.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>focus:ring-2 focus:ring-blue-500 (or your brand color)</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>outline: none without an alternative</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — pressing Tab, where am I?</span>
+            <div class="mini-screen" style="display:flex; flex-direction:column; gap:0.4rem;">
+              <button class="m-btn-solid" style="outline:none;">Request Certificate</button>
+              <button class="m-btn-solid" style="outline:none;">Book a Facility</button>
+              <button class="m-btn-solid" style="outline:none;">Donate</button>
+            </div>
+            <div class="mini-note">Second button is focused — but nothing shows it.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — clear focus ring</span>
+            <div class="mini-screen" style="display:flex; flex-direction:column; gap:0.4rem;">
+              <button class="m-btn-solid">Request Certificate</button>
+              <button class="m-btn-solid" style="outline:3px solid #c9a84c; outline-offset:2px;">Book a Facility</button>
+              <button class="m-btn-solid">Donate</button>
+            </div>
+            <div class="mini-note">A 3px gold ring (your brand color) marks the focused button.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Focus States)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Skip-to-content link</span><span class="tags"><span class="sev sev-medium">Medium</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">With a 16-item ☰ menu (flagged in the earlier review as "below the fold"), a keyboard user also has to tab through all of it on every page load unless there's a skip link straight to <code>&lt;main&gt;</code>.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>A visually-hidden-until-focused "Skip to main content" link as the first focusable element</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Force 16+ tab presses to reach the page content</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — Tab order on every page</span>
+            <div class="mini-screen">
+              <span class="m-step">Dashboard</span><span class="m-arrow">→</span><span class="m-step">Mass Schedule</span><span class="m-arrow">→</span><span class="m-step">Announcements</span><span class="m-arrow">→</span><span class="m-step">Messages</span><span class="m-arrow">→</span><span class="m-step">…12 more</span><span class="m-arrow">→</span><span class="m-step hl">Page content</span>
+            </div>
+            <div class="mini-note">16+ presses before reaching the page.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — first Tab press</span>
+            <div class="mini-screen">
+              <div style="background:#1e2a4a; color:#fff; font-size:0.72rem; font-weight:700; padding:0.4rem 0.6rem; border-radius:0.3rem; display:inline-block; outline:3px solid #c9a84c;">Skip to main content</div>
+              <div style="margin-top:0.4rem;"><span class="m-arrow">↓ Enter</span> <span class="m-step hl">Page content</span></div>
+            </div>
+            <div class="mini-note">Invisible to mouse/touch users; appears only when tabbing.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Skip Links)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Form errors must be announced, not just shown in red</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-flagged">DEEPENS EARLIER FLAG</span></span></div>
+        <p class="desc">This is the technical backbone of Top-5 fix #5 (inline messages) and #2 (warning placement): a red border alone is invisible to a screen reader, and an error that disappears after a few seconds may vanish before it's even announced.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>&lt;input aria-describedby="lastname-error"&gt;&lt;p id="lastname-error" role="alert"&gt;Please enter the last name.&lt;/p&gt;</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Red border only, or a toast with no field link</div>
+        </div>
+        <div class="in-project"><b>In this project:</b> Request Certificate, Facility Booking, Donations, Mass Intentions — all currently rely on red outlines and/or a bottom warning bar.</div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="mini-screen">
+              <div style="font-size:0.68rem; color:#374151; margin-bottom:0.2rem;">Last Name</div>
+              <div class="m-input m-input-err">&nbsp;</div>
+              <div style="font-size:0.68rem; color:#374151; margin:0.45rem 0 0.2rem;">First Name</div>
+              <div class="m-input m-input-err">&nbsp;</div>
+              <div class="m-sr" style="margin-top:0.5rem;"><span class="bad">(screen reader: silence)</span></div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="mini-screen">
+              <div style="font-size:0.68rem; color:#374151; margin-bottom:0.2rem;">Last Name</div>
+              <div class="m-input m-input-err">&nbsp;</div>
+              <div class="m-err">⚠ Please enter the last name.</div>
+              <div style="font-size:0.68rem; color:#374151; margin:0.45rem 0 0.2rem;">First Name</div>
+              <div class="m-input m-input-err">&nbsp;</div>
+              <div class="m-err">⚠ Please enter the first name.</div>
+              <div class="m-sr" style="margin-top:0.5rem;">"Please enter the last name."</div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Error Messages, Error Placement, Focusable Error Summary)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 2. TOUCH & INTERACTION ===================== -->
+    <section class="cat" id="touch">
+      <h2>2. Touch &amp; Interaction <span class="impact-tag impact-critical">CRITICAL</span></h2>
+      <p class="cat-sub">Min size 44×44px · 8px+ spacing · Loading feedback. Avoid: reliance on hover only, instant 0ms state changes.</p>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Touch target size is platform-specific — and the web minimum is lower than you'd think</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-new">NEW NUANCE</span></span></div>
+        <p class="desc">The earlier review's "44×44px" rule is the iOS number. On the web, WCAG 2.2 AA's actual floor is 24×24 CSS px (with spacing/exception clauses) — useful context if 44px ever feels like a hard sell for a tight header, but 44px is still the better target for a senior-skewed audience like this app's.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>iOS 44pt / Android 48dp for native; web minimum is 24 CSS px + WCAG exceptions, but aim higher for senior users</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Treat one number as universal across platforms, or ship w-6 h-6 icon buttons</div>
+        </div>
+        <div class="in-project"><b>In this project:</b> the five ~28×28px top-bar icons, and the 41 sub-44px tap targets counted on Ministry Sign-ups.</div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — about 28×28px, tightly packed</span>
+            <div class="mini-screen" style="display:flex; gap:2px; align-items:center;">
+              <span style="width:28px;height:28px;border-radius:999px;background:#e5e7eb;display:inline-flex;align-items:center;justify-content:center;font-size:0.6rem;">🔔</span>
+              <span style="width:28px;height:28px;border-radius:999px;background:#e5e7eb;display:inline-flex;align-items:center;justify-content:center;font-size:0.6rem;">Aa</span>
+              <span style="width:28px;height:28px;border-radius:999px;background:#e5e7eb;display:inline-flex;align-items:center;justify-content:center;font-size:0.6rem;">?</span>
+              <span style="font-size:1.4rem; margin-left:0.4rem;" title="fingertip">👆</span>
+            </div>
+            <div class="mini-note">An average fingertip covers two icons at once.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — 44×44px, 8px apart</span>
+            <div class="mini-screen" style="display:flex; gap:8px; align-items:center;">
+              <span style="width:44px;height:44px;border-radius:999px;background:#e5e7eb;display:inline-flex;align-items:center;justify-content:center;font-size:0.85rem;">🔔</span>
+              <span style="width:44px;height:44px;border-radius:999px;background:#e5e7eb;display:inline-flex;align-items:center;justify-content:center;font-size:0.85rem;">Aa</span>
+              <span style="width:44px;height:44px;border-radius:999px;background:#e5e7eb;display:inline-flex;align-items:center;justify-content:center;font-size:0.85rem;">?</span>
+              <span style="font-size:1.4rem; margin-left:0.2rem;">👆</span>
+            </div>
+            <div class="mini-note">Real size on screen. One tap hits one icon.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Touch Target Size, Target Size Minimum)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Elements that look tappable but only respond to hover</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-flagged">DEEPENS EARLIER FLAG</span></span></div>
+        <p class="desc">Backs the "time chips look tappable but aren't" struggle noted on Request a Service — on a touch device there is no hover, so a hover-only affordance is invisible until tapped (and sometimes never, if the handler is literally onMouseEnter).</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>Drive the primary interaction from onClick/onTap, with hover as a bonus, not the only cue</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>onMouseEnter-only handlers for anything a phone user needs to trigger</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — looks tappable, isn't</span>
+            <div class="mini-screen">
+              <div style="font-size:0.72rem; font-weight:700; margin-bottom:0.35rem;">House Blessing</div>
+              <div style="display:flex; gap:0.3rem; flex-wrap:wrap;">
+                <span style="border:1px solid #c7c9e8; background:#eef0fb; color:#4b4f99; border-radius:999px; font-size:0.65rem; padding:0.2rem 0.5rem;">9:00 AM</span>
+                <span style="border:1px solid #c7c9e8; background:#eef0fb; color:#4b4f99; border-radius:999px; font-size:0.65rem; padding:0.2rem 0.5rem;">2:00 PM</span>
+              </div>
+              <div class="mini-note">Rosa taps "9:00 AM" — nothing happens.</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — info looks like info</span>
+            <div class="mini-screen">
+              <div style="font-size:0.72rem; font-weight:700; margin-bottom:0.35rem;">House Blessing</div>
+              <div style="font-size:0.72rem; color:#374151; margin-bottom:0.45rem;">Usually available 9:00 AM or 2:00 PM</div>
+              <button class="m-btn-solid">Start request</button>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Hover vs Tap)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">300ms tap delay</span><span class="tags"><span class="sev sev-medium">Medium</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">Not yet audited — worth checking whether buttons across the step forms feel laggy on a real phone.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>touch-action: manipulation on interactive elements</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Leave default mobile tap handling on primary buttons</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — tap to response</span>
+            <div class="mini-screen">
+              <div style="font-size:0.65rem; color:#6b7280; margin-bottom:0.25rem;">👆 tap</div>
+              <div style="display:flex; height:14px; border-radius:3px; overflow:hidden;"><div style="width:75%; background:#fecaca;"></div><div style="width:25%; background:#1e2a4a;"></div></div>
+              <div style="font-size:0.62rem; color:#b91c1c; margin-top:0.2rem;">~300ms dead wait, then the button reacts</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — <code>touch-action: manipulation</code></span>
+            <div class="mini-screen">
+              <div style="font-size:0.65rem; color:#6b7280; margin-bottom:0.25rem;">👆 tap</div>
+              <div style="display:flex; height:14px; border-radius:3px; overflow:hidden;"><div style="width:100%; background:#1e2a4a;"></div></div>
+              <div style="font-size:0.62rem; color:#15803d; margin-top:0.2rem;">Button reacts right away</div>
+            </div>
+            <div class="mini-note">Not a visual change — buttons just feel quicker.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Tap Delay)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 3. PERFORMANCE ===================== -->
+    <section class="cat" id="performance">
+      <h2>3. Performance <span class="impact-tag impact-high">HIGH</span></h2>
+      <p class="cat-sub">WebP/AVIF · Lazy loading · Reserve space (CLS &lt; 0.1). Avoid: layout thrashing, cumulative layout shift.</p>
+      <div class="na-note">Not directly observed in this session (no network trace was taken) — these are worth a pass but are lower priority than the accessibility/touch items above for a senior-focused app.</div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Live badge/count updates shouldn't push nearby buttons</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">Relevant to anything that live-updates a count: the notification bell badge, and Ministry Sign-ups' "0/2" slot counters.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>Reserve a stable, content-driven slot for the badge/count</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Let a badge's insertion shift toolbar buttons sideways</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — badge pushes buttons</span>
+            <div class="mini-screen">
+              <div style="font-size:0.6rem; color:#9ca3af;">Loading…</div>
+              <div style="display:flex; gap:0.3rem; align-items:center; margin-bottom:0.5rem;"><span class="m-step">🔔</span><span class="m-step">Aa</span><span class="m-step">?</span></div>
+              <div style="font-size:0.6rem; color:#9ca3af;">Loaded — 3 new alerts</div>
+              <div style="display:flex; gap:0.3rem; align-items:center;"><span class="m-step">🔔 <b style="background:#dc2626;color:#fff;border-radius:999px;padding:0 4px;">3</b></span><span class="m-step" style="outline:2px dashed #dc2626;">Aa</span><span class="m-step" style="outline:2px dashed #dc2626;">?</span></div>
+            </div>
+            <div class="mini-note">"Aa" and "?" slide right — Rosa taps the wrong one.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — badge has a reserved spot</span>
+            <div class="mini-screen">
+              <div style="font-size:0.6rem; color:#9ca3af;">Loading…</div>
+              <div style="display:flex; gap:0.3rem; align-items:center; margin-bottom:0.5rem;"><span class="m-step" style="position:relative;">🔔</span><span class="m-step">Aa</span><span class="m-step">?</span></div>
+              <div style="font-size:0.6rem; color:#9ca3af;">Loaded — 3 new alerts</div>
+              <div style="display:flex; gap:0.3rem; align-items:center;"><span class="m-step" style="position:relative;">🔔<b style="position:absolute; top:-6px; right:-6px; background:#dc2626;color:#fff;border-radius:999px;padding:0 4px;font-size:0.55rem;">3</b></span><span class="m-step">Aa</span><span class="m-step">?</span></div>
+            </div>
+            <div class="mini-note">The count sits on the corner of the bell; nothing moves.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Content Jumping)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Images: lazy-load below the fold, reserve their space</span><span class="tags"><span class="sev sev-medium">Medium</span><span class="status status-new">NEW</span></span></div>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>loading="lazy" on below-fold images; aspect-video/explicit dimensions on wrappers</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Eager-load every image; let an image's own load determine layout</div>
+        </div>
+        <div class="in-project"><b>In this project:</b> Announcements' image attachments, Prayer Wall, Digital Archives — worth spot-checking.</div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — image loads late, text jumps</span>
+            <div class="mini-screen">
+              <div style="font-size:0.72rem; font-weight:700;">Parish Fiesta</div>
+              <div style="font-size:0.65rem; color:#4b5563; margin-bottom:0.3rem;">Read more ↓ <span style="color:#b91c1c;">(you're about to tap)</span></div>
+              <div style="height:60px; background:linear-gradient(135deg,#c9a84c,#8a3040); border-radius:0.3rem; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem;">image pops in here ↑ pushes text down</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — space held while it loads</span>
+            <div class="mini-screen">
+              <div style="height:60px; background:#e5e7eb; border-radius:0.3rem; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:0.6rem; margin-bottom:0.3rem;">image slot (16:9) — reserved</div>
+              <div style="font-size:0.72rem; font-weight:700;">Parish Fiesta</div>
+              <div style="font-size:0.65rem; color:#4b5563;">Read more ↓ stays put</div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv + html-tailwind stack (Lazy Loading, Reserve image space)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 4. STYLE SELECTION ===================== -->
+    <section class="cat" id="style">
+      <h2>4. Style Selection <span class="impact-tag impact-high">HIGH</span></h2>
+      <p class="cat-sub">Match product type · Consistency · SVG icons (no emoji). Avoid: mixing flat &amp; skeuomorphic randomly, emoji as icons.</p>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Emoji are being used as functional icons</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-flagged">DEEPENS EARLIER FLAG</span></span></div>
+        <p class="desc">🔔 Aa ☾ EN ? in the top bar, and 🤖/💬 for the chat widgets, are emoji doing an icon's job. Beyond accessibility (section 1), this is flagged separately as a <b>style anti-pattern</b> — emoji render inconsistently across OS/browser, can't be recolored to match your brand palette, and read as informal next to your maroon/gold liturgical identity.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>One consistent SVG icon family (Phosphor or Heroicons), sized and colored to match your brand</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Emoji as icons</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — emoji (look differs per phone)</span>
+            <div class="mini-screen" style="display:flex; gap:0.8rem; font-size:1.2rem; align-items:center;">
+              <span>🔔</span><span>☾</span><span>💬</span><span>🤖</span>
+            </div>
+            <div class="mini-note">Colors and shapes change between Android, iPhone and Windows; can't match maroon/gold.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — one SVG icon set, brand colored</span>
+            <div class="mini-screen" style="display:flex; gap:0.8rem; align-items:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8a3040" stroke-width="2"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 01-6 0"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8a3040" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8a3040" stroke-width="2"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg>
+            </div>
+            <div class="mini-note">Same everywhere, tinted maroon and gold.</div>
+          </div>
+        </div>
+        <div class="source">Source: pro-rules.md priority table (Style Selection anti-patterns) + icons.csv</div>
+      </div>
+    </section>
+
+    <!-- ===================== 5. LAYOUT & RESPONSIVE ===================== -->
+    <section class="cat" id="layout">
+      <h2>5. Layout &amp; Responsive <span class="impact-tag impact-high">HIGH</span></h2>
+      <p class="cat-sub">Mobile-first breakpoints · Viewport meta · No horizontal scroll. Avoid: horizontal scroll, fixed px container widths, disabling zoom.</p>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">A table wider than the screen forces horizontal scroll</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-fixed">ALREADY FIXED</span></span></div>
+        <p class="desc">This is exactly the Dashboard "My Recent Requests" bug from the first review — the 3-column table was wider than a 360px phone, so the Status column scrolled off-screen. The stack-specific guidance below is the formal pattern behind the card-layout fix already shipped.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>flex flex-wrap gap-2 for the collection; min-w-0 truncate on the label; shrink-0 on the status chip</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>flex h-8 overflow-hidden — clip a fixed-height row and hide values off-screen</div>
+        </div>
+        <div class="in-project"><b>In this project:</b> matches <code>.request-row</code>/<code>.request-cards</code> now in <code>user-dashboard.html</code> + <code>user-shell.css</code>.</div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — Status off the edge</span>
+            <div class="mini-screen" style="overflow:hidden;">
+              <div style="display:flex; gap:0.9rem; font-size:0.65rem; white-space:nowrap; color:#9ca3af; font-weight:700; text-transform:uppercase; margin-bottom:0.3rem;"><span>Certificate Type</span><span>Date Submitted</span><span>Status</span></div>
+              <div style="display:flex; gap:0.9rem; font-size:0.72rem; white-space:nowrap;"><span style="font-weight:600;">Baptismal Certificate</span><span>Oct 14, 2026</span><span class="badge" style="background:#fffbeb;color:#b45309;border-radius:999px;padding:0 0.4rem;">Pending</span></div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — live in the app now</span>
+            <div class="mini-screen">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+                <div style="min-width:0;"><div style="font-size:0.75rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Baptismal Certificate</div><div style="font-size:0.65rem; color:#9ca3af;">Oct 14, 2026</div></div>
+                <span style="flex-shrink:0; background:#fffbeb; color:#b45309; border-radius:999px; padding:0.15rem 0.55rem; font-size:0.65rem; font-weight:600;">Pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: stacks/html-tailwind.csv (Chip Collection Reflow / Compact label layout) + ux-guidelines.csv (Horizontal Scroll)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Multiple fixed/sticky elements need to account for each other</span><span class="tags"><span class="sev sev-medium">Medium</span><span class="status status-flagged">DEEPENS EARLIER FLAG</span></span></div>
+        <p class="desc">The install banner, chat bubble and warning bar are three independently-positioned fixed/sticky elements — none of them currently seems to know the others exist, which is how they end up stacked on top of the same button.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>Account for safe areas and other fixed elements; a fixed nav + fixed bottom need a planned gap</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Stack multiple fixed elements without checking whether they'll overlap</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — three overlays fight for one spot</span>
+            <div class="mini-screen" style="height:130px;">
+              <div style="font-size:0.7rem; color:#4b5563;">Mass Intentions · Step 1</div>
+              <div style="position:absolute; left:0; right:0; top:40px; background:linear-gradient(90deg,#8b8fc7,#6c6fb0); color:#fff; font-size:0.62rem; padding:0.45rem; text-align:center;">Get the SacraDigit app ✕</div>
+              <button class="m-btn-pale" style="position:absolute; left:0.6rem; right:0.6rem; bottom:12px; width:auto;">Next</button>
+              <div style="position:absolute; left:0; right:0; bottom:0; background:#fef2f2; color:#b91c1c; font-size:0.6rem; padding:0.45rem;">⚠ Please add at least one person</div>
+              <div style="position:absolute; right:8px; bottom:26px; width:28px; height:28px; border-radius:999px; background:#1e2a4a; color:#fff; font-size:0.7rem; display:flex; align-items:center; justify-content:center;">💬</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — each has its own place</span>
+            <div class="mini-screen" style="height:130px;">
+              <div style="background:#fef2f2; color:#b91c1c; font-size:0.62rem; padding:0.35rem 0.5rem; border-radius:0.3rem; margin-bottom:0.35rem;">⚠ Tap one of the intentions above first ✕</div>
+              <div style="font-size:0.7rem; color:#4b5563;">Mass Intentions · Step 1</div>
+              <button class="m-btn-solid" style="position:absolute; left:0.6rem; right:0.6rem; bottom:10px; width:auto;">Next</button>
+            </div>
+            <div class="mini-note">Banner: Dashboard only. Bubble: hidden on step pages. Warning: top.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Fixed Positioning)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">A sticky top bar needs matching body padding</span><span class="tags"><span class="sev sev-medium">Medium</span><span class="status status-new">NEW</span></span></div>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>padding-top on body/main equal to the sticky nav's height</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Let the nav overlap the first section's content with no compensation</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — header hides the first line</span>
+            <div class="mini-screen" style="height:90px; padding:0;">
+              <div style="position:absolute; top:0; left:0; right:0; background:#fff; border-bottom:3px solid #8a3040; padding:0.45rem 0.6rem; font-size:0.72rem; font-weight:700; z-index:2;">Announcements</div>
+              <div style="padding:0.85rem 0.6rem 0; font-size:0.72rem; font-weight:700;">Parish Fiesta Schedule</div>
+              <div style="padding:0 0.6rem; font-size:0.65rem; color:#4b5563;">Sunday, October 18</div>
+            </div>
+            <div class="mini-note">The title is half under the bar.</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — content starts below it</span>
+            <div class="mini-screen" style="height:90px; padding:0;">
+              <div style="background:#fff; border-bottom:3px solid #8a3040; padding:0.45rem 0.6rem; font-size:0.72rem; font-weight:700;">Announcements</div>
+              <div style="padding:0.4rem 0.6rem 0; font-size:0.72rem; font-weight:700;">Parish Fiesta Schedule</div>
+              <div style="padding:0 0.6rem; font-size:0.65rem; color:#4b5563;">Sunday, October 18</div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Sticky Navigation)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 6. TYPOGRAPHY & COLOR ===================== -->
+    <section class="cat" id="typography">
+      <h2>6. Typography &amp; Color <span class="impact-tag impact-medium">MEDIUM</span></h2>
+      <p class="cat-sub">Base 16px · Line-height 1.5 · Semantic color tokens. Avoid: text &lt; 12px body, gray-on-gray, raw hex in components.</p>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">8–113 pieces of text under 14px, down to 9–10px</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-flagged">DEEPENS EARLIER FLAG</span></span></div>
+        <p class="desc">Formal version of the "small, faint text" global issue: mobile body text has an explicit 16px floor in this guideline set, not just a vague "make it bigger."</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>text-base (16px) or larger for all body copy on mobile</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>text-xs for anything a user is expected to read, not just skim</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — 10px / 12px</span>
+            <div class="mini-screen">
+              <div style="font-size:10px; color:#9ca3af; text-transform:uppercase;">All Parishioners · Oct 18</div>
+              <div style="font-size:12px; color:#4b5563;">The parish fiesta Mass will begin at 9:00 AM, followed by a procession around the plaza.</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — 14px / 16px</span>
+            <div class="mini-screen">
+              <div style="font-size:14px; color:#4b5563;">Sunday, October 18</div>
+              <div style="font-size:16px; color:#111827; line-height:1.5;">The parish fiesta Mass will begin at 9:00 AM, followed by a procession around the plaza.</div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Readable Font Size)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Pale grey text on white fails contrast</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-flagged">DEEPENS EARLIER FLAG</span></span></div>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>text-gray-900 on white (≈7:1) for anything that must read as "readable," not just decorative</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>text-gray-400 on gray-100 (≈2.8:1) — well under the 4.5:1 floor</div>
+        </div>
+        <div class="in-project"><b>In this project:</b> audience tags, descriptions, and the 9px progress-tracker labels called out across the original review.</div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — #9ca3af on white (2.5:1)</span>
+            <div class="mini-screen" style="background:#fff;">
+              <div style="font-size:0.85rem; color:#9ca3af;">Your request is being reviewed by the parish office.</div>
+              <div style="font-size:0.75rem; color:#c3c7ce; margin-top:0.25rem;">This is visible to parish staff only.</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — #374151 / #111827 (10:1+)</span>
+            <div class="mini-screen" style="background:#fff;">
+              <div style="font-size:0.85rem; color:#111827;">Your request is being reviewed by the parish office.</div>
+              <div style="font-size:0.75rem; color:#374151; margin-top:0.25rem;">This is visible to parish staff only.</div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Color Contrast, Contrast Readability)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 7. ANIMATION ===================== -->
+    <section class="cat" id="animation">
+      <h2>7. Animation <span class="impact-tag impact-medium">MEDIUM</span></h2>
+      <p class="cat-sub">Context-aware timing · Motion conveys meaning · Spatial continuity. Avoid: one duration for everything, animating width/height, no reduced-motion support.</p>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">prefers-reduced-motion isn't mentioned anywhere in the original review</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">Worth a dedicated check: does any animation on this site (toasts, banners, livestream pulse, check-in confirmation) respect a user's OS-level reduced-motion setting?</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>@media (prefers-reduced-motion: reduce) { /* disable/soften */ }</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Ship motion with no reduced-motion fallback</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — always moves</span>
+            <div class="mini-screen" style="display:flex; align-items:center; gap:0.5rem;">
+              <span style="display:inline-block; animation:bounce-demo 0.7s infinite; width:12px; height:12px; border-radius:999px; background:#dc2626;"></span>
+              <span style="font-size:0.75rem; font-weight:700;">We're live now</span>
+            </div>
+            <div class="mini-note">Keeps bouncing even if the phone is set to "Reduce motion."</div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — follows the phone setting</span>
+            <div class="mini-screen" style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="m-bounce" style="width:12px; height:12px; border-radius:999px; background:#dc2626;"></span>
+              <span style="font-size:0.75rem; font-weight:700;">We're live now</span>
+            </div>
+            <div class="mini-note">Turn on "Reduce motion" on your device and this dot stops; the left one keeps going.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Reduced Motion, Motion Sensitivity)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">A warning bar that auto-dismisses is the wrong pattern for a form error</span><span class="tags"><span class="sev sev-medium">Medium</span><span class="status status-flagged">CLARIFIES EARLIER FLAG</span></span></div>
+        <p class="desc">Auto-dismiss after 3–5s is correct for a <i>toast</i> (e.g. "Message sent") — but a required-field error is not a toast, it's validation feedback, and it should stay until the user fixes the problem. This is why Top-5 fix #2 is right to move it to the top and keep it visible, not just relocate the same disappearing bar.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>Auto-dismiss toasts for non-critical info after 3–5s; keep validation errors visible until resolved</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Use the same transient-toast pattern for "you can't submit this form"</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — error behaves like a toast</span>
+            <div class="mini-screen">
+              <div style="font-size:0.62rem; color:#6b7280;">0s</div>
+              <div style="background:#fef2f2; color:#b91c1c; font-size:0.65rem; padding:0.35rem; border-radius:0.3rem; margin-bottom:0.3rem;">⚠ Please pick a schedule</div>
+              <div style="font-size:0.62rem; color:#6b7280;">4s later</div>
+              <div style="border:1px dashed #d1d5db; color:#9ca3af; font-size:0.65rem; padding:0.35rem; border-radius:0.3rem;">(gone — Rosa was still reading)</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — toast for news, persistent for errors</span>
+            <div class="mini-screen">
+              <div style="background:#ecfdf3; color:#15803d; font-size:0.65rem; padding:0.35rem; border-radius:0.3rem; margin-bottom:0.3rem;">✓ Message sent <span style="color:#6b7280;">(fades after 4s)</span></div>
+              <div style="background:#fef2f2; color:#b91c1c; font-size:0.65rem; padding:0.35rem; border-radius:0.3rem;">⚠ Please pick a date and time ✕ <span style="color:#6b7280;">(stays until fixed)</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Toast Notifications vs. Error Placement)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 8. FORMS & FEEDBACK ===================== -->
+    <section class="cat" id="forms">
+      <h2>8. Forms &amp; Feedback <span class="impact-tag impact-medium">MEDIUM</span></h2>
+      <p class="cat-sub">Visible labels · Error near field · Helper text · Progressive disclosure. Avoid: placeholder-only labels, errors only at the top, overwhelming the user upfront.</p>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Confirm every form submission's status — loading, then success or error</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">Directly relevant to Donations: pressing "Confirm Offering" needs a visible loading state before the new confirmation page appears, so Rosa isn't left wondering if her tap registered.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>Loading state → success/error message, every time</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Button click with no visible response</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — tap, then nothing visible</span>
+            <div class="mini-screen">
+              <button class="m-btn-pale" style="margin-bottom:0.35rem;">Confirm Offering</button>
+              <div style="font-size:0.62rem; color:#9ca3af;">…2 seconds, no change…</div>
+              <div style="font-size:0.62rem; color:#b91c1c;">Rosa taps again → double offering?</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — three clear states</span>
+            <div class="mini-screen" style="display:flex; flex-direction:column; gap:0.3rem;">
+              <button class="m-btn-solid" style="min-height:34px; padding:0.45rem;">Confirm Offering</button>
+              <button class="m-btn-solid" style="min-height:34px; padding:0.45rem; opacity:0.75;">⏳ Sending…</button>
+              <div style="background:#ecfdf3; color:#15803d; font-size:0.7rem; font-weight:600; padding:0.4rem; border-radius:0.3rem;">✓ Received — next, open GCash</div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Submit Feedback)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Inputs need a real &lt;label&gt;, not just a placeholder</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-new">NEW — WORTH AUDITING</span></span></div>
+        <p class="desc">Not confirmed either way in this project yet — worth checking Request Certificate, Facility Booking and Donations specifically, since placeholder-only labels disappear the moment a senior user starts typing, right when they'd want the reminder most.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>&lt;label for="email"&gt;Email&lt;/label&gt;</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>placeholder="Email" as the only label</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — placeholder only</span>
+            <div class="mini-screen">
+              <div class="m-input" style="margin-bottom:0.3rem;">Mother's maiden name</div>
+              <div class="m-input" style="color:#111827;">Dela Cr|</div>
+              <div class="mini-note">While typing, the hint is gone. "Was this mother's or father's?"</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — label stays above</span>
+            <div class="mini-screen">
+              <div style="font-size:0.7rem; font-weight:600; color:#374151; margin-bottom:0.2rem;">Mother's maiden name</div>
+              <div class="m-input" style="color:#111827;">Dela Cr|</div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Form Labels)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 9. NAVIGATION PATTERNS ===================== -->
+    <section class="cat" id="navigation">
+      <h2>9. Navigation Patterns <span class="impact-tag impact-high">HIGH</span></h2>
+      <p class="cat-sub">Predictable back · Bottom nav ≤5 · Deep linking. Avoid: overloaded nav, broken back behavior, no deep links.</p>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Back button must behave predictably</span><span class="tags"><span class="sev sev-high">High</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">Worth checking on the multi-step forms (Request Certificate, Mass Intentions, Facility Booking): does browser/phone "back" step back one form step, or does it exit the whole flow and lose progress?</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>history.pushState() per step, so back steps through the form</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>location.replace() — breaks the browser/app back button</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — Back exits the form</span>
+            <div class="mini-screen">
+              <span class="m-step">Step 1</span><span class="m-arrow">→</span><span class="m-step">Step 2</span><span class="m-arrow">→</span><span class="m-step hl">Step 3</span>
+              <div style="margin-top:0.4rem; font-size:0.68rem;">◀ Back <span class="m-arrow">→</span> <span class="m-step" style="background:#fef2f2; color:#b91c1c;">Dashboard — answers lost</span></div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — Back goes one step</span>
+            <div class="mini-screen">
+              <span class="m-step">Step 1</span><span class="m-arrow">→</span><span class="m-step hl">Step 2</span><span class="m-arrow">←</span><span class="m-step">Step 3</span>
+              <div style="margin-top:0.4rem; font-size:0.68rem;">◀ Back <span class="m-arrow">→</span> <span class="m-step" style="background:#ecfdf3; color:#15803d;">Step 2 — answers kept</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Back Button)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">Heading hierarchy should be sequential, not decorative</span><span class="tags"><span class="sev sev-medium">Medium</span><span class="status status-new">NEW</span></span></div>
+        <p class="desc">Screen-reader users jump between headings to navigate a page — worth verifying panel titles (e.g. "My Recent Requests") are real <code>&lt;h2&gt;</code>/<code>&lt;h3&gt;</code> elements in sequence, not just styled <code>&lt;div&gt;</code>s or heading levels skipped for visual sizing.</p>
+        <div class="dodont">
+          <div class="code-box code-good"><span class="lbl">Do</span>h1 then h2 then h3, in order</div>
+          <div class="code-box code-bad"><span class="lbl">Don't</span>Skip levels (h1 straight to h4) or use a heading tag purely for its default font size</div>
+        </div>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — page outline (screen reader)</span>
+            <div class="mini-screen" style="font-family:'SF Mono',Consolas,monospace; font-size:0.66rem; line-height:1.6;">
+              h1 Dashboard<br>
+              <span style="color:#b91c1c;">&nbsp;&nbsp;&nbsp;&nbsp;h3 My Faith Journey</span><br>
+              &nbsp;&nbsp;h2 Today's Mass Schedule<br>
+              <span style="color:#b91c1c;">&nbsp;&nbsp;(div) Quick Actions — not a heading</span>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — same look, clean outline</span>
+            <div class="mini-screen" style="font-family:'SF Mono',Consolas,monospace; font-size:0.66rem; line-height:1.6;">
+              h1 Dashboard<br>
+              &nbsp;&nbsp;h2 Quick Actions<br>
+              &nbsp;&nbsp;h2 My Faith Journey<br>
+              &nbsp;&nbsp;h2 Today's Mass Schedule
+            </div>
+            <div class="mini-note">No visual change — only the tags under the styling.</div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Heading Hierarchy)</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-head"><span class="finding-title">16 items in 7 groups is a lot for one menu</span><span class="tags"><span class="sev sev-medium">Medium</span><span class="status status-flagged">DEEPENS EARLIER FLAG</span></span></div>
+        <p class="desc">Backs the earlier "below the fold with no hint to scroll" finding and the Top-5 rename ask — a flat 16-item menu is also where a skip link (section 1) and clearer grouping both pay off together.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — ☰ menu</span>
+            <div class="mini-screen" style="font-size:0.7rem; line-height:1.7; height:140px; overflow:hidden; color:#374151;">
+              Dashboard<br>Mass Schedule<br>Announcements<br>Messages<br>My Requests<br>Requested Services<br>Request Certificate<br>…
+              <div style="position:absolute; left:0; right:0; bottom:0; background:#f9fafb; font-size:0.6rem; color:#b91c1c; padding:0.25rem 0.6rem;">Prayer Wall · Ministry · Badges hidden below; Settings &amp; Log out behind your name</div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="mini-screen" style="font-size:0.7rem; line-height:1.7; height:140px; overflow:hidden; color:#374151;">
+              Dashboard<br>Mass Schedule<br><b>My certificate requests</b><br><b>My service bookings</b><br>… <span style="color:#6b7280;">(scroll ↓)</span>
+              <div style="border-top:1px solid #e5e7eb; margin-top:0.2rem; padding-top:0.2rem;"><b>Settings</b><br><b>Log out</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="source">Source: ux-guidelines.csv (Breadcrumbs / navigation depth guidance, applied by extension)</div>
+      </div>
+    </section>
+
+    <!-- ===================== 10. CHARTS & DATA ===================== -->
+    <section class="cat" id="charts">
+      <h2>10. Charts &amp; Data <span class="impact-tag impact-low">LOW</span></h2>
+      <p class="cat-sub">Legends · Tooltips · Accessible colors. Avoid: relying on color alone to convey meaning.</p>
+      <div class="na-note">Not applicable yet — this project doesn't currently render charts or data visualizations (stat cards on Requested Services/My Badges are plain numbers, not charts). Keep this category in mind only if a reporting/analytics view is added later — e.g. for an admin dashboard.</div>
+    </section>
+
+  </div>
+</div>
+</body>
+</html>

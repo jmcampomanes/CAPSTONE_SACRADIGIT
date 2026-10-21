@@ -17,6 +17,7 @@
 
 import { client } from '../amplify-init.js';
 import { watchClosures, closureOn, logBookingAction } from '../service-schedule.js';
+import { showToast } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -771,19 +772,5 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  const toast = document.getElementById('toast');
-  let toastTimer = null;
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
 });

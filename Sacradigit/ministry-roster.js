@@ -12,6 +12,7 @@ import {
   MINISTRIES, ministryReady, watchRosterMasses, watchSignups, groupSignups, removeSignup,
   fmtMassDay, fmtTime, monthLabel, escapeHtml, todayIso,
 } from '../ministry.js';
+import { showToast, confirmDialog } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
@@ -76,7 +77,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = e.target.closest('.min-remove');
     if (!btn) return;
     const s = signups.find(x => x.id === btn.dataset.id);
-    if (!s || !confirm(`Remove ${s.volunteerName || 'this volunteer'} from ${fmtMassDay(s.massDate)} · ${fmtTime(s.massTime)}?`)) return;
+    if (!s) return;
+    const sure = await confirmDialog({
+      title: `Remove ${s.volunteerName || 'this volunteer'} from the roster?`,
+      detail: `${fmtMassDay(s.massDate)} · ${fmtTime(s.massTime)}`,
+      message: 'Their slot opens up for someone else.',
+      confirmLabel: 'Remove',
+      tone: 'danger',
+    });
+    if (!sure) return;
     try {
       await removeSignup(s);
       showToast('Removed from the roster.');
@@ -107,19 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const toast = $('toast');
-  let toastTimer = null;
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
   load();
 });

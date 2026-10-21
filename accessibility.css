@@ -21,6 +21,50 @@
   letter-spacing: 0.01em;
 }
 
+/* ---------- Nothing smaller than 16px ----------
+   Growing the root size alone leaves 10–11px labels at only ~13px. */
+:root[data-a11y="on"] body :is(
+  .text-xs, .text-\[9px\], .text-\[10px\], .text-\[11px\], .text-\[12px\],
+  small, .badge, .form-label, .sidebar-label, .panel-title, .panel-link,
+  [class*="-sub"], [class*="-meta"], [class*="-label"], [class*="-note"],
+  [class*="-time"], [class*="-hint"], [class*="-date"], [class*="-caption"], [class*="-tag"]
+):not(svg):not(svg *) {
+  font-size: 16px !important;
+}
+
+/* ---------- Buttons and icons at least 44×44px ---------- */
+:root[data-a11y="on"] body :is(
+  button, [role="button"], select, .btn-gold, .btn-lavender, .btn-secondary,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]),
+  .sidebar-link
+):not([class*="cal-day"]):not(.slot-day):not(.repeatable-row-remove) {
+  min-height: 44px;
+}
+
+:root[data-a11y="on"] body :is(
+  .modal-close, .help-icon-btn, .pn-btn, .ui-prefs-btn, .ui-prefs-lang,
+  .pn-close, .pa-close, .pa-send, .toast-close, .repeatable-row-remove
+) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+:root[data-a11y="on"] body .panel-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+:root[data-a11y="on"] body :is(input[type="checkbox"], input[type="radio"]) {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+:root[data-a11y="on"] body header .help-date-wrap :is(.pn-btn, .ui-prefs-btn, .help-icon-btn) svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 /* ---------- Clear focus ring for keyboard users ---------- */
 :root[data-a11y="on"] :focus-visible {
   outline: 3px solid #1d4ed8 !important;

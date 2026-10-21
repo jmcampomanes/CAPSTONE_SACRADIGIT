@@ -26,6 +26,35 @@ function watchPendingPrayers(link) {
 }
 // Adds the rotating sacred art to every navy page header (see sacred-art.js).
 import './sacred-art.js';
+import { labelTopBarIcons } from '../top-bar-labels.js';
+
+/* Phones: a wide table pushes its Status and Action columns off the right
+   edge. Each cell gets its column's name (data-label) so admin-shell.css
+   can show every row as a card instead; desktop keeps the table. */
+function initTableCards() {
+  const label = (table) => {
+    const heads = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const cells = [...tr.children];
+      if (cells.length !== heads.length) return; // "Loading…" / "No records" rows span every column
+      let primary = false;
+      cells.forEach((td, i) => {
+        const head = heads[i];
+        const isAction = /^actions?$/i.test(head) || td.querySelector('.row-actions');
+        td.classList.toggle('td-actions', !!isAction);
+        if (!head || isAction) { td.removeAttribute('data-label'); return; }
+        td.dataset.label = head;
+        if (!primary && !td.classList.contains('col-select')) { td.classList.add('td-primary'); primary = true; }
+      });
+    });
+  };
+  document.querySelectorAll('table.records-table').forEach(table => {
+    table.classList.add('has-cards');
+    label(table);
+    const body = table.querySelector('tbody');
+    if (body) new MutationObserver(() => label(table)).observe(body, { childList: true });
+  });
+}
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -41,7 +70,8 @@ const HELP_CONTENT = {
     steps: [
       'Check Today’s Schedule for the masses and events happening today.',
       'Review Pending Requests to see what needs your attention first.',
-      'Glance at Cloud Status and Recent Records for a quick system health check.',
+      'Ready to Release shows approved certificates that haven’t been handed over yet.',
+      'Recent Records lists the latest additions to the Digital Archives.',
       'Use the sidebar on the left to jump into any module — Digital Archives, Record Requests, Masses, and more.',
     ],
   },
@@ -316,7 +346,9 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   initPageHelp(HELP_CONTENT[currentPage]);
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
+  labelTopBarIcons(); // a word under each top-bar icon (../top-bar-labels.js)
   initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
+  initTableCards(); // phones: each table row as a card (below)
 
 
   /* ------------------------------------------
@@ -469,6 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toastEl.innerHTML = '<span class="toast-message"></span><button type="button" class="toast-dismiss" aria-label="Dismiss notification">&times;</button>';
     toastEl.querySelector('.toast-dismiss').addEventListener('click', () => {
       toastEl.classList.remove('show');
+      setTimeout(() => toastEl.classList.add('hidden'), 200);
     });
   }
 

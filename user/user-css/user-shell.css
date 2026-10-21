@@ -118,6 +118,10 @@ body { background-color: #f7f8fa; }
 .sidebar-link[data-nav="facility-booking"].active { background-color: rgba(30,42,74,0.08); color: #1e2a4a; }
 .sidebar-link[data-nav="facility-booking"].active svg { color: #1e2a4a; }
 
+.sidebar-link-logout, .sidebar-link-logout svg { color: #b91c1c; }
+.sidebar-link-logout:hover { background-color: #fef2f2; color: #991b1b; }
+.sidebar-link-logout:hover svg { color: #991b1b; }
+
 .sidebar-link[data-nav="donations"] svg,
 .sidebar-link[data-nav="donations"]:hover svg { color: #15803d; }
 .sidebar-link[data-nav="donations"].active { background-color: rgba(21,128,61,0.12); color: #15803d; }
@@ -290,8 +294,22 @@ body { background-color: #f7f8fa; }
 .btn-gold     { background-color: #c9a84c; color: #1e2a4a; }
 .btn-gold:hover { background-color: #b5943e; }
 
-.btn-lavender { background-color: #8b8fc7; color: #ffffff; }
-.btn-lavender:hover { background-color: #767bc0; }
+/* Main actions (Next, Submit, Confirm Offering, Check In…): solid navy so they
+   read as pressable. Pale grey is kept only for buttons that are truly disabled. */
+.btn-lavender { background-color: #1e2a4a; color: #ffffff; min-height: 2.75rem; justify-content: center; }
+.btn-lavender:hover { background-color: #2a3963; }
+:is(.btn-gold, .btn-lavender, .btn-secondary):disabled,
+:is(.btn-gold, .btn-lavender, .btn-secondary)[aria-disabled="true"] {
+  background-color: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+:root[data-theme="dark"] .btn-lavender { background-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] .btn-lavender:hover { background-color: #a3a6d6; }
+:root[data-theme="dark"] :is(.btn-gold, .btn-lavender, .btn-secondary):disabled { background-color: #2c3547; color: #9aa3b5; }
+@media (max-width: 640px) {
+  .btn-lavender { min-height: 3rem; font-size: 0.9375rem; }
+}
 
 .btn-secondary { background-color: #f3f4f6; color: #374151; }
 .btn-secondary:hover { background-color: #e5e7eb; }
@@ -540,6 +558,45 @@ body { background-color: #f7f8fa; }
   transform: translateX(-50%) translateY(0);
 }
 
+/* Warnings ("Please pick a schedule"…) sit at the TOP, clear of the
+   Next/Submit buttons, and stay until closed or replaced. */
+.toast.toast-error {
+  top: calc(0.75rem + env(safe-area-inset-top));
+  bottom: auto;
+  width: max-content;
+  max-width: min(34rem, calc(100% - 1.5rem));
+  align-items: flex-start;
+  gap: 0.6rem;
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1.5px solid #fca5a5;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  transform: translateX(-50%) translateY(-10px);
+}
+.toast.toast-error:not(.hidden) { display: flex; }
+.toast.toast-error.show { transform: translateX(-50%) translateY(0); }
+.toast-icon { flex-shrink: 0; width: 1.25rem; height: 1.25rem; margin-top: 0.05rem; }
+.toast-text { flex: 1; min-width: 0; }
+.toast-close {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.65rem -0.1rem -0.65rem 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  color: #991b1b;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.toast-close:hover { background-color: #fee2e2; }
+:root[data-theme="dark"] .toast.toast-error { background-color: #3b1219; color: #fecaca; border-color: #7f1d1d; }
+:root[data-theme="dark"] .toast-close { color: #fecaca; }
+:root[data-theme="dark"] .toast-close:hover { background-color: #4c1d24; }
+
 /* ---------- Empty state ---------- */
 .empty-state {
   display: flex;
@@ -551,11 +608,34 @@ body { background-color: #f7f8fa; }
 }
 
 /* ---------- Focus ---------- */
-a:focus-visible, button:focus-visible {
-  outline: 2px solid #8b8fc7;
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible, summary:focus-visible,
+input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible {
+  outline: 3px solid #5b5fa8;
   outline-offset: 2px;
   border-radius: 4px;
 }
+:root[data-theme="dark"] :is(a, button, [role="button"], summary, input[type="checkbox"], input[type="radio"]):focus-visible {
+  outline-color: #c7cbe8;
+}
+
+/* Skip straight past the menu to the page (keyboard users) */
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -5rem;
+  z-index: 300;
+  background: #1e2a4a;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+}
+.skip-link:focus { top: 0.75rem; }
+
+/* No 300ms wait between a tap and the response */
+a, button, input, select, textarea, label, summary, [role="button"] { touch-action: manipulation; }
 
 /* ---------- Responsive: collapsible sidebar on mobile ---------- */
 @media (max-width: 767px) {
@@ -831,3 +911,112 @@ input[type="date"].form-input::-webkit-date-and-time-value { text-align: left; }
    Fatima Parish") wrap instead of being cut off on phones. */
 #common-fields .field-na-label,
 .field-na-label:has(> span) { white-space: normal; }
+
+/* ---------- Message under a box that's missing something (user-shell.js) ---------- */
+.field-msg {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #b91c1c;
+}
+.field-msg::before { content: "⚠"; flex-shrink: 0; }
+:root[data-theme="dark"] .field-msg { color: #fca5a5; }
+
+/* Top-bar icon words and 44px tap areas: ../top-bar-labels.js (shared with the admin portal).
+   Phones: Dark mode and Language live on My Settings, leaving room for
+   Alerts · Bigger text · Help with their words. */
+@media (max-width: 640px) {
+  header .help-date-wrap #ui-theme-btn,
+  header .help-date-wrap .ui-prefs-lang-wrap { display: none !important; }
+}
+
+/* ============================================
+   Readable text: no pale grey on white for words
+   people need to read (4.5:1 contrast or better).
+   ============================================ */
+:root:not([data-theme="dark"]) body main :is(.text-gray-400, .text-gray-300):not(.greeting-banner *):not(svg) { color: #6b7280; }
+.request-date { color: #6b7280; font-size: 0.8125rem; }
+.form-input::placeholder { color: #6b7280; }
+.sidebar-label { color: #6b7280; }
+.form-label { font-size: 0.8125rem; color: #374151; }
+.badge { font-size: 0.75rem; }
+.sidebar-link { font-size: 0.875rem; min-height: 2.75rem; }
+
+/* ============================================
+   "Start request" and "Volunteer" are real buttons
+   ============================================ */
+body .cert-type-cta,
+body .svc-type-cta {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.75rem;
+  margin-top: 0.625rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.6rem;
+  background-color: #1e2a4a;
+  color: #ffffff;
+  font-size: 0.875rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+body .cert-type-card:hover .cert-type-cta,
+body .svc-type-card:hover .svc-type-cta { background-color: #2a3963; color: #ffffff; }
+body .min-volunteer {
+  width: 100%;
+  justify-content: center;
+  min-height: 2.75rem;
+  background-color: #1e2a4a;
+  color: #ffffff;
+}
+body .min-volunteer:hover { background-color: #2a3963; }
+:root[data-theme="dark"] body :is(.cert-type-cta, .svc-type-cta, .min-volunteer) { background-color: #8b8fc7; color: #0f1420; }
+
+/* ============================================
+   First sign-in: "Would you like bigger letters?"
+   ============================================ */
+.textsize-ask-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.5);
+}
+.textsize-ask-card {
+  width: 100%;
+  max-width: 24rem;
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
+}
+.textsize-ask-card .textsize-ask-sample { font-family: Georgia, 'Times New Roman', serif; font-size: 2.5rem; font-weight: 700; color: #1e2a4a; line-height: 1; margin: 0 0 0.75rem; }
+.textsize-ask-card h2 { font-size: 1.375rem; font-weight: 700; color: #111827; margin: 0 0 0.5rem; }
+.textsize-ask-card p { font-size: 1rem; color: #374151; line-height: 1.5; margin: 0 0 1.25rem; }
+.textsize-ask-actions { display: flex; flex-direction: column; gap: 0.625rem; }
+.textsize-ask-actions button { min-height: 3rem; font-size: 1.0625rem; justify-content: center; width: 100%; }
+:root[data-theme="dark"] .textsize-ask-card { background: #1a2131; }
+:root[data-theme="dark"] .textsize-ask-card h2 { color: #f1f3f7; }
+:root[data-theme="dark"] .textsize-ask-card p { color: #cbd3e6; }
+:root[data-theme="dark"] .textsize-ask-sample { color: #c7cbe8; }
+
+/* ============================================
+   Respect the phone's "Reduce motion" setting
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const coverHtml = cover
         ? (cover.type === 'video'
             ? `<video class="post-card-cover-media" src="${cover.resolvedUrl}" muted></video>`
-            : `<img class="post-card-cover-media" src="${cover.resolvedUrl}" alt="${escapeHtml(a.title)}" />`)
+            : `<img class="post-card-cover-media" src="${cover.resolvedUrl}" alt="${escapeHtml(a.title)}" loading="lazy" />`)
         : `<div class="post-card-cover-placeholder">${MEGAPHONE_ICON}</div>`;
 
       return `

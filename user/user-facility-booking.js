@@ -17,6 +17,7 @@ import { client } from '../amplify-init.js';
 import { watchTakenSlots } from '../public-data.js';
 import { currentUserName } from '../auth.js';
 import { watchClosures, closureOn } from '../service-schedule.js';
+import { stepHistory } from '../step-history.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -410,6 +411,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const bookingNextBtn                 = document.getElementById('booking-next');
   const bookingConfirmGrid                = document.getElementById('booking-confirm-grid');
 
+  // Phone Back steps back through the wizard; Back on step 1 closes it as before.
+  const bookingNav = stepHistory('facility-booking', (s) => goToStep(s));
+
   function goToStep(step) {
     bookingStep = step;
     bookingSteps.forEach(el => el.classList.toggle('hidden', parseInt(el.dataset.step, 10) !== step));
@@ -423,6 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (step === 3) renderBookingConfirmation();
     // On small screens the middle area scrolls — start each step at its top.
     bookingBody.scrollTop = 0;
+    if (history.state?.bookingPage) bookingNav.moved(step);
   }
 
   function renderBookingConfirmation() {
@@ -471,15 +476,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openBookingPage(preSelectFacilityId = null) {
-    resetBookingForm(preSelectFacilityId);
     if (location.hash !== BOOKING_HASH) history.pushState({ bookingPage: true }, '', BOOKING_HASH);
+    resetBookingForm(preSelectFacilityId);
     showBookingScreen();
   }
 
   // Leave via history when we pushed the #book entry, so Back/Forward
-  // stay in sync; popstate then swaps the view.
+  // stay in sync; popstate then swaps the view. Rewinds past any step entries too.
   function closeBookingPage() {
-    if (history.state?.bookingPage) history.back();
+    if (history.state?.bookingPage) history.go(-(bookingNav.leave() + 1));
     else hideBookingPage();
   }
 
@@ -492,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (location.hash === BOOKING_HASH) {
       if (bookingView.classList.contains('hidden')) { resetBookingForm(); showBookingScreen(); }
     } else {
+      bookingNav.leave();
       hideBookingPage();
     }
   });

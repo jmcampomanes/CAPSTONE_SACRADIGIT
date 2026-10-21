@@ -208,11 +208,11 @@
             <p class="text-gray-500 text-sm mt-1">Browse, search, and manage all digitized sacramental records.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
-            <button id="btn-scan" type="button" class="btn-lavender">
+            <button id="btn-scan" type="button" class="btn-secondary">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2M7 12h10"/></svg>
               Scan Document
             </button>
-            <button id="btn-upload" type="button" class="btn-gold">
+            <button id="btn-upload" type="button" class="btn-secondary">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0-9l-3 3m3-3l3 3"/></svg>
               Upload
             </button>
@@ -456,6 +456,7 @@
         <!-- Injected by digital-archives.js -->
       </div>
       <div class="modal-footer">
+        <p class="secretary-only role-note">Only the Head Admin can edit or delete records. Ask them if something needs fixing.</p>
         <button type="button" id="view-delete" class="btn-danger head-admin-only">Delete</button>
         <button type="button" id="view-edit" class="btn-lavender head-admin-only">Edit</button>
         <button type="button" class="btn-secondary" data-close-modal>Close</button>

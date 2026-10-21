@@ -16,6 +16,8 @@
    Edit) and scanner/scan-screen.js (Scan Document).
    ============================================ */
 
+import { confirmDialog } from './admin-ui.js';
+
 const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
 
 /** "Juan M. Dela Cruz Jr." → "juan|cruz" (first|last name, normalized). */
@@ -64,7 +66,7 @@ const fmt = (iso) => (iso ? new Date(iso.length > 10 ? iso : iso + 'T00:00:00').
  * True when it's fine to save: no look-alikes, or the Secretary confirms
  * it's a different person / a deliberate second copy.
  */
-export function confirmNotDuplicate(records, candidate, options) {
+export async function confirmNotDuplicate(records, candidate, options) {
   const matches = findDuplicates(records, candidate, options);
   if (!matches.length) return true;
   const lines = matches.slice(0, 3).map(r => {
@@ -74,7 +76,11 @@ export function confirmNotDuplicate(records, candidate, options) {
     return `• ${bits.join(' — ')}`;
   });
   const more = matches.length > 3 ? `\n…and ${matches.length - 3} more` : '';
-  return confirm(
-    `Possible duplicate: this ${candidate.type} record looks like ${matches.length === 1 ? 'one' : `${matches.length}`} already in the archive:\n\n` +
-    `${lines.join('\n')}${more}\n\nSave it anyway?`);
+  return confirmDialog({
+    title: 'This might already be in the archive',
+    message: `This ${candidate.type} record looks like ${matches.length === 1 ? 'one' : `${matches.length}`} already saved:`,
+    detail: `${lines.join('\n')}${more}`,
+    confirmLabel: 'Save anyway',
+    cancelLabel: 'Go back',
+  });
 }

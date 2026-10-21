@@ -43,6 +43,35 @@ function dismissedThisVisit() {
   try { return sessionStorage.getItem(DISMISS_KEY) === '1'; } catch { return false; }
 }
 
+/* Parishioners: the banner covered the middle of every page. Now it shows only
+   on their Dashboard, once, from their second visit on — and never on Sign In.
+   Other portals (admin, ITech, Media) keep the old behaviour. */
+const VISITS_KEY = 'sacradigit_visits';
+const SHOWN_KEY = 'sacradigit_install_shown';
+const path = window.location.pathname;
+const isSignIn = /\/login\.html$/.test(path);
+const isParishioner = /\/user\/[^/]*$/.test(path);
+const isParishionerHome = /\/user\/user-dashboard\.html$/.test(path);
+
+function countVisit() {
+  try {
+    if (sessionStorage.getItem('sacradigit_visit_counted')) return;
+    sessionStorage.setItem('sacradigit_visit_counted', '1');
+    localStorage.setItem(VISITS_KEY, String((Number(localStorage.getItem(VISITS_KEY)) || 0) + 1));
+  } catch { /* private mode */ }
+}
+if (isParishioner) countVisit();
+
+function bannerAllowedHere() {
+  if (isSignIn) return false;
+  if (!isParishioner) return true;
+  try {
+    return isParishionerHome
+      && (Number(localStorage.getItem(VISITS_KEY)) || 0) >= 2
+      && !localStorage.getItem(SHOWN_KEY);
+  } catch { return false; }
+}
+
 const fil = () => { try { return localStorage.getItem('sacradigit_lang') === 'fil'; } catch { return false; } };
 
 // The browser's install prompt (Chrome / Edge / Android). It can be used once per page load.
@@ -85,7 +114,7 @@ export function installButton() {
     if (deferredPrompt) promptInstall();
     else if (isIos()) {
       document.querySelector('.pwa-banner')?.remove();
-      showBanner({ text: iosSteps(), icon: SHARE_ICON });
+      showBanner({ text: iosSteps(), icon: SHARE_ICON, asked: true });
     }
   });
   return btn;
@@ -124,9 +153,11 @@ const STYLE = `
   :root[data-theme="dark"] .pwa-banner-close:hover { background: #242c3e; color: #f1f3f7; }
 `;
 
-function showBanner({ text, icon = '', onInstall }) {
+function showBanner({ text, icon = '', onInstall, asked = false }) {
   // Installing needs a connection; the offline notice uses the same spot.
   if (document.querySelector('.pwa-banner') || !navigator.onLine) return;
+  if (!asked && !bannerAllowedHere()) return;
+  if (isParishioner) { try { localStorage.setItem(SHOWN_KEY, '1'); } catch { /* private mode */ } }
   const st = document.createElement('style');
   st.textContent = STYLE;
   document.head.appendChild(st);

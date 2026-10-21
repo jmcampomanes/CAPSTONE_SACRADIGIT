@@ -188,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toastEl.innerHTML = '<span class="toast-message"></span><button type="button" class="toast-dismiss" aria-label="Dismiss notification">&times;</button>';
     toastEl.querySelector('.toast-dismiss').addEventListener('click', () => {
       toastEl.classList.remove('show');
+      setTimeout(() => toastEl.classList.add('hidden'), 200);
     });
   }
 

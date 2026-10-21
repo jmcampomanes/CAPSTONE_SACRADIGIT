@@ -21,6 +21,7 @@
    ============================================ */
 
 import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled } from './name-utils.js';
+import { stepHistory } from './step-history.js';
 
 /** "Add Guardian" relationship options — "Other" reveals a text box. */
 export const GUARDIAN_RELATIONSHIPS = [
@@ -335,6 +336,7 @@ export function createMarriageForm(container, {
 
   let current = 0;
   let furthest = 0; // furthest step reached — the bar can jump back to any of these
+  const backNav = stepHistory('cert-marriage', (s) => go(s), () => wiz.isConnected);
 
   function go(step) {
     current = Math.max(0, Math.min(step, MARRIAGE_STEPS.length - 1));
@@ -348,6 +350,7 @@ export function createMarriageForm(container, {
     });
     onStepChange(current, current === MARRIAGE_STEPS.length - 1);
     (scrollTarget || wiz).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    backNav.moved(current);
   }
 
   function tryForward(target) {

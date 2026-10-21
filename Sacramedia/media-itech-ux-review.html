@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Media &amp; ITech UX Review — SacraDigit</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; margin: 0; color: #111827; }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 260px; flex-shrink: 0; background: #1e2a4a; color: #cbd3e6; padding: 1.25rem 0.75rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar h1 { color: #fff; font-size: 0.95rem; margin: 0 0.5rem 0.25rem; }
+  .sidebar p.note { font-size: 0.7rem; color: #8b95b8; margin: 0 0.5rem 1rem; line-height: 1.4; }
+  .sidebar a { display: flex; justify-content: space-between; gap: 0.4rem; color: #cbd3e6; text-decoration: none; font-size: 0.78rem; padding: 0.4rem 0.6rem; border-radius: 0.4rem; margin-bottom: 0.1rem; }
+  .sidebar a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .sidebar a.group { font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; color: #7d87ad; margin-top: 0.9rem; padding: 0.4rem 0.6rem 0.1rem; pointer-events: none; }
+  .sidebar .who { font-size: 0.6rem; font-weight: 700; padding: 0.05rem 0.35rem; border-radius: 999px; align-self: center; white-space: nowrap; }
+  .mobile-jump { display: none; }
+  .content { flex: 1; padding: 2rem 2.5rem 6rem; max-width: 1180px; }
+
+  .masthead { background: #fff; border: 1px solid #e5e7eb; border-left: 4px solid #1e2a4a; border-radius: 0.6rem; padding: 1rem 1.25rem; font-size: 0.82rem; color: #4b5563; line-height: 1.55; margin-bottom: 1.25rem; }
+  .masthead b { color: #111827; }
+  .masthead code { background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.78rem; }
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+  .role-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.8rem 1rem; font-size: 0.8rem; color: #4b5563; line-height: 1.5; }
+  .role-card strong { display: block; color: #111827; font-size: 0.88rem; margin-bottom: 0.2rem; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.72rem; color: #6b7280; margin-bottom: 2rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+  .who-both { background: #eef2ff; color: #4338ca; }
+  .who-sec { background: #ecfeff; color: #0e7490; }
+  .who-head { background: #fdf2f8; color: #9d174d; }
+
+  .cat { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+  .cat h2 { font-size: 1.15rem; margin: 0 0 0.15rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .impact-tag { font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .impact-critical { background: #fef2f2; color: #b91c1c; }
+  .impact-high { background: #fffbeb; color: #b45309; }
+  .impact-medium { background: #eef2ff; color: #4338ca; }
+  .impact-low { background: #f3f4f6; color: #6b7280; }
+  .cat-sub { font-size: 0.78rem; color: #6b7280; margin: 0 0 1.1rem; }
+
+  .finding { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.65rem; padding: 0.9rem 1.1rem; margin-bottom: 0.9rem; }
+  .finding-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }
+  .finding-title { font-size: 0.92rem; font-weight: 700; color: #111827; }
+  .tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .tag { font-size: 0.62rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: 999px; text-transform: uppercase; }
+  .sev-high { background: #fef2f2; color: #b91c1c; }
+  .sev-medium { background: #fffbeb; color: #b45309; }
+  .sev-low { background: #f3f4f6; color: #6b7280; }
+  .desc { font-size: 0.82rem; color: #4b5563; margin: 0 0 0.5rem; line-height: 1.5; }
+  .where { font-size: 0.76rem; color: #374151; background: #f9fafb; border-left: 3px solid #8b8fc7; padding: 0.45rem 0.65rem; border-radius: 0.3rem; margin-top: 0.4rem; }
+  .where code { font-size: 0.72rem; }
+  .source { font-size: 0.65rem; color: #9ca3af; margin-top: 0.4rem; }
+  .source.fallback { color: #b45309; }
+
+  .mini-compare { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 0.7rem 0 0.4rem; }
+  .mini-box { flex: 1; min-width: 280px; border-radius: 0.5rem; padding: 0.6rem 0.7rem 0.75rem; background: #fff; }
+  .mini-before { border: 2px solid #fecaca; }
+  .mini-after { border: 2px solid #bbf0cf; }
+  .mini-label { display: block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .mini-before .mini-label { color: #b91c1c; }
+  .mini-after .mini-label { color: #15803d; }
+  .scr { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.4rem; padding: 0.6rem; position: relative; overflow: hidden; font-size: 0.75rem; }
+  .note { font-size: 0.68rem; color: #6b7280; margin-top: 0.4rem; line-height: 1.4; }
+
+  /* mock building blocks (real admin tokens) */
+  .m-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; overflow: hidden; }
+  .m-ph { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0.65rem; border-bottom: 1px solid #f1f2f5; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .m-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.65rem; border-bottom: 1px solid #f5f6f8; font-size: 0.72rem; }
+  .m-row:last-child { border-bottom: none; }
+  .m-grow { flex: 1; min-width: 0; }
+  .m-sub { font-size: 0.62rem; color: #6b7280; }
+  .m-link-g { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #15803d; }
+  .m-link-r { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #b91c1c; }
+  .m-link-y { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #9c7d2e; }
+  .m-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; border: none; border-radius: 0.45rem; font-size: 0.72rem; font-weight: 600; padding: 0.42rem 0.7rem; min-height: 2rem; cursor: default; font-family: inherit; }
+  .m-pale { background: #8b8fc7; color: #fff; }
+  .m-gold { background: #c9a84c; color: #1e2a4a; }
+  .m-navy { background: #1e2a4a; color: #fff; }
+  .m-sec { background: #f3f4f6; color: #374151; }
+  .m-out { background: #fff; color: #1e2a4a; border: 1.5px solid #c7cad6; }
+  .m-green { background: #15803d; color: #fff; }
+  .m-red-out { background: #fff; color: #b91c1c; border: 1.5px solid #fca5a5; }
+  .m-badge { display: inline-flex; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.62rem; font-weight: 600; white-space: nowrap; }
+  .b-amber { background: #fffbeb; color: #b45309; }
+  .b-green { background: #ecfdf3; color: #15803d; }
+  .b-gray { background: #f3f4f6; color: #4b5563; }
+  .b-blue { background: #eef2ff; color: #4338ca; }
+  .m-input { border: 1px solid #d1d5db; background: #fff; border-radius: 0.35rem; padding: 0.35rem 0.45rem; font-size: 0.68rem; color: #9ca3af; }
+  .m-lbl { font-size: 0.64rem; font-weight: 600; color: #374151; margin-bottom: 0.15rem; }
+  .m-toast-old { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: #b91c1c; color: #fff; border-radius: 0.4rem; padding: 0.35rem 0.6rem; font-size: 0.64rem; font-weight: 600; white-space: nowrap; }
+  .m-toast-new { background: #fef2f2; color: #991b1b; border: 1.5px solid #fca5a5; border-radius: 0.45rem; padding: 0.4rem 0.55rem; font-size: 0.68rem; font-weight: 600; display: flex; justify-content: space-between; gap: 0.5rem; }
+  .m-dialog { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; box-shadow: 0 10px 24px rgba(15,23,42,0.18); padding: 0.7rem; }
+  .m-native { background: #fff; border: 1px solid #9ca3af; border-radius: 0.2rem; box-shadow: 0 6px 16px rgba(0,0,0,0.25); padding: 0.55rem; font-family: "Segoe UI", Tahoma, sans-serif; font-size: 0.68rem; }
+  .m-native .t { font-size: 0.62rem; color: #6b7280; margin-bottom: 0.3rem; }
+  .m-native .b { border: 1px solid #6b7280; background: #f3f4f6; border-radius: 0.15rem; padding: 0.15rem 0.6rem; font-size: 0.64rem; }
+  .m-topbar { display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 2px solid #8a3040; padding: 0.4rem 0.6rem; }
+  .m-ico-s { width: 18px; height: 18px; border-radius: 999px; border: 1.5px solid #c7cad6; display: inline-flex; align-items: center; justify-content: center; font-size: 0.5rem; color: #4b5563; }
+  .m-ico-l { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 40px; }
+  .m-ico-l svg { width: 16px; height: 16px; stroke: #1e2a4a; }
+  .m-ico-l span { font-size: 0.55rem; font-weight: 600; color: #374151; }
+  .m-stat { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.45rem 0.55rem; }
+  .m-stat .l { font-size: 0.58rem; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+  .m-stat .v { font-size: 1rem; font-weight: 700; }
+  .strike { text-decoration: line-through; color: #b91c1c; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .mobile-jump { display: block; position: sticky; top: 0; z-index: 10; background: #1e2a4a; padding: 0.75rem 1rem; }
+    .mobile-jump select { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: none; font-size: 0.85rem; }
+    .content { padding: 1.25rem 1rem 4rem; }
+  }
+</style>
+
+<style>
+  .who-media { background: #fff7ed; color: #c2410c; }
+  .who-itech { background: #ecfeff; color: #0e7490; }
+  .m-teal { background: #0e7490; color: #fff; }
+  .m-live { background: #dc2626; color: #fff; }
+  .good { background: #ecfdf3; border: 1px solid #bbf0cf; border-left: 4px solid #15803d; border-radius: .6rem; padding: .75rem 1rem; font-size: .8rem; color: #15542f; line-height: 1.5; margin-bottom: 1.25rem; }
+  .live-strip { display: flex; align-items: center; gap: .5rem; background: #fef2f2; border: 1.5px solid #fca5a5; color: #991b1b; border-radius: .5rem; padding: .45rem .6rem; font-size: .72rem; font-weight: 700; }
+  .dot { width: 8px; height: 8px; border-radius: 999px; background: #dc2626; display: inline-block; }
+  .bar { height: 6px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin: .35rem 0 .2rem; }
+  .bar > span { display: block; height: 100%; width: 62%; background: #1e2a4a; }
+</style>
+</head>
+<body>
+
+<div class="mobile-jump">
+  <select onchange="if(this.value) location.hash = this.value;">
+    <option value="">Jump to a finding…</option>
+    <option value="#shared">Both portals</option>
+    <option value="#media">Media portal</option>
+    <option value="#itech">ITech portal</option>
+  </select>
+</div>
+
+<div class="app">
+  <nav class="sidebar">
+    <h1>Media &amp; ITech Review</h1>
+    <p class="note">Suggestions only — nothing here is applied yet. Tell me which numbers to build.</p>
+    <a class="group">Both portals</a>
+    <a href="#s1">S1 Pale main buttons <span class="who who-media">Media</span></a>
+    <a href="#s2">S2 Browser pop-ups <span class="who who-both">Both</span></a>
+    <a href="#s3">S3 3-second red warnings <span class="who who-both">Both</span></a>
+    <a href="#s4">S4 Unlabeled top-bar icons <span class="who who-both">Both</span></a>
+    <a href="#s5">S5 Tables off-screen on phones <span class="who who-both">Both</span></a>
+    <a class="group">Media</a>
+    <a href="#m1">M1 One-tap Go Live / End Stream <span class="who who-media">Media</span></a>
+    <a href="#m2">M2 Save vs Go Live <span class="who who-media">Media</span></a>
+    <a href="#m3">M3 Video upload with no progress <span class="who who-media">Media</span></a>
+    <a href="#m4">M4 "Welcome back, Media Team" <span class="who who-media">Media</span></a>
+    <a class="group">ITech</a>
+    <a href="#i1">I1 Permissions that do nothing <span class="who who-itech">ITech</span></a>
+    <a href="#i2">I2 Role changes on a dropdown <span class="who who-itech">ITech</span></a>
+    <a href="#i3">I3 Permanent delete, one OK <span class="who who-itech">ITech</span></a>
+    <a href="#i4">I4 No "last backup" date <span class="who who-itech">ITech</span></a>
+    <a href="#i5">I5 11px text <span class="who who-itech">ITech</span></a>
+  </nav>
+
+  <div class="content">
+
+    <div class="masthead">
+      <b>How this was tested:</b> I read the Media portal (<code>Sacramedia/</code>: dashboard, livestream, content calendar, event coverage, media library, post templates) and the ITech portal (<code>Sacraitech/</code>: dashboard, roles &amp; accounts, backup, cloud, storage, logs, service schedules). I didn't sign in as either role. Each finding is backed by the <code>ui-ux-pro-max</code> skill's guideline database (<code>search.py --domain ux</code>), and its source is named; cards marked in amber had no exact database match and use general good practice.<br>
+      Companion pages: <a href="../Sacradigit/admin-ux-review.html">admin review</a> · <a href="../user/ui-ux-pro-max-review.html">parishioner review</a>.
+    </div>
+
+    <div class="good"><b>Already good, keep it:</b> ITech's System Health runs real, re-runnable checks (unlike the admin Dashboard's old fixed text). ITech's teal buttons (#0e7490, about 5.4:1 with white) pass contrast. The Media Announcements page already shares the admin's fixes, so Media's official announcements go to the Head Admin for review, with that said up front.</div>
+
+    <div class="roles">
+      <div class="role-card"><strong>Media Team</strong>Plans posts on the content calendar, covers events, manages the photo/video library and templates, drafts announcements, and turns the parish livestream on and off (parishioners see a "Watch Live" banner).</div>
+      <div class="role-card"><strong>IT Team</strong>Creates staff accounts and sets their role, disables accounts, checks system health, exports backups, manages cloud files and storage, reads the activity log, and edits service schedules.</div>
+    </div>
+
+    <!-- ================= SHARED ================= -->
+    <section class="cat" id="shared">
+      <h2>Both portals <span class="impact-tag impact-high">High</span></h2>
+      <p class="cat-sub">The same five problems the admin portal had. The admin fixes can be reused almost as-is (<code>admin-ui.js</code>, <code>top-bar-labels.js</code>, the phone table cards).</p>
+
+      <div class="finding" id="s1">
+        <div class="finding-head"><span class="finding-title">S1 Media's main buttons are the pale lavender (about 3:1 contrast)</span><span class="tags"><span class="tag sev-high">High</span><span class="tag who-media">Media</span></span></div>
+        <p class="desc">"Go Live", "Add Entry", "Upload", "New Template" and "Save Profile" use <code>.btn-lavender</code>, which Media defines on its own as #8b8fc7. White on it is below the 4.5:1 minimum and looks switched off. ITech's teal is fine.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr" style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="m-btn m-pale">+ Add Entry</button><button class="m-btn m-pale">Upload</button><button class="m-btn m-pale">New Template</button></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr" style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="m-btn m-navy">+ Add Entry</button><button class="m-btn m-navy">Upload</button><button class="m-btn m-navy">New Template</button></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacramedia/media-css/media-shell.css</code> line 131 — one line.</div>
+        <div class="source">Source: ux-guidelines.csv: Color Contrast ("Minimum 4.5:1", High); Disabled States (Medium).</div>
+      </div>
+
+      <div class="finding" id="s2">
+        <div class="finding-head"><span class="finding-title">S2 Ten browser OK/Cancel boxes for removing and deleting</span><span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Media: removing a calendar entry, a coverage request, a library file, a template. ITech: changing a role, disabling an account, deleting a cloud file or stored file (permanent), deleting a role, resetting a service schedule. All use the browser's own <code>confirm()</code>.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr" style="background:#e5e7eb"><div class="m-native"><div class="t">sacradigit.app says</div>Remove "Fiesta photos (42)" from the library?<div style="display:flex;gap:.3rem;justify-content:flex-end;margin-top:.4rem"><span class="b">OK</span><span class="b">Cancel</span></div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — the admin dialog, reused</span><div class="scr"><div class="m-dialog"><div style="font-weight:700;font-size:.78rem">Remove "Fiesta photos (42)" from the library?</div><div style="font-size:.66rem;color:#4b5563;margin:.2rem 0 .45rem">Posts that use these photos will show a blank image.</div><div style="display:flex;gap:.4rem;justify-content:flex-end"><button class="m-btn m-sec">Cancel</button><button class="m-btn" style="background:#b91c1c;color:#fff">Remove</button></div></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> content-calendar.js 215, event-coverage.js 206, media-library.js 309, post-templates.js 233; itech-accounts.js 102 &amp; 124, itech-cloud.js 140, itech-storage.js 120, itech-roles.js 132, itech-service-schedules.js 202.</div>
+        <div class="source">Source: ux-guidelines.csv: Confirmation Dialogs ("Good: Are you sure modal", High).</div>
+      </div>
+
+      <div class="finding" id="s3">
+        <div class="finding-head"><span class="finding-title">S3 Error messages vanish after 3 seconds</span><span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Media has six copies of the toast code and ITech one; all fade every message, errors included ("Couldn't update the livestream status", "Couldn't change the role"). Those are exactly the messages that need reading.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr" style="height:80px"><div class="m-sub">…3 seconds later, gone.</div><div class="m-toast-old">Couldn't change the role.</div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr" style="height:80px"><div class="m-toast-new"><span>⚠ Couldn't change the role. You may not have permission — check with the Head Admin.</span><b>×</b></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>showToast</code> in content-calendar.js, event-coverage.js, livestream.js, media-library.js, post-templates.js, Sacramedia/profile.js; Sacraitech/itech-shell.js.</div>
+        <div class="source">Source: ux-guidelines.csv: Toast Notifications (non-critical only); Error Messages ("role=alert", High).</div>
+      </div>
+
+      <div class="finding" id="s4">
+        <div class="finding-head"><span class="finding-title">S4 Top-bar icons have no words</span><span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Parishioner and admin top bars now say Bigger text / Dark / Language / Help. Media and ITech still show small unlabeled circles.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr" style="padding:0"><div class="m-topbar"><b>Livestream</b><span style="display:flex;gap:4px"><span class="m-ico-s">Aa</span><span class="m-ico-s">☾</span><span class="m-ico-s">EN</span><span class="m-ico-s">?</span></span></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr" style="padding:0"><div class="m-topbar"><b>Livestream</b><span style="display:flex;gap:6px"><span class="m-ico-l"><b style="font-family:Georgia;font-size:.8rem">Aa</b><span>Bigger text</span></span><span class="m-ico-l"><b>☾</b><span>Dark</span></span><span class="m-ico-l"><b>🌐</b><span>Language</span></span><span class="m-ico-l"><b>?</b><span>Help</span></span></span></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> one line each — <code>labelTopBarIcons()</code> after <code>initUiPrefs()</code> in media-shell.js and itech-shell.js. The phone layout already works (both load admin-shell.css).</div>
+        <div class="source">Source: icons.csv: icon-context-accessibility; priority table: "Icon-only buttons without labels" (Critical).</div>
+      </div>
+
+      <div class="finding" id="s5">
+        <div class="finding-head"><span class="finding-title">S5 Tables push their last columns off a phone screen</span><span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Media: content calendar list, event coverage. ITech: accounts (the role picker and Disable button are the last columns), backup "Export", storage, logs, dashboard activity. Same fix as the admin tables: one card per row on phones.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — 360px</span><div class="scr" style="width:200px;overflow:hidden"><div style="display:flex;gap:.8rem;white-space:nowrap;font-size:.66rem"><b>Name</b><b>Email</b><b>Role</b><b>Status</b><b>Access</b></div><div style="display:flex;gap:.8rem;white-space:nowrap;font-size:.66rem;margin-top:.25rem"><span>Maria Cruz</span><span>maria@olfp.parish</span></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr" style="width:200px"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Maria Cruz</b><div class="m-sub">maria@olfp.parish</div><div class="m-sub">Role: Secretary · Active</div></span></div><div style="padding:.35rem .6rem .5rem"><button class="m-btn m-out" style="width:100%">Change role…</button></div></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> move <code>initTableCards()</code> from Sacradigit/dashboard.js into a shared file and call it from both shells.</div>
+        <div class="source">Source: ux-guidelines.csv: Table Handling ("horizontal scroll or card layout", Medium).</div>
+      </div>
+    </section>
+
+    <!-- ================= MEDIA ================= -->
+    <section class="cat" id="media">
+      <h2>Media portal <span class="impact-tag impact-high">High</span></h2>
+      <p class="cat-sub">The livestream switch is the most public button in the whole app: every parishioner sees its result on their Dashboard.</p>
+
+      <div class="finding" id="m1">
+        <div class="finding-head"><span class="finding-title">M1 "Go Live" and "End Stream" are one button that acts instantly</span><span class="tags"><span class="tag sev-high">High</span><span class="tag who-media">Media</span></span></div>
+        <p class="desc">The same button flips between Go Live and End Stream. A stray tap during Mass ends the banner for everyone watching, and going live shows parishioners whatever link is in the box, with no check that it's the right one. The only "you're live" signal is a small badge.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr"><div class="m-panel"><div class="m-ph">Current Livestream <span class="m-badge b-gray">Off</span></div><div style="padding:.55rem"><button class="m-btn m-pale">Go Live</button></div></div><div class="note">One tap → every parishioner's Dashboard shows "Watch Live".</div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr">
+            <div class="live-strip"><span class="dot"></span>LIVE since 9:02 AM · Facebook <span style="margin-left:auto"><button class="m-btn m-sec" style="min-height:1.5rem">End stream…</button></span></div>
+            <div class="m-dialog" style="margin-top:.45rem"><div style="font-weight:700;font-size:.74rem">Go live now?</div><div style="font-size:.64rem;color:#4b5563;margin:.15rem 0 .3rem">Parishioners will see this banner:</div><div style="background:#dc2626;color:#fff;border-radius:.35rem;padding:.3rem .45rem;font-size:.62rem;font-weight:700">● We're live now — Join us on Facebook</div><div style="font-size:.6rem;color:#6b7280;margin:.25rem 0 .35rem">facebook.com/OLFPQC/live · <u>Open link to check</u></div><div style="display:flex;gap:.35rem;justify-content:flex-end"><button class="m-btn m-sec">Cancel</button><button class="m-btn m-live">Go live</button></div></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacramedia/livestream.js</code> ~55–125, <code>livestream.html</code> ~177–197.</div>
+        <div class="source">Source: ux-guidelines.csv: Confirmation Dialogs (High); Active State ("Don't: no visual feedback on current location", Medium). The banner preview is general guidance.</div>
+      </div>
+
+      <div class="finding" id="m2">
+        <div class="finding-head"><span class="finding-title">M2 Two buttons for one job: "Save" (gold) and "Go Live" (lavender)</span><span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-media">Media</span></span></div>
+        <p class="desc">Go Live already saves the platform and link, so the separate Save is only needed to change the link while off air. Two filled buttons next to the same form make people wonder whether they must press Save first.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr"><div class="m-lbl">Stream link</div><div class="m-input">https://facebook.com/OLFPQC/live</div><div style="display:flex;gap:.4rem;margin-top:.4rem"><button class="m-btn m-pale">Go Live</button><button class="m-btn m-gold">Save</button></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr"><div class="m-lbl">Stream link</div><div class="m-input">https://facebook.com/OLFPQC/live</div><div class="m-sub" style="margin-top:.2rem">Saved automatically when you go live.</div><div style="display:flex;gap:.4rem;margin-top:.4rem"><button class="m-btn m-live">● Go live…</button><button class="m-btn m-out">Save link only</button></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>livestream.html</code> 182 &amp; 197.</div>
+        <div class="source source fallback">No exact database match; general guidance (one primary action per form).</div>
+      </div>
+
+      <div class="finding" id="m3">
+        <div class="finding-head"><span class="finding-title">M3 Uploading a video only says "Uploading…"</span><span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-media">Media</span></span></div>
+        <p class="desc">Mass and event videos are large. With no progress or size shown, it's impossible to tell a slow upload from a stuck one, and people close the tab.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr"><button class="m-btn m-pale" disabled>Uploading…</button></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr"><div style="font-size:.7rem;font-weight:600">fiesta-procession.mp4</div><div class="bar"><span></span></div><div class="m-sub">62% · 186 of 300 MB · keep this page open</div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacramedia/media-library.js</code> ~233 (Amplify Storage's <code>uploadData</code> reports progress via <code>onProgress</code>).</div>
+        <div class="source">Source: ux-guidelines.csv: Progress Indicators ("Don't: no indication of progress", Medium); Loading Indicators ("leave long waits unexplained", High).</div>
+      </div>
+
+      <div class="finding" id="m4">
+        <div class="finding-head"><span class="finding-title">M4 The Dashboard greets everyone as "Welcome back, Media Team"</span><span class="tags"><span class="tag sev-low">Low</span><span class="tag who-media">Media</span></span></div>
+        <p class="desc">Same as the admin greeting before its fix. A to-do line helps more than the welcome: what's scheduled to post today, and whether a stream is live.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr" style="background:#1e2a4a;color:#fff"><div style="font-size:1rem;font-weight:700">Welcome back, Media Team</div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr" style="background:#1e2a4a;color:#fff"><div style="font-size:1rem;font-weight:700">Good morning, Paolo</div><div style="font-size:.66rem;opacity:.85">2 posts scheduled today · 1 waiting for the Head Admin · not live</div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacramedia/media-dashboard.html</code> 176; data already loads in media-dashboard.js.</div>
+        <div class="source fallback">No database match. General guidance (personalised, role-aware greeting).</div>
+      </div>
+    </section>
+
+    <!-- ================= ITECH ================= -->
+    <section class="cat" id="itech">
+      <h2>ITech portal <span class="impact-tag impact-critical">Critical</span></h2>
+      <p class="cat-sub">This portal decides who can see parishioners' personal records, so mistakes here are security mistakes.</p>
+
+      <div class="finding" id="i1">
+        <div class="finding-head"><span class="finding-title">I1 "Roles &amp; Permissions" saves permissions that nothing checks</span><span class="tags"><span class="tag sev-high">High</span><span class="tag who-itech">ITech</span></span></div>
+        <p class="desc">The page lets IT create roles and tick permissions, but those Role records are only read by the Roles page itself. What someone can actually do comes from the four fixed account roles (Head Admin, Secretary, IT Team, Media Team). Deleting a role even warns "Assigned users lose these permissions", which isn't true. IT can believe someone is restricted when they aren't.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr"><div class="m-panel"><div class="m-ph">Roles &amp; Permissions <button class="m-btn m-teal" style="min-height:1.4rem">+ New Role</button></div><div class="m-row"><span class="m-grow"><b>Parish Secretary</b><div class="m-sub">☑ View records ☐ Delete records ☐ Export</div></span></div></div><div class="note">Looks like it limits the Secretary. It doesn't.</div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — say what's real</span><div class="scr"><div class="m-panel"><div class="m-ph">What each account role can do</div><div class="m-row"><span class="m-grow"><b>Secretary</b><div class="m-sub">Records, requests, bookings, drafts. Can't approve, publish or delete.</div></span></div><div class="m-row"><span class="m-grow"><b>Head Admin</b><div class="m-sub">Everything the Secretary can, plus approve, publish, delete.</div></span></div></div><div class="note">Either make the table read-only and accurate (recommended), or wire custom permissions into <code>auth.js</code> — a much bigger job.</div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacraitech/itech-roles.js</code> (only file using <code>client.models.Role</code>); access is enforced by Cognito groups in <code>auth.js</code> <code>PORTAL_ACCESS</code> and <code>isHeadAdmin()</code>.</div>
+        <div class="source fallback">No database match for "permissions that aren't enforced". General guidance; nearest rule: Compact Control Semantics ("controls must expose state that matches the visible label", Critical).</div>
+      </div>
+
+      <div class="finding" id="i2">
+        <div class="finding-head"><span class="finding-title">I2 Changing a role is just picking from a dropdown in the table</span><span class="tags"><span class="tag sev-high">High</span><span class="tag who-itech">ITech</span></span></div>
+        <p class="desc">Each account row has a role picker; the change starts as soon as a new value is picked. Arrow keys or a scroll wheel over a focused picker can select "Head Admin" by accident, and the browser box that follows is easy to OK without reading. Giving someone Head Admin access deserves a deliberate step.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Maria Cruz</b><div class="m-sub">maria@olfp.parish</div></span><span class="m-input" style="color:#111827">Secretary ▾</span><span class="m-link-r">Disable</span></div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Maria Cruz</b><div class="m-sub">Secretary · Active</div></span><button class="m-btn m-out">Change role…</button></div></div>
+            <div class="m-dialog" style="margin-top:.45rem"><div style="font-weight:700;font-size:.74rem">Give Maria Head Admin access?</div><div style="font-size:.63rem;color:#4b5563;margin:.15rem 0 .35rem">She'll be able to approve requests, publish announcements and delete records. Takes effect at her next sign-in.</div><div style="display:flex;gap:.35rem;justify-content:flex-end"><button class="m-btn m-sec">Cancel</button><button class="m-btn" style="background:#b45309;color:#fff">Give Head Admin access</button></div></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacraitech/itech-accounts.js</code> ~78–118.</div>
+        <div class="source">Source: ux-guidelines.csv: Compact Control Semantics ("Prefer a button… Don't reveal the only action on hover", Critical); Confirmation Dialogs (High).</div>
+      </div>
+
+      <div class="finding" id="i3">
+        <div class="finding-head"><span class="finding-title">I3 Permanent file deletion is one browser OK away</span><span class="tags"><span class="tag sev-high">High</span><span class="tag who-itech">ITech</span></span></div>
+        <p class="desc">Cloud and Storage say "removes it for everyone and can't be undone" — inside a browser box where OK is the default. For permanent deletes of parish files, ask for the file name to be typed, and say which records point at it.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr" style="background:#e5e7eb"><div class="m-native"><div class="t">sacradigit.app says</div>Permanently delete "baptism-1998-book12.pdf"? This removes it for everyone and can't be undone.<div style="display:flex;gap:.3rem;justify-content:flex-end;margin-top:.4rem"><span class="b" style="outline:2px solid #2563eb">OK</span><span class="b">Cancel</span></div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr"><div class="m-dialog"><div style="font-weight:700;font-size:.74rem">Delete baptism-1998-book12.pdf for good?</div><div style="font-size:.63rem;color:#4b5563;margin:.15rem 0 .3rem">2 archive records link to this file and will lose their scan.</div><div class="m-lbl">Type the file name to confirm</div><div class="m-input">baptism-1998-book12.pdf</div><div style="display:flex;gap:.35rem;justify-content:flex-end;margin-top:.35rem"><button class="m-btn m-sec">Cancel</button><button class="m-btn" style="background:#b91c1c;color:#fff">Delete permanently</button></div></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>itech-cloud.js</code> 140, <code>itech-storage.js</code> 120. The admin <code>reasonDialog</code> can be extended with a "type to confirm" check.</div>
+        <div class="source">Source: ux-guidelines.csv: Confirmation Dialogs ("Confirm before delete/irreversible actions", High).</div>
+      </div>
+
+      <div class="finding" id="i4">
+        <div class="finding-head"><span class="finding-title">I4 The Backup page doesn't say when the last backup was made</span><span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-itech">ITech</span></span></div>
+        <p class="desc">"Export Everything" downloads a file, but there's no record on screen of when it was last done or by whom, and no nudge when it's been a while. The activity log could supply this.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr"><b style="font-size:.78rem">Full Backup</b><div class="m-sub" style="margin:.2rem 0 .4rem">Download every module as a single JSON file…</div><button class="m-btn m-teal">Export Everything</button></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr"><b style="font-size:.78rem">Full Backup</b><div style="font-size:.7rem;color:#b45309;font-weight:600;margin:.2rem 0">⚠ Last full export: Aug 30 by Jun (52 days ago)</div><div class="m-sub" style="margin-bottom:.4rem">We suggest one a month. Keep it off this computer.</div><button class="m-btn m-teal">Export everything now</button></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacraitech/itech-backup.js</code> / <code>itech-backup.html</code> ~164–173; log an "Export Everything" action and read the latest one back.</div>
+        <div class="source fallback">No database match. General guidance (show system status and last-run time for recurring maintenance tasks).</div>
+      </div>
+
+      <div class="finding" id="i5">
+        <div class="finding-head"><span class="finding-title">I5 Fifteen 11px text styles, and log filter labels in text-xs</span><span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-itech">ITech</span></span></div>
+        <p class="desc">Status chips, table headers, the log's "From"/"To" labels and the backup record counts are 10–11px. The activity log is read carefully, line by line — it should be the easiest page to read, not the hardest.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span><div class="scr"><div style="font-size:10px;color:#6b7280">From <span class="m-input">10/01/2026</span> To <span class="m-input">10/21/2026</span></div><div style="font-size:11px;margin-top:.35rem">Oct 21 9:14 · maria@… · Change Role · Secretary → Head Admin</div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span><div class="scr"><div style="font-size:13px;color:#374151">From <span class="m-input">Oct 1, 2026</span> To <span class="m-input">Oct 21, 2026</span></div><div style="font-size:13px;margin-top:.35rem"><b>Oct 21, 9:14 AM</b> · maria@… · <b>Change Role</b> · Secretary → Head Admin</div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacraitech/itech-css/itech-shell.css</code> and <code>itech.css</code> (0.6875rem ×15, 0.625rem ×1); <code>itech-logs.html</code> 175–176.</div>
+        <div class="source">Source: ux-guidelines.csv: Readable Font Size (High); Font Size Scale (Medium).</div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</body>
+</html>

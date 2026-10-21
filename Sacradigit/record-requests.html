@@ -209,13 +209,13 @@
             <p class="text-gray-500 text-sm mt-1">Review and process incoming certificate requests.</p>
           </div>
           <div class="flex items-center gap-2.5 shrink-0">
-            <button id="btn-upload" type="button" class="btn-gold">
+            <button id="btn-upload" type="button" class="btn-secondary">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0-9l-3 3m3-3l3 3"/></svg>
-              Upload
+              Upload certificate
             </button>
             <button id="btn-new-request" type="button" class="btn-lavender">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              New Request
+              New walk-in request
             </button>
           </div>
         </div>
@@ -306,12 +306,19 @@
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">All Requests</h2>
-            <p id="results-count" class="text-xs text-gray-400 font-medium"></p>
+            <p id="results-count" class="text-sm text-gray-600 font-medium" role="status"></p>
+          </div>
+          <!-- Head Admin: approve several pending requests at once -->
+          <div id="req-bulk-bar" class="req-bulk-bar head-admin-only hidden">
+            <span id="req-bulk-count"></span>
+            <button type="button" id="req-bulk-approve" class="btn-approve">Approve selected…</button>
+            <button type="button" id="req-bulk-clear" class="btn-secondary">Clear selection</button>
           </div>
           <div class="overflow-x-auto">
             <table class="records-table">
               <thead>
                 <tr>
+                  <th class="col-select head-admin-only"><input type="checkbox" id="req-select-all" class="row-check" aria-label="Select all pending requests shown" /></th>
                   <th>Requester</th>
                   <th>Certificate Type</th>
                   <th>Date Requested</th>
@@ -325,9 +332,10 @@
               </tbody>
             </table>
             <div id="empty-state" class="empty-state hidden">
-              <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-              <p class="text-sm font-medium text-gray-600">No requests match your filters</p>
-              <p class="text-xs text-gray-400 mt-1">Try a different search term or clear your filters.</p>
+              <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+              <p id="empty-title" class="text-sm font-semibold text-gray-800">No requests match your filters</p>
+              <p id="empty-hint" class="text-sm text-gray-600 mt-1">Check the spelling, or clear the search and filters.</p>
+              <button type="button" id="empty-clear" class="btn-secondary mt-3">Clear search &amp; filters</button>
             </div>
           </div>
         </div>

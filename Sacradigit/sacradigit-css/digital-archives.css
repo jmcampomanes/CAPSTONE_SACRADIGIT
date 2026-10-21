@@ -42,13 +42,22 @@
   background-color: #b5943e;
 }
 
+/* The main action on a page: solid navy (white on #8b8fc7 was only ~3:1). */
 .btn-lavender {
-  background-color: #8b8fc7;
+  background-color: #1e2a4a;
   color: #ffffff;
 }
 
 .btn-lavender:hover {
-  background-color: #767bc0;
+  background-color: #2a3963;
+}
+
+/* Only a button that really can't be pressed looks pale. */
+.btn-lavender:disabled,
+.btn-gold:disabled {
+  background-color: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
 }
 
 .btn-secondary {

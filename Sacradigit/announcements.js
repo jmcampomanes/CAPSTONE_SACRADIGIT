@@ -28,6 +28,7 @@ import { client } from '../amplify-init.js';
 import { isHeadAdmin } from '../auth.js';
 import { createTimePicker, displayTime } from '../time-picker.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
+import { showToast } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -677,6 +678,21 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.classList.toggle('hidden', isPost);
     postNowBtn.classList.toggle('hidden', !isPost);
     postNowBtn.textContent = editing ? 'Save Changes' : 'Post Now';
+    // The Secretary can't publish official announcements: say so here, and make
+    // the draft button her main action, instead of refusing after she's written it.
+    const needsReview = !isPost && !isHeadAdmin();
+    draftBtn.textContent = needsReview ? 'Send to Head Admin for review' : 'Save as Draft';
+    draftBtn.classList.toggle('btn-lavender', needsReview);
+    draftBtn.classList.toggle('btn-secondary', !needsReview);
+    let note = document.getElementById('ann-review-note');
+    if (!note) {
+      note = document.createElement('p');
+      note.id = 'ann-review-note';
+      note.className = 'ann-review-note';
+      draftBtn.closest('.modal-footer').before(note);
+    }
+    note.textContent = 'Saved as a draft. The Head Admin reviews official announcements and publishes them.';
+    note.classList.toggle('hidden', !needsReview);
     modalTitle.textContent = `${editing ? 'Edit' : 'New'} ${isPost ? 'Post / Update' : 'Announcement'}`;
   }
   kindRadios.forEach(r => r.addEventListener('change', () => applyKindUI(currentKind(), { editing: editTargetId !== null })));
@@ -929,13 +945,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!publishedFlag) payload.published = false;
         const result = await client.models.Announcement.update(payload);
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(publishedFlag ? `"${title}" updated.` : `"${title}" saved as draft.`);
+        showToast(publishedFlag ? `"${title}" updated.` : `"${title}" saved as draft${kind === 'announcement' && !isHeadAdmin() ? ' — the Head Admin will review it' : ''}.`);
       } else {
         const result = await client.models.Announcement.create({ title, body, audience, media, published: publishedFlag });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
         showToast(publishedFlag
           ? (startDate > todayIso() ? `"${title}" scheduled for ${formatPlainDate(startDate)}.` : `"${title}" published.`)
-          : `"${title}" saved as draft.`);
+          : `"${title}" saved as draft${kind === 'announcement' && !isHeadAdmin() ? ' — the Head Admin will review it' : ''}.`);
       }
       closeModal(modal);
     } catch (err) {
@@ -1058,21 +1074,6 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------
      5. TOAST NOTIFICATIONS
   ------------------------------------------ */
-  const toast = document.getElementById('toast');
-  let toastTimer = null;
 
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
 });

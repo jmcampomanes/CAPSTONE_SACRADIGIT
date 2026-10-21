@@ -323,6 +323,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const fund = givingOptions().find(f => f.id === selectedFundId);
     if (!fund) return;
 
+    // Show the tap registered (and stop a second tap from giving twice).
+    const submitBtn = document.getElementById('donate-submit');
+    if (submitBtn.disabled) return;
+    const submitLabel = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.setAttribute('aria-busy', 'true');
+    submitBtn.textContent = 'Sending your offering…';
+
     try {
       const result = await client.models.Donation.create({
         donor: DONOR_NAME,
@@ -339,6 +347,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Failed to save donation:', err);
       window.showToast(err.message || "Couldn't process the donation.", true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.removeAttribute('aria-busy');
+      submitBtn.textContent = submitLabel;
     }
   });
 
