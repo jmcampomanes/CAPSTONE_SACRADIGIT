@@ -38,6 +38,7 @@ import { currentUserName, currentUser } from '../auth.js';
 import { initPasswordChange } from '../password-change.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { getPreference, preferencesReady, saveProfileDetails } from '../mass-checkin.js';
+import { markSaved } from './leave-warning.js';
 import { NOTIF_TYPES, loadPrefs, savePrefs, enableDeviceAlerts } from '../notifications/parish-notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -254,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
       defaults.bio = pfBio.value;
 
       showToast('Profile information saved.');
+      markSaved(); // the boxes stay filled — don't warn "unsaved changes" on leaving
     } catch (err) {
       console.error('Failed to save profile information:', err);
       showToast('Could not save your changes. Please try again.', true);

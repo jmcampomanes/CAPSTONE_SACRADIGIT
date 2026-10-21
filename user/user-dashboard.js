@@ -41,9 +41,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // "Welcome back, <first name>" — from the signed-in account (cached by auth.js,
   // then refreshed from Cognito when the sacradigit:user event fires).
   const greetingName = document.getElementById('greeting-name');
+  const greetingLabel = document.getElementById('greeting-label');
+  // "Welcome," the first time this person opens the Dashboard on this device;
+  // "Welcome back," every time after.
+  let greeted = false;
   const paintGreeting = (u) => {
     if (!greetingName || !u) return;
     greetingName.textContent = u.firstName || (u.name || '').split(' ')[0] || 'Parishioner';
+    if (greeted || !greetingLabel || !u.sub) return;
+    greeted = true;
+    const key = `sacradigit_seen_dashboard_${u.sub}`;
+    try {
+      const returning = !!localStorage.getItem(key);
+      greetingLabel.textContent = returning ? 'Welcome back,' : 'Welcome,';
+      if (!returning) localStorage.setItem(key, '1');
+    } catch { greetingLabel.textContent = 'Welcome,'; }
   };
   paintGreeting(currentUser());
   document.addEventListener('sacradigit:user', (e) => paintGreeting(e.detail));

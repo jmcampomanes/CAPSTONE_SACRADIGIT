@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="svc-type-foot">
         ${needsApproval(s.name) ? '<span class="svc-type-approval" title="The parish office approves blessing requests first">Needs approval</span>' : ''}
         <span class="svc-type-cta">Start request
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 12h14M13 6l6 6-6 6"/></svg>
         </span>
       </div>
     </a>`;

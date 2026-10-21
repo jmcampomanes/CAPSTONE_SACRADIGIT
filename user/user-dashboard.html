@@ -42,7 +42,7 @@
   <link rel="stylesheet" href="user-css/user-dashboard.css" />
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
-  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <script>(function(){var h=document.documentElement;try{var u=JSON.parse(localStorage.getItem('sacradigit_user')||'null');if(u&&u.role==='parishioner')return}catch(e){}h.classList.add('auth-pending');setTimeout(function(){h.classList.remove('auth-pending')},8000)})()</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
   <link rel="stylesheet" href="../accessibility.css" />
@@ -201,7 +201,7 @@
         <div class="greeting-banner">
           <div id="sacred-art-user-dashboard" class="absolute inset-0" data-sacred-art aria-hidden="true"></div>
           <div>
-            <p class="greeting-label">Welcome back,</p>
+            <p class="greeting-label" id="greeting-label">Welcome,</p>
             <h2 class="greeting-name" id="greeting-name"></h2>
             <p class="greeting-sub">Here's what's happening at Our Lady of Fatima Parish today.</p>
           </div>

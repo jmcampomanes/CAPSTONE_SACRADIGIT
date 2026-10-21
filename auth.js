@@ -174,7 +174,15 @@ function hasStaffSession() {
 export async function guardPage(portal) {
   const allowed = PORTAL_ACCESS[portal] || [];
   // Fast path: nobody cached → straight to login, before the page does anything.
-  if (!currentUser()) { goToLogin(); return new Promise(() => {}); }
+  const cached = currentUser();
+  if (!cached) { goToLogin(); return new Promise(() => {}); }
+  // Parishioner pages show straight away for a remembered parishioner (see the
+  // <head> snippet) while the check below runs — fill in their name now so the
+  // sidebar card isn't blank for that second. Data still needs the real session.
+  if (cached.role === 'parishioner') {
+    const early = () => paintUserCard(cached);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', early); else early();
+  }
   const user = await loadUser();
   if (!user) { goToLogin(); return new Promise(() => {}); }
   const ok = allowed.includes('parishioner') || allowed.some(r => user.groups.includes(r));

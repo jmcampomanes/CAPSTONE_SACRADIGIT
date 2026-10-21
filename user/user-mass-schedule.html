@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="user-css/user-mass-schedule.css" />
   <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
-  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <script>(function(){var h=document.documentElement;try{var u=JSON.parse(localStorage.getItem('sacradigit_user')||'null');if(u&&u.role==='parishioner')return}catch(e){}h.classList.add('auth-pending');setTimeout(function(){h.classList.remove('auth-pending')},8000)})()</script>
   <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
   <link rel="stylesheet" href="../theme-dark.css" />
   <link rel="stylesheet" href="../accessibility.css" />
@@ -171,7 +171,7 @@
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <span id="date-picker-label"></span>
             <label for="date-picker" class="sr-only">Select date</label>
-            <input type="date" id="date-picker" class="day-nav-input" />
+            <input type="date" id="date-picker" class="day-nav-input" data-no-leave-warning />
           </div>
           <button id="btn-next-day" type="button" class="day-nav-arrow" aria-label="Next day">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>

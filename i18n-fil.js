@@ -2106,6 +2106,8 @@ export const FIL = {
   "Fund": "Pondo",
   "Check in at Mass": "Mag-check in sa Misa",
   "What’s on this page?": "Ano ang nasa pahinang ito?",
+  "More below": "May iba pa sa ibaba",
+  "Scroll the menu to see more": "I-scroll ang menu para makita ang iba pa",
   "Who will reply?": "Sino ang sasagot?",
   "How does giving work?": "Paano magbigay?",
   "What can I book here?": "Ano ang maaari kong i-book dito?",

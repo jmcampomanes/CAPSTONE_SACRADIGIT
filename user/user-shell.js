@@ -17,6 +17,7 @@ import { initExtToggles } from '../name-utils.js';
 import { watchFieldErrors, FIELD_ERROR_SELECTOR } from './field-messages.js';
 import { initBirthDateDropdowns } from '../date-dropdowns.js';
 import { mountPageInfo } from './page-info.js';
+import { initLeaveWarning } from './leave-warning.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -340,6 +341,30 @@ document.addEventListener('DOMContentLoaded', () => {
         </ul>`);
   }
 
+  /* "More below ↓" — the menu is taller than most screens and nothing showed
+     it scrolls. A soft fade + a tappable hint sit at its bottom edge while
+     there's more to see, and disappear once the end is reached. */
+  if (sidebarNav) {
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'sidebar-more hidden';
+    more.innerHTML = `<span>More below</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>`;
+    more.setAttribute('aria-label', 'Scroll the menu to see more');
+    sidebarNav.after(more);
+    const update = () => {
+      const left = sidebarNav.scrollHeight - sidebarNav.scrollTop - sidebarNav.clientHeight;
+      more.classList.toggle('hidden', left <= 8);
+    };
+    more.addEventListener('click', () => sidebarNav.scrollBy({ top: sidebarNav.clientHeight * 0.7, behavior: 'smooth' }));
+    sidebarNav.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    new ResizeObserver(update).observe(sidebarNav);
+    // The sidebar slides in on phones — measure again once it's open.
+    document.getElementById('sidebar-toggle')?.addEventListener('click', () => setTimeout(update, 320));
+    setTimeout(update, 0);                       // after the Messages link below is added
+    window.addEventListener('load', update);     // after fonts / styles have settled
+  }
+
   /* "Parish → Messages" — chat with the parish office (../chat.js),
      with a count of office replies not read yet. */
   const annLink = document.querySelector('#sidebar a.sidebar-link[href="user-announcements.html"]');
@@ -387,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initExtToggles(); // phones: Ext. (Jr., III) box hidden behind an "Add extension" checkbox (name-utils.js)
   initBirthDateDropdowns(); // birth dates: Month / Day / Year dropdowns instead of the mm/dd/yyyy calendar (../date-dropdowns.js)
   mountPageInfo(pageFile); // "What can I do here?" box at the top of each page, main button on the right (page-info.js)
+  initLeaveWarning(); // refreshing / leaving with something typed but not sent asks first (leave-warning.js)
   labelTopBarIcons();
   addSkipLink();
   askAboutTextSize();
