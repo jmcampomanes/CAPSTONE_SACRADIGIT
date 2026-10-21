@@ -644,10 +644,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     2. NEW / EDIT ANNOUNCEMENT MODAL
+     2. NEW / EDIT ANNOUNCEMENT — full-page editor
+     Replaces the list view while open (was a pop-up
+     that lost everything on a stray outside click).
+     Opening it adds a history entry, so the browser's
+     Back button returns to the list; leaving with
+     unsaved changes asks first.
   ------------------------------------------ */
-  const modal          = document.getElementById('announcement-modal');
+  const listView       = document.getElementById('ann-list-view');
+  const editorView     = document.getElementById('ann-editor-view');
   const modalTitle       = document.getElementById('announcement-modal-title');
+  const EDITOR_HASH = '#editor';
+  let editorDirty = false;
+
+  editorView.addEventListener('input', () => { editorDirty = true; });
+  editorView.addEventListener('change', () => { editorDirty = true; });
+
+  function openEditor() {
+    editorDirty = false;
+    listView.classList.add('hidden');
+    editorView.classList.remove('hidden');
+    if (location.hash !== EDITOR_HASH) history.pushState({ annEditor: true }, '', EDITOR_HASH);
+    window.scrollTo(0, 0);
+    titleInput.focus({ preventScroll: true });
+  }
+
+  // Puts the list back. Doesn't touch history — see leaveEditor().
+  function showList() {
+    editorView.classList.add('hidden');
+    listView.classList.remove('hidden');
+    editorDirty = false;
+    window.scrollTo(0, 0);
+  }
+
+  const confirmDiscard = () => !editorDirty || confirm('Leave without saving? Your changes will be lost.');
+
+  // Back / Cancel / after saving: step back over the #editor history entry.
+  function leaveEditor({ force = false } = {}) {
+    if (editorView.classList.contains('hidden')) return;
+    if (!force && !confirmDiscard()) return;
+    editorDirty = false;
+    if (location.hash === EDITOR_HASH) history.back(); // popstate below shows the list
+    else showList();
+  }
+
+  window.addEventListener('popstate', () => {
+    if (editorView.classList.contains('hidden') || location.hash === EDITOR_HASH) return;
+    if (editorDirty && !confirm('Leave without saving? Your changes will be lost.')) {
+      history.pushState({ annEditor: true }, '', EDITOR_HASH); // stay put
+      return;
+    }
+    showList();
+  });
+
+  // Landed on (or refreshed) …#editor with nothing open: drop the stale hash.
+  if (location.hash === EDITOR_HASH) history.replaceState(null, '', location.pathname + location.search);
+
+  // Closing the tab / leaving the page with unsaved work.
+  window.addEventListener('beforeunload', (e) => {
+    if (editorDirty && !editorView.classList.contains('hidden')) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  document.getElementById('ann-editor-back').addEventListener('click', () => leaveEditor());
+  document.getElementById('ann-editor-cancel').addEventListener('click', () => leaveEditor());
   const submitBtn         = document.getElementById('announcement-submit');
   const draftBtn           = document.getElementById('announcement-save-draft');
   const titleInput          = document.getElementById('ann-title');
@@ -689,7 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
       note = document.createElement('p');
       note.id = 'ann-review-note';
       note.className = 'ann-review-note';
-      draftBtn.closest('.modal-footer').before(note);
+      draftBtn.closest('.ann-editor-footer').before(note);
     }
     note.textContent = 'Saved as a draft. The Head Admin reviews official announcements and publishes them.';
     note.classList.toggle('hidden', !needsReview);
@@ -802,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentMedia = [];
     renderMediaGrid();
     applyKindUI('announcement');
-    openModal(modal);
+    openEditor();
   });
 
   /* Prefill from the Media portal — Post Templates ("Use in
@@ -826,6 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
       startDateInput.value = prefill.startDate;
       submitBtn.textContent = 'Schedule Post';
     }
+    editorDirty = true; // handed-over text counts as unsaved work
   })();
 
   async function openEditModal(id) {
@@ -861,7 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
       existingMedia.map(async (m) => ({ ...m, previewUrl: await resolveMediaUrl(m.url) }))
     );
     renderMediaGrid();
-    openModal(modal);
+    openEditor();
   }
 
   async function uploadPendingMedia(mediaList) {
@@ -953,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ? (startDate > todayIso() ? `"${title}" scheduled for ${formatPlainDate(startDate)}.` : `"${title}" published.`)
           : `"${title}" saved as draft${kind === 'announcement' && !isHeadAdmin() ? ' — the Head Admin will review it' : ''}.`);
       }
-      closeModal(modal);
+      leaveEditor({ force: true });
     } catch (err) {
       console.error('Failed to save announcement:', err);
       showToast(err.message || "Couldn't save the announcement.", true);
@@ -1046,17 +1106,17 @@ document.addEventListener('DOMContentLoaded', () => {
      4. MODAL HELPERS (open/close/escape)
   ------------------------------------------ */
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => { closeModal(modal); closeModal(unpublishModal); closeModal(deleteModal); closeModal(detailModal); });
+    btn.addEventListener('click', () => { closeModal(unpublishModal); closeModal(deleteModal); closeModal(detailModal); });
   });
 
-  [modal, unpublishModal, deleteModal, detailModal].forEach(m => {
+  [unpublishModal, deleteModal, detailModal].forEach(m => {
     m.addEventListener('click', (e) => {
       if (e.target === m) closeModal(m);
     });
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeModal(modal); closeModal(unpublishModal); closeModal(deleteModal); closeModal(detailModal); }
+    if (e.key === 'Escape') { closeModal(unpublishModal); closeModal(deleteModal); closeModal(detailModal); }
   });
 
   function openModal(m) {

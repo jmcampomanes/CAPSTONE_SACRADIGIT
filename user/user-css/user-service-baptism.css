@@ -1,0 +1,16 @@
+/* ============================================
+   SacraDigit — Baptism Styles
+   Page-specific styles for user-service-baptism.html.
+   Shared form styles: user-request-service.css
+   ============================================ */
+
+:root {
+  --page-accent: #5b5fa8;
+  --page-accent-soft: rgba(139,143,199,0.16);
+}
+
+/* ---------- Page header ---------- */
+.page-header-icon {
+  background-color: var(--page-accent-soft);
+  color: var(--page-accent);
+}

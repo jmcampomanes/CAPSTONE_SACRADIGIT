@@ -1,0 +1,16 @@
+/* ============================================
+   SacraDigit — Anointing of the Sick Styles
+   Page-specific styles for user-service-anointing-of-the-sick.html.
+   Shared form styles: user-request-service.css
+   ============================================ */
+
+:root {
+  --page-accent: #15803d;
+  --page-accent-soft: rgba(21,128,61,0.1);
+}
+
+/* ---------- Page header ---------- */
+.page-header-icon {
+  background-color: var(--page-accent-soft);
+  color: var(--page-accent);
+}

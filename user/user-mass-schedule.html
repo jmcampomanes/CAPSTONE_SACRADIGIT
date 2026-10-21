@@ -135,32 +135,44 @@
 
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
-        <!-- Mass type legend — explains what makes each color-coded badge
-             shown below (Daily/Sunday, Anticipated, Special, Baptism)
-             different from the others. -->
-        <div class="mass-legend" id="mass-type-legend"></div>
-
-        <!-- Liturgical season banner -->
-        <div class="season-banner">
-          <div class="season-banner-left">
-            <span id="season-dot" class="season-dot"></span>
-            <div>
-              <p id="season-name" class="season-name"></p>
-              <p id="season-week" class="season-week"></p>
-            </div>
+        <!-- Regular Weekly Mass Schedule — first, since "what time is Mass?"
+             is why people open this page. Today's row is highlighted. -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Regular Weekly Mass Schedule</h2>
           </div>
-          <div class="season-progress-wrap">
-            <div class="season-progress-track">
-              <div id="season-progress-fill" class="season-progress-fill"></div>
-            </div>
-            <p id="season-progress-label" class="season-progress-label"></p>
+          <div class="overflow-x-auto">
+            <table class="user-table weekly-table">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Time(s)</th>
+                  <th>Mass Type</th>
+                </tr>
+              </thead>
+              <tbody id="weekly-tbody">
+                <!-- Rows injected by user-mass-schedule.js -->
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Date picker -->
-        <div class="flex items-center gap-2.5 flex-wrap">
-          <label for="date-picker" class="sr-only">Select date</label>
-          <input type="date" id="date-picker" class="date-input" />
+        <!-- Day picker: ‹ [Tuesday, October 21] › Today. The real date input
+             sits invisibly over the middle button, so tapping it opens the
+             phone's own calendar — no raw "mm/dd/yyyy" box on screen. -->
+        <div class="day-nav">
+          <button id="btn-prev-day" type="button" class="day-nav-arrow" aria-label="Previous day">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <div class="day-nav-date">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span id="date-picker-label"></span>
+            <label for="date-picker" class="sr-only">Select date</label>
+            <input type="date" id="date-picker" class="day-nav-input" />
+          </div>
+          <button id="btn-next-day" type="button" class="day-nav-arrow" aria-label="Next day">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
           <button id="btn-today" type="button" class="btn-today">Today</button>
         </div>
 
@@ -186,23 +198,25 @@
           </div>
         </div>
 
-        <!-- Regular Weekly Mass Schedule -->
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Regular Weekly Mass Schedule</h2>          </div>
-          <div class="overflow-x-auto">
-            <table class="user-table weekly-table">
-              <thead>
-                <tr>
-                  <th>Day</th>
-                  <th>Time(s)</th>
-                  <th>Mass Type</th>
-                </tr>
-              </thead>
-              <tbody id="weekly-tbody">
-                <!-- Rows injected by user-mass-schedule.js -->
-              </tbody>
-            </table>
+        <!-- Mass type legend — explains the color-coded badges in the
+             Date's Schedule above (Daily/Sunday, Anticipated, Special, Baptism). -->
+        <div class="mass-legend" id="mass-type-legend"></div>
+
+        <!-- Liturgical season banner — background info, so it goes last
+             (hidden on phones, see user-mass-schedule.css). -->
+        <div class="season-banner">
+          <div class="season-banner-left">
+            <span id="season-dot" class="season-dot"></span>
+            <div>
+              <p id="season-name" class="season-name"></p>
+              <p id="season-week" class="season-week"></p>
+            </div>
+          </div>
+          <div class="season-progress-wrap">
+            <div class="season-progress-track">
+              <div id="season-progress-fill" class="season-progress-fill"></div>
+            </div>
+            <p id="season-progress-label" class="season-progress-label"></p>
           </div>
         </div>
 

@@ -339,6 +339,25 @@
   background-color: #ffffff;
 }
 
+/* Parishioner Messages: a big "Send" button with the word on it, not just an arrow. */
+.chat-send.chat-send-labeled {
+  width: auto;
+  height: 2.75rem;
+  min-width: 5.5rem;
+  padding: 0 1.25rem;
+  gap: 0.45rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+}
+.chat-composer:has(.chat-send-labeled) { align-items: flex-end; }
+.chat-composer:has(.chat-send-labeled) .chat-input { min-height: 2.75rem; }
+
+/* Keyboard hint means nothing on a touchscreen — hide it on phones/tablets. */
+@media (hover: none) and (pointer: coarse), (max-width: 640px) {
+  .chat-note-keys { display: none; }
+}
+
 .chat-layout.with-hero {
   height: calc(100vh - 20rem);
 }

@@ -228,6 +228,10 @@ body {
 
 .lg-foot { margin: 1rem 0 0; font-size: 0.8125rem; color: var(--lg-muted); text-align: center; }
 
+/* Under the Sign In button: reset link + the parish office number. */
+.lg-help { margin: 0.875rem 0 0; font-size: 0.875rem; line-height: 1.5; color: var(--lg-muted); text-align: center; }
+.lg-help .lg-link { font-size: inherit; white-space: nowrap; }
+
 .lg-alert {
   margin-bottom: 1rem;
   padding: 0.65rem 0.8rem;

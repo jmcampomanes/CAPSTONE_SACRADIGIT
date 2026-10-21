@@ -26,9 +26,9 @@ import { watchFieldErrors, FIELD_ERROR_SELECTOR } from './field-messages.js';
 const HELP_CONTENT = {
   'user-messages.html': {
     title: 'Messages',
-    intro: 'Chat with the parish office — the Head Admin or the Secretary will reply here.',
+    intro: 'Chat with the parish office — a parish office staff member will reply here, usually within 1 day.',
     steps: [
-      'Type your question at the bottom and press Enter to send (Shift+Enter for a new line).',
+      'Type your question at the bottom and tap Send.',
       'Replies from the parish office show up here as soon as they are sent.',
       'A red number next to Messages in the menu means the office has replied and you haven’t read it yet.',
     ],
@@ -355,7 +355,12 @@ document.addEventListener('DOMContentLoaded', () => {
      Matches current page filename to each
      link's href so the right tab highlights.
   ------------------------------------------ */
-  const currentPage = window.location.pathname.split('/').pop() || 'user-dashboard.html';
+  // Each certificate's / service's own page (user-request-*-certificate.html,
+  // user-service-*.html) counts as its parent page here.
+  const pageFile = window.location.pathname.split('/').pop() || 'user-dashboard.html';
+  const currentPage = /^user-request-.+-certificate\.html$/.test(pageFile) ? 'user-request-certificate.html'
+    : /^user-service-.+\.html$/.test(pageFile) ? 'user-request-service.html'
+    : pageFile;
   document.querySelectorAll('.sidebar-link').forEach(link => {
     const href = link.getAttribute('href');
     if (href === currentPage) {

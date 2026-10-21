@@ -143,27 +143,15 @@
           <button type="button" class="ann-kind-tab active" role="tab" aria-selected="true" data-kind="announcement">Announcements <span class="ann-kind-count" id="count-announcement">0</span></button>
           <button type="button" class="ann-kind-tab" role="tab" aria-selected="false" data-kind="post">Updates <span class="ann-kind-count" id="count-post">0</span></button>
         </div>
+        <!-- What the selected tab holds (text set by user-announcements.js) -->
+        <p id="ann-kind-hint" class="ann-kind-hint">Official notices from the parish office.</p>
 
-        <!-- Search + filter bar -->
+        <!-- Search only — the audience filter + Clear button were staff tools; each card still shows its audience tag. -->
         <div class="ann-filter-bar">
           <div class="ann-search-wrap">
             <svg class="w-4 h-4 ann-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-            <input id="search-input" type="text" placeholder="Search announcements…" class="ann-search-input" />
+            <input id="search-input" type="search" placeholder="Search announcements…" class="ann-search-input" aria-label="Search announcements" />
           </div>
-          <div class="shrink-0">
-            <select id="audience-filter" class="ann-filter-select">
-              <option value="">All Audiences</option>
-              <option value="All Parishioners">All Parishioners</option>
-              <option value="Youth Ministry">Youth Ministry</option>
-              <option value="Lectors &amp; Commentators">Lectors &amp; Commentators</option>
-              <option value="Choir">Choir</option>
-              <option value="Catechists">Catechists</option>
-            </select>
-          </div>
-          <button id="btn-clear" type="button" class="ann-clear-btn">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
-            Clear
-          </button>
         </div>
 
         <!-- Results count -->
@@ -176,7 +164,7 @@
         <div id="ann-empty" class="empty-state hidden panel py-16">
           <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
           <p class="text-sm font-medium text-gray-600">No announcements found</p>
-          <p class="text-xs text-gray-400 mt-1">Try a different search or clear your filters.</p>
+          <p class="text-xs text-gray-400 mt-1">Try a different search.</p>
         </div>
 
         <!-- Detail modal -->

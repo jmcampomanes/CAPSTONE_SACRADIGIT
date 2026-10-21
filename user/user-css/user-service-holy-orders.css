@@ -1,0 +1,16 @@
+/* ============================================
+   SacraDigit — Holy Orders Styles
+   Page-specific styles for user-service-holy-orders.html.
+   Shared form styles: user-request-service.css
+   ============================================ */
+
+:root {
+  --page-accent: #c2701c;
+  --page-accent-soft: rgba(194,112,28,0.14);
+}
+
+/* ---------- Page header ---------- */
+.page-header-icon {
+  background-color: var(--page-accent-soft);
+  color: var(--page-accent);
+}

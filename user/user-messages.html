@@ -149,7 +149,7 @@
               <span class="chat-avatar">PO</span>
               <div>
                 <p class="chat-pane-title">Parish Office</p>
-                <p class="chat-pane-sub">The Head Admin or the Secretary will reply here</p>
+                <p class="chat-pane-sub">A parish office staff member will reply here, usually within 1 day.</p>
               </div>
             </div>
             <div id="chat-empty" class="chat-empty">
@@ -160,9 +160,10 @@
             <div>
               <div class="chat-composer">
                 <textarea id="chat-input" class="chat-input" rows="1" maxlength="1000" placeholder="Write a message…" aria-label="Message"></textarea>
-                <button type="button" id="chat-send" class="chat-send" aria-label="Send"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg></button>
+                <button type="button" id="chat-send" class="chat-send chat-send-labeled"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>Send</button>
               </div>
-              <p class="chat-note">Enter to send · Shift+Enter for a new line</p>
+              <!-- Keyboard shortcut hint: computers only (hidden on phones/tablets, see chat.css). -->
+              <p class="chat-note chat-note-keys">Enter to send · Shift+Enter for a new line</p>
             </div>
           </div>
         </div>

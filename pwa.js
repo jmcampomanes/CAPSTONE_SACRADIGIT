@@ -49,7 +49,8 @@ function dismissedThisVisit() {
 const VISITS_KEY = 'sacradigit_visits';
 const SHOWN_KEY = 'sacradigit_install_shown';
 const path = window.location.pathname;
-const isSignIn = /\/login\.html$/.test(path);
+// Sign In is the site root (index.html); login.html kept for old links.
+const isSignIn = /^\/(index\.html|login\.html)?$/.test(path);
 const isParishioner = /\/user\/[^/]*$/.test(path);
 const isParishionerHome = /\/user\/user-dashboard\.html$/.test(path);
 
@@ -76,7 +77,8 @@ const fil = () => { try { return localStorage.getItem('sacradigit_lang') === 'fi
 
 // The browser's install prompt (Chrome / Edge / Android). It can be used once per page load.
 let deferredPrompt = null;
-const canInstall = () => !isInstalled() && (!!deferredPrompt || isIos());
+// Never on Sign In: people there just want to get into the portal.
+const canInstall = () => !isSignIn && !isInstalled() && (!!deferredPrompt || isIos());
 
 // iPad Safari keeps Share at the top right; iPhone at the bottom of the screen.
 const iosSteps = () => (isIpad()

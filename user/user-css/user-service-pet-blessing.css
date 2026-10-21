@@ -1,0 +1,16 @@
+/* ============================================
+   SacraDigit — Pet Blessing Styles
+   Page-specific styles for user-service-pet-blessing.html.
+   Shared form styles: user-request-service.css
+   ============================================ */
+
+:root {
+  --page-accent: #a16207;
+  --page-accent-soft: rgba(161,98,7,0.14);
+}
+
+/* ---------- Page header ---------- */
+.page-header-icon {
+  background-color: var(--page-accent-soft);
+  color: var(--page-accent);
+}

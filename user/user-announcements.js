@@ -26,8 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const annEmpty      = document.getElementById('ann-empty');
   const resultsLabel   = document.getElementById('results-label');
   const searchInput     = document.getElementById('search-input');
-  const audienceFilter   = document.getElementById('audience-filter');
-  const clearBtn          = document.getElementById('btn-clear');
+  const kindHint         = document.getElementById('ann-kind-hint');
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -39,6 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!input) return '';
     const d = new Date(input);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // "Sunday, October 18" — the year only when it isn't this year.
+  function formatFullDate(input) {
+    if (!input) return '';
+    const d = new Date(input);
+    const opts = { weekday: 'long', month: 'long', day: 'numeric' };
+    if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+    return d.toLocaleDateString('en-US', opts);
   }
 
   function audienceClass(audience) {
@@ -149,10 +157,15 @@ document.addEventListener('DOMContentLoaded', () => {
      are live today show: not before their Start Date, not after their
      End Date (Updates archive themselves after two weeks). */
   let activeKind = 'announcement';
+  const KIND_HINTS = {
+    announcement: 'Official notices from the parish office.',
+    post: 'Photos and news from the parish media team. Updates are removed after two weeks.',
+  };
   const kindTabs = document.querySelectorAll('.ann-kind-tab');
   kindTabs.forEach(tab => tab.addEventListener('click', () => {
     activeKind = tab.dataset.kind;
     kindTabs.forEach(t => { const on = t === tab; t.classList.toggle('active', on); t.setAttribute('aria-selected', String(on)); });
+    kindHint.textContent = KIND_HINTS[activeKind];
     renderGrid();
   }));
 
@@ -167,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const myToken = ++renderToken;
 
     const query   = searchInput.value.trim().toLowerCase();
-    const audience = audienceFilter.value;
 
     const live = announcements.filter(isLive);
     ['announcement', 'post'].forEach(k => {
@@ -177,8 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filtered = live.filter(a => {
       const matchKind    = parseMediaField(a.media).kind === activeKind;
       const matchQuery   = !query || a.title.toLowerCase().includes(query) || a.body.toLowerCase().includes(query);
-      const matchAudience = !audience || a.audience === audience;
-      return matchKind && matchQuery && matchAudience;
+      return matchKind && matchQuery;
     });
 
     filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -205,9 +216,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // user kept typing in the search box) — discard this stale pass.
     if (myToken !== renderToken) return;
 
+    // The newest one gets a big card at the top — unless she's searching,
+    // when every result should look the same.
+    const featureFirst = !query;
+
     grid.innerHTML = filtered.map((a, i) => {
       const { items, eventDate, eventTime, location } = parseMediaField(a.media);
       const cover = resolvedCovers[i];
+      const featured = featureFirst && i === 0;
 
       const coverHtml = cover
         ? (cover.type === 'video'
@@ -216,17 +232,19 @@ document.addEventListener('DOMContentLoaded', () => {
         : `<div class="post-card-cover-placeholder">${MEGAPHONE_ICON}</div>`;
 
       return `
-        <article class="post-card" data-id="${a.id}" role="button" tabindex="0" aria-label="Read announcement: ${escapeHtml(a.title)}">
+        <article class="post-card${featured ? ' post-card--featured' : ''}" data-id="${a.id}" role="button" tabindex="0" aria-label="Read announcement: ${escapeHtml(a.title)}">
           <div class="post-card-cover">
             ${coverHtml}
             ${items.length > 1 ? `<span class="post-card-media-count">${CAMERA_ICON}${items.length}</span>` : ''}
           </div>
           <div class="post-card-body">
+            ${featured ? `<p class="post-card-newest">Newest · ${formatFullDate(a.createdAt)}</p>` : ''}
             <p class="post-card-title">${escapeHtml(a.title)}</p>
             ${eventBarHtml(eventDate, location, eventTime)}
             <p class="post-card-excerpt">${escapeHtml(a.body)}</p>
+            ${featured ? '<span class="post-card-readmore">Read more ›</span>' : ''}
             <div class="post-card-meta">
-              <span class="announcement-date">${CALENDAR_ICON}${formatShortDate(a.createdAt)}</span>
+              <span class="announcement-date">${CALENDAR_ICON}${featured ? formatFullDate(a.createdAt) : formatShortDate(a.createdAt)}</span>
               <span class="ann-audience-tag ${audienceClass(a.audience)}">${escapeHtml(a.audience)}</span>
             </div>
           </div>
@@ -249,12 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   searchInput.addEventListener('input', renderGrid);
-  audienceFilter.addEventListener('change', renderGrid);
-  clearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    audienceFilter.value = '';
-    renderGrid();
-  });
 
 
   /* ------------------------------------------
@@ -293,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     detailTitle.textContent    = a.title;
     detailBody.innerHTML       = bodyParagraphsHtml(a.body);
-    detailDate.textContent     = formatShortDate(a.createdAt);
+    detailDate.textContent     = formatFullDate(a.createdAt);
     detailAudience.textContent = a.audience;
     detailAudience.className   = `ann-audience-tag ${audienceClass(a.audience)}`;
 

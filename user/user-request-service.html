@@ -137,30 +137,6 @@
 
       <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
 
-        <!-- ===== CONFIRMATION (after a request is submitted) — same idea as
-             Request a Certificate: what was booked, then where to track it. ===== -->
-        <section id="svc-success" class="svc-success hidden" aria-live="polite">
-          <div class="success-wrap">
-            <div class="success-icon">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            </div>
-            <div class="min-w-0">
-              <p class="success-title" id="svc-success-title" tabindex="-1">Request Submitted!</p>
-              <p class="success-sub" id="svc-success-desc"></p>
-            </div>
-          </div>
-          <div class="svc-success-card">
-            <div class="modal-detail-grid" id="svc-success-details"></div>
-            <div class="svc-success-actions">
-              <a href="user-requested-services.html" id="svc-success-track" class="btn-lavender">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                Track My Requested Services
-              </a>
-              <button type="button" id="svc-success-again" class="btn-secondary">Request Another Service</button>
-            </div>
-          </div>
-        </section>
-
         <!-- ===== MENU VIEW: browse services ===== -->
         <div id="menu-view">
 
@@ -193,63 +169,6 @@
         </div>
 
       </main>
-
-      <!-- ===== REQUEST SCREEN: full-screen form beside the sidebar, shown after a service is selected ===== -->
-      <section id="form-view" class="req-screen hidden" role="dialog" aria-modal="true" aria-labelledby="form-view-title">
-
-        <header class="req-screen-bar">
-          <button type="button" id="btn-back-to-menu" class="req-screen-back">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            Back
-          </button>
-          <div id="form-view-icon" class="svc-icon req-screen-icon"></div>
-          <div class="req-screen-heading">
-            <h2 class="req-screen-title" id="form-view-title">Request a Service</h2>
-            <p class="req-screen-sub" id="form-view-sub"></p>
-          </div>
-        </header>
-
-        <div class="req-screen-body" id="req-screen-body">
-          <div class="req-screen-cols">
-
-            <!-- Left: who / what the request is for -->
-            <div class="req-screen-col space-y-4">
-              <h3 class="req-screen-col-title">Details</h3>
-              <div id="svc-dynamic-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-              <div>
-                <label class="form-label" for="svc-contact">Contact Number <span class="text-red-500">*</span></label>
-                <input type="text" id="svc-contact" class="form-input" placeholder="e.g. 0917 123 4567" />
-              </div>
-              <div>
-                <label class="form-label" for="svc-notes">Additional Notes (optional)</label>
-                <textarea id="svc-notes" class="form-input" rows="3" placeholder="Any other details the parish office should know…"></textarea>
-              </div>
-              <div class="req-info-note">
-                <svg class="w-4 h-4 shrink-0 mt-0.5 text-lavender" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <p id="svc-booking-note" class="text-xs text-gray-600 leading-relaxed">These are the parish's fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "Requested Services."</p>
-              </div>
-            </div>
-
-            <!-- Right: when -->
-            <div class="req-screen-col space-y-4">
-              <h3 class="req-screen-col-title">Choose a Schedule <span class="text-red-500">*</span></h3>
-              <div>
-                <div id="svc-slot-picker" class="slot-picker"></div>
-                <p id="svc-slot-summary" class="slot-summary hidden"></p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <footer class="req-screen-footer">
-          <button type="button" id="btn-cancel-request" class="btn-secondary">Cancel</button>
-          <button type="button" id="svc-submit" class="btn-lavender req-submit-btn">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Submit Request
-          </button>
-        </footer>
-      </section>
     </div>
   </div>
 

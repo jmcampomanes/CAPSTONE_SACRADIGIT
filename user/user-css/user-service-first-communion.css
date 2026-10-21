@@ -1,0 +1,16 @@
+/* ============================================
+   SacraDigit — First Communion Styles
+   Page-specific styles for user-service-first-communion.html.
+   Shared form styles: user-request-service.css
+   ============================================ */
+
+:root {
+  --page-accent: #b5943e;
+  --page-accent-soft: rgba(201,168,76,0.16);
+}
+
+/* ---------- Page header ---------- */
+.page-header-icon {
+  background-color: var(--page-accent-soft);
+  color: var(--page-accent);
+}

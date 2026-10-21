@@ -124,6 +124,87 @@
   border-color: #9ca3af;
 }
 
+/* ---------- Day picker: ‹ [date] › Today ---------- */
+.day-nav {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.day-nav-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  flex-shrink: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  background-color: #ffffff;
+  color: #4b5563;
+  cursor: pointer;
+}
+.day-nav-arrow:hover { background-color: #f3f4f6; }
+
+/* Looks like a button; the invisible date input on top opens the phone's calendar. */
+.day-nav-date {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  background-color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  cursor: pointer;
+}
+.day-nav-date:hover { border-color: #8b8fc7; }
+.day-nav-date:focus-within {
+  border-color: #8b8fc7;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.15);
+}
+.day-nav-date > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.day-nav-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+/* Chrome/Edge: make the whole box open the calendar, not just its icon. */
+.day-nav-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  cursor: pointer;
+}
+
+/* ---------- Weekly table: today's row ---------- */
+.weekly-table tr.is-today td { background-color: rgba(139, 143, 199, 0.12); }
+.weekly-table tr.is-today td:first-child { box-shadow: inset 3px 0 0 #8b8fc7; }
+
+.today-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  vertical-align: 0.1em;
+  background-color: #5b5fa8;
+  color: #ffffff;
+}
+
 /* ---------- Mass list row ---------- */
 .mass-row {
   display: flex;
@@ -206,10 +287,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: #6c6fb0;
   background: none;
   border: 1px solid #d1d5db;
@@ -327,4 +406,7 @@
   .mass-row > .btn-reminder { margin-left: auto; }
   .weekly-table tbody td { white-space: normal; }
   .weekly-table .time-pill { white-space: nowrap; }
+  /* Season progress is background info — not worth the screen space on phones. */
+  .season-banner { display: none; }
+  .day-nav-date { padding: 0.6rem 0.5rem; font-size: 0.8125rem; }
 }

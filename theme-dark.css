@@ -2872,6 +2872,16 @@
 :root[data-theme="dark"] .announcement-date {
     color: #8b93a3
 }
+:root[data-theme="dark"] .ann-kind-hint {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .post-card--featured {
+    border-color: #3a4360
+}
+:root[data-theme="dark"] .post-card-newest,
+:root[data-theme="dark"] .post-card-readmore {
+    color: #a9abd1
+}
 :root[data-theme="dark"] .ann-audience-tag.all {
     color: #e1cc99
 }
@@ -3564,6 +3574,26 @@
 }
 :root[data-theme="dark"] .btn-today:hover {
     background-color: #242c3e
+}
+:root[data-theme="dark"] .day-nav-arrow,
+:root[data-theme="dark"] .day-nav-date {
+    border: 1px solid #2c3548;
+    color: #c4c9d3;
+    background-color: #1a2131
+}
+:root[data-theme="dark"] .day-nav-arrow:hover {
+    background-color: #242c3e
+}
+:root[data-theme="dark"] .day-nav-date:hover,
+:root[data-theme="dark"] .day-nav-date:focus-within {
+    border-color: #8b8fc7
+}
+:root[data-theme="dark"] .weekly-table tr.is-today td {
+    background-color: rgba(139, 143, 199, 0.16)
+}
+:root[data-theme="dark"] .today-tag {
+    background-color: #8b8fc7;
+    color: #0f1420
 }
 :root[data-theme="dark"] .mass-time-col {
     color: #a3b3d7

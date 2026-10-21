@@ -157,12 +157,15 @@ export function watchUnreadBadge(link, side, { threadId } = {}) {
   }, { threadId });
 }
 
-/** Enter sends, Shift+Enter adds a line; the box grows with the text. */
+/** Enter sends, Shift+Enter adds a line; the box grows with the text.
+    On touchscreens the keyboard's Enter key just adds a line — people
+    there use the Send button (and there's no Shift key to hold). */
+const isTouchOnly = () => window.matchMedia?.('(hover: none) and (pointer: coarse)').matches;
 export function wireComposer(textarea, onSend) {
   const grow = () => { textarea.style.height = 'auto'; textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px'; };
   textarea.addEventListener('input', grow);
   textarea.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); onSend(); }
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && !isTouchOnly()) { e.preventDefault(); onSend(); }
   });
   return { reset() { textarea.value = ''; grow(); } };
 }

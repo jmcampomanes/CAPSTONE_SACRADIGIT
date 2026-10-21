@@ -513,7 +513,150 @@
   background-color: #991616;
 }
 
-/* ---------- Media grid (New/Edit Announcement modal) ---------- */
+/* ---------- New / Edit Announcement — full-page editor ---------- */
+/* Full width of the content area — no max-width cap. */
+
+.ann-editor-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.875rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.25rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #5b5fa8;
+  cursor: pointer;
+}
+.ann-editor-back:hover { background-color: rgba(139, 143, 199, 0.1); color: #1e2a4a; }
+
+.ann-editor-header {
+  padding: 1.125rem 1.5rem;
+  border-bottom: 1px solid #f1f2f5;
+}
+
+.ann-editor-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Stacked by default (phones + tablets): writing first, then settings. */
+.ann-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ann-editor-main,
+.ann-editor-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  padding: 1.5rem;
+  min-width: 0;
+}
+
+.ann-editor-side {
+  border-top: 1px solid #f1f2f5;
+  background-color: #fbfbfd;
+}
+
+.ann-editor-group-title {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #374151;
+}
+.ann-editor-optional { font-weight: 500; text-transform: none; letter-spacing: 0; color: #9ca3af; }
+
+.ann-editor-group + .ann-editor-group {
+  padding-top: 1.125rem;
+  border-top: 1px solid #eceef3;
+}
+
+.ann-body-input { min-height: 12rem; resize: vertical; }
+
+/* Keep every box inside its column — nothing pokes past the card edge. */
+.ann-editor-main > *,
+.ann-editor-group,
+.ann-editor-group > *,
+.ann-editor .form-input,
+.ann-editor .dropzone { min-width: 0; max-width: 100%; }
+
+/* Field pairs (Start/End, Event Date/Time) sit side by side only when
+   their own column is wide enough — based on the column, not the screen. */
+.ann-editor-main,
+.ann-editor-group { container-type: inline-size; }
+
+.ann-field-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+@container (min-width: 30rem) {
+  .ann-field-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ann-field-full { grid-column: 1 / -1; }
+}
+
+/* Event time: hour + minute boxes share the row and shrink; the AM/PM
+   switch wraps under them if the cell is still too narrow. */
+.ann-editor .time-picker { flex-wrap: wrap; min-width: 0; }
+.ann-editor .time-picker .form-input { flex: 1 1 4.25rem; width: auto; min-width: 4.25rem; }
+
+/* Announcement / Post choice: two cards only when the column has room. */
+.ann-editor .ann-kind-switch { grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 26rem) {
+  .ann-editor .ann-kind-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Desktop: two equal halves. */
+@media (min-width: 1024px) {
+  .ann-editor-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ann-editor-main,
+  .ann-editor-side { padding: 1.75rem; }
+  .ann-editor-side { border-top: 0; border-left: 1px solid #f1f2f5; }
+  .ann-body-input { min-height: 18rem; }
+}
+
+/* Actions stay in reach at the bottom of the screen while scrolling a long form. */
+.ann-editor-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f2f5;
+  border-radius: 0 0 0.875rem 0.875rem;
+  background-color: #ffffff;
+}
+/* .panel clips overflow, which would stop the footer from sticking. */
+.ann-editor-card { overflow: visible; }
+
+:root[data-theme="dark"] .ann-editor-back { color: #a9abd1; }
+:root[data-theme="dark"] .ann-editor-back:hover { background-color: #242c3e; color: #f1f3f7; }
+:root[data-theme="dark"] .ann-editor-header,
+:root[data-theme="dark"] .ann-editor-footer { border-color: #2c3548; }
+:root[data-theme="dark"] .ann-editor-title { color: #a3b3d7; }
+:root[data-theme="dark"] .ann-editor-footer { background-color: #1a2131; }
+:root[data-theme="dark"] .ann-editor-side { background-color: #161c2a; border-color: #2c3548; }
+:root[data-theme="dark"] .ann-editor-group + .ann-editor-group { border-color: #2c3548; }
+:root[data-theme="dark"] .ann-editor-group-title { color: #c4c9d3; }
+
+@media (max-width: 640px) {
+  .ann-editor-header, .ann-editor-main, .ann-editor-side { padding-left: 1rem; padding-right: 1rem; }
+  .ann-editor-footer { padding: 0.75rem 1rem; }
+  .ann-editor-footer > button { flex: 1 1 auto; }
+}
+
+/* ---------- Media grid (New/Edit Announcement editor) ---------- */
 .ann-media-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));

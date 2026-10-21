@@ -1,0 +1,16 @@
+/* ============================================
+   SacraDigit — Baccalaureate Mass Styles
+   Page-specific styles for user-service-baccalaureate-mass.html.
+   Shared form styles: user-request-service.css
+   ============================================ */
+
+:root {
+  --page-accent: #1d4ed8;
+  --page-accent-soft: rgba(29,78,216,0.12);
+}
+
+/* ---------- Page header ---------- */
+.page-header-icon {
+  background-color: var(--page-accent-soft);
+  color: var(--page-accent);
+}

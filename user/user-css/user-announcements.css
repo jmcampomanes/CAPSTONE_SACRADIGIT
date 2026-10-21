@@ -92,6 +92,13 @@
   border-color: #9ca3af;
 }
 
+/* One line under the Announcements / Updates tabs saying what each holds. */
+.ann-kind-hint {
+  margin-top: -0.75rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
 /* ---------- Card grid ---------- */
 .ann-full-grid {
   display: grid;
@@ -251,14 +258,13 @@
   font-weight: 600;
 }
 
+/* 12px, normal case — the old 10px all-caps tag was hard to read. */
 .ann-audience-tag {
   display: inline-flex;
   align-items: center;
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
   white-space: nowrap;
   max-width: 10rem;
@@ -274,6 +280,55 @@
 .ann-audience-tag.ministry {
   background-color: rgba(139, 143, 199, 0.18);
   color: #5b5fa8;
+}
+
+/* ---------- Newest announcement: one big card across the whole row ---------- */
+.post-card--featured {
+  grid-column: 1 / -1;
+  border-color: #dfe1f0;
+}
+
+.post-card--featured .post-card-body { padding: 1.1rem 1.25rem 1.25rem; }
+
+.post-card-newest {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #5b5fa8;
+  margin-bottom: 0.3rem;
+}
+
+.post-card--featured .post-card-title {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.post-card--featured .post-card-excerpt {
+  font-size: 0.9375rem;
+  color: #4b5563;
+  margin-top: 0.5rem;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  flex: 0 0 auto;
+}
+
+.post-card-readmore {
+  margin-top: 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #5b5fa8;
+}
+
+.post-card--featured .announcement-date { font-size: 0.8125rem; }
+
+/* Wider screens: photo on the left, text on the right. */
+@media (min-width: 768px) {
+  .post-card--featured { flex-direction: row; }
+  .post-card--featured .post-card-cover { flex: 0 0 48%; aspect-ratio: auto; min-height: 15rem; }
+  .post-card--featured .post-card-body { flex: 1; padding: 1.5rem 1.75rem; justify-content: center; }
+  .post-card--featured .post-card-title { font-size: 1.5rem; }
+  .post-card--featured .post-card-meta { margin-top: auto; }
 }
 
 /* ---------- Announcement detail modal (full post preview) ---------- */
