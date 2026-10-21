@@ -16,6 +16,7 @@
 
 import { client } from '../amplify-init.js';
 import { uploadData, getUrl, remove, copy } from 'aws-amplify/storage';
+import { showToast, confirmDialog } from '../Sacradigit/admin-ui.js';
 
 const FOLDER = 'media';
 const VIDEO_EXT = /\.(mp4|webm|mov|m4v|avi|mkv)$/i;
@@ -73,23 +74,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const tagField = document.getElementById('media-tag');
   const fileField = document.getElementById('media-file');
   const fileNameEl = document.getElementById('media-file-name');
+  const progressEl = document.getElementById('media-upload-progress');
+
+  // Videos can be hundreds of MB: show how far the upload is, so a slow one isn't mistaken for a stuck one.
+  function uploadWithProgress(path, file) {
+    const bar = progressEl.querySelector('.upload-progress-bar > span');
+    const text = progressEl.querySelector('.upload-progress-text');
+    const paint = (done, total) => {
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      bar.style.width = `${pct}%`;
+      progressEl.setAttribute('aria-valuenow', String(pct));
+      text.textContent = `${pct}% · ${formatBytes(done)} of ${formatBytes(total)} · keep this page open`;
+    };
+    progressEl.classList.remove('hidden');
+    paint(0, file.size);
+    return uploadData({
+      path, data: file,
+      options: { contentType: file.type, onProgress: ({ transferredBytes, totalBytes }) => paint(transferredBytes, totalBytes || file.size) },
+    }).result.finally(() => progressEl.classList.add('hidden'));
+  }
   const urlField = document.getElementById('media-url');
 
-  const toast = document.getElementById('toast');
-  let toastTimer = null;
 
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    const msgEl = toast.querySelector('.toast-message');
-    if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('show'));
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 200);
-    }, 3000);
-  }
 
   /* Signed S3 URLs expire, so resolve at render time and cache briefly
      (same approach as Sacradigit/announcements.js). */
@@ -240,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let bytes = old.bytes || 0;
         if (file) {
           url = `cloudFiles/${FOLDER}/${encodeURIComponent(tag)}/${Date.now()}_${file.name}`;
-          await uploadData({ path: url, data: file, options: { contentType: file.type } }).result;
+          await uploadWithProgress(url, file);
           bytes = file.size;
         } else if (link && link !== old.url) {
           url = link;
@@ -276,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let bytes = 0;
       if (file) {
         url = `cloudFiles/${FOLDER}/${encodeURIComponent(tag)}/${Date.now()}_${file.name}`;
-        await uploadData({ path: url, data: file, options: { contentType: file.type } }).result;
+        await uploadWithProgress(url, file);
         bytes = file.size;
       }
 
@@ -306,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const item = items.find(x => x.id === deleteId);
     if (!item) return;
-    if (!confirm(`Remove "${item.name}" from the library?`)) return;
+    if (!(await confirmDialog({ title: `Remove "${item.name}" from the library?`, message: 'The file is deleted from storage. This can’t be undone.', confirmLabel: 'Remove', tone: 'danger' }))) return;
 
     try {
       const { errors } = await client.models.CloudFile.delete({ id: deleteId });

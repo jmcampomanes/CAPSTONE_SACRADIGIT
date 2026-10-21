@@ -9,8 +9,29 @@
 
 import { client } from '../amplify-init.js';
 import { watchLivestream } from '../livestream-status.js';
+import { currentUser } from '../auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  // ---- Greeting: the signed-in person's name, and today's to-dos ----
+  const todo = { today: null, pending: null, live: null };
+  function paintGreeting() {
+    const me = currentUser() || {};
+    const first = me.firstName || (me.name || '').split(' ')[0];
+    const hour = new Date().getHours();
+    const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('media-greeting').textContent = first ? `${hello}, ${first}` : hello;
+    if (todo.today === null || todo.pending === null || todo.live === null) return;
+    const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+    document.getElementById('media-todo').textContent = [
+      n(todo.today, 'post scheduled today', 'posts scheduled today'),
+      n(todo.pending, 'coverage request waiting', 'coverage requests waiting'),
+      todo.live ? 'the livestream is LIVE' : 'not live',
+    ].join(' · ');
+  }
+  paintGreeting();
+  document.addEventListener('sacradigit:user', paintGreeting);
+  const todayIso = new Date().toLocaleDateString('en-CA');
 
   // ---- Content calendar: scheduled count + upcoming list ----
   const scheduledEl = document.getElementById('stat-scheduled');
@@ -26,6 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderCalendar(calendar) {
     scheduledEl.textContent = String(calendar.filter(c => c.status === 'scheduled').length);
+    todo.today = calendar.filter(c => c.status === 'scheduled' && (c.date || '').slice(0, 10) === todayIso).length;
+    paintGreeting();
     const upcoming = calendar
       .filter(c => c.status !== 'published')
       .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
@@ -65,6 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter(r => (r.status || 'pending') === 'pending')
       .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
     pendingStatEl.textContent = String(pending.length);
+    todo.pending = pending.length;
+    paintGreeting();
 
     if (pending.length === 0) {
       pendingEl.innerHTML = '<li class="empty-state">No pending requests right now.</li>';
@@ -92,6 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const liveStatEl = document.getElementById('stat-livestream');
   const liveSubEl = document.getElementById('stat-livestream-sub');
   watchLivestream(client, (livestream) => {
+    todo.live = !!livestream.isLive;
+    paintGreeting();
     if (livestream.isLive) {
       liveStatEl.textContent = 'Live';
       liveStatEl.style.color = '#dc2626';

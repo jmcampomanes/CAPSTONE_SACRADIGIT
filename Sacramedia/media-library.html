@@ -220,6 +220,10 @@
                   <span id="media-file-name">No file chosen</span>
                 </label>
                 <input type="file" id="media-file" class="hidden" accept="image/*,video/*" />
+                <div id="media-upload-progress" class="upload-progress hidden" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <div class="upload-progress-bar"><span></span></div>
+                  <p class="upload-progress-text"></p>
+                </div>
               </div>
               <div>
                 <label class="form-label" for="media-url">Or paste a link (Drive, YouTube, Facebook)</label>

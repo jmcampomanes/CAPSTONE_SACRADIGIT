@@ -13,6 +13,7 @@ import { client } from '../amplify-init.js';
 import { SERVICE_CATEGORIES, SERVICE_TYPES } from '../service-catalog.js';
 import { DEFAULT_SERVICE_SCHEDULES, listServiceSlots, timeToMinutes } from '../service-schedule.js';
 import { escapeHtml, showToast, logItAction } from './itech-shell.js';
+import { confirmDialog } from '../Sacradigit/admin-ui.js';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const listEl = document.getElementById('ss-list');
@@ -199,7 +200,8 @@ async function save(name) {
 async function reset(name) {
   const existing = saved.get(name);
   if (!existing) return;
-  if (!confirm(`Reset ${name} to its built-in schedule?`)) return;
+  const sure = await confirmDialog({ title: `Reset ${name} to its built-in schedule?`, message: 'Your custom days and times for this service are removed. Bookings already made stay as they are.', confirmLabel: 'Reset schedule', tone: 'danger' });
+  if (!sure) return;
   try {
     const res = await client.models.ServiceSlot.delete({ id: existing.id });
     if (res.errors?.length) throw new Error(res.errors.map(er => er.message).join('; '));

@@ -15,8 +15,21 @@ import { guardPage, currentUserName } from '../auth.js';
 guardPage('itech');
 import { initUiPrefs } from '../ui-prefs.js';
 import { initExtToggles } from '../name-utils.js';
+import { labelTopBarIcons } from '../top-bar-labels.js';
+import { initTableCards } from '../table-cards.js';
 
 export const ITECH_USER = 'Sacra ITech'; // fallback when the name isn't known
+
+/* What each account role can actually do — these four groups (plus
+   parishioner) are the only thing that controls access (auth.js). */
+export const ROLE_ACCESS = {
+  parishioner: 'Parishioner portal only. No staff pages.',
+  staff: 'Records, certificate requests, bookings, messages, announcement drafts. Can’t approve, publish or delete.',
+  admin: 'Everything the Secretary can, plus approve and reject requests, publish announcements, delete records, and change Mass schedules and Parish Info.',
+  media: 'Content calendar, event coverage, media library, livestream, post templates, announcement drafts.',
+  itech: 'This IT portal: accounts and roles, backups, cloud files and storage, activity logs, service schedules. Can change anyone’s access.',
+};
+export const ELEVATED = new Set(['admin', 'itech']);
 
 /** Every data model in the app, grouped by the portal area that owns it. */
 export const DATA_MODULES = [
@@ -114,21 +127,9 @@ export function actionKind(action = '') {
   return '';
 }
 
-let toastTimer = null;
-export function showToast(message, isError = false) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  clearTimeout(toastTimer);
-  const msgEl = toast.querySelector('.toast-message');
-  if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-  toast.style.backgroundColor = isError ? '#b91c1c' : '#1e2a4a';
-  toast.classList.remove('hidden');
-  requestAnimationFrame(() => toast.classList.add('show'));
-  toastTimer = setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.classList.add('hidden'), 200);
-  }, 3500);
-}
+// One toast for every staff portal: errors stay until closed, success fades (../Sacradigit/admin-ui.js).
+export { showToast } from '../Sacradigit/admin-ui.js';
+import { openDialog } from '../Sacradigit/admin-ui.js';
 
 /**
  * Audit trail for IT actions (role changes, file deletions, exports).
@@ -156,6 +157,25 @@ export async function listAll(modelName) {
     nextToken = next;
   } while (nextToken);
   return items;
+}
+
+/**
+ * Permanent file delete: says how many archive records still point at the
+ * file, and asks for its name to be typed (an easy OK is too easy here).
+ */
+export async function confirmPermanentDelete(file) {
+  let linked = 0;
+  try {
+    if (file.url && !isExternalUrl(file.url)) linked = (await listAll('ParishRecord')).filter(r => r.fileURL === file.url).length;
+  } catch (err) { console.warn('Could not check linked records:', err); }
+  return openDialog({
+    title: `Delete “${file.name}” for good?`,
+    message: (linked ? `${linked} archive record${linked === 1 ? ' links' : 's link'} to this file and will lose ${linked === 1 ? 'its' : 'their'} scan. ` : '')
+      + 'It’s removed for everyone and can’t be undone.',
+    typeToConfirm: file.name,
+    confirmLabel: 'Delete permanently',
+    tone: 'danger',
+  });
 }
 
 /** Triggers a download of `text` as a file. */
@@ -204,6 +224,8 @@ export function wireModals(...modals) {
 function initShell() {
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
   initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
+  labelTopBarIcons(); // a word under each top-bar icon (../top-bar-labels.js)
+  initTableCards('table.records-table, table.acct-table'); // phones: rows as cards (../table-cards.js)
 
   // 1. Active sidebar link — matches the current page filename
   const currentPage = window.location.pathname.split('/').pop() || 'itech-dashboard.html';
@@ -264,7 +286,10 @@ function initShell() {
   const toastEl = document.getElementById('toast');
   if (toastEl) {
     toastEl.innerHTML = '<span class="toast-message"></span><button type="button" class="toast-dismiss" aria-label="Dismiss notification">&times;</button>';
-    toastEl.querySelector('.toast-dismiss').addEventListener('click', () => toastEl.classList.remove('show'));
+    toastEl.querySelector('.toast-dismiss').addEventListener('click', () => {
+      toastEl.classList.remove('show');
+      setTimeout(() => toastEl.classList.add('hidden'), 200);
+    });
   }
 }
 

@@ -18,7 +18,7 @@ import { uploadData, getUrl, remove } from 'aws-amplify/storage';
 import {
   STORAGE_FOLDERS, folderName, isExternalUrl, userFiles,
   escapeHtml, formatBytes, formatDateTime, timeAgo, showToast, logItAction,
-  openModal, closeModal, wireModals,
+  openModal, closeModal, wireModals, confirmPermanentDelete,
 } from './itech-shell.js';
 
 const $ = (id) => document.getElementById(id);
@@ -137,7 +137,7 @@ $('folder-files').addEventListener('click', async (e) => {
   const delId = e.target.closest('[data-delete]')?.dataset.delete;
   if (!delId) return;
   const f = files.find(x => x.id === delId);
-  if (!f || !confirm(`Permanently delete “${f.name}”? This removes it for everyone and can’t be undone.`)) return;
+  if (!f || !(await confirmPermanentDelete(f))) return;
   try {
     if (!isExternalUrl(f.url)) await remove({ path: f.url }).catch(err => console.warn('S3 object not removed (may already be gone):', err));
     const { errors } = await client.models.CloudFile.delete({ id: delId });

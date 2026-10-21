@@ -14,9 +14,11 @@
 
 import { client } from '../amplify-init.js';
 import { currentUser, ROLES } from '../auth.js';
-import { escapeHtml, showToast, logItAction } from './itech-shell.js';
+import { escapeHtml, showToast, logItAction, ROLE_ACCESS, ELEVATED } from './itech-shell.js';
+import { confirmDialog, openDialog } from '../Sacradigit/admin-ui.js';
 
 const ROLE_CHOICES = ['parishioner', 'staff', 'admin', 'media', 'itech'];
+
 
 const ready = () => !!(client.queries?.listUsers && client.mutations?.setUserRole && client.mutations?.createStaffUser && client.mutations?.setUserEnabled);
 const parse = (v) => (typeof v === 'string' ? JSON.parse(v) : v);
@@ -77,14 +79,14 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr data-username="${escapeHtml(u.username)}">
           <td class="font-medium">${escapeHtml(name)}${isMe ? ' <span class="acct-you">You</span>' : ''}</td>
           <td>${escapeHtml(u.email || '')}</td>
-          <td>
-            <select class="form-input acct-role-select" data-role-for="${escapeHtml(u.username)}" ${isMe ? 'disabled title="You can’t change your own role"' : ''}>
-              ${ROLE_CHOICES.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${escapeHtml(ROLES[r].label)}</option>`).join('')}
-            </select>
-          </td>
+          <td><span class="acct-role${ELEVATED.has(role) ? ' acct-role-elevated' : ''}">${escapeHtml(ROLES[role].label)}</span></td>
           <td><span class="acct-status ${statusClass}">${escapeHtml(statusLabel)}</span></td>
           <td class="text-right">
-            ${isMe ? '' : `<button type="button" class="btn-link ${u.enabled === false ? '' : 'danger'}" data-toggle-enabled="${escapeHtml(u.username)}">${u.enabled === false ? 'Enable' : 'Disable'}</button>`}
+            ${isMe ? '<span class="acct-self-note">Ask another IT member to change your own access</span>' : `
+              <div class="row-actions">
+                <button type="button" class="row-btn row-view" data-change-role="${escapeHtml(u.username)}">Change role…</button>
+                <button type="button" class="row-btn ${u.enabled === false ? 'row-view' : 'row-reject'}" data-toggle-enabled="${escapeHtml(u.username)}">${u.enabled === false ? 'Enable…' : 'Disable…'}</button>
+              </div>`}
           </td>
         </tr>`;
     }).join('');
@@ -92,36 +94,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('acct-search').addEventListener('input', render);
 
-  tbody.addEventListener('change', async (e) => {
-    const sel = e.target.closest('[data-role-for]');
-    if (!sel) return;
-    const username = sel.dataset.roleFor;
-    const u = accounts.find(a => a.username === username);
+  async function changeRole(u) {
     const before = roleOf(u);
-    const role = sel.value;
-    if (!confirm(`Change ${u.email} from ${ROLES[before].label} to ${ROLES[role].label}? They’ll get the new access the next time they sign in.`)) { sel.value = before; return; }
-    sel.disabled = true;
+    const role = await openDialog({
+      title: `Change ${u.email}’s role`,
+      select: {
+        label: 'New role',
+        value: before,
+        options: ROLE_CHOICES.map(r => ({ value: r, label: ROLES[r].label, hint: ROLE_ACCESS[r] })),
+      },
+      confirmLabel: 'Next',
+    });
+    if (!role || role === before) return;
+    const sure = await confirmDialog({
+      title: ELEVATED.has(role) ? `Give ${u.email} ${ROLES[role].label} access?` : `Change ${u.email} to ${ROLES[role].label}?`,
+      message: `${ROLES[role].label}: ${ROLE_ACCESS[role]}`,
+      detail: `${ROLES[before].label} → ${ROLES[role].label}. Takes effect the next time they sign in.`,
+      confirmLabel: ELEVATED.has(role) ? `Give ${ROLES[role].label} access` : 'Change role',
+      tone: ELEVATED.has(role) ? 'danger' : 'primary',
+    });
+    if (!sure) return;
     try {
-      const res = await client.mutations.setUserRole({ username, role });
+      const res = await client.mutations.setUserRole({ username: u.username, role });
       const err = failed(res) || (parse(res.data)?.ok === false && parse(res.data).message); if (err) throw new Error(err);
       u.groups = role === 'parishioner' ? [] : [role];
       logItAction('Change Role', `${u.email}: ${ROLES[before].label} → ${ROLES[role].label}`);
+      render();
       showToast(`${u.email} is now ${ROLES[role].label}.`);
     } catch (err) {
       console.error('Failed to change role:', err);
-      sel.value = before;
       showToast(err.message || 'Couldn’t change the role.', true);
-    } finally {
-      sel.disabled = false;
     }
-  });
+  }
 
   tbody.addEventListener('click', async (e) => {
+    const roleBtn = e.target.closest('[data-change-role]');
+    if (roleBtn) { changeRole(accounts.find(a => a.username === roleBtn.dataset.changeRole)); return; }
     const btn = e.target.closest('[data-toggle-enabled]');
     if (!btn) return;
     const u = accounts.find(a => a.username === btn.dataset.toggleEnabled);
     const enable = u.enabled === false;
-    if (!confirm(enable ? `Let ${u.email} sign in again?` : `Disable ${u.email}? They won’t be able to sign in until you enable the account again.`)) return;
+    const sure = await confirmDialog(enable
+      ? { title: `Let ${u.email} sign in again?`, message: `They’ll get ${ROLES[roleOf(u)].label} access back.`, confirmLabel: 'Enable account' }
+      : { title: `Disable ${u.email}?`, message: 'They won’t be able to sign in until the account is enabled again. Nothing they made is deleted.', confirmLabel: 'Disable account', tone: 'danger' });
+    if (!sure) return;
     btn.disabled = true;
     try {
       const res = await client.mutations.setUserEnabled({ username: u.username, enabled: enable });

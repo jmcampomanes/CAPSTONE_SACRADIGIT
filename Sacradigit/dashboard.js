@@ -27,34 +27,7 @@ function watchPendingPrayers(link) {
 // Adds the rotating sacred art to every navy page header (see sacred-art.js).
 import './sacred-art.js';
 import { labelTopBarIcons } from '../top-bar-labels.js';
-
-/* Phones: a wide table pushes its Status and Action columns off the right
-   edge. Each cell gets its column's name (data-label) so admin-shell.css
-   can show every row as a card instead; desktop keeps the table. */
-function initTableCards() {
-  const label = (table) => {
-    const heads = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
-    table.querySelectorAll('tbody tr').forEach(tr => {
-      const cells = [...tr.children];
-      if (cells.length !== heads.length) return; // "Loading…" / "No records" rows span every column
-      let primary = false;
-      cells.forEach((td, i) => {
-        const head = heads[i];
-        const isAction = /^actions?$/i.test(head) || td.querySelector('.row-actions');
-        td.classList.toggle('td-actions', !!isAction);
-        if (!head || isAction) { td.removeAttribute('data-label'); return; }
-        td.dataset.label = head;
-        if (!primary && !td.classList.contains('col-select')) { td.classList.add('td-primary'); primary = true; }
-      });
-    });
-  };
-  document.querySelectorAll('table.records-table').forEach(table => {
-    table.classList.add('has-cards');
-    label(table);
-    const body = table.querySelector('tbody');
-    if (body) new MutationObserver(() => label(table)).observe(body, { childList: true });
-  });
-}
+import { initTableCards } from '../table-cards.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for

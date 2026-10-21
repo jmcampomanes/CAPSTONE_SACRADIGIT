@@ -79,7 +79,8 @@ $('btn-export-all').addEventListener('click', async () => {
       recordCount: total,
       modules,
     }, null, 2));
-    logItAction('Export', `Full backup — ${total} records in ${Object.keys(modules).length} modules (JSON)`);
+    await logItAction('Export', `Full backup — ${total} records in ${Object.keys(modules).length} modules (JSON)`);
+    paintLastBackup();
     showToast(failed.length ? `Backup saved, but skipped: ${failed.join(', ')}.` : `Full backup saved — ${total.toLocaleString()} records.`, failed.length > 0);
   } catch (err) {
     console.error('Full backup failed:', err);
@@ -91,3 +92,31 @@ $('btn-export-all').addEventListener('click', async () => {
 });
 
 loadCounts();
+
+/* When was the last full backup? Read back from the activity log, and
+   nudge after a month. */
+const BACKUP_DUE_DAYS = 30;
+async function paintLastBackup() {
+  const el = $('backup-last');
+  try {
+    const last = (await listAll('AccessLog'))
+      .filter(l => l.action === 'Export' && (l.fileName || '').startsWith('Full backup'))
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0];
+    if (!last) {
+      el.textContent = '⚠ No full backup has been made yet. We suggest one a month.';
+      el.className = 'backup-last is-due';
+      return;
+    }
+    const days = Math.floor((Date.now() - new Date(last.createdAt).getTime()) / 86400000);
+    const when = new Date(last.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const ago = days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
+    const due = days >= BACKUP_DUE_DAYS;
+    el.textContent = `${due ? '⚠ ' : ''}Last full backup: ${when} by ${last.userName || 'IT'} (${ago}).${due ? ' Time for a new one.' : ''}`;
+    el.className = `backup-last${due ? ' is-due' : ''}`;
+  } catch (err) {
+    console.warn('Could not read the last backup date:', err);
+    el.textContent = '';
+  }
+}
+
+paintLastBackup();
