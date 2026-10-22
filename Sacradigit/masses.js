@@ -483,42 +483,111 @@ document.addEventListener('DOMContentLoaded', () => {
   const scheduleDateInput = document.getElementById('schedule-date');
   const scheduleConflict = document.getElementById('schedule-conflict');
   const scheduleSubmitBtn = document.getElementById('schedule-submit');
+  const scheduleTimeAdd = document.getElementById('schedule-time-add');
+  const scheduleTimeList = document.getElementById('schedule-time-list');
   const scheduleTime = createTimePicker(document.getElementById('schedule-time-picker'), { onChange: checkScheduleSlot });
 
-  /* Runs whenever the date or time changes: says straight away whether
-     that slot is free, and keeps Save disabled while it isn't. Returns
-     an error message, or '' when the slot can be booked. */
+  // Times added for this date — one Mass is saved per time, all at once.
+  let scheduleTimes = []; // "h:mm AM/PM" strings, chronologically sorted
+
+  const joinTimes = (list) => list.length < 3 ? list.join(' and ') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+
+  /* Why `time12` can't be booked on `date` (taken by a Mass already on that
+     date, or too close to one of `others` being added with it), or ''. */
+  function scheduleTimeProblem(date, time12, others) {
+    const minutes = to24h(time12);
+    const clashes = clashesWith(massesOnDate(date), minutes);
+    if (clashes.length) {
+      return `${time12} on ${formatShortDate(date)} is taken — it overlaps ${clashes.map(c => `the ${c.time} ${massName(c)}`).join(' and ')}. Masses need at least 1 hour between start times.`;
+    }
+    const near = clashesWith(others.filter(t => t !== time12).map(t => ({ time: t })), minutes);
+    if (near.length) {
+      return `${time12} is less than 1 hour from ${joinTimes(near.map(c => c.time))}, which you're also adding. Masses need at least 1 hour between start times.`;
+    }
+    return '';
+  }
+
+  function renderScheduleTimeChips(badTimes = []) {
+    scheduleTimeList.innerHTML = scheduleTimes.map((t, i) => `
+      <span class="name-chip${badTimes.includes(t) ? ' is-conflict' : ''}">
+        ${escapeHtml(t)}
+        <button type="button" class="name-chip-remove" data-remove-time="${i}" aria-label="Remove ${escapeHtml(t)}">×</button>
+      </span>
+    `).join('') || `<p class="text-xs text-gray-400">No times added yet.</p>`;
+  }
+
+  /* Runs whenever the date or a time changes: says straight away whether
+     the added times (and the one in the picker) are free, and keeps Save
+     disabled while any isn't. Returns an error message, or '' when every
+     time can be booked. */
   function checkScheduleSlot() {
     const date = scheduleDateInput.value;
-    const time12 = scheduleTime.value();
+    const picked = scheduleTime.value();
     let problem = '';
-    if (date && date < todayISO) {
-      problem = 'That date has already passed.';
-    } else if (date && time12) {
-      const clashes = clashesWith(massesOnDate(date), to24h(time12));
-      if (clashes.length) {
-        problem = `${time12} on ${formatShortDate(date)} is taken — it overlaps ${clashes.map(c => `the ${c.time} ${massName(c)}`).join(' and ')}. Masses need at least 1 hour between start times.`;
+    let pickedProblem = '';
+    const badTimes = [];
+    // Past dates are allowed (e.g. recording a Mass after the fact).
+    if (date) {
+      for (const t of scheduleTimes) {
+        const p = scheduleTimeProblem(date, t, scheduleTimes);
+        if (p) { badTimes.push(t); problem ||= p; }
+      }
+      if (picked && !scheduleTimes.includes(picked)) {
+        pickedProblem = scheduleTimeProblem(date, picked, scheduleTimes);
+        problem ||= pickedProblem;
       }
     }
+    renderScheduleTimeChips(badTimes);
+    const pending = picked && !scheduleTimes.includes(picked) ? [picked] : [];
+    const all = [...scheduleTimes, ...pending].sort((a, b) => to24h(a) - to24h(b));
     if (problem) {
       scheduleConflict.textContent = problem;
       scheduleConflict.classList.remove('hidden', 'is-ok');
-    } else if (date && time12) {
-      scheduleConflict.textContent = `${time12} on ${formatShortDate(date)} is free.`;
+    } else if (date && all.length) {
+      scheduleConflict.textContent = `${joinTimes(all)} on ${formatShortDate(date)} ${all.length > 1 ? 'are' : 'is'} free.${date < todayISO ? ' (This date has already passed — it will be added as a past Mass.)' : ''}`;
       scheduleConflict.classList.remove('hidden');
       scheduleConflict.classList.add('is-ok');
     } else {
       scheduleConflict.classList.add('hidden');
     }
+    scheduleTimeAdd.disabled = !!pickedProblem;
     scheduleSubmitBtn.disabled = !!problem;
+    scheduleSubmitBtn.textContent = all.length > 1 ? `Save ${all.length} Masses` : 'Save Mass';
     return problem;
   }
 
   scheduleDateInput.addEventListener('change', checkScheduleSlot);
 
+  scheduleTimeAdd.addEventListener('click', () => {
+    const time12 = scheduleTime.value();
+    if (!time12) { showToast('Pick an hour first, then press Add Time.', true); return; }
+    if (scheduleTimes.includes(time12)) { scheduleTime.reset(); checkScheduleSlot(); return; }
+    const date = scheduleDateInput.value;
+    if (date && scheduleTimeProblem(date, time12, scheduleTimes)) { checkScheduleSlot(); return; }
+    scheduleTimes.push(time12);
+    scheduleTimes.sort((a, b) => to24h(a) - to24h(b));
+    scheduleTime.reset();
+    checkScheduleSlot();
+  });
+
+  scheduleTimeList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-time]');
+    if (!btn) return;
+    scheduleTimes.splice(parseInt(btn.dataset.removeTime, 10), 1);
+    checkScheduleSlot();
+  });
+
+  function resetScheduleForm() {
+    scheduleTimes = [];
+    scheduleTime.reset();
+    document.getElementById('schedule-type').value = '';
+    document.getElementById('schedule-note').value = '';
+    document.getElementById('schedule-special').checked = false;
+  }
+
   document.getElementById('btn-schedule-mass').addEventListener('click', () => {
     scheduleDateInput.value = datePicker.value;
-    scheduleTime.reset();
+    resetScheduleForm();
     checkScheduleSlot();
     openModal(scheduleModal);
   });
@@ -538,20 +607,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('schedule-submit').addEventListener('click', async () => {
     const date    = scheduleDateInput.value;
-    const time12  = scheduleTime.value();
     const type    = document.getElementById('schedule-type').value;
     const note     = document.getElementById('schedule-note').value.trim();
     const isSpecial = document.getElementById('schedule-special').checked;
 
-    if (!date || !time12 || !type) {
-      showToast('Please fill in date, time, and mass type.', true);
-      return;
-    }
     // Last check against the latest data (another admin may have just booked it)
     const problem = checkScheduleSlot();
     if (problem) { showToast(problem, true); return; }
 
-    try {
+    // A time still sitting in the picker counts too, even without Add Time.
+    const picked = scheduleTime.value();
+    const times = [...new Set([...scheduleTimes, ...(picked ? [picked] : [])])].sort((a, b) => to24h(a) - to24h(b));
+
+    if (!date || !times.length || !type) {
+      showToast('Please fill in the date, at least one time, and the mass type.', true);
+      return;
+    }
+
+    scheduleSubmitBtn.disabled = true;
+    // One Mass record per time, all saved together.
+    const results = await Promise.allSettled(times.map(async (time12) => {
       const result = await client.models.Mass.create({
         date,
         time: time12,
@@ -564,21 +639,34 @@ document.addEventListener('DOMContentLoaded', () => {
         isSpecial,
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      return time12;
+    }));
+    scheduleSubmitBtn.disabled = false;
 
+    const saved = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+    const failed = times.filter(t => !saved.includes(t));
+
+    if (saved.length) {
       datePicker.value = date;
       renderDateSchedule();
-
-      closeModal(scheduleModal);
-      showToast(`Mass scheduled for ${formatShortDate(date)} at ${time12}.`);
-
-      scheduleTime.reset();
-      document.getElementById('schedule-type').value = '';
-      document.getElementById('schedule-note').value = '';
-      document.getElementById('schedule-special').checked = false;
-    } catch (err) {
-      console.error('Failed to schedule mass:', err);
-      showToast(err.message || "Couldn't schedule the mass.", true);
     }
+
+    if (!failed.length) {
+      closeModal(scheduleModal);
+      showToast(`${saved.length > 1 ? `${saved.length} Masses` : 'Mass'} scheduled for ${formatShortDate(date)} at ${joinTimes(saved)}.`);
+      resetScheduleForm();
+      return;
+    }
+
+    // Keep only the times that didn't save, so Save can simply be pressed again.
+    const firstError = results.find(r => r.status === 'rejected').reason;
+    console.error('Failed to schedule mass:', firstError);
+    scheduleTimes = failed;
+    scheduleTime.reset();
+    checkScheduleSlot();
+    showToast(saved.length
+      ? `Scheduled ${joinTimes(saved)}, but couldn't save ${joinTimes(failed)}. Press Save to try again.`
+      : (firstError?.message || "Couldn't schedule the mass."), true);
   });
 
 
