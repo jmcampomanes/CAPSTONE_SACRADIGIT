@@ -15,7 +15,7 @@
 
 import { client } from '../amplify-init.js';
 import { watchTakenSlots } from '../public-data.js';
-import { currentUserName } from '../auth.js';
+import { currentUserName, currentUser } from '../auth.js';
 import { watchClosures, closureOn } from '../service-schedule.js';
 import { stepHistory } from '../step-history.js';
 
@@ -676,6 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await client.models.FacilityBooking.create({
         requesterName: REQUESTER_NAME,
         facilityName: facility,
+        email: currentUser()?.email || undefined, // where booking emails go
         date: bkSelectedDateIso,
         startTime: formatTime12(startTime24),
         endTime: formatTime12(endTime24),

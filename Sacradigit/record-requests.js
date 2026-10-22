@@ -18,7 +18,7 @@ import { showToast, confirmDialog } from './admin-ui.js';
 // request carries their address in the Cognito "owner" field as
 // `${sub}::${email}` (identityClaim is cognito:username = email), same
 // convention as Sacradigit/blessings.js.
-const recipientEmail = (r) => (r?.owner || '').split('::')[1] || '';
+const recipientEmail = (r) => r?.email || (r?.owner || '').split('::')[1] || '';
 
 document.addEventListener('DOMContentLoaded', () => {
 

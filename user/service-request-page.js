@@ -421,6 +421,7 @@ export function initServiceRequestPage(serviceId) {
       const result = await client.models.Blessing.create({
         requesterName: REQUESTER_NAME,
         type: svc.name,
+        email: currentUser()?.email || undefined, // where approval/decline emails go
         contact: svcContactInput.value.trim(),
         notes: svcNotesInput.value.trim() || undefined,
         details: JSON.stringify({ ...details, [REMINDER_FIELD]: 'Email' }),
