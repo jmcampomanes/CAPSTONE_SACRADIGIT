@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="schedule-actions act-row">
             ${checkInBtn}
             <button type="button" class="act-btn schedule-details-btn" data-index="${idx}">View</button>
+            ${m.isRecurring ? '' : `<button type="button" class="act-btn schedule-edit-btn head-admin-only" data-index="${idx}">Edit</button>`}
           </div>
         </div>
       `;
@@ -226,6 +227,12 @@ document.addEventListener('DOMContentLoaded', () => {
         title: m.title || massTypeInfo(m.type)?.label || 'Holy Mass',
       });
       ciBtn.disabled = false;
+      return;
+    }
+    const editBtn = e.target.closest('.schedule-edit-btn');
+    if (editBtn) {
+      const m = currentDateMasses[parseInt(editBtn.dataset.index, 10)];
+      if (m) openEditMass(m);
       return;
     }
     const btn = e.target.closest('.schedule-details-btn');
@@ -507,6 +514,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Times added for this date — one Mass is saved per time, all at once.
   let scheduleTimes = []; // "h:mm AM/PM" strings, chronologically sorted
 
+  /* Edit mode: the same form edits one scheduled Mass (see openEditMass).
+     A Mass has one time, so a tapped/added time replaces it, and the Mass
+     being edited never counts as a clash with itself. */
+  let editingMass = null;
+  const scheduleTitleEl = scheduleModal.querySelector('.modal-title');
+  const otherTimes = () => (editingMass ? [] : scheduleTimes);
+
   /* Quick-add buttons under the time picker for the usual Mass times, so
      repeated scheduling is one tap per time. Monday–Saturday show the two
      daily times below; Sunday shows the Sunday times from the Regular
@@ -530,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isSunday = isSundayDate(date);
     scheduleQuickTimes.innerHTML = `<span class="quick-times-label">${isSunday ? 'Sunday times' : 'Usual times'}:</span>` + times.map((t) => {
       const added = scheduleTimes.some(s => sameTime(s, t));
-      const problem = added ? '' : scheduleTimeProblem(date, t, scheduleTimes);
+      const problem = added ? '' : scheduleTimeProblem(date, t, otherTimes());
       const label = t.replace(/^0/, '');
       return `<button type="button" class="quick-time${added ? ' is-added' : ''}" data-quick-time="${t}" aria-pressed="${added}"
         ${problem ? `disabled title="${escapeHtml(problem)}"` : `title="${added ? `Remove ${label}` : `Add ${label}`}"`}>
@@ -544,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const t = btn.dataset.quickTime;
     const i = scheduleTimes.findIndex(s => sameTime(s, t));
     if (i >= 0) scheduleTimes.splice(i, 1);
+    else if (editingMass) scheduleTimes = [t];
     else {
       scheduleTimes.push(t);
       scheduleTimes.sort((a, b) => to24h(a) - to24h(b));
@@ -565,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
      with it), or ''. */
   function scheduleTimeProblem(date, time12, others) {
     const minutes = to24h(time12);
-    const clashes = clashesWith(massesOnDate(date), minutes);
+    const clashes = clashesWith(massesOnDate(date).filter(m => m.id !== editingMass?.id), minutes);
     if (clashes.length) {
       return `${time12} on ${formatShortDate(date)} is taken — it overlaps ${clashes.map(c => `the ${c.time} ${massName(c)}`).join(' and ')}. Masses need at least 1 hour between start times.`;
     }
@@ -596,20 +611,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let pickedProblem = '';
     const badTimes = [];
     // Past dates are allowed (e.g. recording a Mass after the fact).
+    // Editing: a time in the picker replaces the Mass's current time.
+    const chipTimes = editingMass && picked ? [] : scheduleTimes;
     if (date) {
-      for (const t of scheduleTimes) {
-        const p = scheduleTimeProblem(date, t, scheduleTimes);
+      for (const t of chipTimes) {
+        const p = scheduleTimeProblem(date, t, otherTimes());
         if (p) { badTimes.push(t); problem ||= p; }
       }
-      if (picked && !scheduleTimes.includes(picked)) {
-        pickedProblem = scheduleTimeProblem(date, picked, scheduleTimes);
+      if (picked && !chipTimes.includes(picked)) {
+        pickedProblem = scheduleTimeProblem(date, picked, otherTimes());
         problem ||= pickedProblem;
       }
     }
     renderScheduleTimeChips(badTimes);
     renderQuickTimes(date);
-    const pending = picked && !scheduleTimes.includes(picked) ? [picked] : [];
-    const all = [...scheduleTimes, ...pending].sort((a, b) => to24h(a) - to24h(b));
+    const pending = picked && !chipTimes.includes(picked) ? [picked] : [];
+    const all = editingMass
+      ? (picked ? [picked] : scheduleTimes.slice(0, 1))
+      : [...scheduleTimes, ...pending].sort((a, b) => to24h(a) - to24h(b));
     if (problem) {
       scheduleConflict.textContent = problem;
       scheduleConflict.classList.remove('hidden', 'is-ok');
@@ -628,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     scheduleTimeAdd.disabled = !!pickedProblem;
     scheduleSubmitBtn.disabled = !!problem;
-    scheduleSubmitBtn.textContent = all.length > 1 ? `Save ${all.length} Masses` : 'Save Mass';
+    scheduleSubmitBtn.textContent = editingMass ? 'Save Changes' : all.length > 1 ? `Save ${all.length} Masses` : 'Save Mass';
     return problem;
   }
 
@@ -639,9 +658,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!time12) { showToast('Pick an hour first, then press Add Time.', true); return; }
     if (scheduleTimes.includes(time12)) { scheduleTime.reset(); checkScheduleSlot(); return; }
     const date = scheduleDateInput.value;
-    if (date && scheduleTimeProblem(date, time12, scheduleTimes)) { checkScheduleSlot(); return; }
-    scheduleTimes.push(time12);
-    scheduleTimes.sort((a, b) => to24h(a) - to24h(b));
+    if (date && scheduleTimeProblem(date, time12, otherTimes())) { checkScheduleSlot(); return; }
+    if (editingMass) scheduleTimes = [time12];
+    else {
+      scheduleTimes.push(time12);
+      scheduleTimes.sort((a, b) => to24h(a) - to24h(b));
+    }
     scheduleTime.reset();
     checkScheduleSlot();
   });
@@ -654,6 +676,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function resetScheduleForm() {
+    editingMass = null;
+    scheduleTitleEl.textContent = 'Schedule a Mass';
     scheduleTimes = [];
     scheduleTime.reset();
     document.getElementById('schedule-type').value = '';
@@ -697,6 +721,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!date || !times.length || !type) {
       showToast('Please fill in the date, at least one time, and the mass type.', true);
+      return;
+    }
+
+    // Editing one scheduled Mass: update it in place (a picked time replaces its time).
+    if (editingMass) {
+      const time12 = picked || scheduleTimes[0];
+      scheduleSubmitBtn.disabled = true;
+      try {
+        const result = await client.models.Mass.update({
+          id: editingMass.id,
+          date,
+          time: time12,
+          type,
+          title: note || massTypeInfo(type).label,
+          note: note || null,
+          isSpecial,
+        });
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        datePicker.value = date;
+        renderDateSchedule();
+        closeModal(scheduleModal);
+        showToast(`Mass updated — ${formatShortDate(date)} at ${time12}.`);
+        resetScheduleForm();
+      } catch (err) {
+        console.error('Failed to update mass:', err);
+        showToast(err.message || "Couldn't save the changes.", true);
+      } finally {
+        scheduleSubmitBtn.disabled = false;
+      }
       return;
     }
 
@@ -924,8 +977,16 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="mt-4 head-admin-only">
           <button type="button" class="btn-lavender" id="mass-details-replace">Replace with a Special Mass</button>
           <p class="text-xs text-gray-400 mt-2">Schedules a special Mass at ${escapeHtml(m.time)} on ${escapeHtml(formatShortDate(m.date))} instead of this regular Mass. Only this date changes — the weekly schedule stays the same.</p>
-        </div>` : ''}
+        </div>` : `
+        <div class="mt-4 head-admin-only">
+          <button type="button" class="btn-lavender" id="mass-details-edit">Edit Mass</button>
+        </div>`}
     `;
+
+    document.getElementById('mass-details-edit')?.addEventListener('click', () => {
+      closeModal(massDetailsModal);
+      openEditMass(m);
+    });
 
     document.getElementById('mass-details-replace')?.addEventListener('click', () => {
       closeModal(massDetailsModal);
@@ -933,6 +994,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     openModal(massDetailsModal);
+  }
+
+  // Opens Schedule Mass filled in with a scheduled Mass, to edit it in place.
+  function openEditMass(m) {
+    if (!m || m.isRecurring) return;
+    resetScheduleForm();
+    editingMass = m;
+    scheduleTitleEl.textContent = 'Edit Mass';
+    scheduleDateInput.value = m.date;
+    scheduleTimes = [padTime(m.time)];
+    document.getElementById('schedule-type').value = m.type || '';
+    // Title/Intention box: the admin's own text (saved as note, or a custom title)
+    const custom = m.note || (m.title && m.title !== massTypeInfo(m.type).label ? m.title : '');
+    document.getElementById('schedule-note').value = custom;
+    document.getElementById('schedule-special').checked = !!m.isSpecial;
+    checkScheduleSlot();
+    openModal(scheduleModal);
   }
 
   // Opens Schedule Mass already filled in to take over a regular Mass's slot.
