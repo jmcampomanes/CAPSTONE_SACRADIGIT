@@ -162,6 +162,7 @@ export function initServiceRequestPage(serviceId) {
   svcDynamicFields.innerHTML = svc.fields.map(f => {
     if (f.kind === 'name') return nameFieldsHtml(f.id, escapeHtml(f.label), { required: f.required, spanFull: !!f.span2 });
     if (f.kind === 'map') return '';
+    if (f.kind === 'note') return `<p class="svc-field-note sm:col-span-2">${escapeHtml(f.text)}</p>`;
     return `
     <div class="${f.span2 ? 'sm:col-span-2' : ''}">
       <label class="form-label" for="${f.id}">${escapeHtml(f.label)}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
@@ -381,6 +382,7 @@ export function initServiceRequestPage(serviceId) {
 
     const details = {};
     svc.fields.forEach(f => {
+      if (f.kind === 'note') return;
       if (f.kind === 'map') {
         const pin = pinMap?.getValue();
         if (pin) details[f.label] = formatLatLng(pin);

@@ -29,6 +29,7 @@ import { isHeadAdmin } from '../auth.js';
 import { createTimePicker, displayTime } from '../time-picker.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { showToast, confirmDialog } from './admin-ui.js';
+import { isBanns } from '../banns.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -893,6 +894,11 @@ document.addEventListener('DOMContentLoaded', () => {
   async function openEditModal(id) {
     const a = announcements.find(x => x.id === id);
     if (!a) return;
+    // Banns carry their Sundays in `media`, which this editor would drop on save.
+    if (isBanns(a)) {
+      showToast('Marriage banns are edited from the wedding booking on Schedule Offers.', true);
+      return;
+    }
     editTargetId = id;
     modalTitle.textContent = 'Edit Announcement';
     submitBtn.textContent = 'Save Changes';

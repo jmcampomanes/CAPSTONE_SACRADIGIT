@@ -722,3 +722,17 @@ body.svc-screen-open { overflow: hidden; }
 
 .prep-item.done .prep-mark { color: #15803d; }
 .prep-item.missing .prep-mark { color: #b91c1c; }
+
+/* A short notice inside a service form (catalog field kind 'note'), e.g. the
+   marriage banns notice on the Wedding form — see service-catalog.js. */
+.svc-field-note {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.625rem;
+  border-left: 3px solid #c9a84c;
+  background: rgba(201, 168, 76, 0.1);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+:root[data-theme="dark"] .svc-field-note { background: rgba(201, 168, 76, 0.12); color: #cfd4de; }

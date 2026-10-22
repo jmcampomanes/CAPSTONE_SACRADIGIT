@@ -26,6 +26,7 @@ import outputs from './amplify_outputs.json';
 import { mergeWeeklySchedule, dayKeyForDate, timeToMinutes } from './weekly-mass-schedule.js';
 import { massTypeInfo } from './mass-types.js';
 import { initUiPrefs, currentLang } from './ui-prefs.js';
+import { listBanns, isCurrent, timeOfAsking, fmtMonthDay, ORDINAL, THIS_PARISH } from './banns.js';
 
 Amplify.configure(outputs);
 const client = generateClient({ authMode: 'apiKey' });
@@ -149,6 +150,44 @@ client.models.WeeklyMassSchedule.list({ limit: 50 })
     renderFooterMasses(renderMasses(res.data || []));
   })
   .catch(err => console.warn('Weekly Mass schedule unavailable, showing defaults:', err));
+
+/* ---------- Marriage banns (published from Schedule Offers, see banns.js) ---------- */
+
+function bannsCard(b) {
+  const card = el('article', 'hp-bann');
+  if (!b.sundays || !b.groomName) { // edited outside the banns tools: show it as written
+    card.append(el('h3', 'hp-bann-names', b.title.replace(/^Marriage Banns:\s*/, '')), el('p', 'hp-bann-of', b.body));
+    return card;
+  }
+  const names = el('div', 'hp-bann-couple');
+  const person = (name, parish) => {
+    const p = el('div', 'hp-bann-person');
+    p.append(el('p', 'hp-bann-names', name), el('p', 'hp-bann-of', `of ${parish || THIS_PARISH}`));
+    return p;
+  };
+  names.append(person(b.groomName, b.groomParish), el('span', 'hp-bann-and', '&'), person(b.brideName, b.brideParish));
+  card.append(names);
+
+  const asking = timeOfAsking(b.sundays);
+  const list = el('ol', 'hp-bann-sundays');
+  b.sundays.forEach((s, i) => {
+    const li = el('li', asking === i + 1 ? 'is-now' : asking > i + 1 ? 'is-done' : '');
+    li.append(el('span', null, `${ORDINAL[i + 1]} asking`), el('strong', null, fmtMonthDay(s)));
+    list.append(li);
+  });
+  card.append(list);
+  return card;
+}
+
+listBanns(client)
+  .then(all => {
+    const current = all.filter(b => isCurrent(b));
+    if (!current.length) return;
+    $('hp-banns-list').replaceChildren(...current.map(bannsCard));
+    $('banns').hidden = false;
+    $('hp-nav-banns').hidden = false;
+  })
+  .catch(err => console.warn('Marriage banns unavailable:', err));
 
 /* ---------- Parish contact (footer, columbary call-out, about) ---------- */
 

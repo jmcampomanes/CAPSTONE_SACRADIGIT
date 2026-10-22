@@ -187,6 +187,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
     fieldsEl.innerHTML = svc.fields.map(f => {
       if (f.kind === 'name') return nameFieldsHtml(`walkin-f-${f.id}`, escapeHtml(f.label), { required: f.required, spanFull: true });
       if (f.kind === 'map') return pinFieldHtml(f);
+      if (f.kind === 'note') return `<p class="svc-field-note sm:col-span-2">${escapeHtml(f.text)}</p>`;
       return `
         <div class="${f.span2 ? 'sm:col-span-2' : ''}">
           <label class="form-label" for="walkin-f-${f.id}">${escapeHtml(f.label)}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
@@ -290,6 +291,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
     // Same details shape the parishioner form saves, keyed by field label.
     const details = {};
     svc.fields.forEach(f => {
+      if (f.kind === 'note') return;
       if (f.kind === 'map') { const pin = pinMap?.getValue(); if (pin) details[f.label] = formatLatLng(pin); return; }
       if (f.kind === 'name') { const n = readNameFields(`walkin-f-${f.id}`); if (!isNameEmpty(n)) details[f.label] = n; return; }
       const v = $(`walkin-f-${f.id}`).value.trim();

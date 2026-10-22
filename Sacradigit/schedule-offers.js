@@ -25,6 +25,7 @@ import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithCh
 import { currentUserName } from '../auth.js';
 import { logActivity } from '../activity-log.js';
 import { showToast } from './admin-ui.js';
+import { initBannsPanel } from './banns-panel.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -601,6 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tableGroupHtml('Reasons & Notes', noteRows);
 
     renderViewChecklist(o);
+    bannsPanel.render(o);
     viewRescheduleBtn.classList.toggle('hidden', !isReschedulable(o));
     viewCancelBookingBtn.classList.toggle('hidden', !isOpenBooking(o));
 
@@ -612,6 +614,9 @@ document.addEventListener('DOMContentLoaded', () => {
      their requirements here; each tick saves straight away and the
      parishioner sees it on their Requested Services page. */
   const viewChecklist = document.getElementById('view-checklist');
+
+  // Wedding bookings: publish / print / withdraw the marriage banns (./banns-panel.js)
+  const bannsPanel = initBannsPanel(document.getElementById('view-banns'), { showToast });
 
   function renderViewChecklist(o) {
     viewChecklist.innerHTML = hasChecklist(o.type) ? checklistHtml(o, { editable: true }) : '';
