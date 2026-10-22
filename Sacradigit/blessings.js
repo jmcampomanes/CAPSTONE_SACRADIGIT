@@ -1084,6 +1084,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!record) return;
 
+    const row = (label, value, wide) => `<div${wide ? ' style="grid-column: 1 / -1;"' : ''}><p class="so-detail-label">${escapeHtml(label)}</p><p class="so-detail-value">${escapeHtml(value)}</p></div>`;
+    if (section !== 'upcoming' && record.location) extraRows += row('Location', record.location);
+    if (record.contact) extraRows += row('Contact', record.contact);
+    // Everything else the parishioner filled in on the request form (vehicle/item
+    // description, address, names, etc.). Pin and reschedule note get their own rows below.
+    Object.entries(detailsOf(record))
+      .filter(([k]) => k !== MAP_PIN_LABEL && k !== RESCHEDULE_REASON_LABEL && k !== 'Preparation Checklist')
+      .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
+      .forEach(([k, v]) => { extraRows += row(k, v, v.length > 40); });
+    if (record.notes) extraRows += row('Notes', record.notes, true);
+
     // House Blessing requests can carry the exact spot the parishioner pinned
     const pin = detailsOf(record)[MAP_PIN_LABEL];
     if (pin) extraRows += `<div><p class="so-detail-label">Pinned Location</p><p class="so-detail-value"><a href="${escapeHtml(googleMapsUrl(pin))}" target="_blank" rel="noopener" class="map-pin-link">Open in Google Maps ↗</a></p></div>`;
