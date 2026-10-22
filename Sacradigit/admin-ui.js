@@ -29,6 +29,23 @@ export function showToast(message, isError = false) {
   }, SUCCESS_MS);
 }
 
+/**
+ * Shows `message` for a saved change, then — once the parishioner email
+ * (a notify* promise from ../email-notify.js) settles — says so if it
+ * didn't go out, so the office knows to reach them another way.
+ */
+export async function reportEmail(pending, who, message) {
+  if (message) showToast(message);
+  const outcome = await pending;
+  const name = who || 'the parishioner';
+  if (outcome === 'failed') {
+    showToast(`${message ? `${message} ` : ''}But the email to ${name} couldn’t be sent — please let them know another way.`, true);
+  } else if (outcome === 'no-email') {
+    showToast(`${message ? `${message} ` : ''}${name} has no email on file, so they weren’t emailed.`);
+  }
+  return outcome;
+}
+
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /**

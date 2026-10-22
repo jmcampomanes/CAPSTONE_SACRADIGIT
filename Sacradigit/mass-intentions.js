@@ -19,7 +19,8 @@ import { client } from '../amplify-init.js';
 import { printReport, printReadersSheet, printAltarSheets, tableHtml, esc } from '../print-report.js';
 import { formatFullName } from '../name-utils.js';
 import { createIntentionForm } from '../mass-intention-form.js';
-import { showToast } from './admin-ui.js';
+import { showToast, reportEmail } from './admin-ui.js';
+import { notifyMassIntentionUpdate } from '../email-notify.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -607,7 +608,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await client.models.MassIntention.update({ id: removeTargetId, status: removeNextStatus, cancelReason: reason });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(removeModal);
-      showToast(`Intention for ${it ? it.donor : 'donor'} ${removeNextStatus}.`);
+      const doneMsg = `Intention for ${it ? it.donor : 'donor'} ${removeNextStatus}.`;
+      // Only intentions a parishioner submitted have an email; office-logged ones just get the toast.
+      if (it?.email) {
+        const names = getNames(it).map(nameDisplay).join(', ');
+        reportEmail(notifyMassIntentionUpdate({
+          to: it.email, name: it.donor, status: 'cancelled', reason,
+          date: it.massDate ? new Date(it.massDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : '',
+          time: it.massTime, detailsLines: [[it.type, names].filter(Boolean).join(': ')].filter(Boolean),
+        }), it.donor, doneMsg);
+      } else showToast(doneMsg);
       removeTargetId = null;
     } catch (err) {
       console.error('Failed to cancel intention:', err);

@@ -17,7 +17,7 @@
 
 import { client } from '../amplify-init.js';
 import { watchClosures, closureOn, logBookingAction } from '../service-schedule.js';
-import { showToast } from './admin-ui.js';
+import { showToast, reportEmail } from './admin-ui.js';
 import { notifyServiceUpdate } from '../email-notify.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -61,6 +61,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bookings created before end time was added won't have one — fall
   // back to just the start time rather than showing "9:00 AM – ".
+  // Where a booking's emails go (saved when the parishioner booked) and how it reads in them.
+  function bookingEmailFields(b) {
+    return {
+      to: b.email || '', name: b.requesterName, serviceType: `${b.facilityName} booking`,
+      date: new Date(b.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+      time: b.startTime ? formatTimeRange(b) : '', location: b.facilityName,
+    };
+  }
+
   function formatTimeRange(b) {
     if (!b.startTime) return '—';
     return b.endTime ? `${b.startTime} – ${b.endTime}` : b.startTime;
@@ -178,16 +187,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const result = await client.models.FacilityBooking.update({ id: approveBtn.dataset.id, status: 'approved' });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        const doneMsg = `Booking for ${b ? b.facilityName : 'facility'} approved.`;
         if (b) {
-          notifyServiceUpdate({
-            to: b.email || (b.owner || '').split('::')[1] || '',
-            name: b.requesterName, serviceType: `${b.facilityName} booking`, status: 'approved',
-            date: new Date(b.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
-            time: b.startTime ? formatTimeRange(b) : '', location: b.facilityName,
+          reportEmail(notifyServiceUpdate({
+            ...bookingEmailFields(b), status: 'approved',
             detailsLines: [b.purpose && `Purpose: ${b.purpose}`, b.attendees && `Attendees: ${b.attendees}`].filter(Boolean),
-          });
-        }
-        showToast(`Booking for ${b ? b.facilityName : 'facility'} approved.`);
+          }), b.requesterName, doneMsg);
+        } else showToast(doneMsg);
       } catch (err) {
         console.error('Failed to approve:', err);
         showToast(err.message || "Couldn't approve booking.", true);
@@ -225,7 +231,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
       closeModal(cancelModal);
-      showToast(`Booking for ${removed ? removed.facilityName : 'facility'} cancelled.`);
+      const doneMsg = `Booking for ${removed ? removed.facilityName : 'facility'} cancelled.`;
+      // Office-made bookings (no requester email) just get the toast.
+      if (removed?.email) {
+        reportEmail(notifyServiceUpdate({ ...bookingEmailFields(removed), status: 'cancelled' }), removed.requesterName, doneMsg);
+      } else showToast(doneMsg);
       cancelTargetId = null;
     } catch (err) {
       console.error('Failed to cancel booking:', err);

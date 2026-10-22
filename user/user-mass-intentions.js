@@ -9,7 +9,7 @@
 import { client } from '../amplify-init.js';
 import { printReadersSheet } from '../print-report.js';
 import { loadCommunityIntentions } from '../public-data.js';
-import { currentUserName } from '../auth.js';
+import { currentUserName, currentUser } from '../auth.js';
 import { formatFullName } from '../name-utils.js';
 import { createIntentionForm } from '../mass-intention-form.js';
 
@@ -138,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async onSubmit({ people, records, offering, massDate }) {
       const results = await Promise.all(records.map(r => client.models.MassIntention.create({
         donor: DONOR_NAME,
+        email: currentUser()?.email || undefined, // where cancelled / offered emails go
         type: typeConfig(r.typeId).label,
         names: JSON.stringify([r.name]),
         massDate: massDate || undefined,

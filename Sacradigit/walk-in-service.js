@@ -22,6 +22,7 @@ import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, logBookin
 import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 import { createPinMap, formatLatLng } from '../pin-map.js';
 import { notifyServiceUpdate } from '../email-notify.js';
+import { reportEmail } from './admin-ui.js';
 
 // Added to every walk-in's details so staff can tell how it was booked.
 export const BOOKED_BY_LABEL = 'Booked By';
@@ -326,19 +327,19 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       logBookingAction(client, { action: 'Walk-in', record: result.data });
+      const bookedMsg = `${svc.name} booked for ${requesterName} — ${fmtLongDate(slot.date)} at ${slot.time}.`;
       if (email) {
         const detailsLines = Object.entries(details)
           .filter(([k]) => k !== BOOKED_BY_LABEL && k !== MAP_PIN_LABEL)
           .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
           .map(([k, v]) => `${k}: ${v}`)
           .concat(details[MAP_PIN_LABEL] ? [`Pinned Location: ${googleMapsUrl(details[MAP_PIN_LABEL])}`] : []);
-        notifyServiceUpdate({
+        reportEmail(notifyServiceUpdate({
           to: email, name: requesterName, serviceType: svc.name, status: 'scheduled',
           date: fmtLongDate(slot.date), time: slot.time, location: locationFor(svc.name, details),
           contact: $('walkin-contact').value.trim(), detailsLines,
-        });
-      }
-      showToast(`${svc.name} booked for ${requesterName} — ${fmtLongDate(slot.date)} at ${slot.time}.`);
+        }), requesterName, bookedMsg);
+      } else showToast(bookedMsg); // no email typed in — nothing to report
       close();
     } catch (err) {
       console.error('Failed to book walk-in service:', err);
