@@ -10,6 +10,7 @@ guardPage('parishioner');
 import { initPageHelp } from '../help-tutorial.js';
 import { initUiPrefs, currentLang, setAccessibility } from '../ui-prefs.js';
 import { labelTopBarIcons } from '../top-bar-labels.js';
+import { initTableCards } from '../table-cards.js';
 import { watchUnreadBadge } from '../chat.js';
 import { initParishAssistant } from '../assistant/parish-assistant.js';
 import { initNotifications } from '../notifications/parish-notifications.js';
@@ -414,6 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
   mountPageInfo(pageFile); // "What can I do here?" box at the top of each page, main button on the right (page-info.js)
   initLeaveWarning(); // refreshing / leaving with something typed but not sent asks first (leave-warning.js)
   labelTopBarIcons();
+  initTableCards('table.user-table:not(.weekly-table)'); // phones: Giving History, My Bookings as cards (../table-cards.js)
   addSkipLink();
   askAboutTextSize();
 

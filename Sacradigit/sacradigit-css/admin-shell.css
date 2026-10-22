@@ -51,6 +51,14 @@ body {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+/* Short laptop screens (e.g. 1366×768): a little tighter so all 17 links fit. */
+@media (min-width: 768px) and (max-height: 860px) {
+  .sidebar-link { padding-top: 0.34rem; padding-bottom: 0.34rem; }
+  .sidebar-label { margin-bottom: 0.25rem; }
+  #sidebar nav ul.mb-4 { margin-bottom: 0.6rem; }
+  #sidebar nav { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+}
+
 .sidebar-link svg {
   flex-shrink: 0;
   color: #9ca3af;
@@ -263,7 +271,7 @@ body {
   align-items: center;
   padding: 0.2rem 0.625rem;
   border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -280,6 +288,17 @@ body {
 .badge-gray {
   background-color: #f3f4f6;
   color: #6b7280;
+}
+
+/* Released / Completed: every page, not only the ones whose own stylesheet had it. */
+.badge-blue {
+  background-color: #eef2ff;
+  color: #4338ca;
+}
+
+.badge-red {
+  background-color: #fef2f2;
+  color: #b91c1c;
 }
 
 /* ---------- Focus states ---------- */
@@ -562,18 +581,43 @@ button:focus-visible {
   /* Slightly tighter side gutters. */
   body main.px-6 { padding-left: 1rem; padding-right: 1rem; }
 
-  /* Stat boxes and status tiles: 2 across (3 across for groups of three). */
-  .grid.grid-cols-1:has(> .stat-card, > .cloud-box) {
+  /* Status tiles: 2 across. */
+  .grid.grid-cols-1:has(> .cloud-box) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
   }
-  .grid.grid-cols-1:has(> .stat-card:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .grid > .stat-card { padding: 0.75rem; }
-  .grid > .stat-card .stat-icon { display: none; }
-  .grid > .stat-card > div:first-child { margin-bottom: 0.375rem; }
-  .grid > .stat-card .stat-label { font-size: 0.6875rem; line-height: 1.25; }
-  .grid > .stat-card > .stat-value { font-size: 1.375rem; }
-  .grid > .stat-card > .stat-sub { font-size: 0.6875rem; line-height: 1.3; }
+
+  /* Stat boxes become one swipeable row of count chips ("2 Pending"), so the
+     list people came for starts on the first screen. Tappable ones still
+     filter / jump exactly as the full cards do. */
+  .grid:has(> .stat-card) {
+    display: flex; gap: 0.4rem; overflow-x: auto; scrollbar-width: none;
+    margin-left: -1rem; margin-right: -1rem; padding: 0 1rem 2px;
+  }
+  .grid:has(> .stat-card)::-webkit-scrollbar { display: none; }
+  .grid > .stat-card {
+    flex: 0 0 auto; display: flex; flex-direction: row-reverse; align-items: baseline; gap: 0.35rem;
+    padding: 0.45rem 0.85rem; border-radius: 999px; min-height: 2.5rem;
+  }
+  .grid > .stat-card .stat-icon,
+  .grid > .stat-card > .stat-sub { display: none; }
+  .grid > .stat-card > div:first-child { margin: 0; }
+  .grid > .stat-card .stat-label { font-size: 0.8125rem; line-height: 1.25; white-space: nowrap; }
+  .grid > .stat-card > .stat-value { font-size: 1rem; line-height: 1.25; }
+  .grid > .stat-card > :not(div:first-child, .stat-label, .stat-value, .stat-sub) { display: none; }
+  .grid > .stat-card > .stat-label { margin: 0; }
+
+  /* Page banner: just its buttons. The page title is in the top bar. */
+  .admin-hero { padding: 0.75rem; gap: 0; }
+  .admin-hero .admin-hero-lead { display: none; }
+  .admin-hero > .flex { flex-wrap: wrap; gap: 0.5rem; width: 100%; }
+  .admin-hero > .flex > * { flex: 1 1 auto; justify-content: center; }
+  .admin-hero:not(:has(button, a)) { display: none; } /* nothing left to show */
+
+  /* Search on its own line, then the filters and Clear side by side. */
+  .filter-bar .search-wrap { flex-basis: 100%; }
+  .filter-bar > .relative { flex: 1 1 0; min-width: 0; }
+  .filter-bar > .relative .filter-select { width: 100%; }
 
   /* Panel headers: let the title and its extras (buttons, notes) stack. */
   .panel-header { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem; }
@@ -584,9 +628,6 @@ button:focus-visible {
   .weekly-table tbody td > span { white-space: nowrap; display: inline-flex; } /* keep "7:00 AM" together */
 }
 
-@media (max-width: 360px) {
-  .grid.grid-cols-1:has(> .stat-card:nth-child(3):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 
 /* ---------- Time picker (../time-picker.js): hour / minute + AM-PM switch ---------- */
 .time-picker {
@@ -770,6 +811,36 @@ input[type="date"].form-input::-webkit-date-and-time-value { text-align: left; }
 :root[data-theme="dark"] :is(.records-table, .acct-table) :is(.row-view, .row-cert, .row-reject) { background: transparent; color: #e5e8ef; border-color: #3a4459; }
 :root[data-theme="dark"] :is(.records-table, .acct-table) .row-reject { color: #fca5a5; border-color: #7f1d1d; }
 
+/* ---------- Row action buttons outside tables (lists, cards) ----------
+   Same look as the table row buttons above, so every page follows one rule:
+   outlined = open / change, filled green = the next step, red = undoing /
+   refusing (always last, and it asks first).
+   The :is(body, #act-scope) prefix only raises priority (an id's weight) so
+   these win over each page's older link-style rules for the same buttons. */
+:is(body, #act-scope) .act-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+:is(body, #act-scope) .act-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;
+  min-height: 2.25rem; padding: 0.35rem 0.8rem; border-radius: 0.5rem;
+  font-size: 0.8125rem; font-weight: 600; letter-spacing: 0; text-transform: none;
+  white-space: nowrap; cursor: pointer; text-decoration: none;
+  background: #ffffff; color: #1e2a4a; border: 1.5px solid #c7cad6;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+:is(body, #act-scope) .act-btn:hover { background: #f3f4f6; color: #1e2a4a; }
+:is(body, #act-scope) .act-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+:is(body, #act-scope) .act-btn.act-approve { background: #15803d; color: #ffffff; border-color: #15803d; }
+:is(body, #act-scope) .act-btn.act-approve:hover { background: #166534; }
+:is(body, #act-scope) .act-btn.act-navy { background: #1e2a4a; color: #ffffff; border-color: #1e2a4a; }
+:is(body, #act-scope) .act-btn.act-navy:hover { background: #2a3963; }
+:is(body, #act-scope) .act-btn.act-danger { color: #b91c1c; border-color: #fca5a5; }
+:is(body, #act-scope) .act-btn.act-danger:hover { background: #fef2f2; color: #991b1b; }
+:is(body, #act-scope) .act-row .act-danger { margin-left: auto; }
+:root[data-theme="dark"] :is(body, #act-scope) .act-btn { background: transparent; color: #e5e8ef; border-color: #3a4459; }
+:root[data-theme="dark"] :is(body, #act-scope) .act-btn:hover { background: #242c3e; color: #ffffff; }
+:root[data-theme="dark"] :is(body, #act-scope) .act-btn.act-approve { background: #15803d; border-color: #15803d; color: #ffffff; }
+:root[data-theme="dark"] :is(body, #act-scope) .act-btn.act-navy { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] :is(body, #act-scope) .act-btn.act-danger { color: #fca5a5; border-color: #7f1d1d; }
+
 /* ---------- Approve several at once (Record Requests) ---------- */
 .req-bulk-bar {
   display: flex; align-items: center; flex-wrap: wrap; gap: 0.625rem;
@@ -801,27 +872,7 @@ body .calendar-cell-more { font-size: 0.75rem; font-weight: 600; color: #1e2a4a;
 body .min-swap-tag { font-size: 0.6875rem; }
 :root[data-theme="dark"] body .calendar-cell-more { color: #c7cbe8; }
 
-/* ---------- Phones: each table row as a card (dashboard.js initTableCards) ---------- */
-@media (max-width: 640px) {
-  table.has-cards thead { display: none; }
-  table.has-cards,
-  table.has-cards > tbody,
-  table.has-cards > tbody > tr { display: block; width: 100%; }
-  table.has-cards > tbody > tr { padding: 0.75rem 1rem; border-bottom: 1px solid #eef0f4; }
-  table.has-cards > tbody > tr:last-child { border-bottom: none; }
-  table.has-cards > tbody > tr > td[data-label],
-  table.has-cards > tbody > tr > td.td-actions { display: block; border: 0; padding: 0.125rem 0; white-space: normal; text-align: left; }
-  table.has-cards > tbody > tr > td[data-label]:not(.td-primary)::before {
-    content: attr(data-label) ": "; font-weight: 600; color: #6b7280;
-  }
-  table.has-cards > tbody > tr > td.td-primary { font-size: 0.9375rem; font-weight: 600; color: #111827; padding-bottom: 0.25rem; }
-  table.has-cards > tbody > tr > td.td-actions { padding-top: 0.5rem; }
-  table.has-cards > tbody > tr > td.td-actions .row-actions { justify-content: flex-start; }
-  table.has-cards > tbody > tr > td.col-select { display: block; border: 0; padding: 0 0 0.25rem; }
-  table.has-cards .purpose-cell { max-width: none; }
-  table.has-cards > tbody > tr > td:empty { display: none; }
-  table.has-cards .row-reject { margin-left: 0; }
-}
+/* Phone table cards: styles travel with ../../table-cards.js. */
 
 /* Phones: four labeled top-bar icons leave no room for the page title, and the
    admin portal has no settings page to move Dark/Language into, so the icons

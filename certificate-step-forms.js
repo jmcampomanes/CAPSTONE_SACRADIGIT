@@ -747,10 +747,11 @@ export function createCertStepForm(container, typeId, {
   staging.insertAdjacentHTML('beforebegin', `
     <div class="mwiz sm:col-span-2 cert-steps">
       <ol class="mstep-bar" aria-label="Steps" style="grid-template-columns: repeat(${all.length}, minmax(0, 1fr));">
-        ${all.map((s, i) => `<li><button type="button" class="mstep-dot" data-step="${i}"><span class="mstep-num">${i + 1}</span><span class="mstep-label">${s.label}</span></button></li>`).join('')}
+        ${all.map((s, i) => `<li><button type="button" class="mstep-dot" data-step="${i}" aria-label="Step ${i + 1}: ${s.label}"><span class="mstep-num">${i + 1}</span><span class="mstep-label">${s.label}</span></button></li>`).join('')}
       </ol>
       ${all.map((s, i) => `
       <section class="mstep-panel${i ? ' hidden' : ''}" data-step="${i}" aria-label="${s.label}">
+        <p class="mstep-count">Step ${i + 1} of ${all.length}</p>
         <h3 class="mstep-title">${s.title}</h3>
         <p class="mstep-hint">${s.hint}</p>
         ${i < steps.length

@@ -214,7 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Every row can be opened. The Head Admin approves/rejects pending ones;
         // the Secretary sees that it's waiting for the Head Admin instead.
-        const certBtn = GENERATABLE_CERT_TYPES.has(r.certificateType)
+        // Generate sits on the row once a request is approved (print, then Release);
+        // before that it's inside View, so pending rows keep to View / Approve / Reject.
+        const certBtn = r.status === 'approved' && GENERATABLE_CERT_TYPES.has(r.certificateType)
           ? `<button type="button" class="row-btn row-cert" data-id="${r.id}" data-cert-type="${escapeHtml(r.certificateType)}">Generate</button>`
           : '';
         const viewBtn = `<button type="button" class="row-btn row-view" data-id="${r.id}" aria-label="View ${who}'s request">View</button>`;
@@ -342,13 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewBtn    = e.target.closest('.row-view');
     const certBtn    = e.target.closest('.row-cert');
 
-    if (certBtn) {
-      if (certBtn.dataset.certType === 'Confirmation Certificate') openGenerateConfirmationCertModal(certBtn.dataset.id);
-      else if (certBtn.dataset.certType === 'First Communion Certificate') openGenerateFirstCommunionCertModal(certBtn.dataset.id);
-      else if (certBtn.dataset.certType === 'Marriage Certificate') openGenerateMarriageCertModal(certBtn.dataset.id);
-      else if (certBtn.dataset.certType === 'Death Certificate') openGenerateDeathCertModal(certBtn.dataset.id);
-      else openGenerateCertModal(certBtn.dataset.id);
-    }
+    if (certBtn) openGenerateFor(certBtn.dataset.id, certBtn.dataset.certType);
 
     // Approving/rejecting is the Head Admin's call; the Secretary releases approved ones.
     if ((approveBtn && !approveBtn.dataset.release) || rejectBtn) {
@@ -706,9 +702,28 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------
      13. VIEW DETAILS MODAL — read-only summary
   ------------------------------------------ */
+  function openGenerateFor(id, certType) {
+    if (certType === 'Confirmation Certificate') openGenerateConfirmationCertModal(id);
+    else if (certType === 'First Communion Certificate') openGenerateFirstCommunionCertModal(id);
+    else if (certType === 'Marriage Certificate') openGenerateMarriageCertModal(id);
+    else if (certType === 'Death Certificate') openGenerateDeathCertModal(id);
+    else openGenerateCertModal(id);
+  }
+
+  // "Generate certificate" inside View — for pending and approved requests.
+  const viewGenerateBtn = document.getElementById('view-generate');
+  viewGenerateBtn?.addEventListener('click', () => {
+    closeModal(viewModal);
+    openGenerateFor(viewGenerateBtn.dataset.id, viewGenerateBtn.dataset.certType);
+  });
+
   function openViewModal(id) {
     const r = requests.find(x => x.id === id);
     if (!r) return;
+
+    const canGenerate = (r.status === 'pending' || r.status === 'approved') && GENERATABLE_CERT_TYPES.has(r.certificateType);
+    viewGenerateBtn?.classList.toggle('hidden', !canGenerate);
+    if (viewGenerateBtn) { viewGenerateBtn.dataset.id = r.id; viewGenerateBtn.dataset.certType = r.certificateType; }
 
     viewName.textContent = r.requesterName;
     viewType.textContent = r.certificateType;

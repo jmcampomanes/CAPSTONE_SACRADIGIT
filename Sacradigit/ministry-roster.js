@@ -29,11 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let masses = [];
   let signups = [];
   let stops = [];
+  // Upcoming Masses first: the coordinator's question is "who's short this weekend?".
+  // Past Masses stay one tap away. A month with nothing upcoming opens on Past.
+  let view = 'upcoming';
+  let viewChosen = false;
 
   function load() {
     stops.forEach(stop => stop());
     masses = []; signups = [];
     $('min-month').textContent = monthLabel(year, month);
+    viewChosen = false;
     stops = [
       watchRosterMasses(year, month, (list) => { masses = list; render(); }),
       watchSignups(year, month, (list) => { signups = list; render(); }),
@@ -54,11 +59,26 @@ document.addEventListener('DOMContentLoaded', () => {
     $('stat-swaps').textContent = swaps;
 
     $('min-thead').innerHTML = `<tr><th>Mass</th>${MINISTRIES.map(m => `<th>${escapeHtml(m.label)} <span class="text-gray-400 font-normal">(${m.perMass})</span></th>`).join('')}</tr>`;
-    $('min-empty').classList.toggle('hidden', masses.length > 0);
-    $('min-tbody').innerHTML = masses.map(mass => {
+    const today = todayIso();
+    const upcoming = masses.filter(m => m.date >= today);
+    const past = masses.filter(m => m.date < today);
+    if (!viewChosen) view = upcoming.length || !past.length ? 'upcoming' : 'past';
+    $('min-count-upcoming').textContent = `(${upcoming.length})`;
+    $('min-count-past').textContent = `(${past.length})`;
+    document.querySelectorAll('.min-view-chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.view === view)));
+    const shown = view === 'past' ? past : upcoming;
+
+    $('min-empty').classList.toggle('hidden', shown.length > 0);
+    $('min-empty').textContent = masses.length === 0 ? 'No Masses on the roster this month.'
+      : view === 'past' ? 'No past Masses this month.' : 'No more Masses this month. Use › for next month.';
+    $('min-tbody').innerHTML = shown.map(mass => {
       const byMin = grouped.get(mass.key) || new Map();
-      return `<tr class="${mass.date < todayIso() ? 'past' : ''}">
-        <td class="min-mass-cell"><b>${escapeHtml(fmtMassDay(mass.date))} · ${escapeHtml(fmtTime(mass.time))}</b><small>${escapeHtml(mass.title)}</small></td>
+      const short = MINISTRIES.reduce((n, m) => n + Math.max(0, m.perMass - (byMin.get(m.id) || []).length), 0);
+      const need = mass.date < today ? ''
+        : short ? `<span class="min-need">Needs ${short} ${short === 1 ? 'person' : 'people'}</span>`
+        : '<span class="min-need is-full">Full</span>';
+      return `<tr class="${mass.date < today ? 'past' : ''}">
+        <td class="min-mass-cell"><b>${escapeHtml(fmtMassDay(mass.date))} · ${escapeHtml(fmtTime(mass.time))}</b><small>${escapeHtml(mass.title)}</small>${need}</td>
         ${MINISTRIES.map(m => {
           const list = byMin.get(m.id) || [];
           const open = m.perMass - list.length;
@@ -72,6 +92,14 @@ document.addEventListener('DOMContentLoaded', () => {
       </tr>`;
     }).join('');
   }
+
+  document.querySelector('.min-view-chips').addEventListener('click', (e) => {
+    const chip = e.target.closest('.min-view-chip');
+    if (!chip) return;
+    view = chip.dataset.view;
+    viewChosen = true;
+    render();
+  });
 
   $('min-tbody').addEventListener('click', async (e) => {
     const btn = e.target.closest('.min-remove');

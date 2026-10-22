@@ -276,8 +276,8 @@
           </div>
 
           <div class="relative shrink-0">
-            <select id="status-filter" class="filter-select">
-              <option value="">Status Filter</option>
+            <select id="status-filter" class="filter-select" aria-label="Status">
+              <option value="">All statuses</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="released">Released</option>
@@ -286,8 +286,8 @@
           </div>
 
           <div class="relative shrink-0">
-            <select id="type-filter" class="filter-select">
-              <option value="">Type Filter</option>
+            <select id="type-filter" class="filter-select" aria-label="Certificate type">
+              <option value="">All types</option>
               <option value="Baptismal Certificate">Baptismal</option>
               <option value="Confirmation Certificate">Confirmation</option>
               <option value="First Communion Certificate">First Communion</option>
@@ -297,7 +297,7 @@
           </div>
 
           <button id="btn-clear-filters" type="button" class="btn-filter">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 4h18M6 4v16a1 1 0 001 1h10a1 1 0 001-1V4M10 10v6m4-6v6"/></svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
             Clear
           </button>
         </div>
@@ -946,6 +946,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" data-close-modal>Close</button>
+        <button type="button" id="view-generate" class="btn-lavender hidden">Generate certificate</button>
       </div>
     </div>
   </div>

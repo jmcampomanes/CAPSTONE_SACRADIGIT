@@ -263,14 +263,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isOpenBooking(o)) {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="row-view" data-id="${o.id}">View ›</button>
-            ${isReschedulable(o) ? `<button type="button" class="row-reschedule" data-id="${o.id}">Reschedule</button>` : ''}
-            <button type="button" class="row-reject row-cancel" data-id="${o.id}">Cancel</button>
+            <button type="button" class="act-btn row-view" data-id="${o.id}">View</button>
+            ${isReschedulable(o) ? `<button type="button" class="act-btn row-reschedule" data-id="${o.id}">Reschedule</button>` : ''}
+            <button type="button" class="act-btn act-danger row-reject row-cancel" data-id="${o.id}">Cancel…</button>
           </div>`;
       } else {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="row-view" data-id="${o.id}">View ›</button>
+            <button type="button" class="act-btn row-view" data-id="${o.id}">View</button>
           </div>`;
       }
 

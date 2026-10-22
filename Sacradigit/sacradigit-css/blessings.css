@@ -160,56 +160,6 @@
   flex-shrink: 0;
 }
 
-.req-approve {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: #15803d;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
-}
-
-.req-approve:hover {
-  color: #0f5c2c;
-}
-
-.req-decline {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: #b91c1c;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
-}
-
-.req-decline:hover {
-  color: #8f1414;
-}
-
-/* Reschedule — replaced Approve / Decline on pending requests */
-.req-reschedule {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: #5b5fa8;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
-}
-
-.req-reschedule:hover { color: #1e2a4a; }
-
 /* ---------- Completed blessing rows ---------- */
 .completed-row {
   display: flex;
@@ -281,37 +231,19 @@
 .btn-danger:hover {
   background-color: #991616;
 }
-/* ---------- "Details" row action (Upcoming / Requests / Completed) ---------- */
-.blessing-details-btn {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: #5b5fa8;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  margin-top: 0.3rem;
-  transition: color 0.15s ease;
-  display: block;
-  text-align: right;
-}
-
-.blessing-details-btn:hover {
-  color: #1e2a4a;
-}
-
+/* ---------- Row actions ----------
+   Pending requests: name + date on top, real buttons underneath (Approve,
+   Reschedule, View … Decline last, on its own side). Other lists: one
+   "View" button under the date. Button looks: .act-btn in admin-shell.css. */
+.blessing-details-btn { margin-top: 0.4rem; }
+.act-row .blessing-details-btn { margin-top: 0; }
+.request-row { flex-wrap: wrap; }
 .request-actions {
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
+  flex-basis: 100%;
+  padding-left: 2.875rem;
 }
-
-.request-actions .request-action-row {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
+@media (max-width: 480px) {
+  .request-actions { padding-left: 0; }
 }
 
 /* ---------- Detail grid (Blessing Details modal) ---------- */

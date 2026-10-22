@@ -476,3 +476,24 @@
 
 /* "Check in at Mass" Quick Action is a <button> (opens the camera) — same look as the link cards. */
 .quick-action-btn { font: inherit; }
+
+/* ---------- Your next thing (next-up-card.js) ---------- */
+.next-up { display: grid; gap: 0.625rem; }
+.next-up.hidden { display: none; }
+.next-up-item {
+  display: flex; flex-direction: column; gap: 0.15rem;
+  padding: 0.875rem 1rem; border-radius: 0.875rem; background: #ffffff;
+  border: 1px solid #e5e7eb; border-left: 4px solid #1e2a4a; text-decoration: none; color: #111827;
+}
+.next-up-item.is-ready { border-left-color: #15803d; }
+.next-up-item.is-coming { border-left-color: #b45309; }
+.next-up-item:hover { background: #fafbfc; }
+.next-up-kicker { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5563; }
+.next-up-title { font-size: 1rem; font-weight: 700; }
+.next-up-sub { font-size: 0.875rem; color: #4b5563; }
+@media (min-width: 768px) { .next-up { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); } }
+:root[data-theme="dark"] .next-up-item { background: #1a2131; border-color: #2c3547; color: #f1f3f7; }
+:root[data-theme="dark"] .next-up-item.is-ready { border-left-color: #22c55e; }
+:root[data-theme="dark"] .next-up-item.is-coming { border-left-color: #f59e0b; }
+:root[data-theme="dark"] .next-up-kicker,
+:root[data-theme="dark"] .next-up-sub { color: #b6bdca; }

@@ -19,6 +19,7 @@ import { client } from '../amplify-init.js';
 import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
 import { currentUserName, currentUser } from '../auth.js';
 import { notifyServiceUpdate } from '../email-notify.js';
+import { loadPrefs, savePrefs, enableDeviceAlerts } from '../notifications/parish-notifications.js';
 import { createSlotPicker, slotHasRoom, locationFor, watchClosures } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
 import { createPinMap, formatLatLng, addressFromLatLng } from '../pin-map.js';
@@ -266,7 +267,49 @@ export function initServiceRequestPage(serviceId) {
 
   /* --- Confirmation after submitting: replaces the form with what was
      booked and a button to track it. --- */
-  function showServiceSuccess({ slot, approval, location }) {
+  /* How to be reminded the day before. Saved on the booking (details), so the
+     parish office's day-before email (Sacradigit/blessings.js) knows whether
+     to send it. Text messages need an SMS sender the parish doesn't have yet. */
+  const REMINDER_FIELD = 'Day-before reminder';
+  const REMINDER_CHOICES = [
+    { value: 'Email', label: 'Email' },
+    { value: 'This phone', label: 'This phone' },
+    { value: 'No reminder', label: 'No reminder' },
+  ];
+  function reminderChooserHtml(bookingId) {
+    return `
+      <fieldset class="svc-reminder" data-booking="${escapeHtml(bookingId)}">
+        <legend class="svc-reminder-title">Remind me the day before by:</legend>
+        <div class="svc-reminder-options">
+          ${REMINDER_CHOICES.map((c, i) => `
+          <label class="svc-reminder-option"><input type="radio" name="svc-reminder" value="${c.value}" ${i === 0 ? 'checked' : ''} /> ${c.label}</label>`).join('')}
+        </div>
+        <p class="svc-reminder-note" role="status"></p>
+      </fieldset>`;
+  }
+  async function saveReminderChoice(fieldset, value) {
+    const note = fieldset.querySelector('.svc-reminder-note');
+    if (value === 'This phone') {
+      const allowed = await enableDeviceAlerts();
+      if (allowed) savePrefs({ ...loadPrefs(), device: true, 'service-status': true });
+      else note.textContent = 'This phone didn’t allow notifications. Turn them on in your browser settings, or choose Email.';
+    }
+    try {
+      const { data } = await client.models.Blessing.get({ id: fieldset.dataset.booking });
+      const details = data?.details ? (typeof data.details === 'string' ? JSON.parse(data.details) : data.details) : {};
+      details[REMINDER_FIELD] = value;
+      const res = await client.models.Blessing.update({ id: fieldset.dataset.booking, details: JSON.stringify(details) });
+      if (res.errors?.length) throw new Error(res.errors[0].message);
+      if (value !== 'This phone' || note.textContent === '') {
+        note.textContent = value === 'No reminder' ? 'Okay — no reminder.' : `Saved. We’ll remind you by ${value === 'Email' ? 'email' : 'a notification on this phone'} the day before.`;
+      }
+    } catch (err) {
+      console.error('Could not save the reminder choice:', err);
+      note.textContent = 'Couldn’t save that choice. Please try again.';
+    }
+  }
+
+  function showServiceSuccess({ slot, approval, location, bookingId }) {
     document.body.classList.remove('req-screen-open');
     formView.classList.add('hidden');
     if (pinMap) { pinMap.destroy(); pinMap = null; }
@@ -282,6 +325,13 @@ export function initServiceRequestPage(serviceId) {
       row('Location', location),
       row('Status', approval ? 'Awaiting Approval' : 'Scheduled'),
     ].join('');
+    const detailsEl = document.getElementById('svc-success-details');
+    detailsEl.parentElement.querySelector('.svc-reminder')?.remove();
+    if (bookingId) {
+      detailsEl.insertAdjacentHTML('afterend', reminderChooserHtml(bookingId));
+      const fieldset = detailsEl.parentElement.querySelector('.svc-reminder');
+      fieldset.addEventListener('change', (e) => { if (e.target.name === 'svc-reminder') saveReminderChoice(fieldset, e.target.value); });
+    }
     // Blessings open Requested Services on the Blessings filter
     document.getElementById('svc-success-track').href = approval ? 'user-requested-services.html?filter=blessing' : 'user-requested-services.html';
     successView.classList.remove('hidden');
@@ -373,7 +423,7 @@ export function initServiceRequestPage(serviceId) {
         type: svc.name,
         contact: svcContactInput.value.trim(),
         notes: svcNotesInput.value.trim() || undefined,
-        details: JSON.stringify(details),
+        details: JSON.stringify({ ...details, [REMINDER_FIELD]: 'Email' }),
         location: locationFor(svc.name, details),
         preferredDate: slot.date,
         date: slot.date,
@@ -390,7 +440,7 @@ export function initServiceRequestPage(serviceId) {
         });
       }
 
-      showServiceSuccess({ slot, approval, location: locationFor(svc.name, details) });
+      showServiceSuccess({ slot, approval, location: locationFor(svc.name, details), bookingId: result.data?.id });
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);

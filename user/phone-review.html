@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phone Review — Parishioner Portal</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; margin: 0; color: #111827; }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 260px; flex-shrink: 0; background: #1e2a4a; color: #cbd3e6; padding: 1.25rem 0.75rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar h1 { color: #fff; font-size: 0.95rem; margin: 0 0.5rem 0.25rem; }
+  .sidebar p.note { font-size: 0.7rem; color: #8b95b8; margin: 0 0.5rem 1rem; line-height: 1.4; }
+  .sidebar a { display: flex; justify-content: space-between; gap: 0.4rem; color: #cbd3e6; text-decoration: none; font-size: 0.78rem; padding: 0.4rem 0.6rem; border-radius: 0.4rem; margin-bottom: 0.1rem; }
+  .sidebar a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .sidebar a.group { font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; color: #7d87ad; margin-top: 0.9rem; padding: 0.4rem 0.6rem 0.1rem; pointer-events: none; }
+  .sidebar .who { font-size: 0.6rem; font-weight: 700; padding: 0.05rem 0.35rem; border-radius: 999px; align-self: center; white-space: nowrap; }
+  .mobile-jump { display: none; }
+  .content { flex: 1; padding: 2rem 2.5rem 6rem; max-width: 1180px; }
+
+  .masthead { background: #fff; border: 1px solid #e5e7eb; border-left: 4px solid #1e2a4a; border-radius: 0.6rem; padding: 1rem 1.25rem; font-size: 0.82rem; color: #4b5563; line-height: 1.55; margin-bottom: 1.25rem; }
+  .masthead b { color: #111827; }
+  .masthead code { background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.78rem; }
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+  .role-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.8rem 1rem; font-size: 0.8rem; color: #4b5563; line-height: 1.5; }
+  .role-card strong { display: block; color: #111827; font-size: 0.88rem; margin-bottom: 0.2rem; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.72rem; color: #6b7280; margin-bottom: 2rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+  .who-both { background: #eef2ff; color: #4338ca; }
+  .who-sec { background: #ecfeff; color: #0e7490; }
+  .who-head { background: #fdf2f8; color: #9d174d; }
+
+  .cat { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+  .cat h2 { font-size: 1.15rem; margin: 0 0 0.15rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .impact-tag { font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .impact-critical { background: #fef2f2; color: #b91c1c; }
+  .impact-high { background: #fffbeb; color: #b45309; }
+  .impact-medium { background: #eef2ff; color: #4338ca; }
+  .impact-low { background: #f3f4f6; color: #6b7280; }
+  .cat-sub { font-size: 0.78rem; color: #6b7280; margin: 0 0 1.1rem; }
+
+  .finding { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.65rem; padding: 0.9rem 1.1rem; margin-bottom: 0.9rem; }
+  .finding-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }
+  .finding-title { font-size: 0.92rem; font-weight: 700; color: #111827; }
+  .tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .tag { font-size: 0.62rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: 999px; text-transform: uppercase; }
+  .sev-high { background: #fef2f2; color: #b91c1c; }
+  .sev-medium { background: #fffbeb; color: #b45309; }
+  .sev-low { background: #f3f4f6; color: #6b7280; }
+  .desc { font-size: 0.82rem; color: #4b5563; margin: 0 0 0.5rem; line-height: 1.5; }
+  .where { font-size: 0.76rem; color: #374151; background: #f9fafb; border-left: 3px solid #8b8fc7; padding: 0.45rem 0.65rem; border-radius: 0.3rem; margin-top: 0.4rem; }
+  .where code { font-size: 0.72rem; }
+  .source { font-size: 0.65rem; color: #9ca3af; margin-top: 0.4rem; }
+  .source.fallback { color: #b45309; }
+
+  .mini-compare { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 0.7rem 0 0.4rem; }
+  .mini-box { flex: 1; min-width: 280px; border-radius: 0.5rem; padding: 0.6rem 0.7rem 0.75rem; background: #fff; }
+  .mini-before { border: 2px solid #fecaca; }
+  .mini-after { border: 2px solid #bbf0cf; }
+  .mini-label { display: block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .mini-before .mini-label { color: #b91c1c; }
+  .mini-after .mini-label { color: #15803d; }
+  .scr { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.4rem; padding: 0.6rem; position: relative; overflow: hidden; font-size: 0.75rem; }
+  .note { font-size: 0.68rem; color: #6b7280; margin-top: 0.4rem; line-height: 1.4; }
+
+  /* mock building blocks (real admin tokens) */
+  .m-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; overflow: hidden; }
+  .m-ph { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0.65rem; border-bottom: 1px solid #f1f2f5; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .m-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.65rem; border-bottom: 1px solid #f5f6f8; font-size: 0.72rem; }
+  .m-row:last-child { border-bottom: none; }
+  .m-grow { flex: 1; min-width: 0; }
+  .m-sub { font-size: 0.62rem; color: #6b7280; }
+  .m-link-g { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #15803d; }
+  .m-link-r { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #b91c1c; }
+  .m-link-y { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #9c7d2e; }
+  .m-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; border: none; border-radius: 0.45rem; font-size: 0.72rem; font-weight: 600; padding: 0.42rem 0.7rem; min-height: 2rem; cursor: default; font-family: inherit; }
+  .m-pale { background: #8b8fc7; color: #fff; }
+  .m-gold { background: #c9a84c; color: #1e2a4a; }
+  .m-navy { background: #1e2a4a; color: #fff; }
+  .m-sec { background: #f3f4f6; color: #374151; }
+  .m-out { background: #fff; color: #1e2a4a; border: 1.5px solid #c7cad6; }
+  .m-green { background: #15803d; color: #fff; }
+  .m-red-out { background: #fff; color: #b91c1c; border: 1.5px solid #fca5a5; }
+  .m-badge { display: inline-flex; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.62rem; font-weight: 600; white-space: nowrap; }
+  .b-amber { background: #fffbeb; color: #b45309; }
+  .b-green { background: #ecfdf3; color: #15803d; }
+  .b-gray { background: #f3f4f6; color: #4b5563; }
+  .b-blue { background: #eef2ff; color: #4338ca; }
+  .m-input { border: 1px solid #d1d5db; background: #fff; border-radius: 0.35rem; padding: 0.35rem 0.45rem; font-size: 0.68rem; color: #9ca3af; }
+  .m-lbl { font-size: 0.64rem; font-weight: 600; color: #374151; margin-bottom: 0.15rem; }
+  .m-toast-old { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: #b91c1c; color: #fff; border-radius: 0.4rem; padding: 0.35rem 0.6rem; font-size: 0.64rem; font-weight: 600; white-space: nowrap; }
+  .m-toast-new { background: #fef2f2; color: #991b1b; border: 1.5px solid #fca5a5; border-radius: 0.45rem; padding: 0.4rem 0.55rem; font-size: 0.68rem; font-weight: 600; display: flex; justify-content: space-between; gap: 0.5rem; }
+  .m-dialog { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; box-shadow: 0 10px 24px rgba(15,23,42,0.18); padding: 0.7rem; }
+  .m-native { background: #fff; border: 1px solid #9ca3af; border-radius: 0.2rem; box-shadow: 0 6px 16px rgba(0,0,0,0.25); padding: 0.55rem; font-family: "Segoe UI", Tahoma, sans-serif; font-size: 0.68rem; }
+  .m-native .t { font-size: 0.62rem; color: #6b7280; margin-bottom: 0.3rem; }
+  .m-native .b { border: 1px solid #6b7280; background: #f3f4f6; border-radius: 0.15rem; padding: 0.15rem 0.6rem; font-size: 0.64rem; }
+  .m-topbar { display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 2px solid #8a3040; padding: 0.4rem 0.6rem; }
+  .m-ico-s { width: 18px; height: 18px; border-radius: 999px; border: 1.5px solid #c7cad6; display: inline-flex; align-items: center; justify-content: center; font-size: 0.5rem; color: #4b5563; }
+  .m-ico-l { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 40px; }
+  .m-ico-l svg { width: 16px; height: 16px; stroke: #1e2a4a; }
+  .m-ico-l span { font-size: 0.55rem; font-weight: 600; color: #374151; }
+  .m-stat { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.45rem 0.55rem; }
+  .m-stat .l { font-size: 0.58rem; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+  .m-stat .v { font-size: 1rem; font-weight: 700; }
+  .strike { text-decoration: line-through; color: #b91c1c; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .mobile-jump { display: block; position: sticky; top: 0; z-index: 10; background: #1e2a4a; padding: 0.75rem 1rem; }
+    .mobile-jump select { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: none; font-size: 0.85rem; }
+    .content { padding: 1.25rem 1rem 4rem; }
+  }
+</style>
+
+<style>
+  .phone { width: 300px; max-width: 100%; background: #f7f8fa; border: 7px solid #1f2430; border-radius: 1.4rem; overflow: hidden; position: relative; margin: 0 auto; }
+  .ph-top { display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 2px solid #8a3040; padding: 0.4rem 0.6rem; font-size: 0.78rem; font-weight: 700; }
+  .ph-body { padding: 0.6rem; position: relative; }
+  .cut { overflow: hidden; }
+  .bubble { position: absolute; right: 10px; width: 38px; height: 38px; border-radius: 999px; background: #1e2a4a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; box-shadow: 0 6px 14px rgba(15,23,42,.3); }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.55rem 0.65rem; margin-bottom: 0.45rem; font-size: 0.72rem; }
+  .card b { font-size: 0.78rem; }
+  .muted { color: #6b7280; font-size: 0.66rem; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 0.68rem; white-space: nowrap; }
+  .tbl th { text-align: left; color: #6b7280; font-size: 0.6rem; text-transform: uppercase; padding: 0.3rem 0.5rem; border-bottom: 1px solid #f1f2f5; }
+  .tbl td { padding: 0.4rem 0.5rem; }
+  .steps { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: #9ca3af; }
+  .steps.squash { justify-content: flex-start; letter-spacing: -0.01em; }
+  .sel { border: 1.5px solid #374151; border-radius: 0.4rem; padding: 0.35rem 0.4rem; font-size: 0.8rem; background: #fff; display: flex; justify-content: space-between; overflow: hidden; white-space: nowrap; }
+  .badge-mini { display: inline-flex; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.62rem; font-weight: 600; }
+  .medal { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(145deg,#d99a6c,#9a5a2c); display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 0.7rem; }
+  .medal.off { background: #e5e7eb; color: #9ca3af; }
+  .bar { height: 5px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-top: 0.25rem; }
+  .bar span { display: block; height: 100%; background: #1e2a4a; }
+  .chip { display: inline-flex; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1.5px solid #d1d5db; font-size: 0.68rem; font-weight: 600; margin: 0 0.2rem 0.25rem 0; background: #fff; }
+  .chip.on { background: #1e2a4a; color: #fff; border-color: #1e2a4a; }
+  .longpage { height: 150px; overflow: hidden; position: relative; }
+  .longpage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(transparent, #f7f8fa); }
+  .count { position: absolute; right: 8px; bottom: 6px; z-index: 2; font-size: 0.62rem; font-weight: 700; background: #b91c1c; color: #fff; border-radius: 999px; padding: 0.05rem 0.45rem; }
+  .btn-n { display: flex; justify-content: center; background: #1e2a4a; color: #fff; border-radius: 0.45rem; padding: 0.4rem; font-size: 0.72rem; font-weight: 700; margin-top: 0.35rem; }
+  .btn-o { display: inline-flex; justify-content: center; border: 1.5px solid #c7cad6; color: #1e2a4a; border-radius: 0.45rem; padding: 0.3rem 0.6rem; font-size: 0.68rem; font-weight: 600; }
+  .shot-note { font-size: 0.68rem; color: #6b7280; margin-top: 0.4rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="mobile-jump">
+  <select onchange="if(this.value) location.hash = this.value;">
+    <option value="">Jump to…</option>
+    <option value="#p1">1. Tables cut off</option>
+    <option value="#p2">2. Chat bubble covers content</option>
+    <option value="#p3">3. Bigger text breaks the form</option>
+    <option value="#p4">4. Date of Baptism picker</option>
+    <option value="#p5">5. Very long pages</option>
+    <option value="#p6">6. Small details</option>
+    <option value="#s1">A. Shorter My Badges</option>
+    <option value="#s2">B. Ministry: remember + Mine</option>
+    <option value="#s3">C. Shorter Mass Intentions intro</option>
+    <option value="#s4">D. "Your next thing" card</option>
+    <option value="#s5">E. Cancel / reschedule on the card</option>
+    <option value="#s6">F. Text or email reminders</option>
+  </select>
+</div>
+
+<div class="app">
+  <nav class="sidebar">
+    <h1>Phone Review</h1>
+    <p class="note">Parishioner portal on a phone. Problems found by testing, then suggestions. Tell me which letters/numbers to build.</p>
+    <a class="group">Problems found</a>
+    <a href="#p1">1. Tables cut off <span class="who sev-high">High</span></a>
+    <a href="#p2">2. Chat bubble covers content <span class="who sev-high">High</span></a>
+    <a href="#p3">3. Bigger text breaks the form <span class="who sev-high">High</span></a>
+    <a href="#p4">4. Date of Baptism picker <span class="who sev-medium">Med</span></a>
+    <a href="#p5">5. Very long pages <span class="who sev-medium">Med</span></a>
+    <a href="#p6">6. Small details <span class="who sev-low">Low</span></a>
+    <a class="group">Suggestions</a>
+    <a href="#s1">A. Shorter My Badges</a>
+    <a href="#s2">B. Ministry: remember + Mine</a>
+    <a href="#s3">C. Shorter intro boxes</a>
+    <a href="#s4">D. "Your next thing" card</a>
+    <a href="#s5">E. Cancel / reschedule on the card</a>
+    <a href="#s6">F. Text or email reminders</a>
+  </nav>
+
+  <div class="content">
+
+    <div class="masthead">
+      <b>How this was tested:</b> all 16 parishioner pages opened in Chrome on a 390px phone screen, plus the open ☰ menu, and the Dashboard and certificate form again at 360px with Bigger text on. A simulated signed-in parishioner ("Rosa") was given sample records; nothing reached the live system. Each page was also measured for sideways scrolling, text under 12px and tap targets under 32px.<br>
+      <b>Already working:</b> no page scrolls sideways; the labeled top bar, solid navy buttons, Dashboard request cards, renamed menu with "More below", "What do you need?" on Request a Service, the plain-sentence certificate status and full-width Volunteer buttons all show correctly.<br>
+      Companion pages: <a href="testing.html">first parishioner mockups</a> · <a href="ui-ux-pro-max-review.html">guideline review</a>.
+    </div>
+
+    <!-- ================= PROBLEMS ================= -->
+    <section class="cat">
+      <h2>Problems found <span class="impact-tag impact-high">Fix first</span></h2>
+      <p class="cat-sub">Things that are wrong on a phone today. 1–4 affect phone users the most.</p>
+
+      <div class="finding" id="p1">
+        <div class="finding-head"><span class="finding-title">1. Two tables are cut off at the right edge</span><span class="tags"><span class="tag sev-high">High</span></span></div>
+        <p class="desc">Donations → My Giving History cuts the date ("Oct 14, 2…"), and Facility Booking → My Bookings pushes Purpose off the screen. These are the only parishioner pages still using tables.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — My Giving History</span>
+            <div class="phone"><div class="ph-body cut">
+              <div class="card" style="padding:0;overflow:hidden"><table class="tbl" style="min-width:330px"><tr><th>Fund</th><th>Amount</th><th>Method</th><th>Date</th></tr><tr><td>General Fund</td><td style="color:#15803d;font-weight:700">₱300</td><td>GCash</td><td>Oct 14, 2026</td></tr></table></div>
+            </div></div>
+            <p class="shot-note">The date runs past the edge.</p>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — one card per gift</span>
+            <div class="phone"><div class="ph-body">
+              <div class="card"><div style="display:flex;justify-content:space-between"><b>General Fund</b><b style="color:#15803d">₱300</b></div><div class="muted">GCash · Oct 14, 2026</div></div>
+            </div></div>
+            <p class="shot-note">Same fix the staff portals already use (table-cards.js).</p>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>user/user-donations.html</code> and <code>user/user-facility-booking.html</code> (the two <code>.user-table</code>s).</div>
+      </div>
+
+      <div class="finding" id="p2">
+        <div class="finding-head"><span class="finding-title">2. The chat bubble sits on top of buttons and text</span><span class="tags"><span class="tag sev-high">High</span></span></div>
+        <p class="desc">It covers the "Details" button on My certificate requests, a row of the Mass Schedule table, and the Faith Journey line on the Dashboard. The bubble stays in the corner while the page scrolls under it, and the page has no spare room at the bottom.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — My certificate requests</span>
+            <div class="phone"><div class="ph-body">
+              <div class="card"><div style="display:flex;justify-content:space-between"><b>Confirmation Certificate</b><span class="btn-o">DETAILS</span></div><div class="muted">Submitted Oct 10</div><span class="badge-mini b-green" style="margin-top:.3rem">Ready</span></div>
+              <div class="bubble" style="top:12px;right:6px">💬</div>
+            </div></div>
+            <p class="shot-note">"Details" is under the bubble.</p>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — room at the bottom, smaller while scrolling</span>
+            <div class="phone"><div class="ph-body" style="padding-bottom:4.5rem">
+              <div class="card"><div style="display:flex;justify-content:space-between"><b>Confirmation Certificate</b><span class="btn-o">Details</span></div><div class="muted">Submitted Oct 10</div><span class="badge-mini b-green" style="margin-top:.3rem">Ready</span></div>
+              <div class="bubble" style="bottom:10px;width:30px;height:30px;font-size:.75rem;opacity:.92">💬</div>
+            </div></div>
+            <p class="shot-note">Extra space under the last item so it can scroll clear; the bubble shrinks while scrolling and comes back when you stop.</p>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>assistant/parish-assistant.js</code> (bubble) and the page bottom padding in <code>user/user-css/user-shell.css</code>.</div>
+      </div>
+
+      <div class="finding" id="p3">
+        <div class="finding-head"><span class="finding-title">3. With Bigger text on a small phone, the certificate form breaks</span><span class="tags"><span class="tag sev-high">High</span></span></div>
+        <p class="desc">At 360px with Bigger text on, the step names run together ("FamilyGodparentsConfirm") and the birth-date dropdowns are cut to "Montl / D / Ye". Bigger text is meant for the people who most need clear steps.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — 360px, Bigger text</span>
+            <div class="phone"><div class="ph-body">
+              <div class="steps squash"><span style="color:#111827">Baptized</span>&nbsp;FamilyGodparentsConfirm</div>
+              <div style="margin-top:.6rem;font-size:.8rem;font-weight:700">Date of Birth *</div>
+              <div style="display:grid;grid-template-columns:1.4fr .7fr 1fr;gap:.3rem;margin-top:.25rem"><span class="sel">Montl ▾</span><span class="sel">D ▾</span><span class="sel">Ye ▾</span></div>
+            </div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="phone"><div class="ph-body">
+              <div style="font-size:.8rem;font-weight:700;color:#111827">Step 1 of 4 · Baptized person</div>
+              <div class="bar"><span style="width:25%"></span></div>
+              <div style="margin-top:.6rem;font-size:.8rem;font-weight:700">Date of Birth *</div>
+              <span class="sel" style="margin-top:.25rem">Month ▾</span>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-top:.3rem"><span class="sel">Day ▾</span><span class="sel">Year ▾</span></div>
+            </div></div>
+            <p class="shot-note">On small screens: "Step 1 of 4" with only the current step's name, and Month on its own line.</p>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> step bar in <code>certificate-step-forms.js</code> / <code>marriage-request-form.css</code>; date dropdowns in the Request Certificate form.</div>
+      </div>
+
+      <div class="finding" id="p4">
+        <div class="finding-head"><span class="finding-title">4. Date of Baptism still uses the browser's date picker</span><span class="tags"><span class="tag sev-medium">Medium</span></span></div>
+        <p class="desc">Date of Birth on the same form now uses Month / Day / Year dropdowns, but Date of Baptism (and similar older dates on other certificates) still opens the mm/dd/yyyy picker, which means scrolling back decades.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="phone"><div class="ph-body"><div style="font-size:.8rem;font-weight:700">Date of Baptism *</div><span class="sel" style="margin-top:.25rem">mm/dd/yyyy <span>📅</span></span></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — same as Date of Birth</span>
+            <div class="phone"><div class="ph-body"><div style="font-size:.8rem;font-weight:700">Date of Baptism *</div><div style="display:grid;grid-template-columns:1.4fr .8fr 1fr;gap:.3rem;margin-top:.25rem"><span class="sel">March ▾</span><span class="sel">14 ▾</span><span class="sel">1958 ▾</span></div></div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> every past-date field on the certificate forms (baptism, confirmation, first communion, marriage dates).</div>
+      </div>
+
+      <div class="finding" id="p5">
+        <div class="finding-head"><span class="finding-title">5. My Badges and Ministry Sign-ups are very long</span><span class="tags"><span class="tag sev-medium">Medium</span></span></div>
+        <p class="desc">My Badges is about 7 phone screens (all 20 badges, mostly not earned yet). Ministry Sign-ups is about 5 (every ministry for every Mass of the month). Fixes are suggestions A and B below.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — My Badges</span>
+            <div class="phone"><div class="ph-body longpage">
+              <div class="card"><span class="medal">🕯</span> <b>Prayer Offered</b></div>
+              <div class="card"><span class="medal off">☆</span> <b>First Step</b><div class="bar"><span style="width:0"></span></div></div>
+              <div class="card"><span class="medal off">↻</span> <b>Steadfast</b><div class="bar"><span style="width:0"></span></div></div>
+              <div class="card"><span class="medal off">☀</span> <b>Early Riser</b></div>
+            </div><span class="count">7 screens</span></div>
+          </div>
+          <div class="mini-box mini-before"><span class="mini-label">Before — Ministry Sign-ups</span>
+            <div class="phone"><div class="ph-body longpage">
+              <div class="card"><b>Sat, Oct 24 · 6:00 PM</b><div class="muted">Lectors · 2 needed</div><div class="btn-n">Volunteer</div><div class="muted" style="margin-top:.3rem">Choir · 6 needed</div><div class="btn-n">Volunteer</div></div>
+              <div class="card"><b>Sun, Oct 25 · 6:00 AM</b></div>
+            </div><span class="count">5 screens</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding" id="p6">
+        <div class="finding-head"><span class="finding-title">6. Small details</span><span class="tags"><span class="tag sev-low">Low</span></span></div>
+        <p class="desc">The Mass Intentions status badge is 10px, and "SEE DETAILS" / "DETAILS" links are small capital letters, which are harder to read than normal case.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="phone"><div class="ph-body"><div class="card"><b>Thanksgiving</b><div class="muted">Reyes Family</div><span class="badge-mini b-gray" style="font-size:10px">Pending</span><div style="font-size:.6rem;font-weight:700;letter-spacing:.04em;color:#6c6fb0;margin-top:.3rem">SEE DETAILS ›</div></div></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="phone"><div class="ph-body"><div class="card"><b>Thanksgiving</b><div class="muted">Reyes Family</div><span class="badge-mini b-amber" style="font-size:12px">Pending</span><div style="margin-top:.35rem"><span class="btn-o">See details</span></div></div></div></div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>user/user-mass-intentions.js</code> (badge set to 0.625rem inline); "DETAILS" on <code>user/user-my-requests.js</code>.</div>
+      </div>
+    </section>
+
+    <!-- ================= SUGGESTIONS ================= -->
+    <section class="cat">
+      <h2>Suggestions <span class="impact-tag impact-medium">Nice to have</span></h2>
+      <p class="cat-sub">Not broken today, but these would make the portal easier for parishioners.</p>
+
+      <div class="finding" id="s1">
+        <div class="finding-head"><span class="finding-title">A. My Badges: show what's earned and what's next</span></div>
+        <p class="desc">Show earned badges, then the one or two closest to being earned, with "See all 20 badges" for the rest. Cuts the page from about 7 screens to 2.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="phone"><div class="ph-body">
+              <div class="muted" style="font-weight:700;text-transform:uppercase">Earned (2)</div>
+              <div style="display:flex;gap:.35rem;margin:.3rem 0 .6rem"><span class="medal">🕯</span><span class="medal">♡</span></div>
+              <div class="muted" style="font-weight:700;text-transform:uppercase">Almost there</div>
+              <div class="card"><b>Faithful Giver</b><div class="muted">Give 2 more months in a row</div><div class="bar"><span style="width:33%"></span></div></div>
+              <div class="card"><b>First Step</b><div class="muted">Check in at 1 Mass</div><div class="bar"><span style="width:0"></span></div></div>
+              <span class="btn-o" style="width:100%">See all 20 badges</span>
+            </div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding" id="s2">
+        <div class="finding-head"><span class="finding-title">B. Ministry Sign-ups: remember my ministry, and a "Mine" view</span></div>
+        <p class="desc">Open on the ministry the person picked last time (most people serve in one), and add a "Mine" chip listing only the slots they've signed up for, with Withdraw / Ask for swap right there.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="phone"><div class="ph-body">
+              <div><span class="chip">All</span><span class="chip on">Lectors</span><span class="chip">Mine (1)</span></div>
+              <div class="card"><b>Sat, Oct 24 · 6:00 PM</b><div class="muted">Saturday evening Mass · 2 lectors needed</div><div class="btn-n">Volunteer</div></div>
+              <div class="card"><b>Sun, Oct 25 · 8:00 AM</b><div class="muted">You're serving ✓</div><div style="display:flex;gap:.3rem;margin-top:.3rem"><span class="btn-o">Withdraw</span><span class="btn-o">Ask for swap</span></div></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding" id="s3">
+        <div class="finding-head"><span class="finding-title">C. Shorter intro boxes for people who've been here before</span></div>
+        <p class="desc">Every page opens with a "What's on this page?" box; on Mass Intentions it's 6 lines. After the first visit, fold it to one line with "What's this?" to open it, so the main button and the person's own items come first.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — every visit</span>
+            <div class="phone"><div class="ph-body"><div class="card" style="background:#f3f0e6"><b>What is a Mass Intention?</b><div class="muted">A Mass Intention is a prayer offered during the Holy Mass for a specific person or purpose — for the repose of a soul, for healing, or in thanksgiving. A customary offering…</div><div class="btn-n">+ Submit Intention</div></div></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — from the 2nd visit</span>
+            <div class="phone"><div class="ph-body"><div class="btn-n" style="margin:0 0 .35rem">+ Submit Intention</div><div class="muted" style="color:#4b50a0;font-weight:600">ⓘ What's a Mass Intention?</div><div class="card" style="margin-top:.45rem"><b>Thanksgiving</b><div class="muted">Reyes Family · Mass Oct 24</div></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding" id="s4">
+        <div class="finding-head"><span class="finding-title">D. Dashboard: one "Your next thing" card at the top</span></div>
+        <p class="desc">Above the quick actions, a single card with whatever matters most right now: a certificate ready to pick up, the next booked service, or else the next Mass.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="phone"><div class="ph-body">
+              <div class="card" style="border-left:4px solid #15803d"><div class="muted" style="font-weight:700;text-transform:uppercase">Ready for you</div><b>Your Confirmation Certificate is ready</b><div class="muted">Pick it up at the parish office, Tue–Sun 8 AM – 5 PM.</div></div>
+              <div class="card" style="border-left:4px solid #b45309"><div class="muted" style="font-weight:700;text-transform:uppercase">Coming up</div><b>House Blessing · Wed Oct 28, 9:00 AM</b><div class="muted">Waiting for parish approval</div></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding" id="s5">
+        <div class="finding-head"><span class="finding-title">E. Cancel or reschedule right from the card</span></div>
+        <p class="desc">Today it takes "View details" first. Where the parish rules allow (e.g. up to the day before), show Reschedule and Cancel on the card itself.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="phone"><div class="ph-body"><div class="card"><b>House Blessing</b><div style="color:#b45309;font-weight:700">Waiting for approval</div><div class="muted">Wed Oct 28, 9:00 AM</div><span class="btn-o" style="width:100%;margin-top:.35rem">View details ›</span></div></div></div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="phone"><div class="ph-body"><div class="card"><b>House Blessing</b><div style="color:#b45309;font-weight:700">Waiting for approval</div><div class="muted">Wed Oct 28, 9:00 AM</div><div style="display:flex;gap:.3rem;margin-top:.35rem"><span class="btn-o" style="flex:1">Reschedule</span><span class="btn-o" style="flex:1;color:#b91c1c;border-color:#fca5a5">Cancel…</span></div></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding" id="s6">
+        <div class="finding-head"><span class="finding-title">F. Optional text or email reminder the day before</span></div>
+        <p class="desc">Phone notifications only reach people who allowed them on that phone. Let parishioners also choose a text or email reminder the day before a booked service, facility booking or ministry slot. Needs an email/SMS sender on the backend.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-after"><span class="mini-label">After — on the booking confirmation</span>
+            <div class="phone"><div class="ph-body"><div class="card"><b>✓ House Blessing booked</b><div class="muted">Wed Oct 28, 9:00 AM</div><div style="margin-top:.45rem;font-size:.72rem;font-weight:600">Remind me the day before by:</div><div style="margin-top:.25rem"><span class="chip on">Email</span><span class="chip">Text</span><span class="chip">This phone</span></div></div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</body>
+</html>

@@ -10,11 +10,11 @@
 import { currentLang, currentTheme } from './ui-prefs.js';
 
 const LABELS = {
-  en: { alerts: 'Alerts', bigger: 'Bigger text', dark: 'Dark', light: 'Light', language: 'Language', help: 'Help' },
-  fil: { alerts: 'Abiso', bigger: 'Mas malaki', dark: 'Madilim', light: 'Maliwanag', language: 'Wika', help: 'Tulong' },
+  en: { find: 'Find', alerts: 'Alerts', bigger: 'Bigger text', dark: 'Dark', light: 'Light', language: 'Language', help: 'Help' },
+  fil: { find: 'Hanapin', alerts: 'Abiso', bigger: 'Mas malaki', dark: 'Madilim', light: 'Maliwanag', language: 'Wika', help: 'Tulong' },
 };
 
-const ICONS = ':is(.pn-btn, .ui-prefs-btn, .ui-prefs-lang, .help-icon-btn)';
+const ICONS = ':is(.find-person-btn, .pn-btn, .ui-prefs-btn, .ui-prefs-lang, .help-icon-btn)';
 
 const STYLE = `
   header .help-date-wrap { gap: 0.5rem; }
@@ -29,7 +29,8 @@ const STYLE = `
     border-radius: 0.6rem; border-color: transparent; background-color: transparent; color: #1e2a4a;
   }
   header .help-date-wrap ${ICONS}:hover { background-color: #f3f4f6; border-color: transparent; }
-  header .help-date-wrap :is(.pn-btn, .ui-prefs-btn, .help-icon-btn) svg { width: 1.25rem; height: 1.25rem; }
+  header .help-date-wrap :is(.find-person-btn, .pn-btn, .ui-prefs-btn, .help-icon-btn) svg { width: 1.25rem; height: 1.25rem; }
+  header .help-date-wrap .find-person-btn { display: inline-flex; border: 1px solid transparent; cursor: pointer; }
   header .help-date-wrap ${ICONS}[data-label]::after {
     content: attr(data-label); flex-basis: 100%; text-align: center; font-family: inherit;
     font-size: 0.6875rem; font-weight: 600; letter-spacing: 0; line-height: 1.1; color: #374151; white-space: nowrap;
@@ -73,6 +74,7 @@ export function labelTopBarIcons() {
   const paint = () => {
     const l = LABELS[currentLang()];
     const set = (sel, text) => document.querySelector(sel)?.setAttribute('data-label', text);
+    set('#find-person-btn', l.find);
     set('header .pn-btn', l.alerts);
     set('#ui-a11y-btn', l.bigger);
     set('#ui-theme-btn', currentTheme() === 'dark' ? l.light : l.dark);

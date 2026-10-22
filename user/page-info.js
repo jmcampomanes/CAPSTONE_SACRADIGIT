@@ -82,6 +82,35 @@ function moveActions(banner, actionsRow) {
   actionsRow.remove();
 }
 
+/* From the second visit to a page, the box folds to its title, with
+   "Show more" to open it again: returning parishioners know what the
+   page is for, and their own items move up the screen. */
+const SEEN_KEY = 'sacradigit_seen_pages';
+function foldAfterFirstVisit(banner, pageFile) {
+  let seen = [];
+  try { seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || []; } catch { /* private mode */ }
+  if (!seen.includes(pageFile)) {
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify([...seen, pageFile])); } catch { /* private mode */ }
+    return;
+  }
+  const title = banner.querySelector('.info-banner-title');
+  if (!title) return;
+  const body = title.parentElement;
+  if (!body.id) body.id = `page-info-${pageFile.replace(/\W/g, '')}`;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'info-banner-toggle';
+  btn.setAttribute('aria-controls', body.id);
+  const paint = (open) => {
+    banner.classList.toggle('is-folded', !open);
+    btn.setAttribute('aria-expanded', String(open));
+    btn.textContent = open ? 'Show less' : 'Show more';
+  };
+  btn.addEventListener('click', () => paint(banner.classList.contains('is-folded')));
+  title.append(' ', btn);
+  paint(false);
+}
+
 export function mountPageInfo(pageFile) {
   const info = PAGE_INFO[pageFile];
   const main = document.querySelector('main');
@@ -95,6 +124,7 @@ export function mountPageInfo(pageFile) {
     const body = existing.querySelector('.info-banner-icon + div');
     body?.classList.add('info-banner-body');
     moveActions(existing, actionsRow);
+    foldAfterFirstVisit(existing, pageFile);
     return;
   }
   if (!info.title) return;
@@ -123,6 +153,8 @@ export function mountPageInfo(pageFile) {
     const firstView = main.querySelector(':scope > #menu-view') || main;
     firstView.prepend(banner);
   }
+
+  foldAfterFirstVisit(banner, pageFile);
 
   // Messages: the chat box is sized to the screen — make room for the box above it.
   document.getElementById('chat-layout')?.classList.add('with-hero');

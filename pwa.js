@@ -45,7 +45,8 @@ function dismissedThisVisit() {
 
 /* Parishioners: the banner covered the middle of every page. Now it shows only
    on their Dashboard, once, from their second visit on — and never on Sign In.
-   Other portals (admin, ITech, Media) keep the old behaviour. */
+   The Head Admin / Secretary portal never shows it: it sat on top of every
+   table's Approve / Release buttons. ITech and Media keep the old behaviour. */
 const VISITS_KEY = 'sacradigit_visits';
 const SHOWN_KEY = 'sacradigit_install_shown';
 const path = window.location.pathname;
@@ -53,6 +54,7 @@ const path = window.location.pathname;
 const isSignIn = /^\/(index\.html|login\.html)?$/.test(path);
 const isParishioner = /\/user\/[^/]*$/.test(path);
 const isParishionerHome = /\/user\/user-dashboard\.html$/.test(path);
+const isAdminPortal = /\/Sacradigit\/[^/]*$/.test(path);
 
 function countVisit() {
   try {
@@ -64,7 +66,7 @@ function countVisit() {
 if (isParishioner) countVisit();
 
 function bannerAllowedHere() {
-  if (isSignIn) return false;
+  if (isSignIn || isAdminPortal) return false;
   if (!isParishioner) return true;
   try {
     return isParishionerHome

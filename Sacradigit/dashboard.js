@@ -28,6 +28,7 @@ function watchPendingPrayers(link) {
 import './sacred-art.js';
 import { labelTopBarIcons } from '../top-bar-labels.js';
 import { initTableCards } from '../table-cards.js';
+import { initFindPerson } from './find-person.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -127,7 +128,7 @@ const HELP_CONTENT = {
     ],
   },
   'masses.html': {
-    title: 'Special Masses',
+    title: 'Masses',
     intro: 'Schedule and manage the parish’s regular and special masses.',
     steps: [
       'Check the legend at the top to see what each mass-type badge (Daily, Anticipated, Special, Baptism) means.',
@@ -270,6 +271,37 @@ document.addEventListener('DOMContentLoaded', () => {
           </li>`);
   }
 
+  /* Menu groups, by the job rather than by when each page was added. The
+     links themselves (and their badges) are moved, not rebuilt, so every
+     page's copy of the sidebar ends up in the same order. */
+  const NAV_GROUPS = [
+    ['Main', ['dashboard.html']],
+    ['Masses', ['masses.html', 'special-schedules.html', 'ministry-roster.html', 'attendance.html']],
+    ['Requests', ['record-requests.html', 'schedule-offers.html', 'blessings.html', 'facility-booking.html', 'mass-intentions.html']],
+    ['Records & Finance', ['digital-archives.html', 'donations.html']],
+    ['Communications', ['announcements.html', 'messages.html', 'prayer-wall.html', 'parish-info.html']],
+  ];
+  const nav = document.querySelector('#sidebar nav');
+  if (nav && !nav.dataset.grouped) {
+    const items = new Map([...nav.querySelectorAll('a.sidebar-link')].map(a => [a.getAttribute('href'), a.closest('li')]));
+    const frag = document.createDocumentFragment();
+    NAV_GROUPS.forEach(([label, pages], i) => {
+      const lis = pages.map(p => items.get(p)).filter(Boolean);
+      pages.forEach(p => items.delete(p));
+      if (i === NAV_GROUPS.length - 1) lis.push(...items.values()); // anything not listed above
+      if (!lis.length) return;
+      const p = document.createElement('p');
+      p.className = 'sidebar-label';
+      p.textContent = label;
+      const ul = document.createElement('ul');
+      ul.className = 'space-y-0.5 mb-4';
+      ul.append(...lis);
+      frag.append(p, ul);
+    });
+    nav.replaceChildren(frag);
+    nav.dataset.grouped = '1';
+  }
+
   const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
   const sidebarLinks = document.querySelectorAll('.sidebar-link');
 
@@ -277,10 +309,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const linkPage = link.getAttribute('href');
     if (linkPage === currentPage) {
       link.classList.add('active');
+      link.setAttribute('aria-current', 'page');
     } else {
       link.classList.remove('active');
+      link.removeAttribute('aria-current');
     }
   });
+  // On short laptop screens the menu scrolls: keep the current page's link in view.
+  document.querySelector('.sidebar-link.active')?.scrollIntoView({ block: 'nearest' });
 
 
   /* ------------------------------------------
@@ -319,6 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   initPageHelp(HELP_CONTENT[currentPage]);
   initUiPrefs(); // Light/Dark + English/Filipino controls (ui-prefs.js)
+  initFindPerson(); // "Find" a parishioner across requests, services and records (find-person.js)
   labelTopBarIcons(); // a word under each top-bar icon (../top-bar-labels.js)
   initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
   initTableCards(); // phones: each table row as a card (below)

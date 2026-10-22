@@ -934,6 +934,14 @@ input[type="date"].form-input::-webkit-date-and-time-value { text-align: left; }
   gap: 0.5rem;
 }
 .date-dd-select { min-height: 2.75rem; cursor: pointer; }
+/* Small phones, or Bigger text: "September" doesn't fit a third of the row,
+   so Month gets its own line and Day / Year share the next one. */
+@media (max-width: 420px) {
+  .date-dd { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .date-dd > .date-dd-select:first-child { grid-column: 1 / -1; }
+}
+:root[data-a11y="on"] .date-dd { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+:root[data-a11y="on"] .date-dd > .date-dd-select:first-child { grid-column: 1 / -1; }
 .date-dd-invalid .date-dd-select { border-color: #f87171; }
 .date-dd-invalid .date-dd-select:invalid,
 .date-dd-invalid .date-dd-select:has(option[value=""]:checked) { background-color: #fef2f2; }
@@ -1176,3 +1184,20 @@ body .min-volunteer:hover { background-color: #2a3963; }
   background: linear-gradient(to bottom, rgba(26, 33, 49, 0), #1a2131 65%);
   color: #c7cbe8;
 }
+
+/* Links/buttons in normal case and a readable size (small capitals are harder to read). */
+body .intention-details-btn,
+body .btn-view-details,
+body .btn-view-cert { text-transform: none; letter-spacing: 0; font-size: 0.875rem; }
+
+/* Intro box folded to its title after the first visit (page-info.js). */
+.info-banner.is-folded { padding-top: 0.625rem; padding-bottom: 0.625rem; align-items: center; }
+.info-banner.is-folded .info-banner-icon { width: 1.75rem; height: 1.75rem; margin-top: 0; }
+.info-banner.is-folded .info-banner-title { margin-bottom: 0; }
+.info-banner.is-folded .info-banner-title ~ * { display: none; }
+.info-banner-toggle {
+  margin-left: 0.35rem; padding: 0.25rem 0.4rem; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 0.8125rem; font-weight: 600; color: #4b50a0; text-decoration: underline;
+  min-height: 2rem;
+}
+:root[data-theme="dark"] .info-banner-toggle { color: #b3b6e6; }

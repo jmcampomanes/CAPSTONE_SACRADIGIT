@@ -171,6 +171,10 @@ const ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const STYLE = `
   body.has-parish-assistant .pwa-banner { bottom: calc(5.25rem + env(safe-area-inset-bottom)); }
   body.has-parish-assistant .pwa-offline { bottom: calc(5.25rem + env(safe-area-inset-bottom)); }
+  /* Room under the last item on every page, so it can scroll clear of the bubble. */
+  body.has-parish-assistant main { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+  /* While the page scrolls, the bubble shrinks and fades a little so it hides less. */
+  .pa-launcher.pa-scrolling { transform: scale(0.72); opacity: 0.85; }
 
   .pa-launcher {
     position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 65;
@@ -286,6 +290,13 @@ export function initParishAssistant() {
     </section>`;
   document.body.appendChild(root);
   document.body.classList.add('has-parish-assistant');
+  let scrollTimer = null;
+  window.addEventListener('scroll', () => {
+    const btn = root.querySelector('.pa-launcher');
+    btn.classList.add('pa-scrolling');
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => btn.classList.remove('pa-scrolling'), 700);
+  }, { passive: true });
 
   const launcher = root.querySelector('.pa-launcher');
   const log = root.querySelector('.pa-log');

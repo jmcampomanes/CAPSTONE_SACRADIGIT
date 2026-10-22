@@ -13,11 +13,13 @@ import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../w
 import { watchLivestream } from '../livestream-status.js';
 import { mountBadgeStrip } from './faith-journey-widgets.js';
 import { mountCheckInCard } from './checkin-card.js';
+import { mountNextUpCard } from './next-up-card.js';
 import { openCheckInScanner } from './checkin-scanner.js';
 import { checkInReady } from '../mass-checkin.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   mountCheckInCard(document.getElementById('checkin-card'));
+  mountNextUpCard(document.getElementById('next-up'));
 
   mountBadgeStrip(document.getElementById('fj-badge-strip'));
 

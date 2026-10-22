@@ -261,13 +261,13 @@
 
           <div class="stat-card">
             <div class="flex items-start justify-between mb-3">
-              <p class="stat-label">Storage Used</p>
+              <p class="stat-label">Added This Month</p>
               <div class="stat-icon">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5.5 5.5 0 00-10.6-1.4A4.5 4.5 0 003 15z"/></svg>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm7-7v4m-2-2h4"/></svg>
               </div>
             </div>
-            <p class="stat-value">6.8 GB</p>
-            <p class="stat-sub">of 10 GB used</p>
+            <p class="stat-value" id="stat-month">0</p>
+            <p class="stat-sub" id="stat-month-sub">new records this month</p>
           </div>
         </div>
 
@@ -279,8 +279,8 @@
           </div>
 
           <div class="relative shrink-0">
-            <select id="type-filter" class="filter-select">
-              <option value="">Type Filter</option>
+            <select id="type-filter" class="filter-select" aria-label="Type">
+              <option value="">All types</option>
               <option value="Baptism">Baptismal</option>
               <option value="Confirmation">Confirmation</option>
               <option value="Marriage">Marriage</option>
@@ -289,8 +289,8 @@
           </div>
 
           <div class="relative shrink-0">
-            <select id="date-filter" class="filter-select">
-              <option value="">Date Filter</option>
+            <select id="date-filter" class="filter-select" aria-label="Date added">
+              <option value="">Any date</option>
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>

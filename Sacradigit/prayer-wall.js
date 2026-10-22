@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button type="button" class="btn-secondary" data-act="reject" data-id="${r.id}">Reject</button>` : ''}
           ${r.status === 'approved' ? `<button type="button" class="btn-secondary" data-act="remove" data-id="${r.id}">Take Down</button>` : ''}
           ${r.status === 'rejected' || r.status === 'removed' ? `<button type="button" class="btn-secondary" data-act="approve" data-id="${r.id}">Approve After All</button>` : ''}
-          ${isHeadAdmin() && r.status !== 'pending' ? `<button type="button" class="pw-delete" data-act="delete" data-id="${r.id}">Delete</button>` : ''}
+          ${isHeadAdmin() && r.status !== 'pending' ? `<button type="button" class="act-btn act-danger pw-delete" data-act="delete" data-id="${r.id}">Delete…</button>` : ''}
         </div>
       </article>`).join('');
   }

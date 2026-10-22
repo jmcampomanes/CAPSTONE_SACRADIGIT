@@ -143,15 +143,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (b.status === 'pending') {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="row-approve" data-id="${b.id}">Approve</button>
-            <button type="button" class="row-reject" data-id="${b.id}">Cancel</button>
-            <button type="button" class="row-view" data-id="${b.id}">View</button>
+            <button type="button" class="act-btn act-approve row-approve" data-id="${b.id}">Approve</button>
+            <button type="button" class="act-btn row-view" data-id="${b.id}">View</button>
+            <button type="button" class="act-btn act-danger row-reject" data-id="${b.id}">Cancel…</button>
           </div>`;
       } else {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="row-reject" data-id="${b.id}">Cancel</button>
-            <button type="button" class="row-view" data-id="${b.id}">View</button>
+            <button type="button" class="act-btn row-view" data-id="${b.id}">View</button>
+            <button type="button" class="act-btn act-danger row-reject" data-id="${b.id}">Cancel…</button>
           </div>`;
       }
 

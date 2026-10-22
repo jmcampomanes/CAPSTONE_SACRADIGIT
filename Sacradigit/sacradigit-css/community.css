@@ -486,7 +486,7 @@
 
 .min-table th {
   text-align: left;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -508,7 +508,7 @@
 
 .min-mass-cell small {
   display: block;
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   color: #6b7280;
 }
 
@@ -541,7 +541,25 @@
 .min-open {
   display: inline-block;
   margin-top: 0.2rem;
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #b45309;
 }
+
+/* Upcoming / Past switch and the "Needs N people" tag per Mass */
+.min-view-chips { display: flex; gap: 0.4rem; }
+.min-view-chip {
+  min-height: 2.25rem; padding: 0.35rem 0.85rem; border-radius: 999px;
+  border: 1.5px solid #d1d5db; background: #ffffff; color: #374151;
+  font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+}
+.min-view-chip[aria-pressed="true"] { background: #1e2a4a; border-color: #1e2a4a; color: #ffffff; }
+.min-need {
+  display: inline-block; margin-top: 0.3rem; padding: 0.1rem 0.5rem; border-radius: 999px;
+  font-size: 0.75rem; font-weight: 700; background: #fef2f2; color: #b91c1c;
+}
+.min-need.is-full { background: #ecfdf3; color: #15803d; }
+:root[data-theme="dark"] .min-view-chip { background: transparent; border-color: #3a4459; color: #e5e8ef; }
+:root[data-theme="dark"] .min-view-chip[aria-pressed="true"] { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] .min-need { background: rgba(185, 28, 28, 0.18); color: #fca5a5; }
+:root[data-theme="dark"] .min-need.is-full { background: rgba(21, 128, 61, 0.2); color: #86efac; }

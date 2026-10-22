@@ -1,5 +1,5 @@
 /* ============================================
-   SacraDigit — Month / Day / Year dropdowns for birth dates
+   SacraDigit — Month / Day / Year dropdowns for past dates
    (started by user/user-shell.js on every parishioner page).
 
    The browser's mm/dd/yyyy calendar is hard work for someone
@@ -24,8 +24,13 @@ const MIN_YEAR = 1900;
 const ERROR_CLASSES = ['border-red-400', 'has-error', 'mi-invalid'];
 const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
 
+// Dates of events that already happened, often decades ago (birth, baptism,
+// confirmation, first communion, marriage, death). Booking and schedule
+// pickers, which choose future dates, keep the calendar.
+const PAST_DATE_ID = /birth|baptism|confirmation|communion|marriage|death/i;
 const isBirthDateInput = (el) =>
-  el instanceof HTMLInputElement && el.type === 'date' && /birth/i.test(el.id) && !el.dataset.dateDropdowns;
+  el instanceof HTMLInputElement && el.type === 'date' && PAST_DATE_ID.test(el.id)
+  && !(el.min && el.min > new Date().toLocaleDateString('en-CA')) && !el.dataset.dateDropdowns;
 
 const daysIn = (year, month) => new Date(year || 2000, month, 0).getDate(); // year unknown: allow Feb 29
 

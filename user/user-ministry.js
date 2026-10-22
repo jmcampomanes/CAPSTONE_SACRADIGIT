@@ -51,8 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('min-next').addEventListener('click', () => { month += 1; if (month > 11) { month = 0; year += 1; } load(); });
 
   // Ministry filter chips
-  $('min-filter').innerHTML = [{ id: 'all', label: 'All ministries' }, ...MINISTRIES]
-    .map(m => `<button type="button" class="min-chip" data-filter="${m.id}" aria-pressed="false">${escapeHtml(m.label)}</button>`).join('');
+  // "Mine": only the Masses and ministries this person signed up for.
+  $('min-filter').innerHTML = [{ id: 'all', label: 'All ministries' }, ...MINISTRIES, { id: 'mine', label: 'Mine' }]
+    .map(m => `<button type="button" class="min-chip${m.id === 'mine' ? ' min-chip-mine' : ''}" data-filter="${m.id}" aria-pressed="false">${escapeHtml(m.label)}</button>`).join('');
+  const emptyText = $('min-empty').textContent;
   $('min-show-past').addEventListener('change', render);
 
   function paintFilter() {
@@ -69,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!chip) return;
     filter = chip.dataset.filter;
     filterChosen = true;
-    try { localStorage.setItem(FILTER_KEY, filter); } catch { /* private mode */ }
+    if (filter !== 'mine') { try { localStorage.setItem(FILTER_KEY, filter); } catch { /* private mode */ } }
     paintFilter();
     render();
   });
@@ -94,7 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function render() {
     guessFilter();
     const grouped = groupSignups(signups);
-    const shownMinistries = filter === 'all' ? MINISTRIES : MINISTRIES.filter(m => m.id === filter);
+    const mineOnly = filter === 'mine';
+    const isMine = (mass, ministryId) => (grouped.get(mass.key)?.get(ministryId) || []).some(s => s.volunteerId === me.id);
+    const shownMinistries = filter === 'all' || mineOnly ? MINISTRIES : MINISTRIES.filter(m => m.id === filter);
 
     // My slots this month
     const mine = signups.filter(s => s.volunteerId === me.id && s.massDate >= todayIso())
@@ -103,13 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
     $('min-mine').innerHTML = mine.map(s => `
       <li><b>${escapeHtml(fmtMassDay(s.massDate))} · ${escapeHtml(fmtTime(s.massTime))}</b> — ${escapeHtml(ministryById(s.ministry)?.one || s.ministry)}${s.swapRequested ? ' <span class="min-swap-tag">Swap requested</span>' : ''}</li>`).join('');
 
+    const mineCount = signups.filter(s => s.volunteerId === me.id && s.massDate >= todayIso()).length;
+    const mineChip = $('min-filter').querySelector('[data-filter="mine"]');
+    if (mineChip) mineChip.textContent = mineCount ? `Mine (${mineCount})` : 'Mine';
+
     // Masses already over are hidden unless asked for
-    const shownMasses = $('min-show-past').checked ? masses : masses.filter(m => m.date >= todayIso());
+    let shownMasses = $('min-show-past').checked ? masses : masses.filter(m => m.date >= todayIso());
+    if (mineOnly) shownMasses = shownMasses.filter(mass => MINISTRIES.some(m => isMine(mass, m.id)));
+    $('min-empty').textContent = mineOnly ? 'You haven’t signed up to serve at any Mass this month yet. Tap “All ministries” to find one.' : emptyText;
     $('min-empty').classList.toggle('hidden', shownMasses.length > 0);
     $('min-roster').innerHTML = shownMasses.map(mass => {
       const byMin = grouped.get(mass.key) || new Map();
       const past = mass.date < todayIso();
-      const rows = shownMinistries.map(m => {
+      const rows = shownMinistries.filter(m => !mineOnly || isMine(mass, m.id)).map(m => {
         const list = byMin.get(m.id) || [];
         const minePending = list.find(s => s.volunteerId === me.id);
         const open = Math.max(0, m.perMass - list.length);

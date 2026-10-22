@@ -193,8 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
           <div class="goal-card-footer">
-            <button type="button" class="goal-edit head-admin-only" data-id="${g.id}">Edit</button>
-            <button type="button" class="goal-delete head-admin-only" data-id="${g.id}">Delete</button>
+            <button type="button" class="act-btn goal-edit head-admin-only" data-id="${g.id}">Edit</button>
+            <button type="button" class="act-btn act-danger goal-delete head-admin-only" data-id="${g.id}">Delete…</button>
           </div>
         </div>
       `;
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><span class="payment-tag ${methodClass(d.method)}">${escapeHtml(d.method)}</span></td>
         <td class="text-gray-500">${escapeHtml(d.purpose)}</td>
         <td class="text-gray-400">${formatShortDate(d.date)}</td>
-        <td class="text-right"><button type="button" class="row-action" data-id="${d.id}">View ›</button></td>
+        <td class="text-right"><button type="button" class="act-btn row-action" data-id="${d.id}">View</button></td>
       </tr>
     `).join('');
 

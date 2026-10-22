@@ -324,9 +324,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const canCancel = it.status === 'scheduled' && !isLocked(it);
     const actionHtml = `
       <div class="row-actions">
-        ${isClosed(it) ? '' : `<button type="button" class="row-edit" data-id="${it.id}">Edit</button>`}
-        <button type="button" class="row-view" data-id="${it.id}">View</button>
-        ${canCancel ? `<button type="button" class="row-remove" data-id="${it.id}">Cancel</button>` : ''}
+        <button type="button" class="act-btn row-view" data-id="${it.id}">View</button>
+        ${isClosed(it) ? '' : `<button type="button" class="act-btn row-edit" data-id="${it.id}">Edit</button>`}
+        ${canCancel ? `<button type="button" class="act-btn act-danger row-remove" data-id="${it.id}">Cancel…</button>` : ''}
       </div>
     `;
 

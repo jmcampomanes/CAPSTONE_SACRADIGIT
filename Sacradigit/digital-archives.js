@@ -33,6 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Schema stores status as lowercase enum values; UI shows Title Case
   const statusLabel = { digitized: 'Digitized', processing: 'Processing', queued: 'Queued' };
+  // Record types are stored lowercase ('baptism'); show them as words ('Baptism').
+  const recordTypeLabel = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : '—');
   const badgeClass  = { digitized: 'badge-green', processing: 'badge-amber', queued: 'badge-gray' };
 
   function escapeHtml(str) {
@@ -92,6 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('stat-pending').textContent    = pending.toLocaleString();
     document.getElementById('stat-digitized-sub').textContent =
       records.length ? `${Math.round((digitized / records.length) * 100)}% of total archive` : 'of total archive';
+
+    // Records whose entry was created this calendar month (replaces a fixed "6.8 GB of 10 GB" storage figure).
+    const now = new Date();
+    const thisMonth = records.filter(r => {
+      const d = new Date(r.createdAt);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).length;
+    document.getElementById('stat-month').textContent = thisMonth.toLocaleString();
+    document.getElementById('stat-month-sub').textContent =
+      `new records in ${now.toLocaleDateString('en-US', { month: 'long' })}`;
   }
 
   /* ------------------------------------------
@@ -173,14 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.innerHTML = `
           <td class="col-select head-admin-only"><input type="checkbox" class="row-check row-select" data-id="${r.id}" aria-label="Select ${escapeHtml(r.fullName)}" ${selected.has(r.id) ? 'checked' : ''} /></td>
           <td class="font-medium text-gray-900">${escapeHtml(r.fullName)}${dupes.has(r.id) ? ' <span class="dup-tag" title="Same type and name as another record — check it isn’t a duplicate">Possible duplicate</span>' : ''}</td>
-          <td>${escapeHtml(r.type)}</td>
+          <td>${escapeHtml(recordTypeLabel(r.type))}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td>${escapeHtml(r.addedByName)}</td>
           <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span></td>
           <td class="text-right whitespace-nowrap">
-            <button type="button" class="row-action row-view" data-id="${r.id}">View ›</button>
-            <button type="button" class="row-action row-edit head-admin-only" data-id="${r.id}">Edit</button>
-            <button type="button" class="row-action row-action-danger row-delete head-admin-only" data-id="${r.id}">Delete</button>
+            <button type="button" class="act-btn row-action row-view" data-id="${r.id}">View</button>
+            <button type="button" class="act-btn row-action row-edit head-admin-only" data-id="${r.id}">Edit</button>
+            <button type="button" class="act-btn act-danger row-action row-action-danger row-delete head-admin-only" data-id="${r.id}">Delete…</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -335,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailGridHtml = `
       <div class="so-detail-grid">
         <div><p class="so-detail-label">Full Name</p><p class="so-detail-value">${escapeHtml(r.fullName)}</p></div>
-        <div><p class="so-detail-label">Record Type</p><p class="so-detail-value">${escapeHtml(r.type)}</p></div>
+        <div><p class="so-detail-label">Record Type</p><p class="so-detail-value">${escapeHtml(recordTypeLabel(r.type))}</p></div>
         <div><p class="so-detail-label">Status</p><p class="so-detail-value">${statusLabel[r.status] || r.status}</p></div>
         <div><p class="so-detail-label">Date of Event</p><p class="so-detail-value">${formatDate(r.dateOfEvent)}</p></div>
         <div><p class="so-detail-label">Officiant</p><p class="so-detail-value">${escapeHtml(r.officiant) || '—'}</p></div>

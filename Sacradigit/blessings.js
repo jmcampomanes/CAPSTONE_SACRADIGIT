@@ -102,6 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const already = remindedSet();
     records
       .filter(r => r.status === 'scheduled' && r.date === tomorrowISO)
+      // The parishioner chose how to be reminded when they booked (service-request-page.js);
+      // older bookings have no choice saved and still get the email.
+      .filter(r => (detailsOf(r)['Day-before reminder'] || 'Email') === 'Email')
       .forEach(r => {
         const key = `${r.id}:${r.date}`;
         if (already.has(key)) return;
@@ -282,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="blessing-datetime">
               ${formatLongDate(b.date)}<br/>${escapeHtml(b.time)}
             </div>
-            <button type="button" class="blessing-details-btn" data-section="upcoming" data-id="${b.id}">Details ›</button>
+            <button type="button" class="act-btn blessing-details-btn" data-section="upcoming" data-id="${b.id}">View</button>
           </div>
         </div>
       </li>
@@ -323,14 +326,11 @@ document.addEventListener('DOMContentLoaded', () => {
               ? `requested for ${formatLongDate(r.preferredDate)}${r.time ? ` at ${escapeHtml(r.time)}` : ''}`
               : `${formatLongDate(r.date)} at ${escapeHtml(r.time)}`}</p>
           </div>
-          <div class="request-actions">
-            <div class="request-action-row">
-              ${r.status === 'pending' ? `
-              <button type="button" class="req-approve" data-id="${r.id}">Approve</button>
-              <button type="button" class="req-decline" data-id="${r.id}">Decline</button>` : ''}
-              <button type="button" class="req-reschedule" data-id="${r.id}">Reschedule</button>
-            </div>
-            <button type="button" class="blessing-details-btn" data-section="${r.status === 'pending' ? 'requests' : 'upcoming'}" data-id="${r.id}">Details ›</button>
+          <div class="request-actions act-row">
+            ${r.status === 'pending' ? `<button type="button" class="act-btn act-approve req-approve" data-id="${r.id}">Approve</button>` : ''}
+            <button type="button" class="act-btn req-reschedule" data-id="${r.id}">Reschedule</button>
+            <button type="button" class="act-btn blessing-details-btn" data-section="${r.status === 'pending' ? 'requests' : 'upcoming'}" data-id="${r.id}" aria-label="View ${escapeHtml(r.requesterName)}'s request">View</button>
+            ${r.status === 'pending' ? `<button type="button" class="act-btn act-danger req-decline" data-id="${r.id}">Decline…</button>` : ''}
           </div>
         </div>
       </li>
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div>
             <div class="completed-date">${formatLongDate(c.date)}</div>
-            <button type="button" class="blessing-details-btn" data-section="completed" data-id="${c.id}">Details ›</button>
+            <button type="button" class="act-btn blessing-details-btn" data-section="completed" data-id="${c.id}">View</button>
           </div>
         </div>
       </li>
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div>
             <div class="completed-date">${formatLongDate(c.date || c.preferredDate)}</div>
-            <button type="button" class="blessing-details-btn" data-section="cancelled" data-id="${c.id}">Details ›</button>
+            <button type="button" class="act-btn blessing-details-btn" data-section="cancelled" data-id="${c.id}">View</button>
           </div>
         </div>
       </li>

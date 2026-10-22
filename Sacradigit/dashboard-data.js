@@ -9,8 +9,11 @@
 import { client } from '../amplify-init.js';
 import { currentUser, isHeadAdmin } from '../auth.js';
 import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../weekly-mass-schedule.js';
+import { mountNeedsYou } from './needs-you.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  mountNeedsYou(document.getElementById('needs-you'));
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
@@ -22,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const statusBadge = { digitized: 'badge-green', processing: 'badge-amber', queued: 'badge-gray' };
   const statusLabel = { digitized: 'Digitized', processing: 'Processing', queued: 'Queued' };
+  // Record types are stored lowercase ('baptism'); show them as words ('Baptism').
+  const recordTypeLabel = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : '—');
 
   /* --- Today's Masses ---
      Combines individually-scheduled Mass records for today with the
@@ -67,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <li class="list-row">
             <span class="list-time">${m.time}</span>
             <span class="list-name">${m.title || m.type}</span>
-            <a href="masses.html" class="list-action">Details ›</a>
+            <a href="masses.html" class="act-btn list-action">View</a>
           </li>`).join('');
   }
 
@@ -159,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : shown.map(r => `
             <li class="list-row">
               <span class="list-name flex-1">${r.requesterName} — ${r.certificateType}</span>
-              <a href="record-requests.html" class="list-action">Details ›</a>
+              <a href="record-requests.html" class="act-btn list-action">View</a>
             </li>`).join('');
     },
     error: (err) => {
@@ -187,11 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
         : recent.map(r => `
             <tr>
               <td class="font-medium text-gray-900">${r.fullName}</td>
-              <td>${r.type}</td>
+              <td>${recordTypeLabel(r.type)}</td>
               <td>${formatShortDate(r.createdAt)}</td>
               <td>${r.addedByName || '—'}</td>
               <td><span class="badge ${statusBadge[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span></td>
-              <td class="text-right"><a href="digital-archives.html" class="list-action">View ›</a></td>
+              <td class="text-right"><a href="digital-archives.html" class="act-btn list-action">View</a></td>
             </tr>`).join('');
     },
     error: (err) => console.error('Failed to load records:', err),

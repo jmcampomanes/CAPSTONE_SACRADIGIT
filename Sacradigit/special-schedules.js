@@ -231,9 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Upcoming: Edit + Cancel · Completed: Edit · Cancelled: Restore + Delete
       const actions = cancelled
         ? `<button type="button" class="sched-restore head-admin-only" data-id="${s.id}">Restore</button>
-           <button type="button" class="sched-delete head-admin-only" data-id="${s.id}">Delete</button>`
-        : `<button type="button" class="sched-edit head-admin-only" data-id="${s.id}">Edit</button>
-           ${state === 'completed' ? '' : `<button type="button" class="sched-delete sched-cancel head-admin-only" data-id="${s.id}">Cancel</button>`}`;
+           <button type="button" class="act-btn act-danger sched-delete head-admin-only" data-id="${s.id}">Delete…</button>`
+        : `<button type="button" class="act-btn sched-edit head-admin-only" data-id="${s.id}">Edit</button>
+           ${state === 'completed' ? '' : `<button type="button" class="act-btn act-danger sched-delete sched-cancel head-admin-only" data-id="${s.id}">Cancel…</button>`}`;
 
       return `
         <div class="schedule-card ${typeClass}${cancelled ? ' is-cancelled' : ''}">

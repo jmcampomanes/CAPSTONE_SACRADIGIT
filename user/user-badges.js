@@ -146,9 +146,27 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>`;
   }
 
+  /* "All": earned badges, then the two closest to being earned, then a
+     "See all" button, instead of 20 cards (about 7 phone screens). The
+     Mass / Giving / Community chips still show every badge in that group. */
+  let showAllBadges = false;
+  const closest = (list) => list
+    .filter(b => !b.earned && b.progress && b.progress.target > 0)
+    .sort((a, z) => (z.progress.current / z.progress.target) - (a.progress.current / a.progress.target))
+    .slice(0, 2);
+
   function renderBadges(badges, ready) {
     const list = badges.filter(b => !activeGroup || b.group === activeGroup);
-    let html = list.map(badgeCardHtml).join('');
+    let html;
+    if (!activeGroup && !showAllBadges) {
+      const earned = list.filter(b => b.earned);
+      const next = closest(list);
+      html = (earned.length ? `<p class="fj-grid-head">Earned (${earned.length})</p>${earned.map(badgeCardHtml).join('')}` : '')
+        + (next.length ? `<p class="fj-grid-head">Almost there</p>${next.map(badgeCardHtml).join('')}` : '')
+        + `<button type="button" class="btn-secondary fj-see-all" id="fj-see-all">See all ${list.length} badges</button>`;
+    } else {
+      html = list.map(badgeCardHtml).join('');
+    }
     if (!ready && (!activeGroup || activeGroup === 'mass')) {
       html += `<p class="fj-grid-note">Mass badges (First Step, Faithful Month, Simbang Gabi, Holy Week Pilgrim, and more) appear once Mass check-in is turned on.</p>`;
     }
@@ -164,6 +182,12 @@ document.addEventListener('DOMContentLoaded', () => {
       </li>`).join('');
     $('givers-empty').classList.toggle('hidden', givers.length > 0);
   }
+
+  $('badge-grid').addEventListener('click', (e) => {
+    if (!e.target.closest('#fj-see-all')) return;
+    showAllBadges = true;
+    render();
+  });
 
   document.querySelector('.fj-tabs').addEventListener('click', (e) => {
     const tab = e.target.closest('.fj-tab');

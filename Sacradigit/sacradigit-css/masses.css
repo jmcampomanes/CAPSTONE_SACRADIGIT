@@ -449,28 +449,13 @@
 #date-schedule-empty {
   padding: 2.5rem 1.5rem;
 }
-/* ---------- "See Full Details" row action (Date's Schedule) ---------- */
-.schedule-row {
-  flex-wrap: wrap;
-}
-
-.schedule-details-btn {
-  flex-shrink: 0;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: #5b5fa8;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
-}
-
-.schedule-details-btn:hover {
-  color: #1e2a4a;
-}
+/* ---------- Date's schedule rows ----------
+   The Mass name gets the free space (type chip beside it); Start check-in and
+   View sit together and drop under the name when the panel is narrow. */
+.schedule-row { flex-wrap: wrap; }
+.schedule-info { flex: 1 1 14rem; }
+.schedule-type .mass-type-badge { margin-left: 0.35rem; vertical-align: 0.1em; }
+.schedule-actions { flex-shrink: 0; margin-left: auto; }
 
 /* ---------- Detail grid (Mass Details modal) ---------- */
 .so-detail-grid {
@@ -502,7 +487,6 @@
   .schedule-row { gap: 0.375rem 0.75rem; padding: 0.875rem 1rem; }
   .schedule-time { width: 4.25rem; flex-shrink: 0; }
   .schedule-info { flex: 1 1 calc(100% - 5rem); min-width: 0; }
-  .schedule-row > .mass-type-badge { margin-left: 5rem; }
-  .schedule-row > .schedule-details-btn { margin-left: auto; }
+  .schedule-actions { margin-left: 5rem; }
 }
 

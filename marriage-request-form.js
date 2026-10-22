@@ -146,24 +146,27 @@ function formHtml({ confirmHint, lastStepBack }) {
     <div class="mwiz">
       <ol class="mstep-bar" aria-label="Steps">
         ${MARRIAGE_STEPS.map((s, i) => `
-        <li><button type="button" class="mstep-dot" data-step="${i}">
+        <li><button type="button" class="mstep-dot" data-step="${i}" aria-label="Step ${i + 1}: ${s.label}">
           <span class="mstep-num">${i + 1}</span><span class="mstep-label">${s.label}</span>
         </button></li>`).join('')}
       </ol>
 
       <section class="mstep-panel" data-step="0" aria-label="Groom">
+        <p class="mstep-count">Step 1 of 4</p>
         <h3 class="mstep-title">Groom's details</h3>
         ${personStepHtml('groom', 'Groom')}
         ${stepNav(0)}
       </section>
 
       <section class="mstep-panel hidden" data-step="1" aria-label="Bride">
+        <p class="mstep-count">Step 2 of 4</p>
         <h3 class="mstep-title">Bride's details</h3>
         ${personStepHtml('bride', 'Bride')}
         ${stepNav(1)}
       </section>
 
       <section class="mstep-panel hidden" data-step="2" aria-label="Sponsors">
+        <p class="mstep-count">Step 3 of 4</p>
         <h3 class="mstep-title">Sponsors &amp; wedding</h3>
         <p class="mstep-hint">The two principal sponsors (ninong and ninang) who witnessed the wedding.</p>
         <div class="mstep-section">${nameFieldsHtml('witness-1', 'Sponsor / Witness 1', { required: true, spanFull: false })}</div>
@@ -182,6 +185,7 @@ function formHtml({ confirmHint, lastStepBack }) {
       </section>
 
       <section class="mstep-panel hidden" data-step="3" aria-label="Confirm">
+        <p class="mstep-count">Step 4 of 4</p>
         <h3 class="mstep-title">Confirm details</h3>
         <p class="mstep-hint">${confirmHint}</p>
         <div class="mstep-slot"></div>

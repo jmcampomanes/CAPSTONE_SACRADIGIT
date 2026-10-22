@@ -174,3 +174,16 @@
 @media (max-width: 640px) {
   :where(.mwiz) :where(.form-subblock) { grid-template-columns: 1fr; }
 }
+
+/* "Step 2 of 4" above each step's title. Only on small phones (or Bigger text),
+   where the bar shows numbered dots without names so they can't run together. */
+.mstep-count { display: none; margin: 0 0 0.15rem; font-size: 0.8125rem; font-weight: 700; color: #4b50a0; letter-spacing: 0.01em; }
+@media (max-width: 480px) {
+  .mstep-count { display: block; }
+  .mstep-bar .mstep-label { display: none; }
+}
+@media (max-width: 640px) {
+  :root[data-a11y="on"] .mstep-count { display: block; }
+  :root[data-a11y="on"] .mstep-bar .mstep-label { display: none; }
+}
+:root[data-theme="dark"] .mstep-count { color: #b3b6e6; }

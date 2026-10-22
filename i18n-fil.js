@@ -328,6 +328,7 @@ export const FIL = {
   "Marriage": "Kasal",
   "Death": "Kamatayan",
   "Date Filter": "Salain ayon sa Petsa",
+  "Any date": "Anumang petsa",
   "Last 7 days": "Nakaraang 7 araw",
   "Last 30 days": "Nakaraang 30 araw",
   "Last 90 days": "Nakaraang 90 araw",
@@ -597,6 +598,9 @@ export const FIL = {
 
   // ---- Masses (admin) ----
   "Special Masses – SacraDigit Admin": "Mga Espesyal na Misa – SacraDigit Admin",
+  "Masses – SacraDigit Admin": "Mga Misa – SacraDigit Admin",
+  "Records & Finance": "Mga Rekord at Pananalapi",
+  "Added This Month": "Naidagdag Ngayong Buwan",
   "Schedule and manage regular and special masses.": "I-iskedyul at pamahalaan ang mga regular at espesyal na misa.",
   "Print Schedule": "I-print ang Iskedyul",
   "Schedule Mass": "I-iskedyul ang Misa",

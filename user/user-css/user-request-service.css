@@ -573,3 +573,20 @@ body.req-screen-open { overflow: hidden; }
   .svc-success-actions > * { flex: 1 1 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .svc-success { animation: none; } }
+
+/* Day-before reminder choice on the booking confirmation (service-request-page.js) */
+.svc-reminder { border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 0.75rem 0.9rem; margin: 1rem 0 0; text-align: left; }
+.svc-reminder-title { font-size: 0.9375rem; font-weight: 700; color: #111827; padding: 0 0.25rem; }
+.svc-reminder-options { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+.svc-reminder-option {
+  display: inline-flex; align-items: center; gap: 0.45rem; min-height: 2.75rem; padding: 0.4rem 0.85rem;
+  border: 1.5px solid #d1d5db; border-radius: 999px; font-size: 0.9375rem; font-weight: 600; color: #1f2937; cursor: pointer;
+}
+.svc-reminder-option:has(input:checked) { border-color: #1e2a4a; background: #f5f6fb; }
+.svc-reminder-option input { accent-color: #1e2a4a; width: 1.1rem; height: 1.1rem; }
+.svc-reminder-note { margin: 0.5rem 0 0; font-size: 0.875rem; color: #374151; }
+:root[data-theme="dark"] .svc-reminder { border-color: #2c3547; }
+:root[data-theme="dark"] .svc-reminder-title { color: #f1f3f7; }
+:root[data-theme="dark"] .svc-reminder-option { border-color: #3a4459; color: #e5e8ef; }
+:root[data-theme="dark"] .svc-reminder-option:has(input:checked) { border-color: #8b8fc7; background: #242c3e; }
+:root[data-theme="dark"] .svc-reminder-note { color: #cbd3e6; }

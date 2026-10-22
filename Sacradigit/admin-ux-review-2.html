@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin UX Review 2 — SacraDigit</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; margin: 0; color: #111827; }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 260px; flex-shrink: 0; background: #1e2a4a; color: #cbd3e6; padding: 1.25rem 0.75rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar h1 { color: #fff; font-size: 0.95rem; margin: 0 0.5rem 0.25rem; }
+  .sidebar p.note { font-size: 0.7rem; color: #8b95b8; margin: 0 0.5rem 1rem; line-height: 1.4; }
+  .sidebar a { display: flex; justify-content: space-between; gap: 0.4rem; color: #cbd3e6; text-decoration: none; font-size: 0.78rem; padding: 0.4rem 0.6rem; border-radius: 0.4rem; margin-bottom: 0.1rem; }
+  .sidebar a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .sidebar a.group { font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; color: #7d87ad; margin-top: 0.9rem; padding: 0.4rem 0.6rem 0.1rem; pointer-events: none; }
+  .sidebar .who { font-size: 0.6rem; font-weight: 700; padding: 0.05rem 0.35rem; border-radius: 999px; align-self: center; white-space: nowrap; }
+  .mobile-jump { display: none; }
+  .content { flex: 1; padding: 2rem 2.5rem 6rem; max-width: 1180px; }
+
+  .masthead { background: #fff; border: 1px solid #e5e7eb; border-left: 4px solid #1e2a4a; border-radius: 0.6rem; padding: 1rem 1.25rem; font-size: 0.82rem; color: #4b5563; line-height: 1.55; margin-bottom: 1.25rem; }
+  .masthead b { color: #111827; }
+  .masthead code { background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.78rem; }
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+  .role-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.8rem 1rem; font-size: 0.8rem; color: #4b5563; line-height: 1.5; }
+  .role-card strong { display: block; color: #111827; font-size: 0.88rem; margin-bottom: 0.2rem; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.72rem; color: #6b7280; margin-bottom: 2rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+  .who-both { background: #eef2ff; color: #4338ca; }
+  .who-sec { background: #ecfeff; color: #0e7490; }
+  .who-head { background: #fdf2f8; color: #9d174d; }
+
+  .cat { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+  .cat h2 { font-size: 1.15rem; margin: 0 0 0.15rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .impact-tag { font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .impact-critical { background: #fef2f2; color: #b91c1c; }
+  .impact-high { background: #fffbeb; color: #b45309; }
+  .impact-medium { background: #eef2ff; color: #4338ca; }
+  .impact-low { background: #f3f4f6; color: #6b7280; }
+  .cat-sub { font-size: 0.78rem; color: #6b7280; margin: 0 0 1.1rem; }
+
+  .finding { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.65rem; padding: 0.9rem 1.1rem; margin-bottom: 0.9rem; }
+  .finding-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }
+  .finding-title { font-size: 0.92rem; font-weight: 700; color: #111827; }
+  .tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .tag { font-size: 0.62rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: 999px; text-transform: uppercase; }
+  .sev-high { background: #fef2f2; color: #b91c1c; }
+  .sev-medium { background: #fffbeb; color: #b45309; }
+  .sev-low { background: #f3f4f6; color: #6b7280; }
+  .desc { font-size: 0.82rem; color: #4b5563; margin: 0 0 0.5rem; line-height: 1.5; }
+  .where { font-size: 0.76rem; color: #374151; background: #f9fafb; border-left: 3px solid #8b8fc7; padding: 0.45rem 0.65rem; border-radius: 0.3rem; margin-top: 0.4rem; }
+  .where code { font-size: 0.72rem; }
+  .source { font-size: 0.65rem; color: #9ca3af; margin-top: 0.4rem; }
+  .source.fallback { color: #b45309; }
+
+  .mini-compare { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 0.7rem 0 0.4rem; }
+  .mini-box { flex: 1; min-width: 280px; border-radius: 0.5rem; padding: 0.6rem 0.7rem 0.75rem; background: #fff; }
+  .mini-before { border: 2px solid #fecaca; }
+  .mini-after { border: 2px solid #bbf0cf; }
+  .mini-label { display: block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .mini-before .mini-label { color: #b91c1c; }
+  .mini-after .mini-label { color: #15803d; }
+  .scr { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.4rem; padding: 0.6rem; position: relative; overflow: hidden; font-size: 0.75rem; }
+  .note { font-size: 0.68rem; color: #6b7280; margin-top: 0.4rem; line-height: 1.4; }
+
+  /* mock building blocks (real admin tokens) */
+  .m-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; overflow: hidden; }
+  .m-ph { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0.65rem; border-bottom: 1px solid #f1f2f5; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .m-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.65rem; border-bottom: 1px solid #f5f6f8; font-size: 0.72rem; }
+  .m-row:last-child { border-bottom: none; }
+  .m-grow { flex: 1; min-width: 0; }
+  .m-sub { font-size: 0.62rem; color: #6b7280; }
+  .m-link-g { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #15803d; }
+  .m-link-r { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #b91c1c; }
+  .m-link-y { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #9c7d2e; }
+  .m-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; border: none; border-radius: 0.45rem; font-size: 0.72rem; font-weight: 600; padding: 0.42rem 0.7rem; min-height: 2rem; cursor: default; font-family: inherit; }
+  .m-pale { background: #8b8fc7; color: #fff; }
+  .m-gold { background: #c9a84c; color: #1e2a4a; }
+  .m-navy { background: #1e2a4a; color: #fff; }
+  .m-sec { background: #f3f4f6; color: #374151; }
+  .m-out { background: #fff; color: #1e2a4a; border: 1.5px solid #c7cad6; }
+  .m-green { background: #15803d; color: #fff; }
+  .m-red-out { background: #fff; color: #b91c1c; border: 1.5px solid #fca5a5; }
+  .m-badge { display: inline-flex; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.62rem; font-weight: 600; white-space: nowrap; }
+  .b-amber { background: #fffbeb; color: #b45309; }
+  .b-green { background: #ecfdf3; color: #15803d; }
+  .b-gray { background: #f3f4f6; color: #4b5563; }
+  .b-blue { background: #eef2ff; color: #4338ca; }
+  .m-input { border: 1px solid #d1d5db; background: #fff; border-radius: 0.35rem; padding: 0.35rem 0.45rem; font-size: 0.68rem; color: #9ca3af; }
+  .m-lbl { font-size: 0.64rem; font-weight: 600; color: #374151; margin-bottom: 0.15rem; }
+  .m-toast-old { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: #b91c1c; color: #fff; border-radius: 0.4rem; padding: 0.35rem 0.6rem; font-size: 0.64rem; font-weight: 600; white-space: nowrap; }
+  .m-toast-new { background: #fef2f2; color: #991b1b; border: 1.5px solid #fca5a5; border-radius: 0.45rem; padding: 0.4rem 0.55rem; font-size: 0.68rem; font-weight: 600; display: flex; justify-content: space-between; gap: 0.5rem; }
+  .m-dialog { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.6rem; box-shadow: 0 10px 24px rgba(15,23,42,0.18); padding: 0.7rem; }
+  .m-native { background: #fff; border: 1px solid #9ca3af; border-radius: 0.2rem; box-shadow: 0 6px 16px rgba(0,0,0,0.25); padding: 0.55rem; font-family: "Segoe UI", Tahoma, sans-serif; font-size: 0.68rem; }
+  .m-native .t { font-size: 0.62rem; color: #6b7280; margin-bottom: 0.3rem; }
+  .m-native .b { border: 1px solid #6b7280; background: #f3f4f6; border-radius: 0.15rem; padding: 0.15rem 0.6rem; font-size: 0.64rem; }
+  .m-topbar { display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 2px solid #8a3040; padding: 0.4rem 0.6rem; }
+  .m-ico-s { width: 18px; height: 18px; border-radius: 999px; border: 1.5px solid #c7cad6; display: inline-flex; align-items: center; justify-content: center; font-size: 0.5rem; color: #4b5563; }
+  .m-ico-l { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 40px; }
+  .m-ico-l svg { width: 16px; height: 16px; stroke: #1e2a4a; }
+  .m-ico-l span { font-size: 0.55rem; font-weight: 600; color: #374151; }
+  .m-stat { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.45rem 0.55rem; }
+  .m-stat .l { font-size: 0.58rem; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+  .m-stat .v { font-size: 1rem; font-weight: 700; }
+  .strike { text-decoration: line-through; color: #b91c1c; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .mobile-jump { display: block; position: sticky; top: 0; z-index: 10; background: #1e2a4a; padding: 0.75rem 1rem; }
+    .mobile-jump select { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: none; font-size: 0.85rem; }
+    .content { padding: 1.25rem 1rem 4rem; }
+  }
+  .dec { background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.6rem; padding: 0.8rem 1rem; font-size: 0.8rem; color: #78350f; line-height: 1.5; margin-bottom: 0.9rem; }
+  .m-phone { width: 210px; max-width: 100%; border: 6px solid #1f2937; border-radius: 18px; background: #f4f5f7; padding: 0.4rem; margin: 0 auto; font-size: 0.62rem; }
+  .m-hero { background: #2d3a5f; color: #fff; border-radius: 0.45rem; padding: 0.5rem; font-size: 0.6rem; }
+  .m-fold { border-top: 2px dashed #b91c1c; margin: 0.3rem 0; position: relative; }
+  .m-fold span { position: absolute; right: 0; top: -0.75rem; background: #fef2f2; color: #b91c1c; font-size: 0.55rem; font-weight: 700; padding: 0 0.25rem; }
+  .m-chip { display: inline-flex; padding: 0.15rem 0.45rem; border-radius: 999px; border: 1px solid #d1d5db; background: #fff; font-size: 0.6rem; font-weight: 600; white-space: nowrap; }
+  .m-chip.on { background: #1e2a4a; color: #fff; border-color: #1e2a4a; }
+  .m-side { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.45rem; padding: 0.35rem; font-size: 0.64rem; }
+  .m-side .g { font-size: 0.52rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin: 0.3rem 0.2rem 0.1rem; }
+  .m-side .i { padding: 0.18rem 0.35rem; border-radius: 0.3rem; }
+  .m-side .i.on { background: #eef2ff; color: #4338ca; font-weight: 700; }
+  .m-side .off { color: #b91c1c; }
+  .content { min-width: 0; }
+  .masthead code, .where code { overflow-wrap: anywhere; }
+  @media (max-width: 600px) {
+    .mini-box { min-width: 0; flex-basis: 100%; }
+    .m-row { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mobile-jump">
+  <select onchange="if(this.value) location.hash = this.value;">
+    <option value="">Jump to a finding…</option>
+    <option value="#trust">1. In the way, or not real</option>
+    <option value="#nav">2. Finding your way</option>
+    <option value="#actions">3. Row actions</option>
+    <option value="#phone">4. Phone</option>
+    <option value="#pages">5. Page by page</option>
+    <option value="#decide">Decide: who approves what?</option>
+    <option value="#ideas">Suggestions A–B</option>
+  </select>
+</div>
+
+<div class="app">
+  <nav class="sidebar">
+    <h1>Admin UX Review · Round 2</h1>
+    <p class="note">A fresh pass over the Head Admin &amp; Secretary portal, after the first review's 18 fixes. Tell me which numbers and letters to build.</p>
+    <a class="group">1 · In the way, or not real</a>
+    <a href="#f1">1 "Get the app" covers row actions <span class="who who-both">Both</span></a>
+    <a href="#f2">2 Storage figure is fixed text <span class="who who-both">Both</span></a>
+    <a class="group">2 · Finding your way</a>
+    <a href="#f3">3 Masses hidden below the menu <span class="who who-head">Head</span></a>
+    <a class="group">3 · Row actions</a>
+    <a href="#f4">4 Blessings: tiny Approve/Decline <span class="who who-both">Both</span></a>
+    <a href="#f5">5 Same action, five looks <span class="who who-both">Both</span></a>
+    <a href="#f6">6 "Generate" on every request <span class="who who-both">Both</span></a>
+    <a class="group">4 · Phone</a>
+    <a href="#f7">7 The list starts on screen two <span class="who who-both">Both</span></a>
+    <a class="group">5 · Page by page</a>
+    <a href="#f8">8 Masses: squeezed titles <span class="who who-head">Head</span></a>
+    <a href="#f9">9 Ministry Roster: past Masses first <span class="who who-both">Both</span></a>
+    <a href="#f10">10 Database words on screen <span class="who who-both">Both</span></a>
+    <a class="group">Decide</a>
+    <a href="#decide">Who approves what?</a>
+    <a class="group">Suggestions</a>
+    <a href="#sA">A "Needs you" inbox</a>
+    <a href="#sC">B Find a parishioner from anywhere</a>
+  </nav>
+
+  <div class="content">
+
+    <div class="masthead">
+      <b>How this was tested:</b> unlike round 1, I ran the portal. The local dev server opened every admin page in Chrome, signed in as a simulated <b>Head Admin</b> and then a simulated <b>Secretary</b>. Every database call was answered with sample data, so nothing touched the live parish data. Each page was checked on a 1366×768 laptop and a 390px phone, plus dark mode for three pages. Each finding cites the <code>ui-ux-pro-max</code> skill's guideline database (<code>search.py --domain ux</code>); a card says so where there was no match.<br>
+      Not counted as problems: a few odd numbers in the screenshots (e.g. "5 pending" on the Dashboard) came from my sample data ignoring filters, not from the app.<br>
+      Round 1: <a href="admin-ux-review.html">admin review</a> (all 18 done) · <a href="../user/phone-review.html">parishioner phone review</a>.
+    </div>
+
+    <div class="legend">
+      <span><span class="tag who-both">Both</span> affects both roles</span>
+      <span><span class="tag who-head">Head Admin</span> mostly the Head Admin</span>
+      <span><span class="tag sev-high">High</span> / <span class="tag sev-medium">Medium</span> / <span class="tag sev-low">Low</span> severity</span>
+    </div>
+
+    <!-- ================= 1 ================= -->
+    <section class="cat" id="trust">
+      <h2>1. In the way, or not real <span class="impact-tag impact-critical">Fix first</span></h2>
+      <p class="cat-sub">One box covers the buttons staff press most; one number is invented.</p>
+
+      <div class="finding" id="f1">
+        <div class="finding-head"><span class="finding-title">1. The "Get the SacraDigit app" box covers Approve, Release and Cancel, on every visit</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">On parishioner pages this box was cut back to once, on the Dashboard. On admin pages it still opens every time the browser is opened, and it sits in the bottom-right corner. That's where every table's action column ends. On Record Requests it hid Rosa's Approve/Reject; on Schedule Offers, Juan's Cancel; on Mass Intentions, a status. It also talks about "your badges", which staff don't have.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — every visit, bottom right</span>
+            <div class="scr" style="height:150px"><div class="m-panel">
+              <div class="m-row"><span class="m-grow"><b>Liza Garcia</b><div class="m-sub">Marriage · Pending</div></span><button class="m-btn m-green">Approve</button><button class="m-btn m-red-out">Reject…</button></div>
+              <div class="m-row"><span class="m-grow"><b>Rosa Reyes</b><div class="m-sub">Baptismal · Pending</div></span><button class="m-btn m-green">Approve</button><button class="m-btn m-red-out">Reject…</button></div>
+              <div class="m-row"><span class="m-grow"><b>Juan Dela Cruz</b><div class="m-sub">Confirmation · Approved</div></span><button class="m-btn m-navy">Release</button></div></div>
+              <div class="m-dialog" style="position:absolute;right:6px;bottom:6px;width:62%;font-size:.6rem"><b>Get the SacraDigit app</b><br>Install it on your phone for one-tap access to Mass times, requests and your badges. <span class="m-btn m-navy" style="min-height:0;padding:.15rem .4rem;font-size:.55rem">Install</span></div>
+            </div>
+          </div>
+          <div class="mini-box mini-after"><span class="mini-label">After — not on admin pages</span>
+            <div class="scr" style="height:150px"><div class="m-panel">
+              <div class="m-row"><span class="m-grow"><b>Liza Garcia</b><div class="m-sub">Marriage · Pending</div></span><button class="m-btn m-green">Approve</button><button class="m-btn m-red-out">Reject…</button></div>
+              <div class="m-row"><span class="m-grow"><b>Rosa Reyes</b><div class="m-sub">Baptismal · Pending</div></span><button class="m-btn m-green">Approve</button><button class="m-btn m-red-out">Reject…</button></div>
+              <div class="m-row"><span class="m-grow"><b>Juan Dela Cruz</b><div class="m-sub">Confirmation · Approved</div></span><button class="m-btn m-navy">Release</button></div></div>
+              <div class="note">Staff who want the app can still install it from the browser's own install button. Or show the box once, on the Dashboard, with staff wording, as parishioners now get.</div>
+            </div>
+          </div>
+        </div>
+        <div class="where"><b>Where:</b> <code>pwa.js</code> <code>bannerAllowedHere()</code>: <code>if (!isParishioner) return true;</code> lets it show on every staff page.</div>
+        <div class="source">Source: ux-guidelines.csv: Focus Not Obscured (Minimum) ("dismiss or move persistent overlays", High); bad example given: "sticky footer covers half the focused button".</div>
+      </div>
+
+      <div class="finding" id="f2">
+        <div class="finding-head"><span class="finding-title">2. Digital Archives always says "Storage Used: 6.8 GB of 10 GB"</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Round 1 removed the made-up Cloud Status panel from the Dashboard, but this card on Digital Archives has the same fixed figure typed into the page. It never changes, however many scans are uploaded. Next to it, Total / Digitized / Pending are real counts, so this one looks just as trustworthy.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr"><div class="m-stat"><div class="l">Storage used</div><div class="v">6.8 GB</div><div class="m-sub">of 10 GB used</div></div><div class="note">The same on every day.</div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — real, or a different card</span>
+            <div class="scr" style="display:flex;gap:.4rem"><div class="m-stat" style="flex:1"><div class="l">Scans uploaded</div><div class="v">1.2 GB</div><div class="m-sub">412 files</div></div><div class="m-stat" style="flex:1"><div class="l">Added this month</div><div class="v">38</div><div class="m-sub">records</div></div></div>
+            <div class="note">Add up <code>CloudFile.bytes</code> (already saved for every upload), or swap the card for "Added this month".</div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>Sacradigit/digital-archives.html</code> lines ~269–270.</div>
+        <div class="source fallback">No database match for "hard-coded figures". General guidance, as in round 1 item 1.1.</div>
+      </div>
+    </section>
+
+    <!-- ================= 2 ================= -->
+    <section class="cat" id="nav">
+      <h2>2. Finding your way <span class="impact-tag impact-high">High</span></h2>
+      <p class="cat-sub">The menu has grown to 15 links. On a common laptop screen the last ones fall off the bottom.</p>
+
+      <div class="finding" id="f3">
+        <div class="finding-head"><span class="finding-title">3. On a 1366×768 laptop, Masses, Attendance and Parish Info are below the menu's fold, even while you're on them</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-head">Head Admin</span></span></div>
+        <p class="desc">Measured: the window is 768px tall, and "Masses" sits at 787px in the sidebar, with Attendance and Parish Info lower still. On the Masses page the highlighted menu item is out of sight, so nothing on screen says where you are. Masses is also filed under <b>Communications</b>, and the page calls itself "Special Masses" while the menu says "Masses".</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — on the Masses page</span>
+            <div class="scr"><div class="m-side">
+              <div class="g">Operations</div><div class="i">Schedule Offers</div><div class="i">Blessings</div><div class="i">Facility Booking</div><div class="i">Ministry Roster</div>
+              <div class="g">Finance</div><div class="i">Mass Intentions</div><div class="i">Donations</div>
+              <div class="g">Communications</div><div class="i">Announcements</div><div class="i">Messages</div>
+              <div class="m-fold"><span>bottom of the screen</span></div>
+              <div class="i off">Special Schedules</div><div class="i on off">Masses ← you are here</div><div class="i off">Attendance</div><div class="i off">Parish Info</div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — grouped by the job</span>
+            <div class="scr"><div class="m-side">
+              <div class="g">Masses &amp; schedules</div><div class="i on">Masses</div><div class="i">Special Schedules</div><div class="i">Schedule Offers</div><div class="i">Ministry Roster</div><div class="i">Attendance</div>
+              <div class="g">Requests</div><div class="i">Record Requests</div><div class="i">Blessings</div><div class="i">Facility Booking</div><div class="i">Mass Intentions</div>
+              <div class="g">Parish</div><div class="i">Digital Archives</div><div class="i">Donations</div><div class="i">Announcements</div><div class="i">Messages</div><div class="i">Parish Info</div></div>
+            <div class="note">Also scroll the active link into view on load, and tighten the link spacing a little so 15 links fit at 768px. Name the page "Masses" to match the menu.</div></div>
+        </div>
+        </div><div class="where"><b>Where:</b> the <code>&lt;aside&gt;</code> sidebar copied into each <code>Sacradigit/*.html</code>; page title in <code>masses.html</code>.</div>
+        <div class="source">Source: ux-guidelines.csv: Navigation / Active State ("Current page/section should be visually indicated", Medium).</div>
+      </div>
+    </section>
+
+    <!-- ================= 3 ================= -->
+    <section class="cat" id="actions">
+      <h2>3. Row actions <span class="impact-tag impact-high">High</span></h2>
+      <p class="cat-sub">Round 1 fixed Record Requests. The other pages still do things their own way.</p>
+
+      <div class="finding" id="f4">
+        <div class="finding-head"><span class="finding-title">4. Blessings: Approve, Decline and Reschedule are small coloured words side by side, and on a phone they crush the name</span>
+          <span class="tags"><span class="tag sev-high">High</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Round 1 turned Approve/Reject on Record Requests into proper buttons with space between them. Blessings' "Awaiting approval" list still has three 12px uppercase words in a row, with Decline (red) right next to Approve (green). On a 390px phone the three words take most of the width, so "Rosa Reyes" and "House Blessing requested for…" wrap one word per line.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — phone</span>
+            <div class="scr"><div class="m-panel"><div class="m-row" style="align-items:flex-start"><span style="width:56px;font-size:.62rem"><b>Rosa<br>Reyes</b><div class="m-sub">House<br>Blessing ·<br>requested<br>for Oct 28<br>at<br>9:00 AM</div></span><span class="m-grow" style="text-align:right"><span class="m-link-g">Approve</span> <span class="m-link-r">Decline</span> <span style="font-size:.6rem;font-weight:700;color:#4338ca">RESCHEDULE</span><br><span style="font-size:.6rem;font-weight:700;color:#4338ca">DETAILS ›</span></span></div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — text first, buttons below</span>
+            <div class="scr"><div class="m-panel"><div class="m-row" style="flex-direction:column;align-items:stretch"><div><b>Rosa Reyes</b><div class="m-sub">House Blessing · Tue, Oct 28 at 9:00 AM</div></div>
+              <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem"><button class="m-btn m-green">Approve</button><button class="m-btn m-out">Reschedule</button><button class="m-btn m-out">Details</button><button class="m-btn m-red-out" style="margin-left:auto">Decline…</button></div></div></div>
+            <div class="note">Same button styles as Record Requests. Decline sits apart at the end and asks for a reason, as Reject does.</div></div>
+        </div>
+        </div><div class="where"><b>Where:</b> <code>Sacradigit/blessings.js</code> pending-list rows (~line 320); styles in <code>blessings.css</code>. Facility Booking's pending rows also put Cancel right beside Approve.</div>
+        <div class="source">Source: ux-guidelines.csv: Confirmation Dialogs ("Prevent accidental destructive actions", High); Touch Target Size (44×44px, High).</div>
+      </div>
+
+      <div class="finding" id="f5">
+        <div class="finding-head"><span class="finding-title">5. One action, five looks: "View" / "VIEW ›" / "DETAILS ›" / "SEE FULL DETAILS ›" / "Edit" link vs button</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Opening a row is a button on Record Requests ("View"), an uppercase link on Donations and Digital Archives ("VIEW ›"), "DETAILS ›" on Blessings and the Dashboard, and "SEE FULL DETAILS ›" on Masses. Mass Intentions puts an "EDIT" link beside a "View" button. Schedule Offers puts a "RESCHEDULE" link between a "View ›" button and a red "Cancel" button. "Clear" uses a <b>trash-can</b> icon on Record Requests, Blessings and Digital Archives, and an ✕ elsewhere. A trash can means "delete", and Clear only empties the search.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — Schedule Offers row</span>
+            <div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Ana Villanueva</b></span><button class="m-btn m-out">View ›</button><span style="font-size:.6rem;font-weight:700;color:#4338ca">RESCHEDULE</span><button class="m-btn m-red-out">Cancel</button></div></div>
+            <div style="margin-top:.4rem"><button class="m-btn m-out">🗑 Clear</button> <button class="m-btn m-out">✕ Clear</button></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — one rule for every page</span>
+            <div class="scr"><div class="m-panel"><div class="m-row"><span class="m-grow"><b>Ana Villanueva</b></span><button class="m-btn m-out">View</button><button class="m-btn m-out">Reschedule</button><button class="m-btn m-red-out">Cancel…</button></div></div>
+            <div style="margin-top:.4rem"><button class="m-btn m-out">✕ Clear filters</button></div>
+            <div class="note">Rule: row actions are outlined buttons in normal case; the one next step (Approve, Release) is filled; anything destructive is red, last, and ends in "…". Opening a row is always "View".</div></div>
+        </div>
+        </div><div class="where"><b>Where:</b> row templates in <code>blessings.js</code>, <code>donations.js</code>, <code>digital-archives.js</code>, <code>mass-intentions.js</code>, <code>masses.js</code>, <code>schedule-offers.js</code>, <code>dashboard-data.js</code>; Clear buttons in <code>record-requests.html</code>, <code>blessings.html</code>, <code>digital-archives.html</code>.</div>
+        <div class="source fallback">No direct database match for "consistent actions"; nearest: "Consistent Help — keep repeated mechanisms in consistent locations" (Medium). General guidance.</div>
+      </div>
+
+      <div class="finding" id="f6">
+        <div class="finding-head"><span class="finding-title">6. Record Requests shows "Generate" on every row, including Rejected and Released ones</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Generate appears on every certificate type with a template, whatever the status. So a pending row has four buttons (Generate, View, Approve, Reject…), which wrap onto two lines on a laptop. On a phone, Reject ends up alone on a third line. Generating a certificate for a <b>rejected</b> request, or one already released, is never the next step.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr"><div class="m-panel">
+              <div class="m-row"><span class="m-grow"><b>Liza Garcia</b> <span class="m-badge b-amber">Pending</span></span><span style="display:flex;flex-wrap:wrap;gap:.25rem;width:120px;justify-content:flex-end"><button class="m-btn m-out">Generate</button><button class="m-btn m-out">View</button><button class="m-btn m-green">Approve</button><button class="m-btn m-red-out">Reject…</button></span></div>
+              <div class="m-row"><span class="m-grow"><b>Carla Mendoza</b> <span class="m-badge" style="background:#fef2f2;color:#b91c1c">Rejected</span></span><button class="m-btn m-out">Generate</button><button class="m-btn m-out">View</button></div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — only what's next</span>
+            <div class="scr"><div class="m-panel">
+              <div class="m-row"><span class="m-grow"><b>Liza Garcia</b> <span class="m-badge b-amber">Pending</span></span><button class="m-btn m-out">View</button><button class="m-btn m-green">Approve</button><button class="m-btn m-red-out">Reject…</button></div>
+              <div class="m-row"><span class="m-grow"><b>Carla Mendoza</b> <span class="m-badge" style="background:#fef2f2;color:#b91c1c">Rejected</span></span><button class="m-btn m-out">View</button></div></div>
+            <div class="note">Generate moves into the View window, and stays on the row only for <b>approved</b> requests (print, then Release).</div></div>
+        </div>
+        </div><div class="where"><b>Where:</b> <code>Sacradigit/record-requests.js</code> ~line 216 (<code>certBtn</code> is built for every status).</div>
+        <div class="source fallback">No database match. General guidance (show the actions that fit the item's state).</div>
+      </div>
+    </section>
+
+    <!-- ================= 4 ================= -->
+    <section class="cat" id="phone">
+      <h2>4. Phone <span class="impact-tag impact-medium">Medium</span></h2>
+      <p class="cat-sub">Nothing runs off the screen any more (round 1 fixed that). The problem now is <i>order</i>.</p>
+
+      <div class="finding" id="f7">
+        <div class="finding-head"><span class="finding-title">7. On a phone, the list you came for starts on the second screen</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Every admin page stacks a large photo banner, then four stat cards (2×2), then search, then filters on two more rows. On Record Requests at 390px the first request starts about 1,100px down, on a screen 844px tall. Blessings and Masses are the same. The banner's three buttons also wrap onto two rows.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before — Record Requests, 390px</span>
+            <div class="scr"><div class="m-phone">
+              <div class="m-hero">Review and process incoming certificate requests.<div style="margin-top:.3rem"><span class="m-btn m-out" style="min-height:0;padding:.15rem .3rem;font-size:.5rem">Upload certificate</span></div><div style="margin-top:.2rem"><span class="m-btn m-gold" style="min-height:0;padding:.15rem .3rem;font-size:.5rem">+ New walk-in request</span></div></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.25rem;margin:.3rem 0"><div class="m-stat"><div class="l">Total</div><div class="v">5</div></div><div class="m-stat"><div class="l">Pending</div><div class="v">2</div></div><div class="m-stat"><div class="l">Approved</div><div class="v">1</div></div><div class="m-stat"><div class="l">Rejected</div><div class="v">1</div></div></div>
+              <div class="m-input">Search…</div><div style="display:flex;gap:.2rem;margin:.2rem 0"><span class="m-input" style="flex:1">Status Filter</span><span class="m-input" style="flex:1">Type Filter</span></div><span class="m-input">Clear</span>
+              <div class="m-fold" style="margin-top:.5rem"><span>end of screen 1</span></div>
+              <div class="m-panel" style="margin-top:.4rem"><div class="m-row"><b>Liza Garcia</b></div></div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — work first</span>
+            <div class="scr"><div class="m-phone">
+              <div style="display:flex;gap:.25rem;margin-bottom:.3rem"><span class="m-btn m-gold" style="min-height:0;padding:.2rem .35rem;font-size:.55rem;flex:1">+ Walk-in request</span><span class="m-btn m-out" style="min-height:0;padding:.2rem .35rem;font-size:.55rem">Upload</span></div>
+              <div style="display:flex;gap:.2rem;overflow:hidden;margin-bottom:.3rem"><span class="m-chip">All 5</span><span class="m-chip on">Pending 2</span><span class="m-chip">Approved 1</span><span class="m-chip">Rejected 1</span></div>
+              <div class="m-input" style="margin-bottom:.3rem">Search name or ref no.</div>
+              <div class="m-panel"><div class="m-row"><span class="m-grow"><b>Liza Garcia</b><div class="m-sub">Marriage · Passport</div></span></div><div class="m-row"><span class="m-grow"><b>Rosa Reyes</b><div class="m-sub">Baptismal · School</div></span></div></div></div>
+            <div class="note">At phone width: hide the banner's description and photo, keep its buttons in one row, and turn the four stat cards into one row of tappable count chips that filter the list (the cards on Record Requests, Blessings, Schedule Offers and Digital Archives already filter or jump when tapped). The type filter goes into a "Filters" sheet.</div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>.admin-hero</code> and <code>.stat-card</code> in <code>Sacradigit/sacradigit-css/admin-shell.css</code> (one phone media query covers every page).</div>
+        <div class="source">Source: ux-guidelines.csv: Mobile First ("Design for mobile then enhance for larger", Medium).</div>
+      </div>
+    </section>
+
+    <!-- ================= 5 ================= -->
+    <section class="cat" id="pages">
+      <h2>5. Page by page <span class="impact-tag impact-low">Medium / Low</span></h2>
+
+      <div class="finding" id="f8">
+        <div class="finding-head"><span class="finding-title">8. Masses: in "Date's Schedule" the Mass name wraps one word per line on a laptop</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-head">Head Admin</span></span></div>
+        <p class="desc">Each row packs time, title, description, a type chip, "Start Check-in" and "SEE FULL DETAILS ›" into one line. At 1366px the title column is left about 60px wide, so "Part of the regular weekly schedule." becomes five lines. The heading "DATE'S SCHEDULE" also reads oddly.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr"><div class="m-panel"><div class="m-ph">Date's schedule</div><div class="m-row"><b style="width:44px">7:00 AM</b><span style="width:52px;font-size:.6rem"><b>Daily<br>Mass</b><div class="m-sub">Part<br>of the<br>regular<br>weekly<br>schedule.</div></span><span class="m-badge b-blue">DAILY MASS</span><span class="m-btn m-out" style="min-height:0;padding:.15rem .3rem;font-size:.55rem">Start Check-in</span><span style="font-size:.55rem;font-weight:700;color:#4338ca">SEE FULL DETAILS ›</span></div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr"><div class="m-panel"><div class="m-ph">Thursday, Oct 22</div><div class="m-row"><b style="width:44px">7:00 AM</b><span class="m-grow"><b>Daily Mass</b> <span class="m-badge b-blue">Daily</span><div class="m-sub">Regular weekly schedule</div></span><button class="m-btn m-out">Start check-in</button><button class="m-btn m-out">View</button></div></div>
+            <div class="note">The title gets the free space (<code>flex: 1; min-width: 0</code>); the chip moves beside the title; the heading shows the chosen date.</div></div>
+        </div>
+        </div><div class="where"><b>Where:</b> <code>Sacradigit/masses.js</code> schedule rows; <code>masses.css</code>.</div>
+        <div class="source fallback">No exact database match ("text wrapping in compact rows" returned heading-balance rules). General guidance.</div>
+      </div>
+
+      <div class="finding" id="f9">
+        <div class="finding-head"><span class="finding-title">9. Ministry Roster lists the whole month, past Masses first, in 12px orange "2 open"</span>
+          <span class="tags"><span class="tag sev-medium">Medium</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">On October 22 the table starts with Oct 3 and runs through 15 Masses that are already over (greyed) before reaching this weekend. Every cell says "2 open", "6 open"… in small orange text: 119 pieces of text under 12px on this page, more than any other. What the coordinator needs is <b>which upcoming Masses are short of people</b>.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr"><div class="m-panel">
+              <div class="m-row" style="color:#9ca3af"><span class="m-grow">Sat, Oct 3 · 6:00 PM</span><span style="font-size:.55rem;color:#d97706">2 open · 6 open · 3 open · 4 open</span></div>
+              <div class="m-row" style="color:#9ca3af"><span class="m-grow">Sun, Oct 4 · 6:00 AM</span><span style="font-size:.55rem;color:#d97706">2 open · 6 open · 3 open · 4 open</span></div>
+              <div class="m-row" style="color:#9ca3af"><span class="m-grow">… 13 more past Masses</span></div>
+              <div class="m-row"><span class="m-grow"><b>Sat, Oct 24 · 6:00 PM</b></span><span style="font-size:.55rem;color:#d97706">2 open · 6 open · 3 open · 4 open</span></div></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After — upcoming first, gaps in words</span>
+            <div class="scr"><div style="display:flex;gap:.25rem;margin-bottom:.35rem"><span class="m-chip on">Upcoming 7</span><span class="m-chip">Past 15</span></div><div class="m-panel">
+              <div class="m-row"><span class="m-grow"><b>Sat, Oct 24 · 6:00 PM</b><div class="m-sub">Anticipated Mass</div></span><span class="m-badge" style="background:#fef2f2;color:#b91c1c">Needs 15 people</span></div>
+              <div class="m-row"><span class="m-grow"><b>Sun, Oct 25 · 8:00 AM</b><div class="m-sub">Lectors 2/2 · Choir 6/6</div></span><span class="m-badge b-amber">Needs 3 servers</span></div></div>
+            <div class="note">Opens on upcoming Masses; past ones go behind a chip. Text at 13–14px.</div></div>
+        </div>
+        </div><div class="where"><b>Where:</b> <code>Sacradigit/ministry-roster.js</code>; <code>community.css</code>.</div>
+        <div class="source">Source: ux-guidelines.csv: Font Size Scale ("Consistent type hierarchy aids scanning", Medium); skill priority 6: "Text &lt; 12px body" is an anti-pattern.</div>
+      </div>
+
+      <div class="finding" id="f10">
+        <div class="finding-head"><span class="finding-title">10. Database words appear on screen: "baptism", "souls", "pending", "Status Filter"</span>
+          <span class="tags"><span class="tag sev-low">Low</span><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Recent Records and Digital Archives show the type as stored ("baptism", "marriage"). Mass Intentions shows "thanksgiving", "souls" and a lowercase "pending" badge. "Released" on Record Requests has no colour at all. The filter boxes read "Status Filter" / "Type Filter", which is the box's name rather than its current value, and they have no visible label.</p>
+        <div class="mini-compare">
+          <div class="mini-box mini-before"><span class="mini-label">Before</span>
+            <div class="scr">baptism · marriage · thanksgiving · souls <span class="m-badge b-gray">pending</span> <span style="font-size:.62rem;font-weight:600">Released</span><div style="margin-top:.35rem"><span class="m-input">Status Filter ▾</span> <span class="m-input">Type Filter ▾</span></div></div></div>
+          <div class="mini-box mini-after"><span class="mini-label">After</span>
+            <div class="scr">Baptism · Marriage · Thanksgiving · For the souls of <span class="m-badge b-amber">Pending</span> <span class="m-badge b-gray">Released ✓</span>
+              <div style="display:flex;gap:.4rem;margin-top:.35rem"><div><div class="m-lbl">Status</div><span class="m-input" style="color:#111827">All statuses ▾</span></div><div><div class="m-lbl">Type</div><span class="m-input" style="color:#111827">All types ▾</span></div></div></div></div>
+        </div>
+        <div class="where"><b>Where:</b> <code>dashboard-data.js</code> and <code>digital-archives.js</code> (record type), <code>mass-intentions.js</code> (type + status), <code>record-requests.js</code> <code>statusBadge</code>; filter <code>&lt;select&gt;</code>s in <code>record-requests.html</code>, <code>blessings.html</code>, <code>digital-archives.html</code>.</div>
+        <div class="source">Source: ux-guidelines.csv: Form Labels ("Inputs must have associated labels", High).</div>
+      </div>
+    </section>
+
+    <!-- ================= DECIDE ================= -->
+    <section class="cat" id="decide">
+      <h2>Decide: who approves what?</h2>
+      <div class="dec">The Secretary <b>cannot</b> approve certificate requests (those buttons are Head-Admin-only), but <b>can</b> approve and decline Blessings, Facility Bookings and Mass Intentions; nothing on those pages checks the role. That may be on purpose (the office handles bookings day to day), but it's an uneven rule. If it's intended, say so on the page ("You can approve blessings and bookings; certificates go to the Head Admin"). If not, hide those buttons the same way.<br><b>Where:</b> <code>blessings.js</code>, <code>facility-booking.js</code>, <code>mass-intentions.js</code> have no <code>isHeadAdmin()</code> / <code>head-admin-only</code> checks.</div>
+    </section>
+
+    <!-- ================= IDEAS ================= -->
+    <section class="cat" id="ideas">
+      <h2>Suggestions <span class="impact-tag impact-low">Optional</span></h2>
+      <p class="cat-sub">New features rather than fixes. Each is built from data the portal already loads.</p>
+
+      <div class="finding" id="sA">
+        <div class="finding-head"><span class="finding-title">A. A "Needs you" inbox at the top of the Dashboard</span><span class="tags"><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Right now the office checks five pages to find waiting work: Record Requests, Blessings, Facility Booking, Mass Intentions, and Announcement drafts. Ministry swap requests make six. One list on the Dashboard, soonest first, each row with its own button, replaces that round of clicking. For the Secretary it lists what's theirs to do: release, log walk-ins, assign intentions.</p>
+        <div class="mini-compare"><div class="mini-box mini-after" style="max-width:520px"><span class="mini-label">Idea</span>
+          <div class="scr"><div class="m-panel"><div class="m-ph">Needs you · 6 <span style="text-transform:none;font-weight:600;color:#6b7280">soonest first</span></div>
+            <div class="m-row"><span class="m-badge b-amber">Today</span><span class="m-grow"><b>Anointing of the Sick</b> · Ana Villanueva<div class="m-sub">Blessing · St. Luke's Rm 402, 3:00 PM</div></span><button class="m-btn m-green">Approve</button></div>
+            <div class="m-row"><span class="m-badge b-blue">Certificate</span><span class="m-grow"><b>Marriage Certificate</b> · Liza Garcia<div class="m-sub">For a passport · 1 day waiting</div></span><button class="m-btn m-out">Review</button></div>
+            <div class="m-row"><span class="m-badge b-green">Release</span><span class="m-grow"><b>Confirmation Certificate</b> · Juan Dela Cruz<div class="m-sub">Approved 12 days ago, not picked up</div></span><button class="m-btn m-navy">Release</button></div>
+            <div class="m-row"><span class="m-badge b-gray">Draft</span><span class="m-grow"><b>Christmas Mass schedule</b><div class="m-sub">Announcement from the Secretary</div></span><button class="m-btn m-out">Review</button></div></div></div></div></div>
+      </div>
+
+      <div class="finding" id="sC">
+        <div class="finding-head"><span class="finding-title">B. Find a parishioner from anywhere</span><span class="tags"><span class="tag who-both">Both</span></span></div>
+        <p class="desc">Walk-in questions usually start with a name: "Did my baptismal certificate come through? Is my house blessing still on?" A search box in the top bar (or <kbd>Ctrl</kbd>+<kbd>K</kbd>) could find that name across requests, blessings, bookings, intentions and records, and show it as one timeline. That saves opening four pages while the person waits at the counter.</p>
+        <div class="mini-compare"><div class="mini-box mini-after" style="max-width:520px"><span class="mini-label">Idea</span>
+          <div class="scr"><div class="m-input" style="color:#111827;margin-bottom:.35rem">🔍 rosa reyes</div><div class="m-panel">
+            <div class="m-row"><span class="m-grow"><b>Baptismal Certificate</b><div class="m-sub">Requested Oct 19 · School enrollment</div></span><span class="m-badge b-amber">Pending</span></div>
+            <div class="m-row"><span class="m-grow"><b>House Blessing</b><div class="m-sub">Tue, Oct 28, 9:00 AM · 12 Mabini St</div></span><span class="m-badge b-amber">Awaiting approval</span></div>
+            <div class="m-row"><span class="m-grow"><b>Mass Intention</b><div class="m-sub">Thanksgiving · Sat, Oct 24, 7:00 AM</div></span><span class="m-badge b-gray">Pending</span></div></div></div></div></div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</body>
+</html>

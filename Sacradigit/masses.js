@@ -186,13 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="schedule-row">
           <span class="schedule-time">${escapeHtml(m.time)}</span>
           <div class="schedule-info">
-            <p class="schedule-type">${escapeHtml(m.title || m.type)}</p>
+            <p class="schedule-type">${escapeHtml(m.title || m.type)} ${massTypeBadgeHtml(m.type)}</p>
             ${m.note && m.title !== m.note ? `<p class="schedule-note">${escapeHtml(m.note)}</p>` : ''}
             ${overlaps.length ? `<span class="schedule-overlap" title="Masses need at least 1 hour between start times">Overlaps ${escapeHtml(overlaps.map(o => o.time).join(', '))}</span>` : ''}
           </div>
-          ${massTypeBadgeHtml(m.type)}
-          ${checkInBtn}
-          <button type="button" class="schedule-details-btn" data-index="${idx}">See Full Details ›</button>
+          <div class="schedule-actions act-row">
+            ${checkInBtn}
+            <button type="button" class="act-btn schedule-details-btn" data-index="${idx}">View</button>
+          </div>
         </div>
       `;
       dateScheduleList.appendChild(li);
@@ -286,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="day-cell">${escapeHtml(w.dayLabel)}</td>
         <td>${w.times.map(t => `<span class="time-pill">${escapeHtml(t)}</span>`).join('')}</td>
         <td>${escapeHtml(w.displayType)}</td>
-        <td class="text-right"><button type="button" class="row-action head-admin-only" data-day-index="${idx}">Edit ›</button></td>
+        <td class="text-right"><button type="button" class="act-btn row-action head-admin-only" data-day-index="${idx}">Edit</button></td>
       </tr>
     `).join('');
   }

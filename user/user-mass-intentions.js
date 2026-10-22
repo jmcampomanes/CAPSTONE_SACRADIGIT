@@ -111,8 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="intention-note">${namesDisplay}</p>
           <div class="intention-meta">
             <span class="intention-date">Submitted ${formatShort(it.createdAt)}</span>
-            ${it.massDate ? `<span class="intention-mass-date">📅 Mass: ${formatShort(it.massDate)}</span>` : `<span class="badge badge-amber" style="font-size:0.625rem;">Awaiting assignment</span>`}
-            <span class="badge ${badgeClass[it.status] || 'badge-gray'}" style="font-size:0.625rem;">${statusLabel[it.status] || it.status}</span>
+            ${it.massDate ? `<span class="intention-mass-date">📅 Mass: ${formatShort(it.massDate)}</span>` : `<span class="badge badge-amber">Awaiting assignment</span>`}
+            <span class="badge ${badgeClass[it.status] || 'badge-gray'}">${statusLabel[it.status] || it.status}</span>
           </div>
           <button type="button" class="intention-details-btn" data-id="${it.id}">See Details ›</button>
         </div>
@@ -497,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
     detailsBody.innerHTML = `
       <div class="details-header-row">
         <div class="intention-icon" style="background-color:${cfg.iconBg};color:${cfg.iconColor};">${cfg.icon}</div>
-        <div><p class="intention-type">${escapeHtml(it.type)}</p><span class="badge ${badgeClass[it.status] || 'badge-gray'}" style="font-size:0.625rem;">${statusLabel[it.status] || it.status}</span></div>
+        <div><p class="intention-type">${escapeHtml(it.type)}</p><span class="badge ${badgeClass[it.status] || 'badge-gray'}">${statusLabel[it.status] || it.status}</span></div>
       </div>
       <div>
         <p class="details-label">Name${names.length === 1 ? '' : 's'} (${names.length})</p>
