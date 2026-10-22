@@ -2,10 +2,10 @@
    SacraDigit Admin — "Needs you" on the Dashboard
    One list of the office's waiting work, soonest
    first, instead of checking five pages:
-     Head Admin  certificate requests to approve,
-                 announcement drafts to publish
-     Both        certificates to release, blessing and
-                 facility requests, ministry swap requests
+     Both roles  certificate requests to approve and to
+                 release, blessing and facility requests,
+                 ministry swap requests
+     Head Admin  announcement drafts to publish
    Each row links to the page where it's handled.
    Prayer Wall and Messages already show their own
    counts in the sidebar, so they aren't repeated here.
@@ -28,18 +28,15 @@ export function mountNeedsYou(el) {
   let showAll = false;
 
   function items() {
-    const head = isHeadAdmin();
     const today = todayIso();
     const out = [];
     // `when` sorts the list: a date the work is needed by, else when it came in.
-    if (head) {
-      data.pending.forEach(r => out.push({
-        tag: 'Certificate', tone: 'badge-blue', when: (r.createdAt || '').slice(0, 10),
-        title: r.certificateType, who: r.requesterName,
-        sub: `${r.purpose ? `For ${r.purpose} · ` : ''}came in ${ago(r.createdAt)}`,
-        href: 'record-requests.html', action: 'Review',
-      }));
-    }
+    data.pending.forEach(r => out.push({
+      tag: 'Certificate', tone: 'badge-blue', when: (r.createdAt || '').slice(0, 10),
+      title: r.certificateType, who: r.requesterName,
+      sub: `${r.purpose ? `For ${r.purpose} · ` : ''}came in ${ago(r.createdAt)}`,
+      href: 'record-requests.html', action: 'Review',
+    }));
     data.approved.forEach(r => out.push({
       tag: 'Release', tone: 'badge-green', when: (r.updatedAt || r.createdAt || '').slice(0, 10),
       title: r.certificateType, who: r.requesterName,
@@ -61,7 +58,7 @@ export function mountNeedsYou(el) {
       sub: `${f.date ? fmtDay(f.date) : ''}${f.startTime ? `, ${f.startTime}` : ''}${f.purpose ? ` · ${f.purpose}` : ''}`,
       href: 'facility-booking.html', action: 'Review',
     }));
-    if (head) {
+    if (isHeadAdmin()) {
       data.drafts.forEach(a => out.push({
         tag: 'Draft', tone: 'badge-gray', when: (a.createdAt || '').slice(0, 10),
         title: a.title, who: '', sub: 'Announcement waiting to be published',

@@ -119,11 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('dash-eyebrow').textContent = `Our Lady of Fatima Parish · ${head ? 'Head Admin' : 'Secretary'}`;
     if (counts.pending === null || counts.approved === null) return;
     const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-    const waiting = head
-      ? plural(counts.pending, 'request is waiting for your approval', 'requests are waiting for your approval')
-      : plural(counts.pending, 'request is waiting for the Head Admin', 'requests are waiting for the Head Admin');
+    // The Head Admin and the Secretary can both approve certificate requests.
+    const waiting = plural(counts.pending, 'request is waiting for your approval', 'requests are waiting for your approval');
     const ready = plural(counts.approved, 'certificate is ready to release', 'certificates are ready to release');
-    const todo = head ? [waiting, ready] : [ready, waiting];
+    const todo = [waiting, ready];
     document.getElementById('dash-todo').textContent = counts.pending + counts.approved === 0
       ? 'Nothing is waiting on you right now.'
       : `${todo.join(' · ')}.`;
@@ -156,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       counts.pending = items.length;
       paintGreeting();
       document.getElementById('stat-pending-requests').textContent = items.length;
-      document.getElementById('stat-pending-requests-sub').textContent = isHeadAdmin() ? 'Awaiting your review' : 'Awaiting the Head Admin';
+      document.getElementById('stat-pending-requests-sub').textContent = 'Awaiting your review';
 
       const shown = items.slice(0, 4);
       pendingList.innerHTML = shown.length === 0

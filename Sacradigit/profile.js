@@ -2,31 +2,27 @@
    SacraDigit Admin — My Profile Scripts (AWS Amplify)
    Runs after dashboard.js.
 
-   There is no auth/sign-in system yet (see the
-   TODO comments across the admin pages, e.g.
-   digital-archives.js's `addedByName: 'Admin User'`),
-   so Profile Info / Notifications have no backing
-   data model and stay session-local — same
-   convention as the rest of this app. Security's
+   Profile Info and the photo are saved to the database
+   (../staff-profile.js — the same ParishionerPreference
+   record the parishioner My Profile uses). Security's
    Change Password is real: it changes the signed-in
    account's Cognito password (../password-change.js).
+   Notifications and Two-Factor are still this-session only.
 
-   The Activity Log tab IS wired to real data: the
-   AccessLog model (userName, fileName, action,
-   createdAt), the same model Sacra ITech reads for
-   its Activity Logs page. It's file/access
-   activity, not per-admin login history — there's no
-   Cognito-backed login flow to log yet.
+   The Activity Log tab is wired to the AccessLog model
+   (userName, fileName, action, createdAt), the same model
+   Sacra ITech reads for its Activity Logs page.
    ============================================ */
 
 import { client } from '../amplify-init.js';
 import { initPasswordChange } from '../password-change.js';
 import { showToast } from './admin-ui.js';
+import { initStaffProfile } from '../staff-profile.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ------------------------------------------
-     0. SESSION-LOCAL ACCOUNT DATA (no backend model)
+     0. NOTIFICATION SETTINGS (this session only)
   ------------------------------------------ */
 
   const notifTypes = [
@@ -42,45 +38,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let accessLog = []; // kept in sync via observeQuery, each has .id
 
 
-  /* ------------------------------------------
-     1. DOM REFERENCES
-  ------------------------------------------ */
-  const avatarLg          = document.getElementById('avatar-lg');
-  const sidebarInitials     = document.getElementById('sidebar-avatar-initials');
-  const headerName            = document.getElementById('header-name');
-  const headerEmail             = document.getElementById('header-email');
-  const sidebarAdminName          = document.getElementById('sidebar-admin-name');
-
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str || '';
     return div.innerHTML;
   }
-
-  function setFieldError(input, message) {
-    input.classList.add('has-error');
-    let msg = input.parentElement.querySelector('.form-error-msg');
-    if (!msg) {
-      msg = document.createElement('p');
-      msg.className = 'form-error-msg';
-      input.insertAdjacentElement('afterend', msg);
-    }
-    msg.textContent = message;
-  }
-
-  function clearFieldError(input) {
-    input.classList.remove('has-error');
-    const msg = input.parentElement.querySelector('.form-error-msg');
-    if (msg) msg.remove();
-  }
-
-  function initialsFrom(name) {
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return '';
-    if (parts.length === 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-
 
   /* ------------------------------------------
      2. TABS
@@ -101,90 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     3. CHANGE PHOTO
+     3–4. PHOTO + PROFILE INFO — saved to the database (../staff-profile.js)
   ------------------------------------------ */
-  const photoInput = document.getElementById('photo-input');
-
-  document.getElementById('btn-change-photo').addEventListener('click', () => photoInput.click());
-
-  photoInput.addEventListener('change', () => {
-    const file = photoInput.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      showToast('Please choose an image file.', true);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      avatarLg.style.backgroundImage = `url(${e.target.result})`;
-      avatarLg.textContent = '';
-      showToast('Profile photo updated.');
-    };
-    reader.readAsDataURL(file);
-  });
-
-
-  /* ------------------------------------------
-     4. PROFILE INFO — save / reset (session-local)
-  ------------------------------------------ */
-  const pfName       = document.getElementById('pf-name');
-  const pfEmail        = document.getElementById('pf-email');
-  const pfPhone          = document.getElementById('pf-phone');
-  const pfDepartment        = document.getElementById('pf-department');
-  const pfBio                  = document.getElementById('pf-bio');
-
-  const defaults = {
-    name: pfName.value, email: pfEmail.value, phone: pfPhone.value,
-    department: pfDepartment.value, bio: pfBio.value,
-  };
-
-  [pfName, pfEmail, pfPhone, pfDepartment].forEach(input => {
-    input.addEventListener('input', () => clearFieldError(input));
-  });
-
-  document.getElementById('pf-save').addEventListener('click', () => {
-    let hasError = false;
-
-    clearFieldError(pfName);
-    if (!pfName.value.trim()) { setFieldError(pfName, 'Full name is required.'); hasError = true; }
-
-    clearFieldError(pfEmail);
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!pfEmail.value.trim()) {
-      setFieldError(pfEmail, 'Email address is required.');
-      hasError = true;
-    } else if (!emailPattern.test(pfEmail.value.trim())) {
-      setFieldError(pfEmail, 'Enter a valid email address.');
-      hasError = true;
-    }
-
-    if (hasError) {
-      showToast('Please fix the highlighted fields.', true);
-      return;
-    }
-
-    headerName.textContent = pfName.value.trim();
-    headerEmail.textContent = pfEmail.value.trim();
-    sidebarAdminName.textContent = pfName.value.trim();
-
-    const initials = initialsFrom(pfName.value.trim());
-    sidebarInitials.textContent = initials;
-    if (!avatarLg.style.backgroundImage) avatarLg.textContent = initials;
-
-    showToast('Profile information saved for this session.');
-  });
-
-  document.getElementById('pf-reset').addEventListener('click', () => {
-    pfName.value = defaults.name;
-    pfEmail.value = defaults.email;
-    pfPhone.value = defaults.phone;
-    pfDepartment.value = defaults.department;
-    pfBio.value = defaults.bio;
-    [pfName, pfEmail, pfPhone, pfDepartment].forEach(clearFieldError);
-    showToast('Changes discarded.');
-  });
+  initStaffProfile({ showToast });
 
 
   /* ------------------------------------------

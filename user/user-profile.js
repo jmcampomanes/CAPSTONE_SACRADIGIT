@@ -39,6 +39,7 @@ import { initPasswordChange } from '../password-change.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { getPreference, preferencesReady, saveProfileDetails } from '../mass-checkin.js';
 import { markSaved } from './leave-warning.js';
+import { setCardPhoto } from '../profile-photo.js';
 import { NOTIF_TYPES, loadPrefs, savePrefs, enableDeviceAlerts } from '../notifications/parish-notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -150,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const { url } = await getUrl({ path: avatarKey, options: { expiresIn: 3600 } });
       avatarLg.style.backgroundImage = `url(${url})`;
       avatarLg.textContent = '';
+      setCardPhoto(url.toString(), DONOR_NAME); // the sidebar account card too
     } catch (err) {
       console.error('Failed to load profile photo:', err);
     }

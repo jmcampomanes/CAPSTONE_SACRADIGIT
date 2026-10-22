@@ -220,7 +220,7 @@
             <p id="header-email" class="profile-header-role">admin@sacradigit.parish</p>
             <span class="profile-header-badge">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-              System Administrator
+              <span id="header-role">Parish Office</span>
             </span>
           </div>
         </div>
@@ -238,7 +238,7 @@
           <div class="panel">
             <div class="panel-header">
               <h2 class="panel-title">Profile Information</h2>
-              <p class="text-xs text-gray-400 font-medium">Saved to this browser session only — sign-in accounts aren't set up yet</p>
+              <p class="text-xs text-gray-400 font-medium">Saved to your account</p>
             </div>
             <div class="p-6 space-y-4">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -260,15 +260,15 @@
                 </div>
                 <div>
                   <label class="form-label" for="pf-role">Role</label>
-                  <input type="text" id="pf-role" class="form-input" value="System Administrator" disabled />
+                  <input type="text" id="pf-role" class="form-input" value="" disabled />
                 </div>
                 <div>
-                  <label class="form-label" for="pf-joined">Admin Since</label>
+                  <label class="form-label" for="pf-joined">Profile Since</label>
                   <input type="text" id="pf-joined" class="form-input" value="—" disabled />
                 </div>
                 <div class="sm:col-span-2">
                   <label class="form-label" for="pf-bio">About</label>
-                  <textarea id="pf-bio" class="form-input" rows="3" placeholder="A short note about your role at the parish…">Handles day-to-day parish records, scheduling, and parishioner requests through SacraDigit.</textarea>
+                  <textarea id="pf-bio" class="form-input" rows="3" placeholder="A short note about your role at the parish…"></textarea>
                 </div>
               </div>
               <div class="flex items-center justify-end gap-2.5 pt-2">

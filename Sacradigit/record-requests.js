@@ -7,7 +7,6 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { isHeadAdmin } from '../auth.js';
 import { uploadData } from 'aws-amplify/storage';
 import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 import { notifyCertificateReady } from '../email-notify.js';
@@ -199,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     tbody.innerHTML = '';
-    const headAdmin = isHeadAdmin();
     shownPendingIds = filtered.filter(r => r.status === 'pending').map(r => r.id);
     selectedIds.forEach(id => { if (!shownPendingIds.includes(id)) selectedIds.delete(id); });
 
@@ -212,8 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const tr = document.createElement('tr');
         const who = escapeHtml(r.requesterName);
 
-        // Every row can be opened. The Head Admin approves/rejects pending ones;
-        // the Secretary sees that it's waiting for the Head Admin instead.
+        // Every row can be opened. The Head Admin and the Secretary can both
+        // approve / reject pending ones and release approved ones.
         // Generate sits on the row once a request is approved (print, then Release);
         // before that it's inside View, so pending rows keep to View / Approve / Reject.
         const certBtn = r.status === 'approved' && GENERATABLE_CERT_TYPES.has(r.certificateType)
@@ -221,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
           : '';
         const viewBtn = `<button type="button" class="row-btn row-view" data-id="${r.id}" aria-label="View ${who}'s request">View</button>`;
         let decision = '';
-        if (r.status === 'pending' && headAdmin) {
+        if (r.status === 'pending') {
           decision = `
             <button type="button" class="row-btn row-approve" data-id="${r.id}">Approve</button>
             <button type="button" class="row-btn row-reject" data-id="${r.id}">Reject…</button>`;
@@ -229,13 +227,13 @@ document.addEventListener('DOMContentLoaded', () => {
           decision = `<button type="button" class="row-btn row-release row-approve" data-id="${r.id}" data-release="1">Release</button>`;
         }
 
-        const label = r.status === 'pending' && !headAdmin ? 'Waiting for Head Admin' : (statusLabel[r.status] || r.status);
+        const label = statusLabel[r.status] || r.status;
         const select = r.status === 'pending'
           ? `<input type="checkbox" class="row-check req-check" data-id="${r.id}" aria-label="Select ${who}'s request" ${selectedIds.has(r.id) ? 'checked' : ''} />`
           : '';
 
         tr.innerHTML = `
-          <td class="col-select head-admin-only">${select}</td>
+          <td class="col-select">${select}</td>
           <td class="font-medium text-gray-900">${who}</td>
           <td>${escapeHtml(r.certificateType)}</td>
           <td>${formatDate(r.createdAt)}</td>
@@ -295,7 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('req-bulk-clear').addEventListener('click', () => { selectedIds.clear(); renderRequests(); });
   document.getElementById('req-bulk-approve').addEventListener('click', async () => {
-    if (!isHeadAdmin()) return;
     const picked = requests.filter(r => selectedIds.has(r.id) && r.status === 'pending');
     if (!picked.length) return;
     const sure = await confirmDialog({
@@ -346,10 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (certBtn) openGenerateFor(certBtn.dataset.id, certBtn.dataset.certType);
 
-    // Approving/rejecting is the Head Admin's call; the Secretary releases approved ones.
-    if ((approveBtn && !approveBtn.dataset.release) || rejectBtn) {
-      if (!isHeadAdmin()) { showToast('Only the Head Admin can approve or reject requests.', true); return; }
-    }
 
     // Approving emails the parishioner, and neither step can be undone here — check first.
     if (approveBtn) {

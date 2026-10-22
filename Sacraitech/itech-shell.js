@@ -24,8 +24,8 @@ export const ITECH_USER = 'Sacra ITech'; // fallback when the name isn't known
    parishioner) are the only thing that controls access (auth.js). */
 export const ROLE_ACCESS = {
   parishioner: 'Parishioner portal only. No staff pages.',
-  staff: 'Records, certificate requests, bookings, messages, announcement drafts. Can’t approve, publish or delete.',
-  admin: 'Everything the Secretary can, plus approve and reject requests, publish announcements, delete records, and change Mass schedules and Parish Info.',
+  staff: 'Records, certificate requests (including approving them), bookings, messages, announcement drafts. Can’t publish or delete.',
+  admin: 'Everything the Secretary can, plus publish announcements, delete records, and change Mass schedules and Parish Info.',
   media: 'Content calendar, event coverage, media library, livestream, post templates, announcement drafts.',
   itech: 'This IT portal: accounts and roles, backups, cloud files and storage, activity logs, service schedules. Can change anyone’s access.',
 };
@@ -256,6 +256,10 @@ function initShell() {
     menu.className = 'user-menu-dropdown hidden';
     menu.setAttribute('role', 'menu');
     menu.innerHTML = `
+      <button type="button" class="user-menu-item" role="menuitem" data-action="profile">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        My Profile
+      </button>
       <button type="button" class="user-menu-item" role="menuitem" data-action="launcher">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h7"/></svg>
         Switch Portal
@@ -278,7 +282,7 @@ function initShell() {
       const item = e.target.closest('.user-menu-item');
       if (!item) return;
       close();
-      window.location.href = '../index.html';
+      window.location.href = item.dataset.action === 'profile' ? 'profile.html' : '../index.html';
     });
   }
 

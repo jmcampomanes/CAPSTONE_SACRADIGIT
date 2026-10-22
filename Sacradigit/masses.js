@@ -701,7 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (w.id) {
         const result = await client.models.WeeklyMassSchedule.update({
           id: w.id,
-          times: editingTimes,
+          times: JSON.stringify(editingTimes), // AWSJSON field — must be a JSON string
           massType,
           label: label || null,
         });
@@ -709,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         const result = await client.models.WeeklyMassSchedule.create({
           dayOfWeek: w.dayKey,
-          times: editingTimes,
+          times: JSON.stringify(editingTimes),
           massType,
           label: label || null,
         });

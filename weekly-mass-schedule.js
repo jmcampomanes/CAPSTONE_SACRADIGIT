@@ -69,12 +69,22 @@ export function mergeWeeklySchedule(liveRecords = []) {
       dayKey: key,
       dayLabel,
       id: live ? live.id : null,
-      times: Array.isArray(source.times) ? source.times : [],
+      times: parseTimes(source.times),
       massType,
       label,
       displayType: label || massTypeInfo(massType).label,
     };
   });
+}
+
+// `times` is an AWSJSON field — it comes back from the API as a JSON
+// string (sometimes double-encoded), while the defaults are plain arrays.
+function parseTimes(value) {
+  let v = value;
+  for (let i = 0; i < 2 && typeof v === 'string'; i++) {
+    try { v = JSON.parse(v); } catch { return []; }
+  }
+  return Array.isArray(v) ? v : [];
 }
 
 // JS's native Date#getDay() is Sunday-first (0-6) — maps that index to

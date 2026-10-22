@@ -308,8 +308,8 @@
             <h2 class="panel-title">All Requests</h2>
             <p id="results-count" class="text-sm text-gray-600 font-medium" role="status"></p>
           </div>
-          <!-- Head Admin: approve several pending requests at once -->
-          <div id="req-bulk-bar" class="req-bulk-bar head-admin-only hidden">
+          <!-- Approve several pending requests at once (Head Admin and Secretary) -->
+          <div id="req-bulk-bar" class="req-bulk-bar hidden">
             <span id="req-bulk-count"></span>
             <button type="button" id="req-bulk-approve" class="btn-approve">Approve selected…</button>
             <button type="button" id="req-bulk-clear" class="btn-secondary">Clear selection</button>
@@ -318,7 +318,7 @@
             <table class="records-table">
               <thead>
                 <tr>
-                  <th class="col-select head-admin-only"><input type="checkbox" id="req-select-all" class="row-check" aria-label="Select all pending requests shown" /></th>
+                  <th class="col-select"><input type="checkbox" id="req-select-all" class="row-check" aria-label="Select all pending requests shown" /></th>
                   <th>Requester</th>
                   <th>Certificate Type</th>
                   <th>Date Requested</th>

@@ -312,3 +312,7 @@
   background-color: #ffffff;
   cursor: pointer;
 }
+
+/* Read-only account details (name, email, role, department, since) */
+.profile-panel .form-input:disabled { background-color: #f3f4f6; color: #4b5563; cursor: not-allowed; }
+:root[data-theme="dark"] .profile-panel .form-input:disabled { background-color: #161c29; color: #b6bdca; }

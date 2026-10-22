@@ -1,23 +1,15 @@
 /* ============================================
    SacraDigit Media — My Profile Scripts
-   Entirely separate account from Sacradigit/profile.js
-   (the Admin's profile). Data lives under its own
-   localStorage key so nothing here ever touches or
-   reads the Admin account.
-
-   There is no real auth/Cognito login wired up yet
-   (same as the Admin side — see the comment at the
-   top of Sacradigit/profile.js), so this stays
-   session-local for now. Once RBAC/Cognito groups
-   are restored, this is where the Media group's
-   real profile record would be read/written instead.
-   Exception: Security's Change Password is real — it
-   changes the signed-in account's Cognito password
-   (../password-change.js).
+   Profile Info and the photo are saved to the database
+   (../staff-profile.js — each person's own record, the
+   same one the parishioner My Profile uses). Security's
+   Change Password is real (../password-change.js).
+   Two-Factor is still only remembered on this device.
    ============================================ */
 
 import { initPasswordChange } from '../password-change.js';
-import { showToast, confirmDialog } from '../Sacradigit/admin-ui.js';
+import { showToast } from '../Sacradigit/admin-ui.js';
+import { initStaffProfile } from '../staff-profile.js';
 
 const PROFILE_KEY = 'sacradigit_media_profile';
 
@@ -35,22 +27,7 @@ function writeProfile(profile) {
 }
 
 function seedIfMissing() {
-  if (readProfile()) return;
-  writeProfile({
-    name: 'Media Team',
-    email: 'media@sacradigit.parish',
-    phone: '',
-    department: 'Media & Communications Team',
-    bio: "Handles the parish's Facebook page, announcements, content calendar, and event coverage through SacraDigit.",
-    twoFactor: false,
-  });
-}
-
-function initialsFrom(name) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return 'MT';
-  if (parts.length === 1) return parts[0][0].toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  if (!readProfile()) writeProfile({ twoFactor: false });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -72,58 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- Profile Info ---------- */
-  const avatarLg = document.getElementById('avatar-lg');
-  const headerName = document.getElementById('header-name');
-  const headerEmail = document.getElementById('header-email');
-
-  const nameField = document.getElementById('pf-name');
-  const emailField = document.getElementById('pf-email');
-  const phoneField = document.getElementById('pf-phone');
-  const deptField = document.getElementById('pf-department');
-  const bioField = document.getElementById('pf-bio');
-
-  function renderProfile() {
-    const p = readProfile();
-    nameField.value = p.name;
-    emailField.value = p.email;
-    phoneField.value = p.phone || '';
-    deptField.value = p.department;
-    bioField.value = p.bio || '';
-    headerName.textContent = p.name;
-    headerEmail.textContent = p.email;
-    avatarLg.textContent = initialsFrom(p.name);
-  }
-
-  document.getElementById('pf-reset').addEventListener('click', () => {
-    renderProfile();
-    showToast('Changes discarded.');
-  });
-
-  document.getElementById('pf-save').addEventListener('click', () => {
-    const name = nameField.value.trim();
-    const email = emailField.value.trim();
-    if (!name) {
-      showToast('Please enter a name.', true);
-      return;
-    }
-    if (!email.includes('@')) {
-      showToast('Please enter a valid email.', true);
-      return;
-    }
-
-    const p = readProfile();
-    writeProfile({
-      ...p,
-      name,
-      email,
-      phone: phoneField.value.trim(),
-      department: deptField.value.trim(),
-      bio: bioField.value.trim(),
-    });
-    renderProfile();
-    showToast('Profile updated.');
-  });
+  /* ---------- Profile Info + photo — saved to the database (../staff-profile.js) ---------- */
+  initStaffProfile({ showToast });
 
   /* ---------- Security: Change Password (real Cognito password — ../password-change.js) ---------- */
   initPasswordChange({ showToast });
@@ -146,6 +73,5 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(twofaToggle.checked ? 'Two-factor authentication enabled.' : 'Two-factor authentication disabled.');
   });
 
-  renderProfile();
   renderTwofa();
 });

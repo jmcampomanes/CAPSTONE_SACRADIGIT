@@ -96,7 +96,7 @@ export function currentUser() {
 /** Display name for the signed-in person ('' when not signed in). */
 export const currentUserName = () => currentUser()?.name || '';
 
-/** Head Admin only: approving requests, publishing, changing schedules. */
+/** Head Admin only: publishing, deleting, changing schedules. (The Secretary can approve certificate requests too.) */
 export const isHeadAdmin = (user = currentUser()) => !!user && (user.groups || []).includes('admin');
 
 export function hasRole(user, ...roles) {
@@ -220,6 +220,8 @@ function paintUserCard(user) {
   if (sidebarName) sidebarName.textContent = user.name;
   const avatarInitials = document.getElementById('avatar-initials');
   if (avatarInitials) avatarInitials.textContent = initials;
+  // Then swap in the photo saved on My Profile, if any (loaded on demand).
+  import('./profile-photo.js').then(m => m.paintCardPhoto(user)).catch(() => {});
 }
 
 // Every portal's user menu (and the parishioner sidebar) has a "Log Out" item; make it really sign out.
