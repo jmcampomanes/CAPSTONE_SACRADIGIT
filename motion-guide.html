@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SacraDigit Motion Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SacraDigit — Motion, Transitions & Loading Guide
+   Every demo below is real CSS you can lift into the portals.
+   ============================================================ */
+:root {
+  /* brand (from admin-shell.css / loading screen test) */
+  --navy: #1e2a4a; --navy-deep: #0f1730; --gold: #c9a84c; --gold-soft: #f3dca0;
+  --burgundy: #8a3040; --green: #15803d; --red: #b91c1c; --amber: #b45309; --indigo: #5b5fa8;
+  --bg: #f6f7fb; --card: #ffffff; --line: #e5e7eb; --text: #111827; --muted: #6b7280; --soft: #f3f4f6;
+  --code-bg: #0f1730; --code-fg: #e3e6ec;
+
+  /* proposed motion tokens */
+  --dur-instant: 100ms; --dur-fast: 160ms; --dur-base: 240ms; --dur-slow: 400ms; --dur-scene: 700ms;
+  --ease-out: cubic-bezier(.22,1,.36,1);
+  --ease-in-out: cubic-bezier(.65,0,.35,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121827; --card: #1a2131; --line: #2c3548; --text: #f1f3f7; --muted: #9aa3b5; --soft: #242c3e;
+  }
+}
+:root[data-theme="dark"] { --bg: #121827; --card: #1a2131; --line: #2c3548; --text: #f1f3f7; --muted: #9aa3b5; --soft: #242c3e; }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Inter", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
+code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .85em; background: var(--soft); padding: .1rem .35rem; border-radius: .25rem; }
+
+/* ---------- layout ---------- */
+.app { display: flex; min-height: 100vh; }
+.side { width: 250px; flex-shrink: 0; background: var(--navy); color: #cbd3e6; padding: 1.4rem .8rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.side h1 { font-family: "Playfair Display", serif; color: #fff; font-size: 1.15rem; margin: 0 .5rem .15rem; }
+.side .sub { font-size: .7rem; color: #8b95b8; margin: 0 .5rem 1.2rem; }
+.side a { display: block; color: #cbd3e6; text-decoration: none; font-size: .8rem; padding: .42rem .6rem; border-radius: .4rem; position: relative; transition: background var(--dur-fast), color var(--dur-fast); }
+.side a:hover { background: rgba(255,255,255,.08); color: #fff; }
+.side a.on { background: rgba(201,168,76,.18); color: #fff; }
+.side a.on::before { content: ""; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; border-radius: 3px; background: var(--gold); }
+.side .grp { font-size: .62rem; text-transform: uppercase; letter-spacing: .07em; color: #7d87ad; font-weight: 700; margin: 1rem .6rem .25rem; }
+.side .ctl { margin: 1.4rem .5rem 0; display: grid; gap: .5rem; }
+.side button.pill { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: .4rem .8rem; font: inherit; font-size: .74rem; cursor: pointer; text-align: left; }
+.side button.pill[aria-pressed="true"] { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 600; }
+
+.main { flex: 1; min-width: 0; padding: 2rem 2.5rem 6rem; max-width: 1180px; }
+.hero { background: radial-gradient(circle at 80% 0%, #243457, var(--navy) 55%, var(--navy-deep)); color: #f6f1e4; border-radius: 1rem; padding: 2rem 2rem 1.8rem; margin-bottom: 2rem; position: relative; overflow: hidden; }
+.hero h2 { font-family: "Playfair Display", serif; font-size: 2rem; margin: 0 0 .4rem; }
+.hero p { margin: 0; max-width: 680px; color: #cdd4e6; font-size: .92rem; }
+.hero .stats { display: flex; gap: 1.6rem; flex-wrap: wrap; margin-top: 1.3rem; }
+.hero .stats b { display: block; font-size: 1.5rem; color: var(--gold-soft); font-family: "Playfair Display", serif; }
+.hero .stats span { font-size: .72rem; color: #aab4cf; text-transform: uppercase; letter-spacing: .05em; }
+
+section.cat { margin-bottom: 3.2rem; scroll-margin-top: 1rem; }
+section.cat > h3 { font-family: "Playfair Display", serif; font-size: 1.5rem; margin: 0 0 .2rem; }
+section.cat > p.lead { color: var(--muted); font-size: .88rem; margin: 0 0 1.2rem; max-width: 760px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1rem; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; display: flex; flex-direction: column; }
+.card.wide { grid-column: 1 / -1; }
+.stage { position: relative; min-height: 190px; background: var(--soft); display: grid; place-items: center; padding: 1.2rem; overflow: hidden; border-bottom: 1px solid var(--line); }
+.stage.dark { background: radial-gradient(circle at 50% 28%, #243457, #1a2544 45%, var(--navy-deep)); color: #f6f1e4; }
+.replay { position: absolute; top: .55rem; right: .55rem; z-index: 5; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; font: inherit; font-size: .68rem; font-weight: 600; padding: .25rem .65rem; cursor: pointer; }
+.stage.dark .replay { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.2); }
+.body { padding: .95rem 1.1rem 1.1rem; font-size: .82rem; color: var(--muted); flex: 1; }
+.body h4 { margin: 0 0 .3rem; font-size: .95rem; color: var(--text); display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.body p { margin: 0 0 .5rem; }
+.where { font-size: .74rem; border-left: 3px solid var(--gold); background: var(--soft); padding: .4rem .6rem; border-radius: .3rem; margin-top: .45rem; color: var(--text); }
+.tag { font-size: .58rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: .12rem .5rem; border-radius: 999px; }
+.p1 { background: #fef2f2; color: var(--red); } .p2 { background: #fffbeb; color: var(--amber); } .p3 { background: #eef2ff; color: #4338ca; }
+details { margin-top: .55rem; }
+summary { cursor: pointer; font-size: .72rem; font-weight: 600; color: var(--indigo); }
+pre { background: var(--code-bg); color: var(--code-fg); padding: .8rem; border-radius: .5rem; font-size: .7rem; overflow-x: auto; margin: .5rem 0 0; line-height: 1.5; }
+
+table.tok { width: 100%; border-collapse: collapse; font-size: .8rem; background: var(--card); border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; }
+table.tok th, table.tok td { padding: .6rem .8rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+table.tok th { font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--soft); }
+.tokbar { height: 8px; width: 140px; background: var(--soft); border-radius: 99px; position: relative; overflow: hidden; }
+.tokbar i { position: absolute; left: 0; top: 0; bottom: 0; width: 20px; border-radius: 99px; background: var(--gold); }
+.tokrow:hover .tokbar i { animation: tok-run var(--d) var(--ease-out) infinite alternate; }
+@keyframes tok-run { to { transform: translateX(120px); } }
+.tablewrap { overflow-x: auto; }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: .8rem; }
+.rule { background: var(--card); border: 1px solid var(--line); border-radius: .7rem; padding: .85rem 1rem; font-size: .8rem; color: var(--muted); }
+.rule b { color: var(--text); display: block; margin-bottom: .2rem; font-size: .86rem; }
+
+/* ============================================================
+   DEMO STYLES
+   ============================================================ */
+
+/* 1. Splash loader (refined loading screen test) */
+.splash { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 1; animation: content-in .9s var(--ease-out) both; }
+@keyframes content-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+.halo { position: relative; width: 84px; height: 84px; display: grid; place-items: center; margin-bottom: 6px; }
+.halo .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--gold); border-right-color: rgba(227,194,107,.35); animation: spin 1.6s linear infinite; }
+.halo .ring.soft { inset: -9px; border-width: 1px; border-top-color: rgba(227,194,107,.35); animation-duration: 3.2s; animation-direction: reverse; }
+.halo .core { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.06); border: 1px solid rgba(227,194,107,.35); display: grid; place-items: center; }
+.cross { width: 22px; height: 30px; position: relative; }
+.cross::before, .cross::after { content: ""; position: absolute; background: var(--gold-soft); border-radius: 2px; }
+.cross::before { left: 9px; top: 0; width: 4px; height: 30px; }
+.cross::after { left: 0; top: 8px; width: 22px; height: 4px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.splash .brand { font-family: "Playfair Display", serif; font-size: 1.3rem; letter-spacing: .02em; }
+.splash .tagl { font-size: .66rem; color: #aab4cf; text-transform: uppercase; letter-spacing: .12em; }
+.splash .bar { width: 150px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 8px; }
+.splash .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold), var(--gold-soft)); animation: fill 2.4s var(--ease-in-out) forwards; }
+@keyframes fill { 30% { width: 38%; } 60% { width: 64%; } 100% { width: 100%; } }
+.splash .status { font-size: .66rem; color: #aab4cf; height: 1em; }
+.motes span { position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%; background: var(--gold-soft); opacity: 0; animation: float-up 6s linear infinite; }
+@keyframes float-up { 10% { opacity: .8; } 90% { opacity: .3; } 100% { transform: translate(10px,-220px); opacity: 0; } }
+
+/* 2. Portal-switch loader */
+.portal-load { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.portal-icons { display: flex; gap: 10px; }
+.portal-icons span { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: .66rem; font-weight: 700; color: #fff; animation: portal-bob 1.4s var(--ease-in-out) infinite; }
+.portal-icons span:nth-child(1) { background: var(--burgundy); }
+.portal-icons span:nth-child(2) { background: var(--indigo); animation-delay: .15s; }
+.portal-icons span:nth-child(3) { background: #0f8a7a; animation-delay: .3s; }
+.portal-icons span:nth-child(4) { background: var(--gold); animation-delay: .45s; }
+@keyframes portal-bob { 0%,60%,100% { transform: translateY(0); opacity: .55; } 30% { transform: translateY(-8px); opacity: 1; } }
+.portal-load small { font-size: .74rem; color: var(--muted); }
+
+/* 3. Skeleton */
+.sk-wrap { width: 100%; max-width: 300px; display: grid; gap: 10px; }
+.sk-row { display: flex; gap: 10px; align-items: center; }
+.sk { background: linear-gradient(90deg, var(--line) 0%, var(--card) 50%, var(--line) 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 6px; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.sk.circle { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; }
+.sk.l1 { height: 10px; width: 70%; } .sk.l2 { height: 8px; width: 45%; margin-top: 6px; }
+.sk.tile { height: 54px; flex: 1; border-radius: 10px; }
+.sk-real { width: 100%; max-width: 300px; display: grid; gap: 10px; }
+.sk-real .row { display: flex; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: .74rem; opacity: 0; animation: fade-up var(--dur-slow) var(--ease-out) forwards; }
+.sk-real .row:nth-child(2) { animation-delay: 60ms; } .sk-real .row:nth-child(3) { animation-delay: 120ms; }
+.sk-real .av { width: 30px; height: 30px; border-radius: 50%; background: rgba(201,168,76,.25); display: grid; place-items: center; font-weight: 700; font-size: .64rem; color: var(--navy); flex-shrink: 0; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* 4. Top progress bar */
+.mini-app { width: 100%; max-width: 320px; height: 150px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; position: relative; overflow: hidden; display: flex; }
+.mini-app .nav { width: 70px; background: var(--navy); padding: 18px 8px; display: grid; gap: 6px; align-content: start; }
+.mini-app .nav i { height: 7px; border-radius: 4px; background: rgba(255,255,255,.18); }
+.mini-app .nav i.on { background: var(--gold); }
+.mini-app .pg { flex: 1; padding: 18px 12px; display: grid; gap: 8px; align-content: start; }
+.mini-app .pg i { height: 9px; border-radius: 4px; background: var(--soft); }
+.topbar { position: absolute; top: 0; left: 0; height: 3px; width: 0; background: linear-gradient(90deg, var(--gold), var(--gold-soft)); box-shadow: 0 0 8px rgba(201,168,76,.7); z-index: 2; }
+.topbar.run { animation: nprog 1.4s var(--ease-out) forwards; }
+@keyframes nprog { 0% { width: 0; opacity: 1; } 60% { width: 72%; } 85% { width: 100%; opacity: 1; } 100% { width: 100%; opacity: 0; } }
+
+/* 5. Button loading */
+.btn { font: inherit; font-size: .82rem; font-weight: 600; border: 0; border-radius: .55rem; padding: .62rem 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 150px; transition: transform var(--dur-instant) var(--ease-out), box-shadow var(--dur-fast), background var(--dur-fast); }
+.btn-gold { background: var(--navy); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+.btn-gold:hover { box-shadow: 0 6px 16px -6px rgba(30,42,74,.55); transform: translateY(-1px); }
+.btn-gold:active { transform: translateY(0) scale(.97); }
+.btn .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; animation: spin .7s linear infinite; display: none; }
+.btn.loading { pointer-events: none; opacity: .9; } .btn.loading .spin { display: inline-block; }
+.btn.done { background: var(--green); }
+.btn .chk { display: none; } .btn.done .chk { display: inline-block; }
+.chk path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: draw .35s var(--ease-out) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+/* 6. Document scan (OCR) */
+.doc { width: 130px; height: 165px; background: #fffdf6; border-radius: 6px; box-shadow: 0 6px 20px -8px rgba(0,0,0,.35); position: relative; overflow: hidden; padding: 16px 14px; display: grid; gap: 7px; align-content: start; }
+.doc i { height: 5px; border-radius: 3px; background: #ddd5bd; }
+.doc i:nth-child(1) { width: 60%; margin: 0 auto 6px; background: #c9b98a; height: 7px; }
+.doc i.hit { background: rgba(201,168,76,.9); transition: background .3s; }
+.scanline { position: absolute; left: 0; right: 0; height: 26px; top: -26px; background: linear-gradient(180deg, transparent, rgba(201,168,76,.35) 85%, var(--gold) 100%); animation: scan 2.2s var(--ease-in-out) infinite; }
+@keyframes scan { 0% { top: -26px; } 50% { top: 100%; } 100% { top: -26px; } }
+.corner { position: absolute; width: 14px; height: 14px; border: 2px solid var(--gold); }
+.corner.tl { top: 4px; left: 4px; border-right: 0; border-bottom: 0; } .corner.tr { top: 4px; right: 4px; border-left: 0; border-bottom: 0; }
+.corner.bl { bottom: 4px; left: 4px; border-right: 0; border-top: 0; } .corner.br { bottom: 4px; right: 4px; border-left: 0; border-top: 0; }
+.scan-label { position: absolute; bottom: 12px; font-size: .68rem; color: var(--muted); }
+
+/* 7. Page enter */
+.pe { width: 100%; max-width: 320px; display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.pe .h { grid-column: 1/-1; height: 14px; width: 55%; border-radius: 5px; background: var(--navy); opacity: 0; animation: fade-up var(--dur-slow) var(--ease-out) forwards; }
+.pe .t { height: 54px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); opacity: 0; animation: fade-up var(--dur-slow) var(--ease-out) forwards; position: relative; }
+.pe .t::after { content: ""; position: absolute; left: 8px; top: 10px; width: 18px; height: 18px; border-radius: 6px; background: var(--c, var(--gold)); opacity: .8; }
+.pe .t:nth-child(2) { animation-delay: 60ms; --c: var(--burgundy); } .pe .t:nth-child(3) { animation-delay: 120ms; --c: var(--indigo); } .pe .t:nth-child(4) { animation-delay: 180ms; --c: #0f8a7a; }
+.pe .w { grid-column: 1/-1; height: 56px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); opacity: 0; animation: fade-up var(--dur-slow) var(--ease-out) 240ms forwards; }
+
+/* 8. View transition mock */
+.vt { width: 100%; max-width: 320px; height: 150px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--card); }
+.vt .pane { position: absolute; inset: 0; padding: 14px; display: grid; gap: 8px; align-content: start; transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
+.vt .pane b { font-size: .8rem; } .vt .pane i { height: 9px; border-radius: 4px; background: var(--soft); }
+.vt .pane.b { opacity: 0; transform: translateX(16px); }
+.vt.flip .pane.a { opacity: 0; transform: translateX(-16px); } .vt.flip .pane.b { opacity: 1; transform: none; }
+.vt .hdr { position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--gold); z-index: 1; }
+
+/* 9. Sidebar indicator */
+.snav { width: 190px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px; position: relative; }
+.snav a { display: block; position: relative; z-index: 1; font-size: .76rem; padding: 8px 10px; border-radius: 7px; color: var(--muted); cursor: pointer; transition: color var(--dur-fast); }
+.snav a.on { color: var(--navy); font-weight: 600; }
+:root[data-theme="dark"] .snav a.on { color: var(--gold-soft); }
+.snav .pill { position: absolute; left: 8px; right: 8px; height: 33px; border-radius: 7px; background: rgba(201,168,76,.2); transition: transform var(--dur-base) var(--ease-spring); }
+.snav .pill::before { content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 3px; background: var(--gold); }
+
+/* 10. Step form */
+.steps { width: 100%; max-width: 320px; }
+.dots { display: flex; align-items: center; margin-bottom: 14px; }
+.dots .d { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); display: grid; place-items: center; font-size: .64rem; font-weight: 700; color: var(--muted); transition: all var(--dur-base) var(--ease-out); flex-shrink: 0; }
+.dots .d.on { border-color: var(--gold); color: var(--navy); box-shadow: 0 0 0 4px rgba(201,168,76,.2); }
+.dots .d.ok { background: var(--gold); border-color: var(--gold); color: #fff; }
+.dots .ln { flex: 1; height: 2px; background: var(--line); position: relative; overflow: hidden; }
+.dots .ln::after { content: ""; position: absolute; inset: 0; background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform var(--dur-slow) var(--ease-out); }
+.dots .ln.ok::after { transform: scaleX(1); }
+.step-panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: .76rem; min-height: 68px; }
+.step-panel.in-next { animation: step-next var(--dur-base) var(--ease-out); }
+.step-panel.in-prev { animation: step-prev var(--dur-base) var(--ease-out); }
+@keyframes step-next { from { opacity: 0; transform: translateX(18px); } }
+@keyframes step-prev { from { opacity: 0; transform: translateX(-18px); } }
+.step-btns { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+.sbtn { font: inherit; font-size: .72rem; padding: .35rem .8rem; border-radius: .4rem; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+.sbtn.pri { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* 11. Field validation */
+.field { width: 100%; max-width: 260px; }
+.field label { font-size: .7rem; font-weight: 600; display: block; margin-bottom: 4px; }
+.field input { width: 100%; font: inherit; font-size: .82rem; padding: .55rem .7rem; border: 1.5px solid var(--line); border-radius: .5rem; background: var(--card); color: var(--text); outline: none; transition: border-color var(--dur-fast), box-shadow var(--dur-fast); }
+.field input:focus { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(201,168,76,.18); }
+.field.err input { border-color: var(--red); box-shadow: 0 0 0 4px rgba(185,28,28,.12); }
+.field.err.shake { animation: shake .36s var(--ease-out); }
+@keyframes shake { 20%,60% { transform: translateX(-5px); } 40%,80% { transform: translateX(5px); } }
+.field .msg { font-size: .68rem; color: var(--red); height: 0; overflow: hidden; opacity: 0; transition: all var(--dur-fast) var(--ease-out); }
+.field.err .msg { height: 1.2em; opacity: 1; margin-top: 4px; }
+
+/* 12. Toast */
+.toasts { position: absolute; right: 12px; bottom: 12px; display: grid; gap: 8px; width: 240px; }
+.toast { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: 9px; padding: 9px 11px; font-size: .74rem; box-shadow: 0 10px 24px -12px rgba(0,0,0,.35); animation: toast-in var(--dur-slow) var(--ease-spring) both; position: relative; overflow: hidden; }
+.toast b { display: block; font-size: .78rem; }
+.toast::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; background: var(--green); opacity: .5; animation: toast-timer 3.5s linear forwards; }
+.toast.out { animation: toast-out var(--dur-base) var(--ease-in-out) forwards; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+@keyframes toast-out { to { opacity: 0; transform: translateX(30px); } }
+@keyframes toast-timer { from { width: 100%; } to { width: 0; } }
+
+/* 13. Success check */
+.success { text-align: center; }
+.success svg circle { stroke-dasharray: 160; stroke-dashoffset: 160; animation: draw-c .6s var(--ease-out) forwards; }
+.success svg path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .35s var(--ease-out) .5s forwards; }
+@keyframes draw-c { to { stroke-dashoffset: 0; } }
+.success .ttl { font-weight: 700; font-size: .9rem; margin-top: 6px; opacity: 0; animation: fade-up .4s var(--ease-out) .7s forwards; }
+.success .ref { font-size: .7rem; color: var(--muted); opacity: 0; animation: fade-up .4s var(--ease-out) .82s forwards; }
+.success .ref code { background: rgba(201,168,76,.18); }
+
+/* 14. Seal stamp */
+.cert { width: 190px; height: 130px; background: #fffdf6; border: 1px solid #e6dcc0; border-radius: 4px; position: relative; padding: 14px; display: grid; gap: 6px; align-content: start; box-shadow: 0 6px 18px -10px rgba(0,0,0,.4); }
+.cert i { height: 4px; background: #ddd5bd; border-radius: 2px; } .cert i:first-child { width: 70%; margin: 0 auto 4px; height: 6px; background: #c9b98a; }
+.seal { position: absolute; right: 10px; bottom: 8px; width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle, #a83a4c, var(--burgundy)); border: 3px double #e9c9a0; display: grid; place-items: center; color: #fbe7c6; font-size: .5rem; font-weight: 800; letter-spacing: .06em; text-align: center; line-height: 1.1; animation: stamp .55s var(--ease-spring) .3s both; }
+@keyframes stamp { 0% { opacity: 0; transform: scale(2.2) rotate(-25deg); } 60% { opacity: 1; transform: scale(.92) rotate(-12deg); } 100% { transform: scale(1) rotate(-12deg); } }
+
+/* 15. Status chip */
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 700; padding: .3rem .75rem; border-radius: 999px; transition: background var(--dur-base), color var(--dur-base); }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.pending { background: #fffbeb; color: var(--amber); } .chip.pending .dot { animation: pulse-dot 1.4s ease-in-out infinite; }
+.chip.approved { background: #f0fdf4; color: var(--green); animation: chip-pop .4s var(--ease-spring); }
+.chip.released { background: #eef2ff; color: #4338ca; animation: chip-pop .4s var(--ease-spring); }
+@keyframes pulse-dot { 50% { opacity: .35; transform: scale(.75); } }
+@keyframes chip-pop { 40% { transform: scale(1.12); } }
+.timeline { display: flex; gap: 6px; margin-top: 12px; }
+.timeline i { height: 4px; width: 46px; border-radius: 3px; background: var(--line); transition: background var(--dur-slow) var(--ease-out); }
+.timeline i.ok { background: var(--gold); }
+
+/* 16. Badge unlock */
+.badge-wrap { position: relative; display: grid; place-items: center; }
+.badge { width: 82px; height: 82px; border-radius: 50%; background: conic-gradient(from 0deg, #e3c26b, #f9eac0, #c9a84c, #f3dca0, #e3c26b); display: grid; place-items: center; position: relative; overflow: hidden; animation: badge-in .7s var(--ease-spring) both; box-shadow: 0 0 0 6px rgba(227,194,107,.18); }
+.badge::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: var(--navy); }
+.badge span { position: relative; color: var(--gold-soft); font-family: "Playfair Display", serif; font-size: 1.5rem; }
+.badge::after { content: ""; position: absolute; top: -50%; left: -60%; width: 40%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); transform: rotate(25deg); animation: shine 1.1s var(--ease-out) .8s; }
+@keyframes badge-in { 0% { opacity: 0; transform: scale(.3) rotate(-30deg); } 100% { opacity: 1; transform: none; } }
+@keyframes shine { from { left: -60%; } to { left: 130%; } }
+.rays i { position: absolute; width: 4px; height: 10px; border-radius: 2px; background: var(--gold); left: 50%; top: 50%; opacity: 0; animation: ray .7s var(--ease-out) .45s forwards; transform-origin: center; }
+@keyframes ray { 0% { opacity: 1; transform: translate(-50%,-50%) rotate(var(--r)) translateY(-40px); } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--r)) translateY(-68px); } }
+.badge-cap { margin-top: 12px; font-size: .74rem; text-align: center; opacity: 0; animation: fade-up .4s var(--ease-out) .9s forwards; }
+
+/* 17. Count up + bars */
+.kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; width: 100%; max-width: 330px; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 9px; }
+.kpi b { font-size: 1.15rem; display: block; font-variant-numeric: tabular-nums; }
+.kpi span { font-size: .6rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.bars { grid-column: 1/-1; display: flex; align-items: flex-end; gap: 6px; height: 64px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.bars i { flex: 1; background: var(--indigo); border-radius: 3px 3px 0 0; height: var(--h); transform-origin: bottom; animation: grow .7s var(--ease-out) both; opacity: .85; }
+.bars i:nth-child(2) { animation-delay: 50ms; } .bars i:nth-child(3) { animation-delay: 100ms; } .bars i:nth-child(4) { animation-delay: 150ms; } .bars i:nth-child(5) { animation-delay: 200ms; } .bars i:nth-child(6) { animation-delay: 250ms; } .bars i:nth-child(7) { animation-delay: 300ms; background: var(--gold); }
+@keyframes grow { from { transform: scaleY(0); } }
+
+/* 18. LIVE */
+.live { display: flex; align-items: center; gap: 10px; background: #111; color: #fff; border-radius: 10px; padding: 10px 14px; width: 260px; }
+.live .thumb { width: 70px; height: 42px; border-radius: 6px; background: linear-gradient(135deg, #2a2a2a, #444); position: relative; }
+.live .lbl { display: inline-flex; align-items: center; gap: 5px; font-size: .62rem; font-weight: 800; background: #dc2626; border-radius: 4px; padding: 2px 6px; letter-spacing: .06em; }
+.live .lbl i { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse-dot 1.2s ease-in-out infinite; }
+.live .ringp { position: absolute; inset: 0; border-radius: 6px; box-shadow: 0 0 0 0 rgba(220,38,38,.6); animation: live-ring 1.8s ease-out infinite; }
+@keyframes live-ring { 70% { box-shadow: 0 0 0 10px rgba(220,38,38,0); } 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); } }
+.live small { font-size: .66rem; color: #aaa; display: block; }
+.eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; margin-left: 4px; }
+.eq i { width: 2px; background: #fff; animation: eq 0.9s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: .2s; } .eq i:nth-child(3) { animation-delay: .4s; }
+@keyframes eq { 0%,100% { height: 3px; } 50% { height: 12px; } }
+
+/* 19. Modal */
+.modal-stage { width: 100%; height: 170px; position: relative; border-radius: 10px; overflow: hidden; background: var(--card); border: 1px solid var(--line); }
+.modal-stage .page { padding: 14px; display: grid; gap: 8px; } .modal-stage .page i { height: 9px; border-radius: 4px; background: var(--soft); }
+.backdrop { position: absolute; inset: 0; background: rgba(15,23,48,.45); backdrop-filter: blur(3px); opacity: 0; transition: opacity var(--dur-base); pointer-events: none; display: grid; place-items: center; }
+.dialog { width: 200px; background: var(--card); border-radius: 12px; padding: 14px; font-size: .74rem; box-shadow: 0 20px 40px -16px rgba(0,0,0,.5); transform: translateY(12px) scale(.95); opacity: 0; transition: transform var(--dur-base) var(--ease-spring), opacity var(--dur-fast); }
+.modal-stage.open .backdrop { opacity: 1; pointer-events: auto; }
+.modal-stage.open .dialog { transform: none; opacity: 1; }
+.dialog b { display: block; margin-bottom: 4px; }
+
+/* 20. QR check-in */
+.qr-box { width: 130px; height: 130px; position: relative; border-radius: 12px; display: grid; place-items: center; }
+.qr { width: 84px; height: 84px; background:
+  conic-gradient(var(--text) 25%, transparent 0 50%, var(--text) 0 75%, transparent 0) 0 0/16px 16px; opacity: .8; border-radius: 4px; transition: filter .3s, opacity .3s; }
+.qr-box .corner { border-color: var(--gold); width: 20px; height: 20px; transition: all .3s var(--ease-out); }
+.qr-box .scanline { top: 0; animation-duration: 1.8s; }
+.qr-box.ok .corner { border-color: var(--green); inset: auto; }
+.qr-box.ok .scanline { display: none; }
+.qr-box.ok .qr { opacity: .15; filter: blur(2px); }
+.qr-ok { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transform: scale(.5); transition: all .4s var(--ease-spring); }
+.qr-box.ok .qr-ok { opacity: 1; transform: scale(1); }
+.qr-ok div { width: 54px; height: 54px; border-radius: 50%; background: var(--green); display: grid; place-items: center; box-shadow: 0 0 0 8px rgba(21,128,61,.18); }
+.flash { position: absolute; inset: 0; border-radius: 12px; background: rgba(21,128,61,.25); opacity: 0; pointer-events: none; }
+.qr-box.ok .flash { animation: flash .5s ease-out; }
+@keyframes flash { 30% { opacity: 1; } }
+
+/* 21. Prayer wall candle */
+.candle-wrap { display: flex; align-items: flex-end; gap: 18px; }
+.candle { width: 22px; height: 54px; background: linear-gradient(90deg, #f6ecd6, #fffaf0, #eadbb8); border-radius: 3px 3px 2px 2px; position: relative; }
+.candle::before { content: ""; position: absolute; top: -5px; left: 10px; width: 2px; height: 6px; background: #444; }
+.flame { position: absolute; left: 50%; top: -24px; width: 12px; height: 20px; margin-left: -6px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: radial-gradient(ellipse at 50% 80%, #fff7d1 0%, #ffd56a 40%, #ff9a2e 80%, transparent 100%); transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; opacity: 0; transition: opacity .4s; filter: drop-shadow(0 0 8px rgba(255,190,80,.9)); }
+.candle.lit .flame { opacity: 1; }
+@keyframes flicker { 0%,100% { transform: scale(1) rotate(-2deg); } 25% { transform: scale(1.06,.95) rotate(2deg); } 50% { transform: scale(.96,1.05) rotate(-1deg); } 75% { transform: scale(1.03) rotate(1.5deg); } }
+.pray-btn { font: inherit; font-size: .74rem; font-weight: 600; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: .4rem .85rem; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; transition: transform var(--dur-instant); }
+.pray-btn:active { transform: scale(.94); }
+.pray-btn.on { border-color: var(--gold); background: rgba(201,168,76,.15); }
+.count { display: inline-block; min-width: 1.2em; font-variant-numeric: tabular-nums; }
+.count.bump { animation: bump .35s var(--ease-spring); }
+@keyframes bump { 40% { transform: translateY(-5px) scale(1.2); color: var(--gold); } }
+
+/* 22. Notification bell */
+.bell { position: relative; width: 44px; height: 44px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; cursor: pointer; }
+.bell svg { transform-origin: 50% 10%; }
+.bell.ring svg { animation: bell .9s var(--ease-out); }
+@keyframes bell { 10%,30%,50% { transform: rotate(14deg); } 20%,40%,60% { transform: rotate(-12deg); } 70% { transform: rotate(4deg); } 80% { transform: none; } }
+.bell .badge-n { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--red); color: #fff; font-size: .6rem; font-weight: 700; display: grid; place-items: center; padding: 0 4px; transform: scale(0); transition: transform .3s var(--ease-spring); border: 2px solid var(--card); }
+.bell.ring .badge-n, .bell.has .badge-n { transform: scale(1); }
+
+/* 23. Row insert */
+.rows { width: 100%; max-width: 320px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: .72rem; }
+.rows .r { display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.rows .r:last-child { border-bottom: 0; }
+.rows .r.new { animation: row-in .45s var(--ease-out), row-hl 2.2s ease-out; }
+@keyframes row-in { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes row-hl { 0%,30% { background: rgba(201,168,76,.22); } 100% { background: transparent; } }
+.rows .r.gone { animation: row-out .35s var(--ease-in-out) forwards; }
+@keyframes row-out { to { opacity: 0; transform: translateX(24px); height: 0; padding-top: 0; padding-bottom: 0; } }
+
+/* 24. Empty state */
+.empty { text-align: center; font-size: .76rem; color: var(--muted); }
+.empty .ill { width: 70px; height: 70px; margin: 0 auto 8px; border-radius: 50%; background: rgba(201,168,76,.15); display: grid; place-items: center; animation: float 3.4s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-6px); } }
+
+/* 25. Offline */
+.net { display: flex; align-items: center; gap: 8px; font-size: .74rem; padding: .5rem .9rem; border-radius: 999px; background: #fffbeb; color: var(--amber); border: 1px solid #fde68a; animation: slide-down .35s var(--ease-out); }
+.net.back { background: #f0fdf4; color: var(--green); border-color: #bbf7d0; }
+@keyframes slide-down { from { opacity: 0; transform: translateY(-12px); } }
+.net .wifi i { display: inline-block; width: 3px; margin-right: 1px; background: currentColor; border-radius: 1px; animation: wifi 1.2s ease-in-out infinite; }
+.net .wifi i:nth-child(1) { height: 4px; } .net .wifi i:nth-child(2) { height: 7px; animation-delay: .15s; } .net .wifi i:nth-child(3) { height: 10px; animation-delay: .3s; }
+@keyframes wifi { 50% { opacity: .25; } }
+.net.back .wifi i { animation: none; }
+
+/* 26. Theme switch */
+.theme-sw { width: 64px; height: 32px; border-radius: 999px; background: #dbe3f3; position: relative; cursor: pointer; border: 0; transition: background var(--dur-base); }
+.theme-sw .k { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.2); transition: transform var(--dur-base) var(--ease-spring); font-size: .8rem; }
+.theme-sw.dark { background: var(--navy); } .theme-sw.dark .k { transform: translateX(32px); background: #2c3548; }
+
+/* reduced motion — real users + sidebar toggle */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+body.rm *, body.rm *::before, body.rm *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+
+/* responsive */
+@media (max-width: 860px) {
+  .app { display: block; }
+  .side { position: static; width: auto; height: auto; padding: 1rem; }
+  .side nav { display: flex; flex-wrap: wrap; gap: .25rem; }
+  .side .grp { width: 100%; margin: .5rem .2rem .1rem; }
+  .side .ctl { grid-template-columns: 1fr 1fr; margin-top: .8rem; }
+  .main { padding: 1.2rem 1rem 4rem; }
+  .grid { grid-template-columns: 1fr; }
+  .hero { padding: 1.4rem; } .hero h2 { font-size: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <h1>Motion Guide</h1>
+    <p class="sub">SacraDigit · animations, transitions &amp; loading states</p>
+    <nav>
+      <div class="grp">Foundation</div>
+      <a href="#tokens">Motion tokens</a>
+      <div class="grp">Suggestions</div>
+      <a href="#loading">Loading screens</a>
+      <a href="#transitions">Page transitions</a>
+      <a href="#micro">Micro-interactions</a>
+      <a href="#feedback">Feedback &amp; status</a>
+      <a href="#data">Dashboards &amp; data</a>
+      <a href="#special">Parish-specific moments</a>
+      <div class="grp">Ship it</div>
+      <a href="#a11y">Accessibility rules</a>
+      <a href="#rollout">Rollout plan</a>
+    </nav>
+    <div class="ctl">
+      <button class="pill" id="rmBtn" aria-pressed="false">Simulate reduced motion</button>
+      <button class="pill" id="themeBtn" aria-pressed="false">Dark mode</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="hero">
+      <h2>Motion for SacraDigit</h2>
+      <p>These are suggested animations, transitions and loading states for the Admin, Parishioner, Media and ITech portals. Every card has a live demo built from the system's own navy, gold and burgundy palette, plus the CSS for it and the file where it belongs. Motion here should feel <b>reverent and calm</b>: soft fades, gentle rises and gold accents. Avoid bouncy, game-like effects.</p>
+      <div class="stats">
+        <div><b data-count="26">0</b><span>Patterns</span></div>
+        <div><b data-count="5">0</b><span>Duration tokens</span></div>
+        <div><b data-count="0">0</b><span>New libraries needed</span></div>
+      </div>
+    </div>
+
+    <!-- ===================== TOKENS ===================== -->
+    <section class="cat" id="tokens">
+      <h3>Motion tokens</h3>
+      <p class="lead">Right now each stylesheet picks its own timing (<code>0.15s ease</code>, <code>0.25s ease</code>, <code>0.12s</code>…). Define these once in a shared file such as <code>accessibility.css</code> or a new <code>motion.css</code> so every portal moves the same way. Hover a row to preview it.</p>
+      <div class="tablewrap">
+      <table class="tok">
+        <thead><tr><th>Token</th><th>Value</th><th>Use for</th><th>Preview</th></tr></thead>
+        <tbody>
+          <tr class="tokrow" style="--d:100ms"><td><code>--dur-instant</code></td><td>100ms</td><td>Button press, checkbox tick</td><td><div class="tokbar"><i></i></div></td></tr>
+          <tr class="tokrow" style="--d:160ms"><td><code>--dur-fast</code></td><td>160ms</td><td>Hover colors, focus rings, sidebar links</td><td><div class="tokbar"><i></i></div></td></tr>
+          <tr class="tokrow" style="--d:240ms"><td><code>--dur-base</code></td><td>240ms</td><td>Modals, dropdowns, step changes, tabs</td><td><div class="tokbar"><i></i></div></td></tr>
+          <tr class="tokrow" style="--d:400ms"><td><code>--dur-slow</code></td><td>400ms</td><td>Page enter, toasts, list stagger</td><td><div class="tokbar"><i></i></div></td></tr>
+          <tr class="tokrow" style="--d:700ms"><td><code>--dur-scene</code></td><td>700ms</td><td>Celebrations only: badge unlock, seal stamp</td><td><div class="tokbar"><i></i></div></td></tr>
+          <tr><td><code>--ease-out</code></td><td>cubic-bezier(.22,1,.36,1)</td><td colspan="2">Default for anything entering the screen</td></tr>
+          <tr><td><code>--ease-in-out</code></td><td>cubic-bezier(.65,0,.35,1)</td><td colspan="2">Things leaving, or moving from A to B</td></tr>
+          <tr><td><code>--ease-spring</code></td><td>cubic-bezier(.34,1.56,.64,1)</td><td colspan="2">Slight overshoot for pops: chips, toasts, sidebar pill. Use sparingly.</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <!-- ===================== LOADING ===================== -->
+    <section class="cat" id="loading">
+      <h3>Loading screens</h3>
+      <p class="lead">Three tiers. A branded splash shows once per session; skeletons cover data fetches from Amplify; inline spinners cover actions. Never show a full-screen loader for something that takes under 300ms.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="stage dark" style="min-height:240px" data-demo="splash">
+            <button class="replay">Replay</button>
+            <div class="motes" aria-hidden="true"></div>
+            <div class="splash">
+              <div class="halo"><div class="ring"></div><div class="ring soft"></div><div class="core"><div class="cross"></div></div></div>
+              <div class="brand">SacraDigit</div>
+              <div class="tagl">Our Lady of Fatima Parish</div>
+              <div class="bar"><i></i></div>
+              <div class="status" id="splashStatus">Preparing your parish…</div>
+            </div>
+          </div>
+          <div class="body">
+            <h4>Branded splash (first load) <span class="tag p1">P1</span></h4>
+            <p>A refined version of <code>loading screen test/</code>. The progress bar should follow real stages: auth check, then parish info, then the dashboard. Rotate the status text through those stages, and fade out with a 300ms opacity transition once <code>auth.js</code> resolves.</p>
+            <div class="where">Show only when <code>sessionStorage.sdSplashSeen</code> is not set. Repeat visits skip straight to skeletons. Use it in <code>index.html</code>, <code>login.html</code> → dashboard, and the PWA launch (<code>pwa.js</code>).</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="skeleton">
+            <button class="replay">Replay</button>
+            <div id="skHost"></div>
+          </div>
+          <div class="body">
+            <h4>Skeleton screens <span class="tag p1">P1</span></h4>
+            <p>Gray placeholder shapes in the same layout as the real content, then a staggered fade-in when the data arrives. Use them for dashboard KPI tiles, request tables, Digital Archives and the Media Library grid.</p>
+            <div class="where">Add a <code>.sk</code> utility to the shell CSS files. Render skeleton rows in <code>table-cards.js</code> before the fetch resolves. Keep the skeleton up for at least 300ms so it doesn't flash.</div>
+            <details><summary>CSS</summary><pre>.sk { background: linear-gradient(90deg,#e5e7eb,#fff,#e5e7eb);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite; border-radius: 6px; }
+@keyframes shimmer { from { background-position: 200% 0 }
+                     to   { background-position: -200% 0 } }</pre></details>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="topbar">
+            <button class="replay">Navigate</button>
+            <div class="mini-app"><div class="topbar"></div><div class="nav"><i></i><i class="on"></i><i></i><i></i></div><div class="pg"><i style="width:60%"></i><i></i><i></i><i style="width:80%"></i></div></div>
+          </div>
+          <div class="body">
+            <h4>Top progress bar <span class="tag p2">P2</span></h4>
+            <p>A thin gold bar along the top edge when you click a sidebar link. Every portal page is a separate HTML file, so this tells users the click registered while the next page loads.</p>
+            <div class="where">Start it on sidebar link click in <code>admin-ui.js</code>, <code>user-shell.js</code>, <code>media-shell.js</code> and the ITech shell. It's about 15 lines of JS and needs no library.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="btn">
+            <button class="replay">Replay</button>
+            <button class="btn btn-gold" id="demoBtn"><span class="spin"></span><svg class="chk" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span class="lbl">Submit Request</span></button>
+          </div>
+          <div class="body">
+            <h4>Button busy → success <span class="tag p1">P1</span></h4>
+            <p>When a request, donation or intention is submitted, the button shows a spinner and is disabled, which also prevents double submits. It then turns green with a drawn check and the label "Submitted".</p>
+            <div class="where">Use for all submit buttons in <code>certificate-step-forms.js</code>, <code>mass-intention-form.js</code>, <code>marriage-request-form.js</code>, <code>donation-payment-info.js</code> and the facility booking forms.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="scan">
+            <button class="replay">Replay</button>
+            <div class="doc" id="ocrDoc"><i></i><i></i><i style="width:85%"></i><i></i><i style="width:70%"></i><i></i><i style="width:90%"></i><i style="width:50%"></i><div class="scanline"></div><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span></div>
+          </div>
+          <div class="body">
+            <h4>OCR / document scan progress <span class="tag p2">P2</span></h4>
+            <p>A gold scan line sweeps over the uploaded record while OCR runs, and lines light up as text is extracted. Users see the work happening instead of a frozen screen.</p>
+            <div class="where"><code>ocr/</code>, <code>Sacradigit/scanner</code>, <code>document-scanner.css</code> and the Digital Archives upload.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage">
+            <div class="portal-load"><div class="portal-icons"><span>AD</span><span>US</span><span>IT</span><span>MD</span></div><small>Opening Media portal…</small></div>
+          </div>
+          <div class="body">
+            <h4>Role / portal hand-off <span class="tag p3">P3</span></h4>
+            <p>After login, accounts are routed to the Admin, Parishioner, ITech or Media portal. A short loader using each portal's color covers the redirect gap. Stop on the target portal's color.</p>
+            <div class="where"><code>login.js</code> right after role resolution, before <code>location.href</code>.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TRANSITIONS ===================== -->
+    <section class="cat" id="transitions">
+      <h3>Page transitions</h3>
+      <p class="lead">SacraDigit is a multi-page app, with one HTML file per screen. This makes the browser's cross-document <b>View Transitions API</b> a free win: two lines of CSS and pages crossfade instead of flashing white. Browsers that don't support it fall back to normal navigation.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="stage" data-demo="vt">
+            <button class="replay">Navigate</button>
+            <div class="vt" id="vtDemo"><div class="hdr"></div><div class="pane a"><b>Dashboard</b><i style="width:70%"></i><i></i><i style="width:50%"></i></div><div class="pane b"><b>Record Requests</b><i></i><i style="width:80%"></i><i></i><i style="width:60%"></i></div></div>
+          </div>
+          <div class="body">
+            <h4>Cross-page crossfade <span class="tag p1">P1</span></h4>
+            <p>The sidebar and top bar stay put while only the content area fades and slides. This removes the white flash between pages.</p>
+            <div class="where">Add to every shell CSS (<code>admin-shell.css</code>, <code>user-shell.css</code>, <code>media-shell.css</code>, <code>itech-shell.css</code>).</div>
+            <details open><summary>CSS</summary><pre>@view-transition { navigation: auto; }
+.sidebar  { view-transition-name: sidebar; }
+.top-bar  { view-transition-name: topbar; }
+main      { view-transition-name: page; }
+::view-transition-old(page) { animation: 160ms ease-in both vt-out; }
+::view-transition-new(page) { animation: 240ms cubic-bezier(.22,1,.36,1) both vt-in; }
+@keyframes vt-out { to   { opacity: 0; transform: translateX(-12px); } }
+@keyframes vt-in  { from { opacity: 0; transform: translateX(12px); } }</pre></details>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="pe">
+            <button class="replay">Replay</button>
+            <div class="pe" id="peDemo"><div class="h"></div><div class="t"></div><div class="t"></div><div class="t"></div><div class="w"></div></div>
+          </div>
+          <div class="body">
+            <h4>Staggered content enter <span class="tag p1">P1</span></h4>
+            <p>The page title, then KPI tiles, then panels rise 8px and fade in, 60ms apart. Cap it at about 6 items and show the rest at once.</p>
+            <div class="where">Dashboards: <code>dashboard.js</code>, <code>user-dashboard.js</code>, <code>media-dashboard.js</code>, <code>itech-dashboard.js</code>. Set <code>style="--i:n"</code> and use <code>animation-delay: calc(var(--i) * 60ms)</code>.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="snav">
+            <div class="snav" id="snav"><div class="pill"></div><a class="on">Dashboard</a><a>Digital Archives</a><a>Record Requests</a><a>Mass Intentions</a></div>
+          </div>
+          <div class="body">
+            <h4>Sliding sidebar indicator <span class="tag p2">P2</span></h4>
+            <p>The gold active highlight glides to the clicked item, then the next page loads. Together with the View Transition, navigation feels continuous. Click the items to try it.</p>
+            <div class="where"><code>.sidebar-link.active</code> in the shell CSS. Store the previous index in <code>sessionStorage</code> and animate from it on load.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="modal">
+            <button class="replay">Open</button>
+            <div class="modal-stage" id="modalDemo"><div class="page"><i style="width:50%"></i><i></i><i></i><i style="width:70%"></i></div><div class="backdrop"><div class="dialog"><b>Approve request?</b>Baptismal certificate for J. Dela Cruz will be marked ready for release.<div class="step-btns"><button class="sbtn" data-close>Cancel</button><button class="sbtn pri" data-close>Approve</button></div></div></div></div>
+          </div>
+          <div class="body">
+            <h4>Modal &amp; drawer <span class="tag p2">P2</span></h4>
+            <p>Blurred navy backdrop fades in over 240ms while the dialog rises and scales from 95% with a slight spring. On close, run it in reverse and faster (160ms). Mobile sidebar drawers slide in from the left with the same backdrop.</p>
+            <div class="where">There are already 4 separate <code>modalIn</code> keyframes. Merge them into one shared rule. Applies to confirm dialogs, the certificate preview (<code>cert-preview-in</code>) and the mobile <code>.sidebar</code>.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MICRO ===================== -->
+    <section class="cat" id="micro">
+      <h3>Micro-interactions</h3>
+      <p class="lead">Small responses that confirm "the system heard you". These matter most for parishioners filling out long sacrament request forms.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="stage" data-demo="steps" style="min-height:220px">
+            <div class="steps" id="stepsDemo">
+              <div class="dots"></div>
+              <div class="step-panel"></div>
+              <div class="step-btns"><button class="sbtn" data-dir="-1">Back</button><button class="sbtn pri" data-dir="1">Next</button></div>
+            </div>
+          </div>
+          <div class="body">
+            <h4>Step-form wizard <span class="tag p1">P1</span></h4>
+            <p>The connector line fills with gold as each step completes, and panels slide in the direction of travel (Next slides from the right, Back from the left). Completed dots turn solid gold with a check.</p>
+            <div class="where"><code>certificate-step-forms.js</code>, <code>marriage-request-form.css</code> (<code>.mstep-*</code>), <code>mass-intention-form.css</code> (<code>mi-step-in</code> already exists, so add direction).</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="field">
+            <button class="replay">Submit empty</button>
+            <div class="field" id="fieldDemo"><label>Child's full name</label><input placeholder="e.g. Juan Dela Cruz"><div class="msg">Please enter the child's full name.</div></div>
+          </div>
+          <div class="body">
+            <h4>Focus glow &amp; error shake <span class="tag p1">P1</span></h4>
+            <p>A soft gold focus ring, and on invalid submit a single 360ms shake with the error message sliding open below. Shake only once per submit, never repeatedly while typing.</p>
+            <div class="where"><code>user/field-messages.js</code> and input styles in the shell CSS.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage">
+            <button class="btn btn-gold" style="min-width:auto">Hover &amp; press me</button>
+          </div>
+          <div class="body">
+            <h4>Button lift &amp; press <span class="tag p2">P2</span></h4>
+            <p>Hover lifts 1px and the shadow deepens; press scales to 97%. This takes 100ms and only animates transform and box-shadow, which keeps it GPU-cheap.</p>
+            <div class="where">Base button classes across all portals.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage">
+            <button class="theme-sw" id="themeSw" aria-label="Toggle theme"><span class="k">☀</span></button>
+          </div>
+          <div class="body">
+            <h4>Theme &amp; language switch <span class="tag p3">P3</span></h4>
+            <p>The knob springs across. When the whole page changes theme, wrap the switch in <code>document.startViewTransition()</code> so colors crossfade instead of snapping.</p>
+            <div class="where"><code>ui-prefs.js</code> (theme + Filipino toggle) and <code>theme-dark.css</code>.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FEEDBACK ===================== -->
+    <section class="cat" id="feedback">
+      <h3>Feedback &amp; status</h3>
+      <p class="lead">Moments where something important just happened. A request was submitted, approved or released. Make them noticeable, and make them clear rather than flashy.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="stage" data-demo="toast" style="min-height:200px">
+            <button class="replay">Show toast</button>
+            <div class="toasts" id="toasts"></div>
+          </div>
+          <div class="body">
+            <h4>Toasts with timer <span class="tag p1">P1</span></h4>
+            <p>Toasts spring up from the bottom-right with a thin bar showing time left. They pause on hover and slide out to the right. Stack at most 3.</p>
+            <div class="where">Toast logic is duplicated in <code>admin-ui.js</code>, <code>dashboard.js</code> and the form scripts. Pull it into one shared helper.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="success">
+            <button class="replay">Replay</button>
+            <div class="success" id="successDemo">
+              <svg width="64" height="64" viewBox="0 0 56 56"><circle cx="28" cy="28" r="25" fill="none" stroke="#15803d" stroke-width="3"/><path d="M17 29l7 7 15-16" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div class="ttl">Request submitted</div>
+              <div class="ref">Reference <code>BAP-2026-0142</code></div>
+            </div>
+          </div>
+          <div class="body">
+            <h4>Submission success screen <span class="tag p1">P1</span></h4>
+            <p>The circle draws, then the check, then the title and reference number fade up. This builds on the existing <code>svc-success-in</code> keyframe.</p>
+            <div class="where">End of every sacrament request, certificate request, mass intention and facility booking.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="seal" style="min-height:200px">
+            <button class="replay">Replay</button>
+            <div class="cert" id="sealDemo"><i></i><i></i><i style="width:80%"></i><i></i><i style="width:60%"></i><div class="seal">PARISH<br>SEAL</div></div>
+          </div>
+          <div class="body">
+            <h4>Certificate seal stamp <span class="tag p2">P2</span></h4>
+            <p>When an admin approves a certificate, or a parishioner opens a released one, a burgundy parish seal stamps down onto the preview. It's a moment that fits the parish setting.</p>
+            <div class="where">The <code>*-certificate-print.html</code> previews and the "Ready for release" state in <code>record-requests.js</code>. Never include it in the printed output.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="chip">
+            <button class="replay">Advance</button>
+            <div style="text-align:center"><span class="chip pending" id="chipDemo"><span class="dot"></span><span class="t">Pending</span></span><div class="timeline" id="tlDemo"><i class="ok"></i><i></i><i></i></div></div>
+          </div>
+          <div class="body">
+            <h4>Status chip transitions <span class="tag p1">P1</span></h4>
+            <p>Pending gets a slowly breathing dot. When the status changes, the chip pops once and changes color, and the progress track below fills.</p>
+            <div class="where"><code>user-my-requests.js</code>, <code>user-requested-services</code> and the admin <code>record-requests.js</code> tables. Also apply to <code>step-history.js</code>.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="net">
+            <button class="replay">Toggle</button>
+            <div class="net" id="netDemo"><span class="wifi"><i></i><i></i><i></i></span><span class="t">You're offline. Changes will sync when you reconnect.</span></div>
+          </div>
+          <div class="body">
+            <h4>Offline / reconnect banner <span class="tag p2">P2</span></h4>
+            <p>The app is a PWA, so connection loss should slide in an amber banner. When the connection returns it turns green ("Back online") and slides away after 2 seconds.</p>
+            <div class="where"><code>pwa.js</code>. Listen for the <code>online</code> and <code>offline</code> events.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage">
+            <div class="empty"><div class="ill"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h10M4 17h7"/></svg></div><b style="color:var(--text)">No requests yet</b><br>Your submitted requests will appear here.</div>
+          </div>
+          <div class="body">
+            <h4>Gentle empty states <span class="tag p3">P3</span></h4>
+            <p>The illustration floats slowly (3.4s cycle, 6px). Its motion keeps the page from looking broken, and it stays calm enough to ignore.</p>
+            <div class="where">Empty tables in My Requests, Messages, Media Library, Notifications and Prayer Wall.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DATA ===================== -->
+    <section class="cat" id="data">
+      <h3>Dashboards &amp; data</h3>
+      <p class="lead">Admin, Media and ITech dashboards are where staff spend their time. Animate data on first load only. Don't re-animate when it auto-refreshes.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="stage" data-demo="kpi">
+            <button class="replay">Replay</button>
+            <div class="kpis" id="kpiDemo">
+              <div class="kpi"><b data-to="142">0</b><span>Requests</span></div>
+              <div class="kpi"><b data-to="38">0</b><span>Intentions</span></div>
+              <div class="kpi"><b data-to="1204" data-pre="₱">0</b><span>Donations</span></div>
+              <div class="bars"><i style="--h:40%"></i><i style="--h:62%"></i><i style="--h:48%"></i><i style="--h:75%"></i><i style="--h:58%"></i><i style="--h:82%"></i><i style="--h:95%"></i></div>
+            </div>
+          </div>
+          <div class="body">
+            <h4>Count-up KPIs &amp; growing bars <span class="tag p2">P2</span></h4>
+            <p>Numbers count up over 800ms with an ease-out curve, using tabular figures so the layout doesn't jitter. Bars grow from the baseline with a 50ms stagger, and today's bar is highlighted in gold.</p>
+            <div class="where"><code>dashboard.js</code>, <code>dashboard-data.js</code>, <code>media-dashboard.js</code>, <code>itech-dashboard.js</code>, <code>donations.js</code>.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="rows">
+            <button class="replay">New request</button>
+            <div class="rows" id="rowsDemo">
+              <div class="r"><span>Confirmation — M. Santos</span><span style="color:var(--amber)">Pending</span></div>
+              <div class="r"><span>Wedding — R. &amp; A. Cruz</span><span style="color:var(--green)">Approved</span></div>
+              <div class="r"><span>House Blessing — L. Reyes</span><span style="color:var(--green)">Approved</span></div>
+            </div>
+          </div>
+          <div class="body">
+            <h4>Live row insert highlight <span class="tag p2">P2</span></h4>
+            <p>New rows from real-time updates slide in and keep a gold highlight for about 2 seconds, so staff notice them without a reload. Removed rows slide out to the right.</p>
+            <div class="where">Admin request queues, <code>itech-logs.js</code>, <code>activity-log.js</code>, <code>messages.js</code>. Builds on the existing <code>panel-flash-pulse</code>.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="bell">
+            <button class="replay">Notify</button>
+            <div class="bell" id="bellDemo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge-n">3</span></div>
+          </div>
+          <div class="body">
+            <h4>Notification bell swing <span class="tag p2">P2</span></h4>
+            <p>The bell swings once from its top pivot and the count badge springs in. Do this only on a <i>new</i> notification, never on page load.</p>
+            <div class="where"><code>notifications/</code> and the top bar in each shell (<code>top-bar-labels.js</code>).</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage">
+            <div class="live"><div class="thumb"><div class="ringp"></div></div><div><span class="lbl"><i></i>LIVE</span><span class="eq"><i></i><i></i><i></i></span><small>Sunday 9:00 AM Mass</small><small>214 watching</small></div></div>
+          </div>
+          <div class="body">
+            <h4>Livestream "LIVE" pulse <span class="tag p2">P2</span></h4>
+            <p>A red ring pulses outward from the thumbnail and a small audio-meter shows the stream is active. Pair it with a "Connecting…" skeleton before the embed loads.</p>
+            <div class="where"><code>livestream-status.js</code>, <code>Sacramedia/livestream.js</code>, <code>livestream.css</code>. Merge the existing <code>live-pulse</code> and <code>watchLivePulse</code> into one rule.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SPECIAL ===================== -->
+    <section class="cat" id="special">
+      <h3>Parish-specific moments</h3>
+      <p class="lead">These are what make SacraDigit feel like a parish system rather than a generic admin template. Use them where they mean something.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="stage" data-demo="qr" style="min-height:210px">
+            <button class="replay">Scan</button>
+            <div class="qr-box" id="qrDemo"><div class="qr"></div><div class="scanline"></div><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><div class="flash"></div><div class="qr-ok"><div><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div></div></div>
+          </div>
+          <div class="body">
+            <h4>Mass check-in scan <span class="tag p1">P1</span></h4>
+            <p>The scan line sweeps and the viewfinder corners breathe. On a successful read there's a green flash, the corners turn green and a check springs in, with an optional short vibration (<code>navigator.vibrate(40)</code>). Ushers at the door can tell it worked without looking closely.</p>
+            <div class="where"><code>mass-checkin.js</code>, <code>user/checkin-scanner.js</code>, <code>mass-checkin.css</code>, <code>mass-checkin-display.js</code>.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage" data-demo="candle">
+            <div style="display:grid;gap:14px;justify-items:center">
+              <div class="candle-wrap"><div class="candle" id="candle"><div class="flame"></div></div></div>
+              <button class="pray-btn" id="prayBtn">🙏 I prayed for this <span class="count" id="prayCount">12</span></button>
+            </div>
+          </div>
+          <div class="body">
+            <h4>Prayer wall candle <span class="tag p2">P2</span></h4>
+            <p>Tapping "I prayed for this" lights a candle with a soft flicker and bumps the count. It's a quiet, meaningful reward. Click it to try.</p>
+            <div class="where"><code>prayer-wall.js</code>, <code>user-prayer-wall</code>, admin <code>prayer-wall.html</code>.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage dark" data-demo="badge" style="min-height:220px">
+            <button class="replay">Replay</button>
+            <div style="display:grid;justify-items:center">
+              <div class="badge-wrap" id="badgeDemo"><div class="rays"></div><div class="badge"><span>✝</span></div></div>
+              <div class="badge-cap" id="badgeCap"><b style="color:var(--gold-soft)">Faithful Attendee</b><br><span style="color:#aab4cf">10 Sundays checked in</span></div>
+            </div>
+          </div>
+          <div class="body">
+            <h4>Badge unlock <span class="tag p2">P2</span></h4>
+            <p>The badge spins in with a slight spring, gold rays burst out and a light sweep shines across it. Play it once, when the badge is earned. In the badge gallery, earned badges show static.</p>
+            <div class="where"><code>badges.js</code>, <code>user-badges.css</code>, <code>faith-journey-widgets.js</code> (<code>fjPop</code> exists).</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stage">
+            <div style="text-align:center;font-size:.78rem;max-width:260px">
+              <div style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:6px">Salamat po!</div>
+              <div style="color:var(--muted)">Your offering of <b style="color:var(--text)">₱500</b> has been received.</div>
+              <div class="motes-light" style="height:28px;position:relative;margin-top:8px" id="thanks"></div>
+            </div>
+          </div>
+          <div class="body">
+            <h4>Donation thank-you <span class="tag p3">P3</span></h4>
+            <p>Reuse the gold motes from the splash: a few rise gently behind the thank-you message for 2 seconds. Keep it modest and dignified. No confetti.</p>
+            <div class="where"><code>user-donations.js</code>, <code>donation-payment-info.js</code>.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== A11Y ===================== -->
+    <section class="cat" id="a11y">
+      <h3>Accessibility rules</h3>
+      <p class="lead">Many parishioners are older and some use the site on low-end phones. These rules are non-negotiable. Try the "Simulate reduced motion" button in the sidebar.</p>
+      <div class="rules">
+        <div class="rule"><b>Respect prefers-reduced-motion</b>Add one global rule that collapses durations to 0.01ms, plus a "Reduce motion" toggle in <code>ui-prefs.js</code> next to the theme and language options. Only part of the current CSS handles this.</div>
+        <div class="rule"><b>Only animate transform &amp; opacity</b>Never animate <code>width</code>, <code>top</code> or <code>height</code> on large elements. These cause jank on cheap Android phones. The progress bar is the one small exception.</div>
+        <div class="rule"><b>Nothing over 400ms on repeat actions</b>Reserve the 700ms scene duration for once-in-a-while celebrations. Staff click through queues all day, so their motion has to be fast.</div>
+        <div class="rule"><b>Loading must be announced</b>Skeletons and spinners get <code>aria-busy="true"</code> on the container, plus a visually hidden "Loading requests…" in an <code>aria-live="polite"</code> region.</div>
+        <div class="rule"><b>Never block input</b>Users can click or scroll through any animation. The splash is skipped when it's not the first visit or once the data is ready.</div>
+        <div class="rule"><b>No infinite motion in view</b>Infinite loops are allowed only for real ongoing state: Pending dot, LIVE, loading. Pause them when the tab is hidden.</div>
+      </div>
+    </section>
+
+    <!-- ===================== ROLLOUT ===================== -->
+    <section class="cat" id="rollout">
+      <h3>Rollout plan</h3>
+      <p class="lead">This is ordered by impact per hour of work. P1 items fix "did it work?" uncertainty; P3 items are polish.</p>
+      <div class="tablewrap">
+      <table class="tok">
+        <thead><tr><th>#</th><th>Item</th><th>Priority</th><th>Effort</th><th>Files</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Motion tokens + global reduced-motion rule</td><td><span class="tag p1">P1</span></td><td>30 min</td><td><code>accessibility.css</code> or new <code>motion.css</code></td></tr>
+          <tr><td>2</td><td>Cross-document View Transitions</td><td><span class="tag p1">P1</span></td><td>30 min</td><td>4 shell CSS files</td></tr>
+          <tr><td>3</td><td>Button busy/success state</td><td><span class="tag p1">P1</span></td><td>1–2 h</td><td>form JS files</td></tr>
+          <tr><td>4</td><td>Skeleton screens for tables &amp; dashboards</td><td><span class="tag p1">P1</span></td><td>3–4 h</td><td><code>table-cards.js</code>, dashboards</td></tr>
+          <tr><td>5</td><td>Status chips + success screen + toasts (shared helper)</td><td><span class="tag p1">P1</span></td><td>2–3 h</td><td><code>admin-ui.js</code>, request pages</td></tr>
+          <tr><td>6</td><td>Step-form directional slides</td><td><span class="tag p1">P1</span></td><td>1 h</td><td><code>certificate-step-forms.js</code></td></tr>
+          <tr><td>7</td><td>Check-in scan success feedback</td><td><span class="tag p1">P1</span></td><td>1 h</td><td><code>mass-checkin.js</code></td></tr>
+          <tr><td>8</td><td>Splash loader (once per session) wired to auth</td><td><span class="tag p1">P1</span></td><td>2 h</td><td><code>loading screen test/</code> → shells</td></tr>
+          <tr><td>9</td><td>Top progress bar, sidebar pill, modal unify</td><td><span class="tag p2">P2</span></td><td>2 h</td><td>shell JS</td></tr>
+          <tr><td>10</td><td>KPI count-up, row highlight, bell, LIVE</td><td><span class="tag p2">P2</span></td><td>3 h</td><td>dashboards, notifications</td></tr>
+          <tr><td>11</td><td>Seal stamp, candle, badge unlock, OCR scan</td><td><span class="tag p2">P2</span></td><td>3 h</td><td>feature pages</td></tr>
+          <tr><td>12</td><td>Portal hand-off, empty states, thank-you, theme crossfade</td><td><span class="tag p3">P3</span></td><td>2 h</td><td>misc</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const restart = el => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; };
+  const restartTree = root => [root, ...root.querySelectorAll('*')].forEach(restart);
+
+  // sidebar scroll-spy
+  const links = $$('.side nav a');
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+  }), { rootMargin: '-30% 0px -60% 0px' });
+  $$('section.cat').forEach(s => io.observe(s));
+
+  // controls
+  $('#rmBtn').onclick = e => { const on = document.body.classList.toggle('rm'); e.currentTarget.setAttribute('aria-pressed', on); };
+  const setTheme = dark => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    $('#themeBtn').setAttribute('aria-pressed', dark);
+    $('#themeSw').classList.toggle('dark', dark); $('#themeSw .k').textContent = dark ? '☾' : '☀';
+  };
+  const swap = dark => document.startViewTransition ? document.startViewTransition(() => setTheme(dark)) : setTheme(dark);
+  $('#themeBtn').onclick = () => swap(document.documentElement.dataset.theme !== 'dark');
+  $('#themeSw').onclick = () => swap(document.documentElement.dataset.theme !== 'dark');
+
+  // count-up helper
+  const countUp = (el, to, pre = '', dur = 800) => {
+    const t0 = performance.now();
+    const step = t => { const p = Math.min(1, (t - t0) / dur), v = Math.round(to * (1 - Math.pow(1 - p, 3)));
+      el.textContent = pre + v.toLocaleString(); if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  };
+  $$('.hero [data-count]').forEach(el => countUp(el, +el.dataset.count, '', 1100));
+
+  // splash
+  const motes = $('.motes');
+  for (let i = 0; i < 12; i++) { const s = document.createElement('span'); s.style.left = (5 + i * 8) + '%'; s.style.animationDelay = (i * .5) + 's'; motes.appendChild(s); }
+  const stages = ['Preparing your parish…', 'Verifying your account…', 'Loading parish info…', 'Opening dashboard…'];
+  let stT = [];
+  const runSplash = () => {
+    stT.forEach(clearTimeout); stT = [];
+    stages.forEach((s, i) => stT.push(setTimeout(() => $('#splashStatus').textContent = s, i * 650)));
+    restartTree($('.splash'));
+  };
+  runSplash();
+
+  // skeleton
+  const skHtml = `<div class="sk-wrap">${'<div class="sk-row"><div class="sk circle"></div><div style="flex:1"><div class="sk l1"></div><div class="sk l2"></div></div></div>'.repeat(3)}</div>`;
+  const realHtml = `<div class="sk-real">
+    <div class="row"><div class="av">JD</div><div><b>Juan Dela Cruz</b><br><span style="color:var(--muted)">Baptismal certificate</span></div></div>
+    <div class="row"><div class="av">MS</div><div><b>Maria Santos</b><br><span style="color:var(--muted)">Mass intention · Sun 9AM</span></div></div>
+    <div class="row"><div class="av">RC</div><div><b>Rico Cruz</b><br><span style="color:var(--muted)">Wedding · Dec 12</span></div></div></div>`;
+  let skT;
+  const runSk = () => { clearTimeout(skT); $('#skHost').innerHTML = skHtml; skT = setTimeout(() => $('#skHost').innerHTML = realHtml, 1800); };
+  runSk();
+
+  // demos keyed by data-demo
+  const demos = {
+    splash: runSplash,
+    skeleton: runSk,
+    topbar() { const b = $('.topbar'); b.classList.remove('run'); void b.offsetWidth; b.classList.add('run'); },
+    btn() {
+      const b = $('#demoBtn'), l = $('.lbl', b);
+      b.className = 'btn btn-gold loading'; l.textContent = 'Submitting…';
+      setTimeout(() => { b.className = 'btn btn-gold done'; l.textContent = 'Submitted'; restartTree(b); }, 1400);
+      setTimeout(() => { b.className = 'btn btn-gold'; l.textContent = 'Submit Request'; }, 3600);
+    },
+    scan() {
+      const lines = $$('#ocrDoc i'); lines.forEach(i => i.classList.remove('hit'));
+      lines.forEach((i, n) => setTimeout(() => i.classList.add('hit'), 250 + n * 130));
+      setTimeout(() => lines.forEach(i => i.classList.remove('hit')), 2600);
+    },
+    vt() { $('#vtDemo').classList.toggle('flip'); },
+    pe() { restartTree($('#peDemo')); },
+    modal() { $('#modalDemo').classList.add('open'); },
+    field() {
+      const f = $('#fieldDemo'); f.classList.remove('shake'); void f.offsetWidth; f.classList.add('err', 'shake');
+    },
+    toast() {
+      const host = $('#toasts');
+      const msgs = [['Request submitted', 'Baptismal certificate · BAP-2026-0142'], ['Intention received', 'Sunday 9:00 AM Mass'], ['Booking confirmed', 'Parish Hall · Nov 3']];
+      const [t, s] = msgs[host.children.length % 3];
+      const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `<b>${t}</b>${s}`;
+      host.appendChild(el); if (host.children.length > 3) host.firstChild.remove();
+      setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, 3500);
+    },
+    success() { restartTree($('#successDemo')); },
+    seal() { restartTree($('#sealDemo')); },
+    chip() {
+      const c = $('#chipDemo'), t = $('.t', c), tl = $$('#tlDemo i');
+      const order = ['pending', 'approved', 'released'], names = ['Pending', 'Approved', 'Released'];
+      const i = (order.indexOf(c.classList[1]) + 1) % 3;
+      c.className = 'chip ' + order[i]; t.textContent = names[i];
+      tl.forEach((x, n) => x.classList.toggle('ok', n <= i));
+    },
+    net() { const n = $('#netDemo'), on = n.classList.toggle('back');
+      $('.t', n).textContent = on ? 'Back online. All changes synced.' : "You're offline. Changes will sync when you reconnect."; restart(n); },
+    kpi() {
+      $$('#kpiDemo [data-to]').forEach(b => countUp(b, +b.dataset.to, b.dataset.pre || ''));
+      $$('#kpiDemo .bars i').forEach(restart);
+    },
+    rows() {
+      const host = $('#rowsDemo');
+      const names = ['First Communion — P. Garcia', 'Funeral Mass — E. Lim', 'Vehicle Blessing — K. Tan', 'Anointing — S. Ramos'];
+      const r = document.createElement('div'); r.className = 'r new';
+      r.innerHTML = `<span>${names[Math.floor(Math.random() * names.length)]}</span><span style="color:var(--amber)">Pending</span>`;
+      host.prepend(r);
+      if (host.children.length > 4) { const last = host.lastElementChild; last.classList.add('gone'); setTimeout(() => last.remove(), 360); }
+    },
+    bell() { const b = $('#bellDemo'); b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring', 'has');
+      const n = $('.badge-n', b); n.textContent = +n.textContent + 1; },
+    qr() { const q = $('#qrDemo'); q.classList.remove('ok'); setTimeout(() => q.classList.add('ok'), 1300); setTimeout(() => q.classList.remove('ok'), 3600); },
+    badge() { restartTree($('#badgeDemo')); restart($('#badgeCap')); },
+  };
+  $$('[data-demo]').forEach(st => {
+    const btn = $('.replay', st), fn = demos[st.dataset.demo];
+    if (btn && fn) btn.onclick = fn;
+  });
+  $('#modalDemo').addEventListener('click', e => { if (e.target.matches('[data-close], .backdrop')) $('#modalDemo').classList.remove('open'); });
+  $('#fieldDemo input').addEventListener('input', () => $('#fieldDemo').classList.remove('err', 'shake'));
+  demos.chip(); demos.chip(); demos.chip(); // reset to pending
+
+  // badge rays
+  const rays = $('.rays');
+  for (let i = 0; i < 10; i++) { const r = document.createElement('i'); r.style.setProperty('--r', (i * 36) + 'deg'); rays.appendChild(r); }
+
+  // sidebar pill
+  const snav = $('#snav'), pill = $('.pill', snav), items = $$('a', snav);
+  const movePill = a => { pill.style.transform = `translateY(${a.offsetTop - 8}px)`; items.forEach(x => x.classList.toggle('on', x === a)); };
+  items.forEach(a => a.onclick = () => movePill(a)); movePill(items[0]);
+
+  // steps
+  const stepNames = ['Applicant details', 'Sacrament record', 'Upload requirements', 'Review & submit'];
+  const stepCopy = ['Full name, contact number, relationship to the record owner.', 'Date and parish of the sacrament, name of the officiating priest.', 'Valid ID and authorization letter (if requesting for someone else).', 'Review your information before submitting the request.'];
+  let cur = 0;
+  const dots = $('#stepsDemo .dots'), panel = $('#stepsDemo .step-panel');
+  const renderSteps = dir => {
+    dots.innerHTML = stepNames.map((_, i) => `${i ? `<div class="ln ${i <= cur ? 'ok' : ''}"></div>` : ''}<div class="d ${i < cur ? 'ok' : i === cur ? 'on' : ''}">${i < cur ? '✓' : i + 1}</div>`).join('');
+    panel.innerHTML = `<b>Step ${cur + 1}: ${stepNames[cur]}</b><br><span style="color:var(--muted)">${stepCopy[cur]}</span>`;
+    panel.className = 'step-panel' + (dir ? (dir > 0 ? ' in-next' : ' in-prev') : '');
+  };
+  $$('#stepsDemo [data-dir]').forEach(b => b.onclick = () => { const d = +b.dataset.dir; const n = Math.max(0, Math.min(3, cur + d)); if (n !== cur) { cur = n; renderSteps(d); } });
+  renderSteps(0);
+
+  // candle
+  $('#prayBtn').onclick = e => {
+    const b = e.currentTarget, c = $('#prayCount'), on = b.classList.toggle('on');
+    $('#candle').classList.toggle('lit', on);
+    c.textContent = +c.textContent + (on ? 1 : -1); c.classList.remove('bump'); void c.offsetWidth; if (on) c.classList.add('bump');
+  };
+
+  // thank-you motes
+  const th = $('#thanks');
+  for (let i = 0; i < 8; i++) { const s = document.createElement('span');
+    Object.assign(s.style, { position: 'absolute', bottom: '0', left: (10 + i * 11) + '%', width: '4px', height: '4px', borderRadius: '50%', background: '#c9a84c', opacity: 0, animation: `float-up 3.5s linear ${i * .4}s infinite` });
+    th.appendChild(s); }
+
+})();
+</script>
+</body>
+</html>
