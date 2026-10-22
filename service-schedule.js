@@ -42,12 +42,12 @@ const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 
 export const SERVICE_SCHEDULES = {
   // Sacraments
-  'Baptism':                     { days: [0],       times: ['10:00 AM', '11:00 AM'],                         capacity: 10, leadDays: 7,  windowDays: 60,  location: 'Main Church' },
+  'Baptism':                     { days: [6],       times: ['11:00 AM'],                                     capacity: 10, leadDays: 14, windowDays: 60,  location: 'Main Church' }, // Common Baptism, Saturdays 11 AM; book 2 weeks ahead (parish rules)
   'Confirmation':                { days: [6],       times: ['09:00 AM'],                                     capacity: 20, leadDays: 14, windowDays: 90,  location: 'Main Church' },
   'First Communion':             { days: [6],       times: ['09:00 AM'],                                     capacity: 30, leadDays: 14, windowDays: 90,  location: 'Main Church' },
   'Confession / Reconciliation': { days: [6],       times: ['04:00 PM', '04:30 PM', '05:00 PM'],             capacity: 5,  leadDays: 1,  windowDays: 21,  location: 'Main Church' },
   'Anointing of the Sick':       { days: EVERY_DAY, times: ['09:00 AM', '02:00 PM'],                         capacity: 1,  leadDays: 1,  windowDays: 14,  locationField: 'Location (Home / Hospital)' },
-  'Wedding':                     { days: WEEKDAYS,  times: ['08:00 AM', '10:00 AM', '01:00 PM', '03:00 PM'], capacity: 1,  leadDays: 60, windowDays: 365, location: 'Main Church' },
+  'Wedding':                     { days: WEEKDAYS,  times: ['08:00 AM', '10:00 AM', '01:00 PM', '03:00 PM'], capacity: 1,  leadDays: 90, windowDays: 365, location: 'Main Church' }, // book 3 months ahead (parish rules)
   'Holy Orders':                 { days: [6],       times: ['09:00 AM'],                                     capacity: 1,  leadDays: 90, windowDays: 365, location: 'Main Church' },
 
   // Special Masses

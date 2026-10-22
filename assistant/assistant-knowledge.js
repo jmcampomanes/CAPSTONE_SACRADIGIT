@@ -11,28 +11,55 @@
    parish-assistant.js), so the assistant never
    disagrees with the rest of the site.
 
-   ⚠ REVIEW WITH THE PARISH OFFICE: the document
-   requirements below are the ones most parishes
-   in the Diocese of Cubao ask for. Confirm or
-   correct them before real parishioners rely on
-   them.
+   Baptism and Wedding requirements and the contact
+   details below follow the parish's own published
+   rules (the old parish website, the same text as
+   the homepage, home.html) — keep the two in step.
+
+   ⚠ REVIEW WITH THE PARISH OFFICE: the other
+   services' requirements are the ones most
+   parishes in the Diocese of Cubao ask for.
+   Confirm or correct them before real
+   parishioners rely on them.
    ============================================ */
 
 /** Contact details. Leave a value '' to have the assistant skip it. */
 export const PARISH_CONTACT = {
   name: 'Our Lady of Fatima Parish',
   officeHours: { en: '', fil: '' },  // e.g. { en: 'Tue–Sun, 8:00 AM – 5:00 PM', fil: 'Martes–Linggo, 8:00 AM – 5:00 PM' }
-  phone: '',                          // e.g. '(02) 8123 4567'
-  email: '',
-  facebook: '',                       // e.g. 'https://facebook.com/…'
-  location: '',                       // e.g. 'Mariana St, Barangay Immaculate Conception, Cubao, Quezon City'
+  phone: '(02) 8711-7200',
+  email: 'ourladyofatimaparish74@gmail.com',
+  facebook: 'https://facebook.com/OLFPQC',
+  location: '57 L. Castillo St., Don Manuel, Quezon City, Metro Manila, 1113 Philippines',
 };
 
 /** Typical documents per service, keyed by the service name in service-catalog.js. */
 export const REQUIREMENTS = {
   'Baptism': {
-    en: ["Child's PSA birth certificate (photocopy)", "Parents' marriage certificate, if married in church", 'Pre-baptism seminar for parents and godparents', 'Godparents should be practicing Catholics who are already confirmed'],
-    fil: ['PSA birth certificate ng bata (kopya)', 'Marriage certificate ng mga magulang, kung kasal sa simbahan', 'Pre-baptism seminar para sa mga magulang at ninong/ninang', 'Ang ninong at ninang ay dapat aktibong Katoliko at kumpil na'],
+    en: [
+      "Child's birth certificate (photocopy with original CTC or PSA)",
+      "Parents' marriage contract, if married (photocopy with original CTC or PSA)",
+      'Letter of Permission from your Parish Priest, if the child is not from this parish',
+      'Application form, filled up by the father or mother (c/o OLFP)',
+      "Parents' proof of identity / ID",
+      'Certificate of No Baptismal Record from 3 parishes near your residence (for 2 years old and above)',
+      'Seminar/Catechism every Saturday, 4:00 PM, before the baptism date — parents and at least 1 pair of sponsors (No Seminar, No Baptism)',
+      'Sponsors must be baptized and confirmed Catholics, 18 years old and above',
+      'Book at least 2 weeks ahead. Common Baptism: Saturdays 11:00 AM, ₱700 (incl. 1 pair of sponsors; +₱50 per extra sponsor). Solo Baptism: by appointment, ₱3,000 (+₱100 per extra sponsor). Prices may change.',
+      'Strictly white dress and cap for the child; proper attire for everyone (no sleeveless, tube, mini skirts or shorts)',
+    ],
+    fil: [
+      'Birth certificate ng bata (kopya na may orihinal na CTC o PSA)',
+      'Marriage contract ng mga magulang, kung kasal (kopya na may orihinal na CTC o PSA)',
+      'Letter of Permission mula sa inyong Kura Paroko, kung hindi taga-parokyang ito ang bata',
+      'Application form, sasagutan ng ama o ina (c/o OLFP)',
+      'ID o patunay ng pagkakakilanlan ng mga magulang',
+      'Certificate of No Baptismal Record mula sa 3 parokyang malapit sa inyong tirahan (para sa 2 taong gulang pataas)',
+      'Seminar/Katekesis tuwing Sabado, 4:00 PM, bago ang araw ng binyag — mga magulang at kahit 1 pares ng ninong/ninang (Walang Seminar, Walang Binyag)',
+      'Ang ninong at ninang ay dapat binyagan at kumpil na Katoliko, 18 taong gulang pataas',
+      'Mag-book nang hindi bababa sa 2 linggo bago. Common Baptism: Sabado 11:00 AM, ₱700 (kasama ang 1 pares ng ninong/ninang; +₱50 bawat dagdag). Solo Baptism: sa appointment, ₱3,000 (+₱100 bawat dagdag). Maaaring magbago ang presyo.',
+      'Puting damit at bonete lamang para sa bata; maayos na kasuotan para sa lahat (bawal ang sleeveless, tube, mini skirt o shorts)',
+    ],
   },
   'Confirmation': {
     en: ['Baptismal certificate (for confirmation purposes)', 'Confirmation seminar / catechesis', 'One sponsor who is a confirmed, practicing Catholic'],
@@ -43,8 +70,30 @@ export const REQUIREMENTS = {
     fil: ['Baptismal certificate', 'Klase sa katekesis para sa Unang Komunyon', 'Unang Kumpisal bago ang Misa ng Unang Komunyon'],
   },
   'Wedding': {
-    en: ['Baptismal and confirmation certificates of both (for marriage purposes, issued within 6 months)', 'PSA birth certificates and CENOMAR of both', 'Marriage license (or affidavit of cohabitation)', 'Pre-Cana seminar and canonical interview with the parish priest', 'Marriage banns posted in both parishes', 'Book at least 2 months ahead'],
-    fil: ['Baptismal at confirmation certificate ng dalawa (for marriage purposes, hindi lalampas sa 6 na buwan)', 'PSA birth certificate at CENOMAR ng dalawa', 'Marriage license (o affidavit of cohabitation)', 'Pre-Cana seminar at canonical interview sa kura paroko', 'Marriage banns sa parokya ng dalawa', 'Mag-book nang hindi bababa sa 2 buwan bago ang kasal'],
+    en: [
+      'All documents must be ORIGINAL',
+      'Newly issued (within 6 months) Baptismal and Confirmation Certificates of both, marked "For Marriage Purposes"',
+      'Marriage License from the Civil Registrar (or PSA Marriage Contract if civilly married; 4 copies of an Affidavit of Cohabitation if living-in 5+ years)',
+      'PSA Birth Certificates and CENOMAR of both',
+      'Four 2×2 ID photos of each, taken within 6 months',
+      'Canonical Interview at least 1 month before the wedding, and the Pre-Cana Seminar',
+      'Ecclesiastical Banns in both parishes (forms from this parish), and a permit from the bride’s parish if she is not from here',
+      'Typewritten list of sponsors with complete addresses — 6 pairs only',
+      'Extra documents apply for a previous marriage, a foreign or non-Catholic partner, immigrants and seafarers — see the Weddings section of the homepage',
+      'Book at least 3 months ahead; complete all requirements 2 weeks before. Fee ₱18,000 (₱5,000 non-refundable down payment; balance 1 month before). Prices may change.',
+    ],
+    fil: [
+      'Dapat ORIHINAL ang lahat ng dokumento',
+      'Bagong kuha (hindi lalampas sa 6 na buwan) na Baptismal at Confirmation Certificate ng dalawa, may tatak na "For Marriage Purposes"',
+      'Marriage License mula sa Civil Registrar (o PSA Marriage Contract kung kasal na sa huwes; 4 na kopya ng Affidavit of Cohabitation kung nagsasama nang 5 taon o higit pa)',
+      'PSA Birth Certificate at CENOMAR ng dalawa',
+      'Apat na 2×2 ID photo ng bawat isa, kuha sa loob ng 6 na buwan',
+      'Canonical Interview nang hindi bababa sa 1 buwan bago ang kasal, at Pre-Cana Seminar',
+      'Ecclesiastical Banns sa parokya ng dalawa (form mula sa parokyang ito), at permit mula sa parokya ng nobya kung hindi siya taga-rito',
+      'Typewritten na listahan ng mga ninong at ninang na may kumpletong address — 6 na pares lamang',
+      'May dagdag na dokumento kung may naunang kasal, banyaga o hindi Katolikong kapareha, imigrante o seaman — tingnan ang Weddings sa homepage',
+      'Mag-book nang hindi bababa sa 3 buwan bago; kumpletuhin ang lahat 2 linggo bago ang kasal. Bayad ₱18,000 (₱5,000 na hindi maibabalik na down payment; ang balanse 1 buwan bago). Maaaring magbago ang presyo.',
+    ],
   },
   'Funeral Mass': {
     en: ["Death certificate of the deceased (photocopy)", 'Name of the funeral home and the preferred Mass time'],
