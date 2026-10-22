@@ -29,6 +29,7 @@ import './sacred-art.js';
 import { labelTopBarIcons } from '../top-bar-labels.js';
 import { initTableCards } from '../table-cards.js';
 import { initFindPerson } from './find-person.js';
+import { initAdminPageViews } from './admin-page-view.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -359,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
   labelTopBarIcons(); // a word under each top-bar icon (../top-bar-labels.js)
   initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
   initTableCards(); // phones: each table row as a card (below)
+  initAdminPageViews(); // windows open as a page with Back, not a pop-up (admin-page-view.js)
 
 
   /* ------------------------------------------
