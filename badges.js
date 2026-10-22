@@ -143,7 +143,19 @@ const ICONS = {
   home:    '<path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-5h4v5"/>',
   hammer:  '<path d="M14 6l4 4M12 8l4 4-8 8-4-4zM14 6l2-2 4 4-2 2"/>',
   dove:    '<path d="M3 13c3 0 5-1 7-4 1.5 3 4 4 7 3l4-3-2 5c-2 4-6 6-10 5l-3 2 1-4c-2-1-3-2-4-4z"/>',
+  // extra choices for badges the admin makes (Sacradigit/badges.html)
+  book:    '<path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 5v16M8 7h7"/>',
+  music:   '<path d="M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z"/>',
+  bell:    '<path d="M6 16V11a6 6 0 0112 0v5l2 2H4zM10 20a2 2 0 004 0"/>',
+  crown:   '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5zM5 19h14"/>',
+  shield:  '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4"/>',
+  rosary:  '<circle cx="12" cy="6" r="3"/><circle cx="6" cy="10" r="1.3"/><circle cx="18" cy="10" r="1.3"/><circle cx="7.5" cy="14.5" r="1.3"/><circle cx="16.5" cy="14.5" r="1.3"/><path d="M12 15v6M10 18h4"/>',
+  users:   '<path d="M16 20v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 10a4 4 0 100-8 4 4 0 000 8zM22 20v-2a4 4 0 00-3-3.9M16 2.1a4 4 0 010 7.8"/>',
+  leaf:    '<path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15zM5 19l7-7"/>',
 };
+
+/** Icons the admin can pick for a new badge, in picker order. */
+export const ICON_NAMES = Object.keys(ICONS);
 
 const TIER_ORDER = { bronze: 1, silver: 2, gold: 3 };
 
@@ -199,10 +211,97 @@ export const BADGE_GROUPS = [
   { id: 'mass', label: 'Mass' },
   { id: 'giving', label: 'Giving' },
   { id: 'community', label: 'Community' },
+  { id: 'honors', label: 'Parish Honors' }, // only badges the admin makes
 ];
 
 export function badgeIconSvg(badge, cls = 'w-6 h-6') {
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[badge.icon] || ICONS.star}</svg>`;
+}
+
+/* ------------------------------------------
+   Rules for badges the admin makes
+   (CustomBadge records, see custom-badges.js)
+   rule: { kind, target, from?, to?, match?, ministry? }
+   Same records and the same faithfulness-not-money
+   idea as the built-in badges above.
+------------------------------------------ */
+
+export const RULE_KINDS = [
+  { id: 'masses', label: 'Masses attended', needsCheckIn: true, unit: 'Masses',
+    describe: (r) => `Checked in at ${r.target} Mass${r.target === 1 ? '' : 'es'}.` },
+  { id: 'masses-between', label: 'Masses during dates (feast, novena, event)', needsCheckIn: true, unit: 'Masses', dates: true,
+    describe: (r) => `Heard ${r.target} Mass${r.target === 1 ? '' : 'es'} between ${fmtShort(r.from)} and ${fmtShort(r.to)}.` },
+  { id: 'sunday-streak', label: 'Sundays in a row', needsCheckIn: true, unit: 'weeks in a row',
+    describe: (r) => `Kept the Sunday Mass ${r.target} weeks in a row.` },
+  { id: 'giving-months', label: 'Months of giving in a row', unit: 'months in a row',
+    describe: (r) => `Gave something ${r.target} months in a row — any amount.` },
+  { id: 'giving-fund', label: 'Gifts to a fund', unit: 'gifts', match: true,
+    describe: (r) => `Gave to the ${r.match} ${r.target} time${r.target === 1 ? '' : 's'} — any amount.` },
+  { id: 'intentions', label: 'Mass intentions offered', unit: 'intentions',
+    describe: (r) => `Offered ${r.target} Mass intention${r.target === 1 ? '' : 's'}.` },
+  { id: 'service', label: 'Times served in a ministry', unit: 'times served', ministry: true,
+    describe: (r) => `Served at Mass ${r.target} time${r.target === 1 ? '' : 's'}${r.ministry ? ` (${r.ministryLabel || r.ministry})` : ''}.` },
+];
+export const ruleKind = (id) => RULE_KINDS.find(k => k.id === id);
+
+function fmtShort(iso) {
+  return iso ? parseISO(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '…';
+}
+
+/** Plain-English description of a rule, e.g. "Checked in at 20 Masses." */
+export function describeRule(rule) {
+  const kind = rule && ruleKind(rule.kind);
+  return kind ? kind.describe({ ...rule, target: Number(rule.target) || 1 }) : '';
+}
+
+/** The parishioner's records, sorted once, for the built-in and admin-made badges. */
+function badgeContext({ checkIns = [], donations = [], intentions = [], blessings = [], ministry = [] }, today) {
+  const todayIso = isoDate(today);
+  const ins = checkIns.filter(c => c.massDate && c.massDate <= todayIso)
+    .sort((a, b) => (a.massDate + (a.checkedInAt || '')).localeCompare(b.massDate + (b.checkedInAt || '')));
+  const sundays = [...new Set(ins.map(obligationSunday).filter(Boolean))].sort();
+  const gifts = donations.filter(d => d.date).sort((a, b) => a.date.localeCompare(b.date));
+  const served = ministry.filter(s => s.massDate && s.massDate < todayIso).sort((a, b) => a.massDate.localeCompare(b.massDate));
+  const offered = intentions.slice()
+    .map(i => ({ ...i, on: i.massDate || String(i.createdAt || '').slice(0, 10) }))
+    .sort((a, b) => String(a.on).localeCompare(String(b.on)));
+  return { today, todayIso, ins, sundays, gifts, served, offered, blessings };
+}
+
+/** { earned, earnedOn?, progress } for one admin-made rule. */
+function evaluateRule(rule, ctx) {
+  const n = Math.max(1, Number(rule?.target) || 1);
+  const nth = (arr, get) => (arr.length >= n ? get(arr[n - 1]) : undefined);
+  const count = (arr, get, label) => ({
+    earned: arr.length >= n, earnedOn: nth(arr, get),
+    progress: { current: Math.min(arr.length, n), target: n, label },
+  });
+  switch (rule?.kind) {
+    case 'masses': return count(ctx.ins, c => c.massDate, 'Masses');
+    case 'masses-between': {
+      const inRange = ctx.ins.filter(c => (!rule.from || c.massDate >= rule.from) && (!rule.to || c.massDate <= rule.to));
+      return count(inRange, c => c.massDate, 'Masses');
+    }
+    case 'sunday-streak': {
+      const best = longestSundayRun(ctx.sundays);
+      return { earned: best >= n, progress: { current: Math.min(sundayStreak(ctx.sundays, ctx.today), n), target: n, label: 'weeks in a row' } };
+    }
+    case 'giving-months': {
+      const dates = ctx.gifts.map(d => d.date);
+      return { earned: longestMonthRun(dates) >= n, progress: { current: Math.min(monthStreak(dates, ctx.today), n), target: n, label: 'months in a row' } };
+    }
+    case 'giving-fund': {
+      const want = String(rule.match || '').trim().toLowerCase();
+      const toFund = want ? ctx.gifts.filter(d => String(d.purpose || '').toLowerCase().includes(want)) : [];
+      return count(toFund, d => d.date, 'gifts');
+    }
+    case 'intentions': return count(ctx.offered, i => i.on, 'intentions');
+    case 'service': {
+      const served = rule.ministry ? ctx.served.filter(s => s.ministry === rule.ministry) : ctx.served;
+      return count(served, s => s.massDate, 'times served');
+    }
+    default: return { earned: false };
+  }
 }
 
 /* ------------------------------------------
@@ -212,15 +311,16 @@ export function badgeIconSvg(badge, cls = 'w-6 h-6') {
 const PRE_BUILT = /BUILD|CONSTRUCT|RESTOR|RENOVAT|BELL|ROOF|ALTAR|CHAPEL/i;
 
 /**
- * data: { checkIns, donations, intentions, blessings } — already filtered to
- * this parishioner. Returns every badge with { earned, earnedOn?, progress?:
- * { current, target, label } }, earned ones first (newest first).
+ * data: { checkIns, donations, intentions, blessings, ministry } — already
+ * filtered to this parishioner. extra: { custom, awards } — the admin-made
+ * badges (custom-badges.js fromRecord()) and this parishioner's hand-given
+ * awards. Returns every badge with { earned, earnedOn?, progress?:
+ * { current, target, label }, awardNote? }, earned ones first (newest first).
  */
-export function computeBadges({ checkIns = [], donations = [], intentions = [], blessings = [], ministry = [] } = {}, today = new Date()) {
-  const todayIso = isoDate(today);
-  const ins = checkIns.filter(c => c.massDate && c.massDate <= todayIso)
-    .sort((a, b) => (a.massDate + (a.checkedInAt || '')).localeCompare(b.massDate + (b.checkedInAt || '')));
-  const gifts = donations.filter(d => d.date).sort((a, b) => a.date.localeCompare(b.date));
+export function computeBadges(data = {}, today = new Date(), { custom = [], awards = [] } = {}) {
+  const ctx = badgeContext(data, today);
+  const { todayIso, ins, gifts, blessings } = ctx;
+  const { intentions = [] } = data;
 
   const out = {};
   const set = (id, earned, extra = {}) => { out[id] = { earned: !!earned, ...extra }; };
@@ -229,7 +329,7 @@ export function computeBadges({ checkIns = [], donations = [], intentions = [], 
   // --- Mass ---
   set('first-step', ins.length >= 1, { earnedOn: nth(ins, 1, c => c.massDate), progress: { current: Math.min(ins.length, 1), target: 1, label: 'Mass' } });
 
-  const sundays = [...new Set(ins.map(obligationSunday).filter(Boolean))].sort();
+  const { sundays } = ctx;
 
   // Faithful Month: every Sunday of some fully-past month
   let fmEarnedOn;
@@ -307,10 +407,19 @@ export function computeBadges({ checkIns = [], donations = [], intentions = [], 
   set('blessed-home', !!blessed, { earnedOn: blessed?.date });
 
   // Ministry sign-ups (../ministry.js) for Masses that have already happened
-  const served = ministry.filter(s => s.massDate && s.massDate < todayIso).sort((a, b) => a.massDate.localeCompare(b.massDate));
+  const { served } = ctx;
   set('faithful-servant', served.length >= 4, { earnedOn: nth(served, 4, s => s.massDate), progress: { current: Math.min(served.length, 4), target: 4, label: 'times served' } });
 
-  return BADGES.map(b => ({ ...b, ...out[b.id] }))
+  // --- Badges the admin made: earned by their rule, or given by hand ---
+  const awardOf = new Map(awards.map(a => [a.badgeId, a]));
+  const extra = custom.map(b => {
+    const byRule = b.mode === 'auto' ? evaluateRule(b.rule, ctx) : { earned: false };
+    const award = awardOf.get(b.recordId);
+    if (byRule.earned || !award) return { ...b, ...byRule };
+    return { ...b, earned: true, earnedOn: award.awardedOn || String(award.createdAt || '').slice(0, 10), awardNote: award.note || '' };
+  });
+
+  return [...BADGES.map(b => ({ ...b, ...out[b.id] })), ...extra]
     .sort((a, b) => (b.earned - a.earned) ||
       (a.earned ? String(b.earnedOn || '').localeCompare(String(a.earnedOn || '')) : 0) ||
       (TIER_ORDER[a.tier] - TIER_ORDER[b.tier]));

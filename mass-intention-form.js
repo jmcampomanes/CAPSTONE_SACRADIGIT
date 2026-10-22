@@ -24,6 +24,10 @@
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from './name-utils.js';
 import { createWeekendCalendar, formatWeekend, formatDay } from './weekend-calendar.js';
 
+/** Lowest offering a parishioner can give for one intention (any number of names).
+    The Parish Assistant quotes the same amount (assistant-knowledge.js). */
+export const MIN_INTENTION_OFFERING = 50;
+
 const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
 const peso = (n) => '₱' + (n || 0).toLocaleString('en-US');
 const nameOf = (n) => formatFullName(typeof n === 'string' ? { firstName: n } : (n || {}));
@@ -162,7 +166,7 @@ function markup({ admin, title, sub }) {
  * @param {Array<{id,label,iconBg,iconColor,icon}>} opts.intentionTypes
  * @param {(data: object) => Promise<void>} opts.onSubmit  throws to keep the form open
  * @param {(msg: string, isError?: boolean) => void} [opts.toast]
- * @param {number} [opts.minOffering]  parishioner: 300 (covers the whole intention)
+ * @param {number} [opts.minOffering]  parishioner: MIN_INTENTION_OFFERING (one offering covers the whole intention)
  * @returns {{ open(prefill?: object): void, close(): void }}
  *   prefill (admin edit): { title, submitLabel, donor, people:[{name,typeIds}], offering, massDate, massTime24, status, locked }
  *   onSubmit data: { donor, people, records:[{name,typeId,offering}], offering, massDate, massTime24, status, lockedOnly }
@@ -172,7 +176,7 @@ export function createIntentionForm(modal, {
   intentionTypes,
   onSubmit,
   toast = (...a) => window.showToast?.(...a),
-  minOffering = role === 'admin' ? 1 : 300,
+  minOffering = role === 'admin' ? 1 : MIN_INTENTION_OFFERING,
 }) {
   const admin = role === 'admin';
   const defaults = admin
@@ -325,10 +329,10 @@ export function createIntentionForm(modal, {
   function renderOffering() {
     offeringHint.textContent = admin
       ? 'The amount the donor gave for this whole intention.'
-      : `An offering of ₱${minOffering} covers your whole intention, no matter how many names or intentions are on your list.`;
+      : `The minimum offering is ₱${minOffering}. One offering covers your whole intention, no matter how many names or intentions are on your list.`;
     if (!offeringTouched && !offeringInput.value) offeringInput.value = admin ? '' : minOffering;
     const current = Number(offeringInput.value);
-    presetsEl.innerHTML = [300, 500, 1000].map((a) => `
+    presetsEl.innerHTML = [MIN_INTENTION_OFFERING, 100, 300, 500].map((a) => `
       <button type="button" class="mi-offer${current === a ? ' selected' : ''}" data-amount="${a}" aria-pressed="${current === a}" ${locked ? 'disabled' : ''}>${peso(a)}</button>`).join('');
   }
   presetsEl.addEventListener('click', (e) => {

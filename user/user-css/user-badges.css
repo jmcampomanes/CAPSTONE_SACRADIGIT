@@ -158,6 +158,8 @@
 .fj-badge.is-locked .fj-badge-name { color: #4b5563; }
 .fj-badge-desc { margin-top: 0.125rem; font-size: 0.75rem; color: #6b7280; line-height: 1.45; }
 .fj-badge-earned { margin-top: 0.375rem; font-size: 0.6875rem; font-weight: 700; color: #8a6d1f; }
+.fj-badge-note { margin-top: 0.25rem; font-size: 0.75rem; font-style: italic; color: #4b5563; line-height: 1.4; }
+:root[data-theme="dark"] .fj-badge-note { color: #cfd4de; }
 
 .fj-progress {
   margin-top: 0.5rem;

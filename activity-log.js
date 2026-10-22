@@ -35,6 +35,7 @@ const MODEL_LABELS = {
   PostTemplate: 'Post Template', EventCoverageRequest: 'Event Coverage', LivestreamStatus: 'Livestream',
   ServiceSlot: 'Service Slot', MassCheckInSession: 'Mass Check-in',
   PrayerRequest: 'Prayer Request', MinistrySignup: 'Ministry Sign-up',
+  CustomBadge: 'Badge', BadgeAward: 'Badge Award',
 };
 
 let logClient = null;

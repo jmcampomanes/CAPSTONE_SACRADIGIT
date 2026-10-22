@@ -1249,6 +1249,7 @@ export const FIL = {
   "Preferred Mass Date (optional)": "Napiling Petsa ng Misa (opsyonal)",
   "Picking either day selects the whole weekend": "Ang pagpili ng alinmang araw ay pumipili ng buong katapusan ng linggo",
   "Offering Amount (₱300 / intention)": "Halaga ng Alay (₱300 / intensyon)",
+  "The minimum offering is ₱50. One offering covers your whole intention, no matter how many names or intentions are on your list.": "Ang pinakamababang alay ay ₱50. Sakop ng isang alay ang buong intensyon mo, gaano man karami ang pangalan o intensyon sa listahan.",
   "Calculated automatically as you add intentions — feel free to adjust the total.": "Awtomatikong kinukuwenta habang nagdadagdag ka ng intensyon — maaari mong baguhin ang kabuuan.",
   "Choose a preferred Mass date": "Pumili ng petsa ng Misa",
   "Awaiting assignment": "Naghihintay ng takdang misa",

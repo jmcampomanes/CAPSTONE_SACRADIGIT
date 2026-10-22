@@ -12,6 +12,7 @@ import { loadFaithfulGivers } from '../public-data.js';
 import { currentUserName } from '../auth.js';
 import { computeBadges, badgeIconSvg, parishionerKey, streakLabel } from '../badges.js';
 import { checkInReady, listCheckInsFor, optedOutKeys } from '../mass-checkin.js';
+import { loadMyCustomBadges } from '../custom-badges.js';
 
 const PARISHIONER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
 const MY_KEY = parishionerKey(PARISHIONER_NAME);
@@ -22,12 +23,13 @@ const escapeHtml = (s) => { const d = document.createElement('div'); d.textConte
 export function mountBadgeStrip(el) {
   if (!el) return;
   const data = { checkIns: [], donations: [], intentions: [], blessings: [] };
-  const loaded = { donations: false, intentions: false, blessings: false, checkIns: false };
+  const loaded = { donations: false, intentions: false, blessings: false, checkIns: false, custom: false };
+  let extra = { custom: [], awards: [] }; // parish-made badges (../custom-badges.js)
 
   const render = () => {
     if (!Object.values(loaded).every(Boolean)) return;
     const ready = checkInReady();
-    const badges = computeBadges(data).filter(b => ready || !b.needsCheckIn || b.earned);
+    const badges = computeBadges(data, new Date(), extra).filter(b => ready || !b.needsCheckIn || b.earned);
     const earned = badges.filter(b => b.earned);
     const next = badges
       .filter(b => !b.earned && b.progress && b.progress.target > b.progress.current)
@@ -58,6 +60,10 @@ export function mountBadgeStrip(el) {
     next: ({ items }) => { data.blessings = items; loaded.blessings = true; render(); },
     error: (err) => console.error('Failed to load blessings:', err),
   });
+  loadMyCustomBadges(PARISHIONER_NAME)
+    .then(r => { extra = r; })
+    .catch(err => console.error('Failed to load parish badges:', err))
+    .finally(() => { loaded.custom = true; render(); });
   (checkInReady() ? listCheckInsFor(PARISHIONER_NAME) : Promise.resolve([]))
     .then(items => { data.checkIns = items; })
     .catch(err => console.error('Failed to load check-ins:', err))

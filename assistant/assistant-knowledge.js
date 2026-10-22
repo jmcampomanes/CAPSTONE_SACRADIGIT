@@ -116,8 +116,9 @@ export const CERTIFICATES = {
   processing: { en: '3–5 working days', fil: '3–5 araw na may pasok' },
 };
 
-/** Suggested Mass intention offering per name — same default as the Mass Intentions page. */
-export const OFFERING_PER_INTENTION = 300;
+/** Minimum Mass intention offering — one offering covers the whole intention, however many names.
+    Same as MIN_INTENTION_OFFERING in mass-intention-form.js. */
+export const OFFERING_PER_INTENTION = 50;
 
 /** Filipino names for the services in service-catalog.js. */
 export const SERVICE_NAMES_FIL = {

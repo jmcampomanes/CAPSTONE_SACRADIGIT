@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Installable app (PWA): see pwa.js and public/manifest.webmanifest -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#1e2a4a" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="SacraDigit" />
+  <title>Badges – SacraDigit Admin</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              DEFAULT: '#1e2a4a',
+              dark: '#16213a',
+              light: '#2a3a5c',
+            },
+            gold: '#c9a84c',
+            lavender: '#8b8fc7',
+            'lavender-light': '#a8acda',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="sacradigit-css/admin-shell.css" />
+  <link rel="stylesheet" href="sacradigit-css/digital-archives.css" />
+  <link rel="stylesheet" href="sacradigit-css/community.css" />
+  <link rel="stylesheet" href="sacradigit-css/badge-maker.css" />
+  <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
+  <style>.auth-pending body{visibility:hidden}</style>
+  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <link rel="stylesheet" href="../theme-dark.css" />
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="admin-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="../sacradigit-images/scaradigit-logo.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Parish Management</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="Admin navigation">
+
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="dashboard.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Dashboard
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Records</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="digital-archives.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+              Digital Archives
+            </a>
+          </li>
+          <li>
+            <a href="record-requests.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Record Requests
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Operations</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="schedule-offers.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Schedule Offers
+            </a>
+          </li>
+          <li>
+            <a href="blessings.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Blessings
+            </a>
+          </li>
+          <li>
+            <a href="facility-booking.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Facility Booking
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Finance</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="mass-intentions.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              Mass Intentions
+            </a>
+          </li>
+          <li>
+            <a href="donations.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Donations
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Communications</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="announcements.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+              Announcements
+            </a>
+          </li>
+          <li>
+            <a href="special-schedules.html" data-nav="special-schedules" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
+              Special Schedules
+            </a>
+          </li>
+          <li>
+            <a href="masses.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Masses
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
+          <div class="w-9 h-9 rounded-full bg-navy flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs">AD</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate">Admin User</p>
+            <p class="text-gray-400 text-xs truncate">System Admin</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#b5943e;border-bottom-width:3px;">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:#b5943e1f;color:#b5943e;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg></div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Badges</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <!-- Page content -->
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
+
+        <div class="admin-hero" data-sacred-header>
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Faith Journey Badges</h2>
+            <p class="text-gray-500 text-sm mt-1">Make new badges for parishioners to earn — automatically from their records, or given by hand for a special honor. They show up on each parishioner’s My Badges page.</p>
+          </div>
+          <button type="button" id="bm-create" class="btn-lavender head-admin-only">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Create Badge
+          </button>
+        </div>
+
+        <p id="bm-unavailable" class="community-unavailable hidden">Badge making needs a backend update (the CustomBadge and BadgeAward models — see custom-badges.js). Once it’s deployed, you can create badges here. The built-in badges below already work.</p>
+
+        <div class="bm-tabs" role="tablist" aria-label="Badge lists">
+          <button type="button" class="bm-tab active" data-tab="custom" role="tab" aria-selected="true">Parish-made <span class="bm-tab-count" id="bm-count-custom">0</span></button>
+          <button type="button" class="bm-tab" data-tab="builtin" role="tab" aria-selected="false">Built-in <span class="bm-tab-count" id="bm-count-builtin">0</span></button>
+        </div>
+
+        <section id="bm-panel-custom" role="tabpanel">
+          <div id="bm-grid" class="bm-grid" aria-live="polite"></div>
+          <div id="bm-empty" class="bm-empty hidden">
+            <div class="bm-empty-medals" aria-hidden="true">
+              <span class="bm-medal tier-bronze"></span><span class="bm-medal tier-silver"></span><span class="bm-medal tier-gold"></span>
+            </div>
+            <p class="bm-empty-title">No parish-made badges yet</p>
+            <p class="bm-empty-text">Create one for a feast day, a novena, faithful service in a ministry, or an honor you give by hand — like “Parish Volunteer of the Year.”</p>
+            <button type="button" class="btn-lavender head-admin-only" data-act="create">Create your first badge</button>
+          </div>
+        </section>
+
+        <section id="bm-panel-builtin" class="hidden" role="tabpanel">
+          <p class="bm-note">These come with SacraDigit and are worked out automatically. They can’t be edited.</p>
+          <div id="bm-builtin-grid" class="bm-grid"></div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ========== CREATE / EDIT BADGE ========== -->
+  <div id="bm-editor" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="bm-editor-title">
+    <div class="modal-card bm-editor-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="bm-editor-title">Create Badge</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="bm-editor">
+          <div class="bm-form">
+            <div>
+              <label class="form-label" for="bm-name">Badge name <span class="text-red-500">*</span></label>
+              <input type="text" id="bm-name" class="form-input" maxlength="40" placeholder="e.g. Fiesta Pilgrim" />
+            </div>
+
+            <fieldset>
+              <legend class="form-label">How is it earned?</legend>
+              <div class="bm-mode">
+                <label class="bm-mode-opt">
+                  <input type="radio" name="bm-mode" value="auto" checked />
+                  <span><strong>Automatically</strong><small>When a parishioner’s records meet a goal you set.</small></span>
+                </label>
+                <label class="bm-mode-opt">
+                  <input type="radio" name="bm-mode" value="manual" />
+                  <span><strong>Given by hand</strong><small>You choose who receives it, like an award.</small></span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div id="bm-rule" class="bm-rule">
+              <div>
+                <label class="form-label" for="bm-kind">Goal</label>
+                <select id="bm-kind" class="form-input"></select>
+              </div>
+              <div class="bm-rule-row">
+                <div>
+                  <label class="form-label" for="bm-target">How many?</label>
+                  <div class="bm-target">
+                    <input type="number" id="bm-target" class="form-input" min="1" max="999" value="10" inputmode="numeric" />
+                    <span id="bm-target-unit" class="bm-unit">Masses</span>
+                  </div>
+                </div>
+                <div id="bm-fund-wrap" class="hidden">
+                  <label class="form-label" for="bm-fund">Fund</label>
+                  <input type="text" id="bm-fund" class="form-input" list="bm-fund-list" placeholder="e.g. Building Fund" />
+                  <datalist id="bm-fund-list"></datalist>
+                </div>
+                <div id="bm-ministry-wrap" class="hidden">
+                  <label class="form-label" for="bm-ministry">Ministry</label>
+                  <select id="bm-ministry" class="form-input"></select>
+                </div>
+              </div>
+              <div id="bm-dates-wrap" class="bm-rule-row hidden">
+                <div>
+                  <label class="form-label" for="bm-from">From</label>
+                  <input type="date" id="bm-from" class="form-input" />
+                </div>
+                <div>
+                  <label class="form-label" for="bm-to">To</label>
+                  <input type="date" id="bm-to" class="form-input" />
+                </div>
+              </div>
+              <p id="bm-checkin-note" class="bm-hint">Mass goals count QR check-ins, so they only grow once parishioners check in at Mass.</p>
+            </div>
+
+            <div>
+              <label class="form-label" for="bm-desc">Description <span class="bm-optional">(optional)</span></label>
+              <textarea id="bm-desc" class="form-input" rows="2" maxlength="160"></textarea>
+              <p class="bm-hint" id="bm-desc-hint"></p>
+            </div>
+
+            <fieldset>
+              <legend class="form-label">Medal</legend>
+              <div class="bm-tiers" role="radiogroup" aria-label="Medal">
+                <label class="bm-tier"><input type="radio" name="bm-tier" value="bronze" /><span class="bm-medal tier-bronze" aria-hidden="true"></span>Bronze</label>
+                <label class="bm-tier"><input type="radio" name="bm-tier" value="silver" checked /><span class="bm-medal tier-silver" aria-hidden="true"></span>Silver</label>
+                <label class="bm-tier"><input type="radio" name="bm-tier" value="gold" /><span class="bm-medal tier-gold" aria-hidden="true"></span>Gold</label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend class="form-label">Icon</legend>
+              <div id="bm-icons" class="bm-icons" role="radiogroup" aria-label="Icon"></div>
+            </fieldset>
+
+            <div class="bm-rule-row">
+              <div>
+                <label class="form-label" for="bm-group">Shows under</label>
+                <select id="bm-group" class="form-input"></select>
+              </div>
+              <label class="bm-check">
+                <input type="checkbox" id="bm-active" checked />
+                <span>Show to parishioners</span>
+              </label>
+            </div>
+          </div>
+
+          <aside class="bm-preview" aria-label="Preview">
+            <p class="bm-preview-label">What parishioners see</p>
+            <div id="bm-preview-card"></div>
+            <p class="bm-preview-label bm-preview-label-2">Once earned</p>
+            <div id="bm-preview-earned"></div>
+          </aside>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="bm-save" class="btn-lavender">Create Badge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GIVE A BADGE ========== -->
+  <div id="bm-award" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="bm-award-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="bm-award-title">Give Badge</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body space-y-4">
+        <div id="bm-award-badge"></div>
+        <div>
+          <label class="form-label" for="bm-award-name">Parishioner’s name <span class="text-red-500">*</span></label>
+          <input type="text" id="bm-award-name" class="form-input" list="bm-people" autocomplete="off" placeholder="Start typing a name…" />
+          <datalist id="bm-people"></datalist>
+          <p class="bm-hint">Use the same name as their parish account, so it appears on their My Badges page.</p>
+        </div>
+        <div class="bm-rule-row">
+          <div>
+            <label class="form-label" for="bm-award-date">Date given</label>
+            <input type="date" id="bm-award-date" class="form-input" />
+          </div>
+        </div>
+        <div>
+          <label class="form-label" for="bm-award-note">Note to the parishioner <span class="bm-optional">(optional)</span></label>
+          <input type="text" id="bm-award-note" class="form-input" maxlength="140" placeholder="e.g. Thank you for serving at every Simbang Gabi!" />
+        </div>
+        <div>
+          <p class="form-label">Already given to <span id="bm-award-count">0</span></p>
+          <ul id="bm-award-list" class="bm-people-list"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Done</button>
+        <button type="button" id="bm-award-save" class="btn-lavender">Give Badge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== WHO HAS IT ========== -->
+  <div id="bm-holders" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="bm-holders-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="bm-holders-title">Who Has It</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body space-y-3">
+        <div id="bm-holders-badge"></div>
+        <p id="bm-holders-summary" class="bm-note"></p>
+        <ul id="bm-holders-list" class="bm-people-list"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="dashboard.js"></script>
+  <script type="module" src="badge-maker.js"></script>
+</body>
+</html>

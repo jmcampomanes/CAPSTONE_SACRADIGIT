@@ -17,9 +17,10 @@
 import { client } from '../amplify-init.js';
 import { loadFaithfulGivers } from '../public-data.js';
 import { currentUserName, currentUser } from '../auth.js';
-import { computeBadges, badgeIconSvg, BADGES, parishionerKey, monthStreak, streakLabel } from '../badges.js';
+import { computeBadges, badgeIconSvg, parishionerKey, monthStreak, streakLabel } from '../badges.js';
 import { checkInReady, preferencesReady, submitCheckIn, listCheckInsFor, optedOutKeys, getPreference, setShowOnHonorRoll, formatCode, normalizeCode, checkInErrorMessage } from '../mass-checkin.js';
 import { openCheckInScanner } from './checkin-scanner.js';
+import { loadMyCustomBadges } from '../custom-badges.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -32,7 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let giversList = []; // Faithful Givers, from public-data.js (no amounts)
   loadFaithfulGivers().then(list => { giversList = list; render(); }).catch(err => console.error('Failed to load Faithful Givers:', err));
   let activeGroup = '';
-  let loaded = { donations: false, intentions: false, blessings: false, checkIns: false };
+  let loaded = { donations: false, intentions: false, blessings: false, checkIns: false, custom: false };
+  let extra = { custom: [], awards: [] }; // badges the parish made + ones given to me (../custom-badges.js)
+  loadMyCustomBadges(PARISHIONER_NAME)
+    .then(r => { extra = r; })
+    .catch(err => console.error('Failed to load parish badges:', err))
+    .finally(() => { loaded.custom = true; render(); });
 
   const $ = (id) => document.getElementById(id);
   const escapeHtml = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
@@ -100,7 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function render() {
     if (!allLoaded()) return;
     const ready = checkInReady();
-    const badges = computeBadges(data);
+    const badges = computeBadges(data, new Date(), extra);
+    $('fj-tab-honors').classList.toggle('hidden', !badges.some(b => b.group === 'honors'));
     const shown = ready ? badges : badges.filter(b => !b.needsCheckIn || b.earned);
     renderStats(badges, ready);
     renderBadges(shown, ready);
@@ -109,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderStats(badges, ready) {
     const earned = badges.filter(b => b.earned).length;
-    $('stat-badges').textContent = `${earned} / ${ready ? BADGES.length : BADGES.filter(b => !b.needsCheckIn).length}`;
+    $('stat-badges').textContent = `${earned} / ${badges.filter(b => ready || !b.needsCheckIn).length}`;
     const steadfast = badges.find(b => b.id === 'steadfast-1');
     $('stat-sunday-streak').textContent = ready ? String(steadfast?.progress?.current ?? 0) : '—';
     const year = String(new Date().getFullYear());
@@ -130,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function badgeCardHtml(b) {
     const pct = b.progress ? Math.round((b.progress.current / b.progress.target) * 100) : 0;
     const status = b.earned
-      ? `<p class="fj-badge-earned">✓ Earned${b.earnedOn ? ` · ${fmtDate(b.earnedOn)}` : ''}</p>`
+      ? `<p class="fj-badge-earned">✓ ${b.awardNote !== undefined ? 'Given by the parish' : 'Earned'}${b.earnedOn ? ` · ${fmtDate(b.earnedOn)}` : ''}</p>${b.awardNote ? `<p class="fj-badge-note" data-no-translate>“${escapeHtml(b.awardNote)}”</p>` : ''}`
       : b.progress
         ? `<div class="fj-progress" aria-label="${b.progress.current} of ${b.progress.target}"><span style="width:${pct}%"></span></div>
            <p class="fj-progress-text">${b.progress.current} / ${b.progress.target} ${escapeHtml(b.progress.label)}</p>`
@@ -219,12 +226,12 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   // "Scan the QR code" — camera scanner; afterwards refresh the badges (and celebrate new ones)
   $('checkin-scan').addEventListener('click', () => {
-    const before = new Set(computeBadges(data).filter(b => b.earned).map(b => b.id));
+    const before = new Set(computeBadges(data, new Date(), extra).filter(b => b.earned).map(b => b.id));
     openCheckInScanner({
       onCheckedIn: async (res) => {
         await loadCheckIns();
         render();
-        const newly = computeBadges(data).filter(b => b.earned && !before.has(b.id));
+        const newly = computeBadges(data, new Date(), extra).filter(b => b.earned && !before.has(b.id));
         if (newly.length && !res.already) celebrate(newly);
       },
     });
@@ -248,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = $('checkin-submit');
     btn.disabled = true;
     btn.textContent = 'Checking in…';
-    const before = new Set(computeBadges(data).filter(b => b.earned).map(b => b.id));
+    const before = new Set(computeBadges(data, new Date(), extra).filter(b => b.earned).map(b => b.id));
     try {
       const res = await submitCheckIn({ sessionId, code, parishionerName: PARISHIONER_NAME });
       showResult(res);
@@ -256,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         codeInput.value = '';
         await loadCheckIns();
         render();
-        const newly = computeBadges(data).filter(b => b.earned && !before.has(b.id));
+        const newly = computeBadges(data, new Date(), extra).filter(b => b.earned && !before.has(b.id));
         if (newly.length && !res.already) celebrate(newly);
       }
     } catch (err) {

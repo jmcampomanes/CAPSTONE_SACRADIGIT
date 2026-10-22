@@ -130,7 +130,7 @@ async function buildContext() {
     certificates: CERTIFICATES,
     facilities: FACILITIES,
     funds: FUNDS,
-    offeringPerMassIntention: OFFERING_PER_INTENTION,
+    minimumMassIntentionOffering: OFFERING_PER_INTENTION, // pesos; one offering covers the whole intention
     // All pages of this portal, so the assistant can say where to go. Name pages exactly as listed.
     portalDirectory: PORTAL_DIRECTORY.map(({ section, pages }) => ({
       section: section.en,

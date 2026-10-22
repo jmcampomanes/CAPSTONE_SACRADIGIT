@@ -161,6 +161,17 @@ const HELP_CONTENT = {
       'Anonymous requests never store the person’s name, so the office doesn’t see it either.',
     ],
   },
+  'badge-maker.html': {
+    title: 'Badges',
+    intro: 'Make new Faith Journey badges for parishioners, on top of the built-in ones.',
+    steps: [
+      'Click “Create Badge.” Choose Automatically to set a goal (Masses attended, Masses during a feast or novena, Sundays in a row, gifts to a fund, times served…), or Given by hand for an honor you award yourself.',
+      'Pick a medal and an icon — the preview shows exactly what parishioners will see, before and after earning it.',
+      'Give Badge hands it to a parishioner by name, with an optional note. Any badge can be given by hand, even an automatic one.',
+      'Who Has It lists everyone who has the badge. Hide keeps a badge but stops showing it; Delete removes it and every award of it.',
+      'Only the Head Admin can create, edit, hide or delete badges. The Secretary can give them.',
+    ],
+  },
   'ministry-roster.html': {
     title: 'Ministry Roster',
     intro: 'Who is serving at each weekend and special Mass this month.',
@@ -260,6 +271,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   watchPendingPrayers(document.querySelector('#sidebar a.sidebar-link[href="prayer-wall.html"]'));
 
+  /* "Badges" — the badge maker (badge-maker.html), after Prayer Wall. */
+  const pwLi = document.querySelector('#sidebar a.sidebar-link[href="prayer-wall.html"]')?.closest('li');
+  if (pwLi && !document.querySelector('#sidebar a.sidebar-link[href="badge-maker.html"]')) {
+    pwLi.insertAdjacentHTML('afterend', `
+          <li>
+            <a href="badge-maker.html" data-nav="badge-maker" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg>
+              Badges
+            </a>
+          </li>`);
+  }
+
   /* "Attendance" (Head Admin only) under Masses — charts from QR check-ins. */
   const massesLink = document.querySelector('#sidebar a.sidebar-link[href="masses.html"]');
   if (massesLink && !document.querySelector('#sidebar a.sidebar-link[href="attendance.html"]')) {
@@ -280,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ['Masses', ['masses.html', 'special-schedules.html', 'ministry-roster.html', 'attendance.html']],
     ['Requests', ['record-requests.html', 'schedule-offers.html', 'blessings.html', 'facility-booking.html', 'mass-intentions.html']],
     ['Records & Finance', ['digital-archives.html', 'donations.html']],
-    ['Communications', ['announcements.html', 'messages.html', 'prayer-wall.html', 'parish-info.html']],
+    ['Communications', ['announcements.html', 'messages.html', 'prayer-wall.html', 'badge-maker.html', 'parish-info.html']],
   ];
   const nav = document.querySelector('#sidebar nav');
   if (nav && !nav.dataset.grouped) {
