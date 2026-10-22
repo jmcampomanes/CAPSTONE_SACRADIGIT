@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       logBookingAction(client, { action: 'Approve', record: { ...r, date } });
       notifyServiceUpdate({
-        to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'scheduled',
+        to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'approved',
         date: formatLongDate(date), time: r.time, location: r.location || locationFor(r.type),
         contact: r.contact, detailsLines: emailDetailLines(r),
       });
@@ -1013,7 +1013,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const from = r.status === 'scheduled' ? `${formatLongDate(r.date)} ${r.time}` : 'pending request';
       logBookingAction(client, { action: 'Reschedule', record: { ...r, date: slot.date, time: slot.time }, reason: `${reason} (from ${from})` });
       notifyServiceUpdate({
-        to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'scheduled',
+        // Booking a pending request is the office approving it.
+        to: recipientEmail(r), name: r.requesterName, serviceType: r.type,
+        status: r.status === 'pending' ? 'approved' : 'scheduled',
         date: formatLongDate(slot.date), time: slot.time, location: r.location || locationFor(r.type),
         contact: r.contact, detailsLines: emailDetailLines(r),
       });
@@ -1081,6 +1083,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!record) return;
+
+    const row = (label, value, wide) => `<div${wide ? ' style="grid-column: 1 / -1;"' : ''}><p class="so-detail-label">${escapeHtml(label)}</p><p class="so-detail-value">${escapeHtml(value)}</p></div>`;
+    if (section !== 'upcoming' && record.location) extraRows += row('Location', record.location);
+    if (record.contact) extraRows += row('Contact', record.contact);
+    // Everything else the parishioner filled in on the request form (vehicle/item
+    // description, address, names, etc.). Pin and reschedule note get their own rows below.
+    Object.entries(detailsOf(record))
+      .filter(([k]) => k !== MAP_PIN_LABEL && k !== RESCHEDULE_REASON_LABEL && k !== 'Preparation Checklist')
+      .map(([k, v]) => [k, detailText(v)]).filter(([, v]) => v)
+      .forEach(([k, v]) => { extraRows += row(k, v, v.length > 40); });
+    if (record.notes) extraRows += row('Notes', record.notes, true);
 
     // House Blessing requests can carry the exact spot the parishioner pinned
     const pin = detailsOf(record)[MAP_PIN_LABEL];
