@@ -24,6 +24,7 @@ import { watchTakenSlots, fetchTakenSlots } from '../public-data.js';
 import { currentUserName } from '../auth.js';
 import { isPrepKey, checklistHtml, progressChipHtml } from '../sacrament-prep.js';
 import { formatFullName, isNameEmpty } from '../name-utils.js';
+import { createPager } from './pager.js';
 import { SERVICE_TYPES, needsApproval } from '../service-catalog.js';
 import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, APPROVED_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../service-schedule.js';
 
@@ -76,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const requestsList  = document.getElementById('requests-list');
   const requestsEmpty  = document.getElementById('requests-empty');
   const requestsCount   = document.getElementById('requests-count');
+  // 5 per page instead of one long scroll (./pager.js)
+  const pager = createPager(document.getElementById('requests-pager'), { onChange: () => renderList(), scrollTo: requestsList.closest('.panel') });
 
   const detailModal    = document.getElementById('detail-modal');
   const modalStatusBadge  = document.getElementById('modal-status-badge');
@@ -153,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!chip) return;
     categoryFilter = chip.dataset.cat;
     paintFilter();
+    pager.reset();
     renderList();
   });
   paintFilter();
@@ -162,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     requestsCount.textContent = `${shown.length} request${shown.length === 1 ? '' : 's'}`;
 
     if (shown.length === 0) {
+      pager.page([]);
       requestsList.innerHTML = '';
       emptyText.textContent = myRequests.length ? 'Nothing here for this category' : 'No service requests yet';
       requestsEmpty.classList.remove('hidden');
@@ -171,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sorted = shown.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    requestsList.innerHTML = sorted.map((r) => {
+    requestsList.innerHTML = pager.page(sorted).map((r) => {
       const svc = serviceByName(r.type) || { name: r.type, iconBg: '#eee', iconColor: '#888', icon: '' };
       const when = r.date || r.preferredDate;
       // Big status word + the date: "House Blessing / Waiting for approval / Tue Oct 28, 9:00 AM"

@@ -9,6 +9,7 @@
 import { client } from '../amplify-init.js';
 import { getUrl } from 'aws-amplify/storage';
 import { formatFullName, isNameEmpty } from '../name-utils.js';
+import { createPager } from './pager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -117,6 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const list        = document.getElementById('requests-list');
   const emptyState   = document.getElementById('requests-empty');
+  // 5 per page instead of one long scroll (./pager.js)
+  const pager = createPager(document.getElementById('requests-pager'), { onChange: () => renderList(), scrollTo: list });
   const detailModal  = document.getElementById('detail-modal');
 
   const modalCancelBtn    = document.getElementById('modal-cancel-request');
@@ -201,13 +204,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const sorted = filtered.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     list.innerHTML = '';
+    const pageItems = pager.page(sorted);
     if (sorted.length === 0) {
       emptyState.classList.remove('hidden');
       return;
     }
     emptyState.classList.add('hidden');
 
-    sorted.forEach((r) => {
+    pageItems.forEach((r) => {
       const card = document.createElement('div');
       card.className = 'req-card';
       card.innerHTML = `
@@ -247,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
       activeFilter = tab.dataset.filter;
+      pager.reset();
       renderList();
     });
   });
