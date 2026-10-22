@@ -143,6 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderWeeklySchedule();
         renderDateSchedule(); // Date's Schedule includes the recurring pattern too — refresh it when that pattern changes
         if (showingCalendar) renderCalendar();
+        // Sunday quick-time buttons come from this schedule — refresh an open Schedule Mass.
+        if (!scheduleModal.classList.contains('hidden')) checkScheduleSlot();
       },
       error: (err) => {
         console.error('Failed to load weekly mass schedule:', err);
@@ -507,20 +509,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* Quick-add buttons under the time picker for the usual Mass times, so
      repeated scheduling is one tap per time. Monday–Saturday show the two
-     daily times; Sunday shows every usual time. Same "07:00 AM" format the
-     time picker gives. Edit these lists to change the buttons. */
-  const QUICK_TIMES = {
-    weekday: ['06:30 AM', '06:00 PM'],
-    sunday:  ['06:00 AM', '06:30 AM', '08:00 AM', '10:00 AM', '05:00 PM', '06:00 PM'],
-  };
-  const quickTimesFor = (date) => !date ? [] : (new Date(date + 'T00:00:00').getDay() === 0 ? QUICK_TIMES.sunday : QUICK_TIMES.weekday);
+     daily times below; Sunday shows the Sunday times from the Regular
+     Weekly Mass Schedule (so editing Sunday there updates the buttons).
+     Same "07:00 AM" format the time picker gives. */
+  const WEEKDAY_QUICK_TIMES = ['06:30 AM', '06:00 PM'];
+  const padTime = (t) => t.replace(/^(\d):/, '0$1:'); // "6:00 AM" → "06:00 AM"
+  const isSundayDate = (date) => new Date(date + 'T00:00:00').getDay() === 0;
+  function quickTimesFor(date) {
+    if (!date) return [];
+    if (!isSundayDate(date)) return WEEKDAY_QUICK_TIMES;
+    const sunday = weeklySchedule.find(w => w.dayKey === 'sunday');
+    return (sunday?.times || []).map(padTime).sort((a, b) => to24h(a) - to24h(b));
+  }
   const sameTime = (a, b) => to24h(a) === to24h(b);
 
   function renderQuickTimes(date) {
     const times = quickTimesFor(date);
     scheduleQuickTimes.classList.toggle('hidden', !times.length);
     if (!times.length) { scheduleQuickTimes.innerHTML = ''; return; }
-    const isSunday = times === QUICK_TIMES.sunday;
+    const isSunday = isSundayDate(date);
     scheduleQuickTimes.innerHTML = `<span class="quick-times-label">${isSunday ? 'Sunday times' : 'Usual times'}:</span>` + times.map((t) => {
       const added = scheduleTimes.some(s => sameTime(s, t));
       const problem = added ? '' : scheduleTimeProblem(date, t, scheduleTimes);
