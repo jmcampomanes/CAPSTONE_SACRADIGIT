@@ -24,7 +24,8 @@ import { initWalkInService } from './walk-in-service.js';
 import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithChecklistItem } from '../sacrament-prep.js';
 import { currentUserName } from '../auth.js';
 import { logActivity } from '../activity-log.js';
-import { showToast } from './admin-ui.js';
+import { showToast, reportEmail } from './admin-ui.js';
+import { notifyServiceUpdate } from '../email-notify.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -429,7 +430,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       logBookingAction(client, { action: 'Reschedule', record: { ...o, date: slot.date, time: slot.time }, reason });
       closeRescheduleScreen();
-      showToast(`${o.type} for ${o.requesterName} rescheduled to ${fmtDate(slot.date)} at ${slot.time}.`);
+      reportEmail(notifyServiceUpdate({
+        to: o.email || '', name: o.requesterName, serviceType: o.type, status: 'rescheduled', declineReason: reason,
+        date: fmtDate(slot.date), time: slot.time, location: o.location || locationFor(o.type, parseDetails(o)), contact: o.contact,
+      }), o.requesterName, `${o.type} for ${o.requesterName} rescheduled to ${fmtDate(slot.date)} at ${slot.time}.`);
     } catch (err) {
       console.error('Failed to reschedule request:', err);
       showToast(err.message || "Couldn't reschedule request.", true);
@@ -495,9 +499,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       closeModal(rejectModal);
       logBookingAction(client, { action: rejectIsCancel ? 'Cancel' : 'Decline', record: o, reason });
-      showToast(rejectIsCancel
+      const doneMsg = rejectIsCancel
         ? `Booking for ${o ? o.requesterName : 'requester'} cancelled — the slot is open again.`
-        : `Request from ${o ? o.requesterName : 'requester'} declined.`);
+        : `Request from ${o ? o.requesterName : 'requester'} declined.`;
+      if (o) {
+        reportEmail(notifyServiceUpdate({
+          to: o.email || '', name: o.requesterName, serviceType: o.type,
+          status: rejectIsCancel ? 'cancelled' : 'declined', declineReason: reason,
+          date: o.date ? fmtDate(o.date) : '', time: o.time,
+        }), o.requesterName, doneMsg);
+      } else showToast(doneMsg);
       rejectTargetId = null;
     } catch (err) {
       console.error('Failed to decline request:', err);

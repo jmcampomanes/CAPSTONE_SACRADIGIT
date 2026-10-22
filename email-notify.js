@@ -7,31 +7,40 @@
    (kept there for local reference only — see its README),
    which couldn't be reached once the site is deployed.
    Kinds of email that go out:
-     signup-code       — courtesy notice after Cognito
-                          emails a sign-up confirmation code
-     password-reset    — courtesy notice after Cognito
-                          emails a password-reset code
-     service-update     — a blessing/service request was
-                           scheduled or declined
-     service-reminder   — a scheduled booking is tomorrow
-     certificate-ready — a certificate request was approved
-                          and is ready for pickup
+     signup-code           — courtesy notice after Cognito
+                              emails a sign-up confirmation code
+     password-reset        — courtesy notice after Cognito
+                              emails a password-reset code
+     service-update        — a blessing/service/facility request
+                              was approved, confirmed, rescheduled,
+                              declined or cancelled
+     certificate-update    — a certificate request was approved,
+                              is ready for pickup, or was rejected
+     mass-intention-update — a Mass intention was cancelled
+   Day-before reminders, "appointment complete" and
+   "intention offered" go out from the daily backend job
+   (amplify/functions/blessing-reminder), not from here.
 
-   Never blocks the caller: if the mutation fails, this
-   just logs a warning.
+   Never throws. Each notify* call resolves to
+   'sent', 'no-email' (nothing on file to send to) or
+   'failed' so staff pages can say when an email
+   didn't go out (see reportEmail in Sacradigit/admin-ui.js).
    ============================================ */
 
 import { client } from './amplify-init.js';
 
 async function send(kind, payload, { guest = false } = {}) {
+  if (!payload.to) return 'no-email';
   try {
     const input = { kind, ...payload, detailsLines: JSON.stringify(payload.detailsLines || []) };
     const { data, errors } = await client.mutations.notifyParishioner(input, guest ? { authMode: 'apiKey' } : undefined);
-    if (errors?.length) { console.warn(`Email notifier: ${kind} failed`, errors); return; }
+    if (errors?.length) { console.warn(`Email notifier: ${kind} failed`, errors); return 'failed'; }
     const result = typeof data === 'string' ? JSON.parse(data) : data;
-    if (!result?.success) console.warn(`Email notifier: ${kind} failed`, result?.error);
+    if (!result?.success) { console.warn(`Email notifier: ${kind} failed`, result?.error); return 'failed'; }
+    return 'sent';
   } catch (err) {
     console.warn(`Email notifier: ${kind} unreachable`, err);
+    return 'failed';
   }
 }
 
@@ -42,31 +51,22 @@ export const notifySignupCode = (to, name) => send('signup-code', { to, name }, 
 export const notifyPasswordReset = (to, name) => send('password-reset', { to, name }, { guest: true });
 
 /**
- * A blessing/service request was scheduled or declined, or a parishioner
- * confirming their own self-booked slot. Uses the signed-in caller's Cognito
- * session automatically; the backend decides who may send which (see
- * amplify/functions/notify-parishioner).
+ * A service/blessing/facility request changed. status: 'approved' |
+ * 'scheduled' | 'rescheduled' | 'declined' | 'cancelled' (reason for the last
+ * three in declineReason). Only 'scheduled' may come from the parishioner
+ * (confirming their own self-booked slot); the rest are staff-only — the
+ * backend checks (see amplify/functions/notify-parishioner).
  */
 export function notifyServiceUpdate({ to, name, serviceType, status, date, time, declineReason, location, contact, detailsLines }) {
-  if (!to) return; // nothing to notify (e.g. no email on file for this requester)
   return send('service-update', { to, name, serviceType, status, date, time, declineReason, location, contact, detailsLines });
 }
 
-/**
- * A scheduled booking falls tomorrow. Staff-only — this is meant to be
- * called from the admin Blessings page when it loads.
- */
-export function notifyServiceReminder({ to, name, serviceType, date, time, location }) {
-  if (!to) return;
-  return send('service-reminder', { to, name, serviceType, date, time, location });
+/** A certificate request was approved, released (ready for pickup) or rejected. Staff-only. */
+export function notifyCertificateUpdate({ to, name, certificateType, status, reason }) {
+  return send('certificate-update', { to, name, certificateType, status, declineReason: reason });
 }
 
-/**
- * A certificate request was approved and is ready for pickup. Staff-only —
- * meant to be called from Record Requests when the Head Admin approves a
- * request.
- */
-export function notifyCertificateReady({ to, name, certificateType }) {
-  if (!to) return;
-  return send('certificate-ready', { to, name, certificateType });
+/** A Mass intention was cancelled by the office. Staff-only. */
+export function notifyMassIntentionUpdate({ to, name, status, date, time, reason, detailsLines }) {
+  return send('mass-intention-update', { to, name, status, date, time, declineReason: reason, detailsLines });
 }

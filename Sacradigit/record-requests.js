@@ -9,16 +9,17 @@
 import { client } from '../amplify-init.js';
 import { uploadData } from 'aws-amplify/storage';
 import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
-import { notifyCertificateReady } from '../email-notify.js';
+import { notifyCertificateUpdate } from '../email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../marriage-request-form.js';
 import { createCertStepForm } from '../certificate-step-forms.js';
-import { showToast, confirmDialog } from './admin-ui.js';
+import { showToast, confirmDialog, reportEmail } from './admin-ui.js';
 
 // CertificateRequest has no dedicated email field — a parishioner's own
 // request carries their address in the Cognito "owner" field as
 // `${sub}::${email}` (identityClaim is cognito:username = email), same
 // convention as Sacradigit/blessings.js.
-const recipientEmail = (r) => r?.email || (r?.owner || '').split('::')[1] || '';
+const recipientEmail = (r) => r?.email || ''; // saved when the parishioner submits; never the owner (staff for office-made requests)
+const certEmail = (r, status, reason) => notifyCertificateUpdate({ to: recipientEmail(r), name: r.requesterName, certificateType: r.certificateType, status, reason });
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -297,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!picked.length) return;
     const sure = await confirmDialog({
       title: `Approve ${picked.length} request${picked.length === 1 ? '' : 's'}?`,
-      message: 'Each requester gets an email that their certificate is ready to pick up.',
+      message: 'Each requester gets an email that their request was approved and is being prepared.',
       detail: picked.slice(0, 8).map(r => `• ${r.requesterName} — ${r.certificateType}`).join('\n') + (picked.length > 8 ? `\n…and ${picked.length - 8} more` : ''),
       confirmLabel: `Approve ${picked.length} & email`,
       tone: 'approve',
@@ -305,18 +306,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!sure) return;
     const results = await Promise.all(picked.map(r => approveRequest(r, { quiet: true })));
     const done = results.filter(Boolean).length;
+    const notEmailed = picked.filter((r, i) => results[i] && results[i] !== 'sent').map(r => r.requesterName);
     selectedIds.clear();
     renderRequests();
-    if (done === picked.length) showToast(`${done} request${done === 1 ? '' : 's'} approved.`);
-    else showToast(`${done} of ${picked.length} approved. The rest couldn’t be updated — please try them again.`, true);
+    if (done < picked.length) showToast(`${done} of ${picked.length} approved. The rest couldn’t be updated — please try them again.`, true);
+    else if (notEmailed.length) showToast(`${done} approved, but these weren’t emailed (no email on file or sending failed): ${notEmailed.join(', ')}. Please let them know another way.`, true);
+    else showToast(`${done} request${done === 1 ? '' : 's'} approved.`);
   });
 
   async function approveRequest(r, { quiet = false } = {}) {
     try {
       const result = await client.models.CertificateRequest.update({ id: r.id, status: 'approved' });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-      notifyCertificateReady({ to: recipientEmail(r), name: r.requesterName, certificateType: r.certificateType });
-      if (!quiet) showToast(`${r.requesterName}’s ${r.certificateType} approved. We’ve emailed them.`);
+      const email = certEmail(r, 'approved');
+      if (quiet) return email; // the bulk action reports emails for all of them at once
+      reportEmail(email, r.requesterName, `${r.requesterName}’s ${r.certificateType} approved.`);
       return true;
     } catch (err) {
       console.error('Failed to approve request:', err);
@@ -352,9 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const to = recipientEmail(r);
         const sure = await confirmDialog({
           title: `Approve ${r.requesterName}’s ${r.certificateType}?`,
-          message: `We’ll email ${to || 'the requester'} that it’s ready to pick up.`,
+          message: to ? `We’ll email ${to} that it’s approved and being prepared.` : 'There’s no email on file for this requester, so they won’t be emailed.',
           detail: r.purpose ? `Purpose: ${r.purpose}` : '',
-          confirmLabel: 'Approve & email',
+          confirmLabel: to ? 'Approve & email' : 'Approve',
           tone: 'approve',
         });
         if (sure) await approveRequest(r);
@@ -369,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const result = await client.models.CertificateRequest.update({ id: r.id, status: 'released' });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(`${r.requesterName}’s ${r.certificateType} marked released.`);
+        reportEmail(certEmail(r, 'released'), r.requesterName, `${r.requesterName}’s ${r.certificateType} marked released.`);
       } catch (err) {
         console.error('Failed to update request:', err);
         showToast(err.message || "Couldn't update the request.", true);
@@ -511,7 +515,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal(uploadModal);
-      showToast(`Certificate uploaded — ${r ? r.requesterName : 'request'}'s request marked Released.`);
+      const doneMsg = `Certificate uploaded — ${r ? r.requesterName : 'request'}'s request marked Released.`;
+      if (r) reportEmail(certEmail(r, 'released'), r.requesterName, doneMsg); else showToast(doneMsg);
 
       fileInput.value = '';
       uploadFilename.classList.add('hidden');
@@ -684,7 +689,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(rejectModal);
-      showToast(`Request for ${r ? r.requesterName : 'requester'} rejected.`);
+      const doneMsg = `Request for ${r ? r.requesterName : 'requester'} rejected.`;
+      if (r) reportEmail(certEmail(r, 'rejected', reason), r.requesterName, doneMsg); else showToast(doneMsg);
       rejectTargetId = null;
     } catch (err) {
       console.error('Failed to reject request:', err);

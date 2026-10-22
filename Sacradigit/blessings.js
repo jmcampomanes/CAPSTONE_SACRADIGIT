@@ -22,18 +22,17 @@ import { client } from '../amplify-init.js';
 import { printReport, tableHtml, esc } from '../print-report.js';
 import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, APPROVED_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
-import { notifyServiceUpdate, notifyServiceReminder } from '../email-notify.js';
-import { showToast } from './admin-ui.js';
+import { notifyServiceUpdate } from '../email-notify.js';
+import { showToast, reportEmail } from './admin-ui.js';
 
-// Blessing records don't always carry an email (only walk-ins staff type one
-// in) — for parishioner-made requests it's folded into the Cognito "owner"
-// field as `${sub}::${email}` (identityClaim is cognito:username = email).
-const recipientEmail = (r) => r?.email || (r?.owner || '').split('::')[1] || '';
+// Where this request's emails go: saved on the record when the parishioner
+// submits it (or typed in by the office for a walk-in). Never the record's
+// owner — for office-made bookings that's the staff member.
+const recipientEmail = (r) => r?.email || '';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   const todayISO = new Date().toISOString().slice(0, 10);
-  const tomorrowISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   let upcoming = [];
   let requests = [];
@@ -85,64 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
 
-  // Day-before email reminders. Fires whenever this page loads/refreshes
-  // and finds a booking dated tomorrow that hasn't been reminded yet
-  // (tracked per-browser, so re-opening the page doesn't resend it) —
-  // there's no always-on server here to run this at a fixed time of night.
-  const REMINDED_KEY = 'sacradigit_reminders_sent';
-  function remindedSet() {
-    try { return new Set(JSON.parse(localStorage.getItem(REMINDED_KEY)) || []); } catch { return new Set(); }
-  }
-  function markReminded(key) {
-    const set = remindedSet();
-    set.add(key);
-    try { localStorage.setItem(REMINDED_KEY, JSON.stringify([...set])); } catch { /* private mode */ }
-  }
-  function sendDueReminders(records) {
-    const already = remindedSet();
-    records
-      .filter(r => r.status === 'scheduled' && r.date === tomorrowISO)
-      // The parishioner chose how to be reminded when they booked (service-request-page.js);
-      // older bookings have no choice saved and still get the email.
-      .filter(r => (detailsOf(r)['Day-before reminder'] || 'Email') === 'Email')
-      .forEach(r => {
-        const key = `${r.id}:${r.date}`;
-        if (already.has(key)) return;
-        markReminded(key);
-        notifyServiceReminder({
-          to: recipientEmail(r), name: r.requesterName, serviceType: r.type,
-          date: formatLongDate(r.date), time: r.time, location: r.location || locationFor(r.type),
-        });
-      });
-  }
-
-  // "Your appointment is complete" emails. Same per-browser, fires-on-page-
-  // load mechanism as the reminder above — a booking whose date has passed
-  // (isPastSchedule, see blessings/service-schedule.js's own auto-complete
-  // display logic) gets emailed once, the first time this page notices.
-  const COMPLETED_KEY = 'sacradigit_completion_notices_sent';
-  function completionNotifiedSet() {
-    try { return new Set(JSON.parse(localStorage.getItem(COMPLETED_KEY)) || []); } catch { return new Set(); }
-  }
-  function markCompletionNotified(key) {
-    const set = completionNotifiedSet();
-    set.add(key);
-    try { localStorage.setItem(COMPLETED_KEY, JSON.stringify([...set])); } catch { /* private mode */ }
-  }
-  function sendCompletionNotices(records) {
-    const already = completionNotifiedSet();
-    records
-      .filter(r => isPastSchedule(r, todayISO))
-      .forEach(r => {
-        const key = `${r.id}:${r.date}`;
-        if (already.has(key)) return;
-        markCompletionNotified(key);
-        notifyServiceUpdate({
-          to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'completed',
-          date: formatLongDate(r.date), time: r.time, location: r.location || locationFor(r.type),
-        });
-      });
-  }
+  // Day-before reminders and "appointment complete" emails are sent by the
+  // daily backend job (amplify/functions/blessing-reminder), not this page.
 
   function blessingIconSvg() {
     return `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`;
@@ -166,8 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
   client.models.Blessing.observeQuery().subscribe({
     next: ({ items }) => {
       allRecords = items;
-      sendDueReminders(items);
-      sendCompletionNotices(items);
       if (walkIn) walkIn.refresh();
       if (reschedulePicker) reschedulePicker.refresh(allRecords);
       upcoming = [];
@@ -388,13 +329,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       logBookingAction(client, { action: 'Approve', record: { ...r, date } });
-      notifyServiceUpdate({
+      closeModal(detailsModal);
+      reportEmail(notifyServiceUpdate({
         to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'approved',
         date: formatLongDate(date), time: r.time, location: r.location || locationFor(r.type),
         contact: r.contact, detailsLines: emailDetailLines(r),
-      });
-      closeModal(detailsModal);
-      showToast(`${r.type} for ${r.requesterName} approved — ${formatLongDate(date)} at ${r.time}.`);
+      }), r.requesterName, `${r.type} for ${r.requesterName} approved — ${formatLongDate(date)} at ${r.time}.`);
     } catch (err) {
       console.error('Failed to approve request:', err);
       showToast("Couldn't approve the request.", true);
@@ -855,10 +795,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeModal(declineModal);
       logBookingAction(client, { action: declineIsCancel ? 'Cancel' : 'Decline', record: r, reason });
-      if (r) notifyServiceUpdate({ to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'declined', declineReason: reason });
-      showToast(declineIsCancel
+      const doneMsg = declineIsCancel
         ? `Booking for ${r ? r.requesterName : 'requester'} cancelled — the slot is open again.`
-        : `Request from ${r ? r.requesterName : 'requester'} declined.`);
+        : `Request from ${r ? r.requesterName : 'requester'} declined.`;
+      if (r) {
+        reportEmail(notifyServiceUpdate({
+          to: recipientEmail(r), name: r.requesterName, serviceType: r.type,
+          status: declineIsCancel ? 'cancelled' : 'declined', declineReason: reason,
+          date: r.date ? formatLongDate(r.date) : '', time: r.time,
+        }), r.requesterName, doneMsg);
+      } else showToast(doneMsg);
       declineTargetId = null;
     } catch (err) {
       console.error('Failed to decline request:', err);
@@ -1012,15 +958,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       const from = r.status === 'scheduled' ? `${formatLongDate(r.date)} ${r.time}` : 'pending request';
       logBookingAction(client, { action: 'Reschedule', record: { ...r, date: slot.date, time: slot.time }, reason: `${reason} (from ${from})` });
-      notifyServiceUpdate({
+      closeRescheduleScreen();
+      reportEmail(notifyServiceUpdate({
         // Booking a pending request is the office approving it.
         to: recipientEmail(r), name: r.requesterName, serviceType: r.type,
-        status: r.status === 'pending' ? 'approved' : 'scheduled',
+        status: r.status === 'pending' ? 'approved' : 'rescheduled', declineReason: reason,
         date: formatLongDate(slot.date), time: slot.time, location: r.location || locationFor(r.type),
         contact: r.contact, detailsLines: emailDetailLines(r),
-      });
-      closeRescheduleScreen();
-      showToast(`${r.type} for ${r.requesterName} moved to ${formatLongDate(slot.date)} at ${slot.time}.`);
+      }), r.requesterName, `${r.type} for ${r.requesterName} moved to ${formatLongDate(slot.date)} at ${slot.time}.`);
     } catch (err) {
       console.error('Failed to reschedule blessing:', err);
       showToast(err.message || "Couldn't reschedule the blessing.", true);
