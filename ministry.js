@@ -69,7 +69,7 @@ export function watchRosterMasses(year, month, onChange) {
       const d = new Date(year, month, day);
       const iso = localIso(d);
       if (d.getDay() === 0 || d.getDay() === 6) {
-        for (const m of recurringMassesForDate(weekly, iso)) {
+        for (const m of recurringMassesForDate(weekly, iso, specials)) {
           // Saturday: only the evening (anticipated) Masses
           if (d.getDay() === 6 && toMinutes(m.time) < 15 * 60) continue;
           masses.set(massKey(iso, m.time), { key: massKey(iso, m.time), date: iso, time: m.time, title: m.title || 'Sunday Mass' });

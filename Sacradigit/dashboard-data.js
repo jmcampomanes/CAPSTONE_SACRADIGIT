@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderTodaysMasses() {
     const sorted = [
       ...todaysMassRecords,
-      ...recurringMassesForDate(weeklySchedule, todayISO),
+      ...recurringMassesForDate(weeklySchedule, todayISO, todaysMassRecords),
     ].sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
 
     const special = sorted.filter(m => m.isSpecial).length;

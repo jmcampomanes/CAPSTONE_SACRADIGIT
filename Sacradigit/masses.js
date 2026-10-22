@@ -91,9 +91,15 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Overlap rules --- */
   const MASS_LENGTH_MINUTES = 60; // a Mass is treated as taking an hour
 
-  // Every Mass on a date: individually scheduled ones plus the weekly pattern.
+  // The Masses individually scheduled on a date (real Mass records).
   function massesOnDate(iso) {
-    return [...allMasses.filter(m => m.date === iso), ...recurringMassesForDate(weeklySchedule, iso)];
+    return allMasses.filter(m => m.date === iso);
+  }
+
+  // The regular weekly Masses still happening on a date — the ones a
+  // scheduled Mass has replaced are already left out.
+  function regularMassesOnDate(iso) {
+    return recurringMassesForDate(weeklySchedule, iso, allMasses);
   }
 
   // The Masses in `list` that would overlap one starting at `minutes`.
@@ -156,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // one ever specifically scheduled them via "Schedule Mass".
     const masses = [
       ...allMasses.filter(m => m.date === iso),
-      ...recurringMassesForDate(weeklySchedule, iso),
+      ...regularMassesOnDate(iso),
     ];
 
     scheduleDateLabel.textContent = formatLongDate(iso);
@@ -492,8 +498,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const joinTimes = (list) => list.length < 3 ? list.join(' and ') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
 
-  /* Why `time12` can't be booked on `date` (taken by a Mass already on that
-     date, or too close to one of `others` being added with it), or ''. */
+  /* The regular weekly Masses on `date` that a new Mass at `time12` would
+     replace for that date. Overlapping a regular Mass isn't a conflict —
+     the new Mass takes its place on that one date. */
+  function regularReplacedBy(date, time12) {
+    return clashesWith(regularMassesOnDate(date), to24h(time12));
+  }
+
+  /* Why `time12` can't be booked on `date` (taken by a Mass already
+     scheduled on that date, or too close to one of `others` being added
+     with it), or ''. */
   function scheduleTimeProblem(date, time12, others) {
     const minutes = to24h(time12);
     const clashes = clashesWith(massesOnDate(date), minutes);
@@ -544,7 +558,13 @@ document.addEventListener('DOMContentLoaded', () => {
       scheduleConflict.textContent = problem;
       scheduleConflict.classList.remove('hidden', 'is-ok');
     } else if (date && all.length) {
-      scheduleConflict.textContent = `${joinTimes(all)} on ${formatShortDate(date)} ${all.length > 1 ? 'are' : 'is'} free.${date < todayISO ? ' (This date has already passed — it will be added as a past Mass.)' : ''}`;
+      const replaced = [...new Set(all.flatMap(t => regularReplacedBy(date, t)))];
+      const free = all.filter(t => !regularReplacedBy(date, t).length);
+      const parts = [];
+      if (free.length) parts.push(`${joinTimes(free)} on ${formatShortDate(date)} ${free.length > 1 ? 'are' : 'is'} free.`);
+      if (replaced.length) parts.push(`This will replace the regular ${joinTimes(replaced.map(r => `${r.time} ${massName(r)}`))} on ${formatShortDate(date)} only — the weekly schedule stays the same.`);
+      if (date < todayISO) parts.push('(This date has already passed — it will be added as a past Mass.)');
+      scheduleConflict.textContent = parts.join(' ');
       scheduleConflict.classList.remove('hidden');
       scheduleConflict.classList.add('is-ok');
     } else {
@@ -844,9 +864,31 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="so-detail-label">Intention / Note</p>
         <p class="so-detail-value">${m.note ? escapeHtml(m.note) : '—'}</p>
       </div>
+      ${m.isRecurring ? `
+        <div class="mt-4 head-admin-only">
+          <button type="button" class="btn-lavender" id="mass-details-replace">Replace with a Special Mass</button>
+          <p class="text-xs text-gray-400 mt-2">Schedules a special Mass at ${escapeHtml(m.time)} on ${escapeHtml(formatShortDate(m.date))} instead of this regular Mass. Only this date changes — the weekly schedule stays the same.</p>
+        </div>` : ''}
     `;
 
+    document.getElementById('mass-details-replace')?.addEventListener('click', () => {
+      closeModal(massDetailsModal);
+      openReplaceWithSpecial(m);
+    });
+
     openModal(massDetailsModal);
+  }
+
+  // Opens Schedule Mass already filled in to take over a regular Mass's slot.
+  function openReplaceWithSpecial(m) {
+    resetScheduleForm();
+    scheduleDateInput.value = m.date;
+    scheduleTimes = [m.time];
+    document.getElementById('schedule-type').value = 'special';
+    document.getElementById('schedule-special').checked = true;
+    checkScheduleSlot();
+    openModal(scheduleModal);
+    document.getElementById('schedule-note').focus();
   }
 
 

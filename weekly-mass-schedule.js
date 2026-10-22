@@ -116,13 +116,21 @@ export function timeToMinutes(timeStr) {
  * database row of their own — `id` is a synthetic string, not a real
  * Mass id), read-only entries: editing the pattern happens on the
  * Regular Weekly Mass Schedule table, not here.
+ *
+ * `scheduled` is the Mass records already on that date: a regular slot
+ * that one of them overlaps (starts less than an hour apart) is left
+ * out, so a special Mass scheduled at a regular time replaces that
+ * regular Mass for that one date without touching the weekly pattern.
  */
-export function recurringMassesForDate(mergedSchedule, iso) {
+export function recurringMassesForDate(mergedSchedule, iso, scheduled = []) {
   const dayKey = dayKeyForDate(iso);
   const dayEntry = mergedSchedule.find(w => w.dayKey === dayKey);
   if (!dayEntry) return [];
 
-  return dayEntry.times.map(time => ({
+  const taken = scheduled.filter(m => m.date === iso && m.time).map(m => timeToMinutes(m.time));
+  const replaced = (time) => taken.some(t => Math.abs(t - timeToMinutes(time)) < 60);
+
+  return dayEntry.times.filter(time => !replaced(time)).map(time => ({
     id: `recurring-${dayKey}-${time}`,
     date: iso,
     time,

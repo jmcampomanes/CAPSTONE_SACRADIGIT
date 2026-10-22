@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // even if no one specifically scheduled them.
     const masses = [
       ...allMasses.filter(m => m.date === iso),
-      ...recurringMassesForDate(weeklySchedule, iso),
+      ...recurringMassesForDate(weeklySchedule, iso, allMasses),
     ];
 
     scheduleDateLabel.textContent = formatLongDate(iso);
