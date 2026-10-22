@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       logBookingAction(client, { action: 'Approve', record: { ...r, date } });
       notifyServiceUpdate({
-        to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'scheduled',
+        to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'approved',
         date: formatLongDate(date), time: r.time, location: r.location || locationFor(r.type),
         contact: r.contact, detailsLines: emailDetailLines(r),
       });
@@ -1013,7 +1013,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const from = r.status === 'scheduled' ? `${formatLongDate(r.date)} ${r.time}` : 'pending request';
       logBookingAction(client, { action: 'Reschedule', record: { ...r, date: slot.date, time: slot.time }, reason: `${reason} (from ${from})` });
       notifyServiceUpdate({
-        to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'scheduled',
+        // Booking a pending request is the office approving it.
+        to: recipientEmail(r), name: r.requesterName, serviceType: r.type,
+        status: r.status === 'pending' ? 'approved' : 'scheduled',
         date: formatLongDate(slot.date), time: slot.time, location: r.location || locationFor(r.type),
         contact: r.contact, detailsLines: emailDetailLines(r),
       });

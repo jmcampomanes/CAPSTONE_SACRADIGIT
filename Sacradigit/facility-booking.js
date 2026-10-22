@@ -18,6 +18,7 @@
 import { client } from '../amplify-init.js';
 import { watchClosures, closureOn, logBookingAction } from '../service-schedule.js';
 import { showToast } from './admin-ui.js';
+import { notifyServiceUpdate } from '../email-notify.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -177,6 +178,15 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const result = await client.models.FacilityBooking.update({ id: approveBtn.dataset.id, status: 'approved' });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+        if (b) {
+          notifyServiceUpdate({
+            to: b.email || (b.owner || '').split('::')[1] || '',
+            name: b.requesterName, serviceType: `${b.facilityName} booking`, status: 'approved',
+            date: new Date(b.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+            time: b.startTime ? formatTimeRange(b) : '', location: b.facilityName,
+            detailsLines: [b.purpose && `Purpose: ${b.purpose}`, b.attendees && `Attendees: ${b.attendees}`].filter(Boolean),
+          });
+        }
         showToast(`Booking for ${b ? b.facilityName : 'facility'} approved.`);
       } catch (err) {
         console.error('Failed to approve:', err);
