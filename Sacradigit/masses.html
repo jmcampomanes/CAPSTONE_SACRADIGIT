@@ -399,8 +399,10 @@
               <div id="schedule-time-picker"></div>
               <button type="button" id="schedule-time-add" class="btn-secondary">Add Time</button>
             </div>
+            <!-- One-click usual times for the picked date's day (filled by masses.js) -->
+            <div id="schedule-quick-times" class="quick-times hidden" role="group" aria-label="Quick add a usual Mass time"></div>
             <div id="schedule-time-list" class="name-chip-list"></div>
-            <p class="text-xs text-gray-400 mt-1">Pick a time and press Add Time — repeat to schedule several Masses on this date at once (e.g. 6:00 AM and 6:30 PM). Masses must start at least 1 hour apart.</p>
+            <p class="text-xs text-gray-400 mt-1">Tap a usual time above, or pick any time and press Add Time — repeat to schedule several Masses on this date at once (e.g. 6:30 AM and 6:00 PM). Masses must start at least 1 hour apart.</p>
           </div>
           <p id="schedule-conflict" class="col-span-2 mass-conflict hidden" role="alert"></p>
           <div class="col-span-2">

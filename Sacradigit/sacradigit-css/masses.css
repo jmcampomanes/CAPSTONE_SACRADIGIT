@@ -529,3 +529,36 @@
 .name-chip.is-conflict .name-chip-remove { background: #fecaca; color: #b91c1c; }
 :root[data-theme="dark"] .name-chip.is-conflict { background-color: #3a1d22; color: #fca5a5; border-color: #7f1d1d; }
 :root[data-theme="dark"] .name-chip.is-conflict .name-chip-remove { background: #7f1d1d; color: #fecaca; }
+
+/* ---------- Quick-add time buttons (Schedule Mass) ----------
+   The usual Mass times for the picked date's day, one tap each:
+   "+ 6:30 AM" adds it as a chip, "✓ 6:30 AM" (added) removes it.
+   Greyed out when that time clashes with a Mass already on the date. */
+.quick-times { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.625rem; }
+.quick-times.hidden { display: none; }
+.quick-times-label { font-size: 0.75rem; font-weight: 600; color: #6b7280; margin-right: 0.15rem; }
+.quick-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.8rem;
+  border: 1.5px solid #c7c9e8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4a4e8a;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.quick-time:hover:not(:disabled) { background: rgba(139, 143, 199, 0.12); border-color: #8b8fc7; }
+.quick-time.is-added { background: #1e2a4a; border-color: #1e2a4a; color: #ffffff; }
+.quick-time.is-added:hover { background: #2a3a5c; border-color: #2a3a5c; }
+.quick-time:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; text-decoration: line-through; }
+.quick-time:focus-visible { outline: 2px solid #8b8fc7; outline-offset: 2px; }
+:root[data-theme="dark"] .quick-times-label { color: #b6bdca; }
+:root[data-theme="dark"] .quick-time { background: #1a2131; border-color: #3a4459; color: #c7cbe8; }
+:root[data-theme="dark"] .quick-time:hover:not(:disabled) { background: #242c3e; border-color: #8b8fc7; }
+:root[data-theme="dark"] .quick-time.is-added { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] .quick-time:disabled { background: #1f2533; border-color: #2c3548; color: #6b7385; }

@@ -500,8 +500,49 @@ document.addEventListener('DOMContentLoaded', () => {
   const scheduleTimeList = document.getElementById('schedule-time-list');
   const scheduleTime = createTimePicker(document.getElementById('schedule-time-picker'), { onChange: checkScheduleSlot });
 
+  const scheduleQuickTimes = document.getElementById('schedule-quick-times');
+
   // Times added for this date — one Mass is saved per time, all at once.
   let scheduleTimes = []; // "h:mm AM/PM" strings, chronologically sorted
+
+  /* Quick-add buttons under the time picker for the usual Mass times, so
+     repeated scheduling is one tap per time. Monday–Saturday show the two
+     daily times; Sunday shows every usual time. Same "07:00 AM" format the
+     time picker gives. Edit these lists to change the buttons. */
+  const QUICK_TIMES = {
+    weekday: ['06:30 AM', '06:00 PM'],
+    sunday:  ['06:00 AM', '06:30 AM', '08:00 AM', '10:00 AM', '05:00 PM', '06:00 PM'],
+  };
+  const quickTimesFor = (date) => !date ? [] : (new Date(date + 'T00:00:00').getDay() === 0 ? QUICK_TIMES.sunday : QUICK_TIMES.weekday);
+  const sameTime = (a, b) => to24h(a) === to24h(b);
+
+  function renderQuickTimes(date) {
+    const times = quickTimesFor(date);
+    scheduleQuickTimes.classList.toggle('hidden', !times.length);
+    if (!times.length) { scheduleQuickTimes.innerHTML = ''; return; }
+    const isSunday = times === QUICK_TIMES.sunday;
+    scheduleQuickTimes.innerHTML = `<span class="quick-times-label">${isSunday ? 'Sunday times' : 'Usual times'}:</span>` + times.map((t) => {
+      const added = scheduleTimes.some(s => sameTime(s, t));
+      const problem = added ? '' : scheduleTimeProblem(date, t, scheduleTimes);
+      const label = t.replace(/^0/, '');
+      return `<button type="button" class="quick-time${added ? ' is-added' : ''}" data-quick-time="${t}" aria-pressed="${added}"
+        ${problem ? `disabled title="${escapeHtml(problem)}"` : `title="${added ? `Remove ${label}` : `Add ${label}`}"`}>
+        ${added ? '<span aria-hidden="true">✓</span>' : '<span aria-hidden="true">+</span>'}${label}</button>`;
+    }).join('');
+  }
+
+  scheduleQuickTimes.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-quick-time]');
+    if (!btn || btn.disabled) return;
+    const t = btn.dataset.quickTime;
+    const i = scheduleTimes.findIndex(s => sameTime(s, t));
+    if (i >= 0) scheduleTimes.splice(i, 1);
+    else {
+      scheduleTimes.push(t);
+      scheduleTimes.sort((a, b) => to24h(a) - to24h(b));
+    }
+    checkScheduleSlot();
+  });
 
   const joinTimes = (list) => list.length < 3 ? list.join(' and ') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
 
@@ -559,6 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     renderScheduleTimeChips(badTimes);
+    renderQuickTimes(date);
     const pending = picked && !scheduleTimes.includes(picked) ? [picked] : [];
     const all = [...scheduleTimes, ...pending].sort((a, b) => to24h(a) - to24h(b));
     if (problem) {
