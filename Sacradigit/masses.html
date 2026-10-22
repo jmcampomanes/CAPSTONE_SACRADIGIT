@@ -389,13 +389,18 @@
       </div>
       <div class="modal-body">
         <div class="grid grid-cols-2 gap-3">
-          <div>
+          <div class="col-span-2">
             <label class="form-label" for="schedule-date">Date</label>
             <input type="date" id="schedule-date" class="form-input" />
           </div>
-          <div>
-            <label class="form-label">Time</label>
-            <div id="schedule-time-picker"></div>
+          <div class="col-span-2">
+            <label class="form-label">Time(s)</label>
+            <div class="name-chip-input-row">
+              <div id="schedule-time-picker"></div>
+              <button type="button" id="schedule-time-add" class="btn-secondary">Add Time</button>
+            </div>
+            <div id="schedule-time-list" class="name-chip-list"></div>
+            <p class="text-xs text-gray-400 mt-1">Pick a time and press Add Time — repeat to schedule several Masses on this date at once (e.g. 6:00 AM and 6:30 PM). Masses must start at least 1 hour apart.</p>
           </div>
           <p id="schedule-conflict" class="col-span-2 mass-conflict hidden" role="alert"></p>
           <div class="col-span-2">

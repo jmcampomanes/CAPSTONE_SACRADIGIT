@@ -490,3 +490,42 @@
   .schedule-actions { margin-left: 5rem; }
 }
 
+
+/* ---------- Time chips (Schedule Mass + Edit Weekly Schedule) ----------
+   Each added time is a removable chip under the time picker. Same look as
+   the name chips on Mass Intentions (mass-intentions.css isn't loaded here). */
+.name-chip-input-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.name-chip-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.625rem; }
+.name-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: rgba(139, 143, 199, 0.12);
+  color: #4a4e8a;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(139, 143, 199, 0.25);
+}
+.name-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(139, 143, 199, 0.25);
+  color: #4a4e8a;
+  font-size: 0.8125rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.name-chip-remove:hover { background: rgba(139, 143, 199, 0.4); }
+/* A time that clashes with another Mass on the chosen date */
+.name-chip.is-conflict { background-color: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.name-chip.is-conflict .name-chip-remove { background: #fecaca; color: #b91c1c; }
+:root[data-theme="dark"] .name-chip.is-conflict { background-color: #3a1d22; color: #fca5a5; border-color: #7f1d1d; }
+:root[data-theme="dark"] .name-chip.is-conflict .name-chip-remove { background: #7f1d1d; color: #fecaca; }
