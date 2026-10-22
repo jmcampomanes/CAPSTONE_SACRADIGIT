@@ -168,7 +168,8 @@ export async function collectNotifications(lang = currentLang()) {
   for (const r of services) {
     const name = esc(r.type);
     const when = r.date ? `${fmtDate(r.date, lang)}${r.time ? `, ${esc(r.time)}` : ''}` : '';
-    if (recent(r) && changedLater(r)) {
+    // An office approval is always news, even if it came within a minute of booking.
+    if (recent(r) && (changedLater(r) || wasApproved(r))) {
       const approval = needsApproval(r.type);
       const notApproved = approval && !wasApproved(r) && !/by the parishioner/i.test(r.declineReason || '');
       const reason = r.declineReason ? esc(r.declineReason) : (fil ? 'Makipag-ugnayan sa parish office.' : 'Please contact the parish office.');
@@ -196,7 +197,10 @@ export async function collectNotifications(lang = currentLang()) {
     }
   }
 
-  for (const r of bookings.filter(r => recent(r) && changedLater(r))) {
+  // Self-booked slots are created already approved and never updated, so any
+  // later update to an approved booking is the office approving it.
+  const officeApproved = (r) => r.status === 'approved' && r.updatedAt !== r.createdAt;
+  for (const r of bookings.filter(r => recent(r) && (changedLater(r) || officeApproved(r)))) {
     const name = esc(r.facilityName);
     const when = r.date ? `${fmtDate(r.date, lang)}${r.startTime ? `, ${esc(r.startTime)}` : ''}` : '';
     const msg = {
