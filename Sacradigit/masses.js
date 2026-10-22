@@ -526,9 +526,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let problem = '';
     let pickedProblem = '';
     const badTimes = [];
-    if (date && date < todayISO) {
-      problem = 'That date has already passed.';
-    } else if (date) {
+    // Past dates are allowed (e.g. recording a Mass after the fact).
+    if (date) {
       for (const t of scheduleTimes) {
         const p = scheduleTimeProblem(date, t, scheduleTimes);
         if (p) { badTimes.push(t); problem ||= p; }
@@ -545,13 +544,13 @@ document.addEventListener('DOMContentLoaded', () => {
       scheduleConflict.textContent = problem;
       scheduleConflict.classList.remove('hidden', 'is-ok');
     } else if (date && all.length) {
-      scheduleConflict.textContent = `${joinTimes(all)} on ${formatShortDate(date)} ${all.length > 1 ? 'are' : 'is'} free.`;
+      scheduleConflict.textContent = `${joinTimes(all)} on ${formatShortDate(date)} ${all.length > 1 ? 'are' : 'is'} free.${date < todayISO ? ' (This date has already passed — it will be added as a past Mass.)' : ''}`;
       scheduleConflict.classList.remove('hidden');
       scheduleConflict.classList.add('is-ok');
     } else {
       scheduleConflict.classList.add('hidden');
     }
-    scheduleTimeAdd.disabled = !!pickedProblem || (date && date < todayISO);
+    scheduleTimeAdd.disabled = !!pickedProblem;
     scheduleSubmitBtn.disabled = !!problem;
     scheduleSubmitBtn.textContent = all.length > 1 ? `Save ${all.length} Masses` : 'Save Mass';
     return problem;
@@ -564,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!time12) { showToast('Pick an hour first, then press Add Time.', true); return; }
     if (scheduleTimes.includes(time12)) { scheduleTime.reset(); checkScheduleSlot(); return; }
     const date = scheduleDateInput.value;
-    if (date && (date < todayISO || scheduleTimeProblem(date, time12, scheduleTimes))) { checkScheduleSlot(); return; }
+    if (date && scheduleTimeProblem(date, time12, scheduleTimes)) { checkScheduleSlot(); return; }
     scheduleTimes.push(time12);
     scheduleTimes.sort((a, b) => to24h(a) - to24h(b));
     scheduleTime.reset();
