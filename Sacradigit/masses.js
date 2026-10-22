@@ -242,27 +242,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* --- Upcoming Special Masses --- */
+  /* Five per page with numbered pages underneath. Masses with the same
+     name on the same date (e.g. a feast at 6:30 AM and 6:00 PM) share
+     one row listing all their times. */
+  const SPECIAL_PAGE_SIZE = 5;
+  const specialPager = document.getElementById('special-masses-pager');
+  let specialPage = 1;
+
   function renderSpecialMasses() {
-    const today = new Date(todayISO + 'T00:00:00');
+    const groups = new Map();
+    allMasses
+      .filter(m => m.isSpecial && m.date >= todayISO)
+      .sort((a, b) => a.date.localeCompare(b.date) || to24h(a.time) - to24h(b.time))
+      .forEach(m => {
+        const name = m.title || m.note || 'Special Mass';
+        const key = `${m.date}|${name}`;
+        if (!groups.has(key)) groups.set(key, { date: m.date, name, times: [] });
+        if (m.time) groups.get(key).times.push(m.time);
+      });
+    const upcoming = [...groups.values()];
 
-    const upcoming = allMasses
-      .filter(m => m.isSpecial && new Date(m.date + 'T00:00:00') >= today)
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    const totalPages = Math.max(1, Math.ceil(upcoming.length / SPECIAL_PAGE_SIZE));
+    specialPage = Math.min(specialPage, totalPages); // live updates can shrink the list
+    const start = (specialPage - 1) * SPECIAL_PAGE_SIZE;
+    const pageItems = upcoming.slice(start, start + SPECIAL_PAGE_SIZE);
 
-    specialMassesList.innerHTML = upcoming.map(m => `
+    specialMassesList.innerHTML = pageItems.map(g => `
       <li>
         <div class="special-row">
           <div class="special-icon">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
           </div>
           <div class="special-info">
-            <p class="special-name">${escapeHtml(m.title || m.note)}</p>
-            <p class="special-date">${formatLongDate(m.date)}</p>
+            <p class="special-name">${escapeHtml(g.name)}</p>
+            <p class="special-date">${formatLongDate(g.date)}${g.times.length ? ` · ${escapeHtml(g.times.map(t => t.replace(/^0/, '')).join(', '))}` : ''}</p>
           </div>
         </div>
       </li>
-    `).join('');
+    `).join('') || `<li class="empty-state"><p class="text-sm font-medium text-gray-600">No upcoming special masses</p></li>`;
+
+    renderSpecialPager(upcoming.length, totalPages, start, pageItems.length);
   }
+
+  // Page numbers, shortened with … when there are many: 1 … 4 5 6 … 12
+  function pageNumbers(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = new Set([1, total, current - 1, current, current + 1].filter(p => p >= 1 && p <= total));
+    const sorted = [...pages].sort((a, b) => a - b);
+    return sorted.flatMap((p, i) => (i && p - sorted[i - 1] > 1 ? ['…', p] : [p]));
+  }
+
+  function renderSpecialPager(totalItems, totalPages, start, count) {
+    specialPager.classList.toggle('hidden', totalItems === 0);
+    if (totalPages <= 1) {
+      specialPager.innerHTML = `<span class="pagination-info">Showing ${totalItems} of ${totalItems}</span>`;
+      return;
+    }
+    specialPager.innerHTML = `
+      <span class="pagination-info">Showing ${start + 1}–${start + count} of ${totalItems}</span>
+      <div class="pagination-controls">
+        <button type="button" class="pagination-btn" data-page="${specialPage - 1}" aria-label="Previous page" ${specialPage === 1 ? 'disabled' : ''}>‹</button>
+        ${pageNumbers(specialPage, totalPages).map(p => p === '…'
+          ? '<span class="pagination-gap" aria-hidden="true">…</span>'
+          : `<button type="button" class="pagination-btn ${p === specialPage ? 'active' : ''}" data-page="${p}" ${p === specialPage ? 'aria-current="page"' : ''}>${p}</button>`).join('')}
+        <button type="button" class="pagination-btn" data-page="${specialPage + 1}" aria-label="Next page" ${specialPage === totalPages ? 'disabled' : ''}>›</button>
+      </div>`;
+  }
+
+  specialPager.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pagination-btn[data-page]');
+    if (!btn || btn.disabled) return;
+    specialPage = parseInt(btn.dataset.page, 10);
+    renderSpecialMasses();
+  });
 
 
   /* --- Stat cards (this week's totals) --- */

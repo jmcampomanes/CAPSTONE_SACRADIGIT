@@ -562,3 +562,31 @@
 :root[data-theme="dark"] .quick-time:hover:not(:disabled) { background: #242c3e; border-color: #8b8fc7; }
 :root[data-theme="dark"] .quick-time.is-added { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
 :root[data-theme="dark"] .quick-time:disabled { background: #1f2533; border-color: #2c3548; color: #6b7385; }
+
+/* ---------- Page numbers (Upcoming Special Masses) ----------
+   Same look as the Donations table pager (donations.css isn't loaded here);
+   dark mode comes from theme-dark.css. */
+.pagination-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.875rem 1.25rem; border-top: 1px solid #eef0f4; }
+.pagination-bar.hidden { display: none; }
+.pagination-info { font-size: 0.75rem; color: #9ca3af; font-weight: 500; }
+.pagination-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; }
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.875rem;
+  height: 1.875rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.pagination-btn:hover:not(:disabled) { background-color: #f9fafb; border-color: #9ca3af; }
+.pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination-btn.active { background-color: #8b8fc7; border-color: #8b8fc7; color: #ffffff; }
+.pagination-gap { font-size: 0.75rem; color: #9ca3af; padding: 0 0.125rem; }
