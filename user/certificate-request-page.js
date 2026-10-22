@@ -12,7 +12,7 @@
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { currentUserName } from '../auth.js';
+import { currentUserName, currentUser } from '../auth.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, formatFullName, isNameEmpty } from '../name-utils.js';
 import { createMarriageForm, MARRIAGE_STEPS, TODAY_ISO, MIN_DATE_ISO, isReasonableDate, guardDateInputRange } from '../marriage-request-form.js';
 import { createCertStepForm, hasCertStepForm } from '../certificate-step-forms.js';
@@ -470,6 +470,7 @@ export function initCertificateRequestPage(typeId) {
       const result = await client.models.CertificateRequest.create({
         requesterName: REQUESTER_NAME,
         certificateType: selectedType.name,
+        email: currentUser()?.email || undefined, // where the "ready for pickup" email goes
         purpose: pendingSubmission.purpose,
         notes: pendingSubmission.notes || undefined,
         details: JSON.stringify(pendingSubmission.details),
