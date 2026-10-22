@@ -31,11 +31,27 @@ const byTime = (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
 export function watchMessages(onChange, { threadId } = {}) {
   if (!chatReady()) return () => {};
   const options = threadId ? { filter: { threadId: { eq: threadId } } } : {};
-  const sub = client.models.ChatMessage.observeQuery(options).subscribe({
-    next: ({ items }) => onChange(items.slice().sort(byTime)),
-    error: (err) => console.error('Failed to load messages:', err),
-  });
-  return () => sub.unsubscribe();
+  let sub = null;
+  const start = () => {
+    sub = client.models.ChatMessage.observeQuery(options).subscribe({
+      next: ({ items }) => onChange(items.slice().sort(byTime)),
+      error: (err) => console.error('Failed to load messages:', err),
+    });
+  };
+  const stop = () => { sub?.unsubscribe(); sub = null; };
+  // Chrome kills the WebSocket when the page goes into the back/forward
+  // cache, so drop the subscription on the way out and reopen it if the
+  // page is restored with Back/Forward.
+  const onHide = (e) => { if (e.persisted) stop(); };
+  const onShow = (e) => { if (e.persisted && !sub) start(); };
+  window.addEventListener('pagehide', onHide);
+  window.addEventListener('pageshow', onShow);
+  start();
+  return () => {
+    window.removeEventListener('pagehide', onHide);
+    window.removeEventListener('pageshow', onShow);
+    stop();
+  };
 }
 
 /** Conversations, newest activity first: [{ threadId, owner, parishionerName, messages, last, unread }]. */
