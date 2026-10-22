@@ -142,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         weeklySchedule = mergeWeeklySchedule(weeklyLive);
         renderWeeklySchedule();
         renderDateSchedule(); // Date's Schedule includes the recurring pattern too — refresh it when that pattern changes
+        if (showingCalendar) renderCalendar();
       },
       error: (err) => {
         console.error('Failed to load weekly mass schedule:', err);
@@ -331,16 +332,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${mm}-${dd}`;
   }
 
-  function calendarItems() {
-    return allMasses.map(m => ({
-      id: m.id,
-      title: m.title || m.type,
-      type: m.type,
-      time: m.time,
-      note: m.note,
-      isSpecial: !!m.isSpecial,
-      calDate: m.date,
-    })).filter(item => item.calDate);
+  // Every Mass on a date for the calendar: the ones scheduled for that date
+  // plus the regular weekly Masses they haven't replaced, by time.
+  function calendarItemsOn(iso) {
+    return [...massesOnDate(iso), ...regularMassesOnDate(iso)]
+      .map(m => ({ ...m, title: m.title || m.type, isSpecial: !!m.isSpecial }))
+      .sort((a, b) => to24h(a.time) - to24h(b.time));
   }
 
   function renderCalendar() {
@@ -352,7 +349,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const firstDay = new Date(year, month, 1);
     const startWeekday = firstDay.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const items = calendarItems();
 
     let cellsHtml = '';
     for (let i = 0; i < startWeekday; i++) cellsHtml += `<div class="calendar-cell empty"></div>`;
@@ -361,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const iso = isoFromParts(year, month, day);
-      const dayItems = items.filter(item => item.calDate === iso).sort((a, b) => to24h(a.time) - to24h(b.time));
+      const dayItems = calendarItemsOn(iso);
       const isToday = iso === todayISO;
       const isSelected = iso === selectedDateIso;
 
@@ -400,8 +396,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  let dayPlanItems = [];
+
   function openDayPlanModal(iso) {
-    const dayItems = calendarItems().filter(item => item.calDate === iso).sort((a, b) => to24h(a.time) - to24h(b.time));
+    const dayItems = dayPlanItems = calendarItemsOn(iso);
     const label = new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
     dayPlanTitle.textContent = label;
@@ -411,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dayPlanList.classList.add('hidden');
       dayPlanEmpty.classList.remove('hidden');
     } else {
-      dayPlanList.innerHTML = dayItems.map(item => `
+      dayPlanList.innerHTML = dayItems.map((item, idx) => `
         <div class="day-plan-item">
           <span class="day-plan-item-time">${escapeHtml(item.time || '—')}</span>
           <div class="day-plan-item-body">
@@ -419,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${item.note && item.note !== item.title ? `<p class="day-plan-item-purpose">${escapeHtml(item.note)}</p>` : ''}
           </div>
           ${massTypeBadgeHtml(item.type)}
+          ${item.isRecurring ? `<button type="button" class="act-btn head-admin-only" data-replace-index="${idx}" title="Hold a special Mass at this time on this date instead">Replace</button>` : ''}
         </div>
       `).join('');
       dayPlanList.classList.remove('hidden');
@@ -427,6 +426,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     openModal(dayPlanModal);
   }
+
+  dayPlanList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-replace-index]');
+    const m = btn && dayPlanItems[parseInt(btn.dataset.replaceIndex, 10)];
+    if (!m) return;
+    closeModal(dayPlanModal);
+    openReplaceWithSpecial(m);
+  });
 
   document.getElementById('cal-prev').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); });
   document.getElementById('cal-next').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); });
