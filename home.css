@@ -550,3 +550,10 @@ a { color: inherit; }
   .hp-bann-couple { grid-template-columns: 1fr; }
   .hp-bann-and { line-height: 1; }
 }
+
+/* Columbary availability (home.js) */
+.hp-avail { margin-top: 1rem; padding: 0.875rem 1rem; border-radius: 0.75rem; background: var(--hp-alt); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.hp-avail p { margin: 0; font-size: 0.9375rem; }
+.hp-avail strong { font-size: 1.375rem; font-weight: 800; color: var(--hp-text); }
+.hp-avail a { font-size: 0.875rem; font-weight: 700; color: var(--hp-lavender); text-decoration: none; }
+.hp-avail a:hover { text-decoration: underline; }

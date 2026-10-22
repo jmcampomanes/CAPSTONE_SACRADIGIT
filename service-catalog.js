@@ -19,7 +19,7 @@ import { MAP_PIN_LABEL } from './service-schedule.js';
 export const SERVICE_CATEGORIES = [
   { key: 'blessing', label: 'Blessings', desc: 'Blessings for a home, vehicle, or business.' },
   { key: 'sacrament', label: 'Sacraments', desc: 'The sacraments of the Catholic faith.' },
-  { key: 'special-mass', label: 'Special Masses', desc: 'A Mass offered for a specific intention or occasion.' },
+  { key: 'special-mass', label: 'Special Masses', desc: 'A Mass or rite for a specific intention or occasion — including inurnment in the parish columbary.' },
 ];
 
 // Blessings booked by parishioners wait for the parish office to approve or
@@ -34,7 +34,7 @@ const APPROVAL_CATEGORIES = new Set(['blessing']);
 export function needsApproval(typeName) {
   const svc = SERVICE_TYPES.find(s => s.name === typeName);
   // Older records used 'Vehicle Blessing' before it became 'Vehicle / Item Blessing'.
-  return svc ? APPROVAL_CATEGORIES.has(svc.category) : /blessing|dedication/i.test(typeName || '');
+  return svc ? (!!svc.approval || APPROVAL_CATEGORIES.has(svc.category)) : /blessing|dedication/i.test(typeName || '');
 }
 
 /** The catalog entry for a stored `type` (display name), if any. */
@@ -105,6 +105,18 @@ export const SERVICE_TYPES = [
     fields: [
       { id: 'deceased-name', label: 'Full Name of Deceased', kind: 'name', required: true, span2: true },
       { id: 'requester-rel', label: 'Relationship to Deceased', placeholder: 'e.g. Son, Daughter, Spouse', required: true },
+    ] },
+  // Waits for the office (approval: true): they check the niche is fully paid
+  // and the certificates are in before confirming. See ../columbary.js.
+  { id: 'inurnment', name: 'Inurnment', category: 'special-mass', approval: true, desc: 'Placing a loved one’s ashes in the parish columbary, with a blessing of the urn.',
+    iconBg: 'rgba(91,95,168,0.12)', iconColor: '#5b5fa8',
+    icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 3h6M10 3v2.5c-2.5 1-4 3.3-4 6.5 0 4 2.7 9 6 9s6-5 6-9c0-3.2-1.5-5.5-4-6.5V3M9 12h6"/></svg>`,
+    fields: [
+      { id: 'inurn-deceased', label: 'Full Name of Deceased', kind: 'name', required: true, span2: true },
+      { id: 'inurn-death-date', label: 'Date of Death', placeholder: 'e.g. October 10, 2026', required: true },
+      { id: 'inurn-relationship', label: 'Relationship to Deceased', placeholder: 'e.g. Son, Daughter, Spouse', required: true },
+      { id: 'inurn-niche', label: 'Niche Number', placeholder: 'e.g. A-3-07 (leave blank if you don’t have one yet)', required: false, span2: true },
+      { id: 'inurn-note', kind: 'note', text: 'Bring the Death Certificate and the Cremation Certificate to the parish office before the inurnment. The niche must be fully paid before it can be used. The office will confirm your schedule.' },
     ] },
   { id: 'house-blessing', name: 'House Blessing', category: 'blessing', desc: 'Blessing for a home or residence.',
     iconBg: 'rgba(201,168,76,0.16)', iconColor: '#b5943e',

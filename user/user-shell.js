@@ -46,6 +46,16 @@ const HELP_CONTENT = {
       'Tap 🙏 “I prayed for this” on someone’s request to let them know they’re being prayed for.',
     ],
   },
+  'user-columbary.html': {
+    title: 'Columbary',
+    intro: 'See which niches in the parish columbary are available and ask the office to reserve one.',
+    steps: [
+      'Pick a wall, then tap an available (white) niche. Each row shows its price.',
+      'Fill in the buyer’s name and contact number and send the request. It’s not a purchase yet.',
+      'The parish office calls or emails you. Once they approve it, pay at the office — in cash or installments. The vault can be used once fully paid.',
+      'Your requests and the office’s answer appear under “My niche requests.” Use “Request an Inurnment” to schedule placing a loved one’s ashes.',
+    ],
+  },
   'user-ministry.html': {
     title: 'Ministry Sign-ups',
     intro: 'Serve as a lector, choir member, altar server or usher at Mass.',
@@ -307,6 +317,15 @@ document.addEventListener('DOMContentLoaded', () => {
         </ul>`);
   }
 
+
+  /* "Columbary" (user-columbary.html), after Facility Booking. */
+  const fbLink = sidebarNav?.querySelector('[data-nav="facility-booking"]');
+  if (fbLink && !sidebarNav.querySelector('[data-nav="columbary"]')) {
+    fbLink.closest('li').insertAdjacentHTML('afterend', `
+          <li><a href="user-columbary.html" data-nav="columbary" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 21V5a2 2 0 012-2h12a2 2 0 012 2v16M4 21h16M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"/></svg>
+            Columbary</a></li>`);
+  }
 
   /* "My Requests" and "Requested Services" sounded like the same thing. */
   const NAV_NAMES = { 'my-requests': 'My certificate requests', 'requested-services': 'My service bookings' };

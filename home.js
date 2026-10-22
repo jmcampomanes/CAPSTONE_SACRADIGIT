@@ -27,6 +27,7 @@ import { mergeWeeklySchedule, dayKeyForDate, timeToMinutes } from './weekly-mass
 import { massTypeInfo } from './mass-types.js';
 import { initUiPrefs, currentLang } from './ui-prefs.js';
 import { listBanns, isCurrent, timeOfAsking, fmtMonthDay, ORDINAL, THIS_PARISH } from './banns.js';
+import { listSections, availableCount } from './columbary.js';
 
 Amplify.configure(outputs);
 const client = generateClient({ authMode: 'apiKey' });
@@ -188,6 +189,18 @@ listBanns(client)
     $('hp-nav-banns').hidden = false;
   })
   .catch(err => console.warn('Marriage banns unavailable:', err));
+
+/* ---------- Columbary: how many niches are available (no names) ---------- */
+
+if (client.models.ColumbarySection) {
+  listSections(client)
+    .then(sections => {
+      if (!sections.length) return;
+      $('hp-col-free').textContent = sections.reduce((n, s) => n + availableCount(s), 0);
+      $('hp-col-avail').hidden = false;
+    })
+    .catch(err => console.warn('Columbary availability unavailable:', err));
+}
 
 /* ---------- Parish contact (footer, columbary call-out, about) ---------- */
 

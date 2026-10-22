@@ -99,6 +99,10 @@ export const REQUIREMENTS = {
     en: ["Death certificate of the deceased (photocopy)", 'Name of the funeral home and the preferred Mass time'],
     fil: ['Death certificate ng yumao (kopya)', 'Pangalan ng punerarya at gustong oras ng Misa'],
   },
+  'Inurnment': {
+    en: ['Death Certificate', 'Cremation Certificate', 'A niche in the parish columbary, fully paid (reserve one on the Columbary page; cash or installment; ₱100/month maintenance from first use)'],
+    fil: ['Death Certificate', 'Cremation Certificate', 'Niche sa columbary ng parokya na bayad na nang buo (mag-request sa pahinang Columbary; cash o hulugan; ₱100 kada buwan na maintenance mula sa unang paggamit)'],
+  },
   'Anointing of the Sick': {
     en: ['Name and complete address of the sick person (home or hospital room)', 'In an emergency, call or go to the parish office right away — don’t wait for an online slot'],
     fil: ['Pangalan at kumpletong address ng may sakit (bahay o kuwarto sa ospital)', 'Kung emergency, tumawag o pumunta agad sa parish office — huwag nang hintayin ang online na slot'],
@@ -130,6 +134,7 @@ export const SERVICE_NAMES_FIL = {
   'Wedding': 'Kasal',
   'Holy Orders': 'Ordinasyon',
   'Funeral Mass': 'Misa para sa Yumao',
+  'Inurnment': 'Paglalagak ng Abo (Inurnment)',
   'House Blessing': 'Pagbabasbas ng Bahay',
   'Vehicle / Item Blessing': 'Pagbabasbas ng Sasakyan / Gamit',
   'Business Dedication': 'Pagbabasbas ng Negosyo',
@@ -147,6 +152,7 @@ export const SERVICE_KEYWORDS = {
   'Anointing of the Sick': ['anointing', 'sick', 'last rites', 'maysakit', 'may sakit', 'pahid', 'langis', 'hospital', 'ospital', 'dying', 'naghihingalo'],
   'Wedding': ['wedding', 'marriage', 'marry', 'married', 'kasal', 'ikasal', 'magpakasal', 'kasalan', 'pre-cana', 'precana', 'cenomar', 'banns'],
   'Holy Orders': ['holy orders', 'ordination', 'ordinasyon', 'priesthood', 'pagpapari'],
+  'Inurnment': ['inurnment', 'columbary', 'columbarium', 'niche', 'vault', 'urn', 'ashes', 'cremation', 'cremated', 'abo', 'nitso', 'kolumbaryo'],
   'Funeral Mass': ['funeral', 'burial', 'wake', 'deceased', 'died', 'patay', 'namatay', 'yumao', 'libing', 'lamay', 'burol', 'punerarya'],
   'House Blessing': ['house blessing', 'house', 'home', 'bahay', 'bagong bahay', 'condo', 'apartment'],
   'Vehicle / Item Blessing': ['vehicle', 'car', 'motorcycle', 'motor', 'kotse', 'sasakyan', 'jeep', 'tricycle'],
@@ -191,6 +197,8 @@ export const PORTAL_DIRECTORY = [
       what: { en: 'Offer a Mass intention (Thanksgiving, Special Intention, or for a Soul) and track it.', fil: 'Mag-alay ng intensyon sa Misa (Pasasalamat, Espesyal na Intensyon, o para sa Kaluluwa) at subaybayan ito.' } },
     { page: 'user-facility-booking.html', en: 'Facility Booking', fil: 'Pag-book ng Pasilidad',
       what: { en: 'Book the Multi-Purpose Hall or the 3rd Floor Hall; see or cancel your bookings.', fil: 'Mag-book ng Multi-Purpose Hall o ng 3rd Floor Hall; tingnan o kanselahin ang iyong booking.' } },
+    { page: 'user-columbary.html', en: 'Columbary', fil: 'Columbary',
+      what: { en: 'See which columbary niches are available, ask the office to reserve one, and track your requests.', fil: 'Tingnan kung aling niche sa columbary ang bakante, mag-request na i-reserve ang isa, at subaybayan ang iyong request.' } },
   ] },
   { section: { en: 'Finance', fil: 'Pananalapi' }, pages: [
     { page: 'user-donations.html', en: 'Donations', fil: 'Mga Donasyon',

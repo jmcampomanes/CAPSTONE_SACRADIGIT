@@ -24,7 +24,8 @@ const STAFF_ROLES = { admin: 'Head Admin', staff: 'Secretary', media: 'Media Tea
 // Models that aren't logged automatically: the log itself, parishioner-only
 // activity, chat (read markers would flood the log), and writes that already
 // log themselves with more detail (bookings via logBookingAction).
-const SKIP_MODELS = new Set(['AccessLog', 'ChatMessage', 'MassCheckIn', 'ParishionerPreference', 'LivestreamSession', 'PrayerReaction']);
+const SKIP_MODELS = new Set(['AccessLog', 'ChatMessage', 'MassCheckIn', 'ParishionerPreference', 'LivestreamSession', 'PrayerReaction',
+  'ColumbarySection', 'NicheReservation', 'NichePayment']); // the Columbary page logs these itself, in words
 const SKIP_OPS = new Set(['Blessing.create', 'Blessing.update', 'FacilityBooking.delete']);
 
 const MODEL_LABELS = {
@@ -36,6 +37,7 @@ const MODEL_LABELS = {
   ServiceSlot: 'Service Slot', MassCheckInSession: 'Mass Check-in',
   PrayerRequest: 'Prayer Request', MinistrySignup: 'Ministry Sign-up',
   CustomBadge: 'Badge', BadgeAward: 'Badge Award',
+  ColumbarySection: 'Columbary Wall', NicheReservation: 'Niche Reservation', NichePayment: 'Niche Payment',
 };
 
 let logClient = null;

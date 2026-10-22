@@ -161,6 +161,17 @@ const HELP_CONTENT = {
       'Anonymous requests never store the person’s name, so the office doesn’t see it either.',
     ],
   },
+  'columbary.html': {
+    title: 'Columbary',
+    intro: 'The parish columbary: niches, reservations, payments and inurnments.',
+    steps: [
+      'Niche Map shows every wall. Colours tell you which niches are available, requested, being paid, fully paid, in use, or not for sale. Click a niche to open it.',
+      'Click an available niche to reserve it for a walk-in family. Parishioners’ online requests wait under Reservations → Requests waiting; Approve or Decline them (the family is emailed).',
+      'Record Payment logs each cash or installment payment with its OR number. When the niche price is fully paid the niche turns Fully paid — only then can the vault be used.',
+      'Record Inurnment adds who rests in the niche. The first inurnment starts the ₱100/month maintenance; “Maintenance due” lists families who are behind. Print Statement gives the family their account.',
+      'Walls & Prices (Head Admin) sets up each wall’s rows, niches per row and the price of each row. A reservation keeps the price it was reserved at.',
+    ],
+  },
   'badge-maker.html': {
     title: 'Badges',
     intro: 'Make new Faith Journey badges for parishioners, on top of the built-in ones.',
@@ -271,6 +282,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   watchPendingPrayers(document.querySelector('#sidebar a.sidebar-link[href="prayer-wall.html"]'));
 
+  /* "Columbary" (columbary.html) — niches, reservations and payments, after Donations. */
+  const donLi = document.querySelector('#sidebar a.sidebar-link[href="donations.html"]')?.closest('li');
+  if (donLi && !document.querySelector('#sidebar a.sidebar-link[href="columbary.html"]')) {
+    donLi.insertAdjacentHTML('afterend', `
+          <li>
+            <a href="columbary.html" data-nav="columbary" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 21V5a2 2 0 012-2h12a2 2 0 012 2v16M4 21h16M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"/></svg>
+              Columbary
+            </a>
+          </li>`);
+  }
+
   /* "Badges" — the badge maker (badge-maker.html), after Prayer Wall. */
   const pwLi = document.querySelector('#sidebar a.sidebar-link[href="prayer-wall.html"]')?.closest('li');
   if (pwLi && !document.querySelector('#sidebar a.sidebar-link[href="badge-maker.html"]')) {
@@ -302,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ['Main', ['dashboard.html']],
     ['Masses', ['masses.html', 'special-schedules.html', 'ministry-roster.html', 'attendance.html']],
     ['Requests', ['record-requests.html', 'schedule-offers.html', 'blessings.html', 'facility-booking.html', 'mass-intentions.html']],
-    ['Records & Finance', ['digital-archives.html', 'donations.html']],
+    ['Records & Finance', ['digital-archives.html', 'donations.html', 'columbary.html']],
     ['Communications', ['announcements.html', 'messages.html', 'prayer-wall.html', 'badge-maker.html', 'parish-info.html']],
   ];
   const nav = document.querySelector('#sidebar nav');

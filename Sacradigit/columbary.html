@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Installable app (PWA): see pwa.js and public/manifest.webmanifest -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#1e2a4a" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="SacraDigit" />
+  <title>Columbary – SacraDigit Admin</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              DEFAULT: '#1e2a4a',
+              dark: '#16213a',
+              light: '#2a3a5c',
+            },
+            gold: '#c9a84c',
+            lavender: '#8b8fc7',
+            'lavender-light': '#a8acda',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="sacradigit-css/admin-shell.css" />
+  <link rel="stylesheet" href="sacradigit-css/digital-archives.css" />
+  <link rel="stylesheet" href="sacradigit-css/community.css" />
+  <link rel="stylesheet" href="sacradigit-css/schedule-offers.css" />
+  <link rel="stylesheet" href="sacradigit-css/columbary.css" />
+  <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
+  <style>.auth-pending body{visibility:hidden}</style>
+  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
+  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
+  <link rel="stylesheet" href="../theme-dark.css" />
+  <link rel="stylesheet" href="../accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased">
+
+  <div class="admin-shell flex min-h-screen">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col shrink-0">
+
+      <div class="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+        <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center shrink-0 overflow-hidden">
+          <img src="../sacradigit-images/scaradigit-logo.png" alt="SacraDigit logo" class="w-full h-full object-cover" />
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-gray-900 text-sm">SacraDigit</p>
+          <p class="text-gray-400 text-xs">Parish Management</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="Admin navigation">
+
+        <p class="sidebar-label">Main</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="dashboard.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Dashboard
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Records</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="digital-archives.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7"/></svg>
+              Digital Archives
+            </a>
+          </li>
+          <li>
+            <a href="record-requests.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Record Requests
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Operations</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="schedule-offers.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Schedule Offers
+            </a>
+          </li>
+          <li>
+            <a href="blessings.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Blessings
+            </a>
+          </li>
+          <li>
+            <a href="facility-booking.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Facility Booking
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Finance</p>
+        <ul class="space-y-0.5 mb-5">
+          <li>
+            <a href="mass-intentions.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m-6 4h6m-6 4h4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              Mass Intentions
+            </a>
+          </li>
+          <li>
+            <a href="donations.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Donations
+            </a>
+          </li>
+        </ul>
+
+        <p class="sidebar-label">Communications</p>
+        <ul class="space-y-0.5">
+          <li>
+            <a href="announcements.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+              Announcements
+            </a>
+          </li>
+          <li>
+            <a href="special-schedules.html" data-nav="special-schedules" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 16h.01M13 16h.01"/></svg>
+              Special Schedules
+            </a>
+          </li>
+          <li>
+            <a href="masses.html" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Masses
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
+          <div class="w-9 h-9 rounded-full bg-navy flex items-center justify-center shrink-0">
+            <span class="text-white font-semibold text-xs">AD</span>
+          </div>
+          <div class="leading-tight min-w-0">
+            <p class="font-medium text-gray-900 text-sm truncate">Admin User</p>
+            <p class="text-gray-400 text-xs truncate">System Admin</p>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#b5943e;border-bottom-width:3px;">
+        <div class="flex items-center gap-3">
+          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:#b5943e1f;color:#b5943e;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 21V5a2 2 0 012-2h12a2 2 0 012 2v16M4 21h16M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"/></svg></div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Columbary</h1>
+        </div>
+        <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
+      </header>
+
+      <!-- Page content -->
+      <main class="flex-1 px-6 md:px-8 py-6 space-y-5">
+
+        <div class="admin-hero" data-sacred-header>
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Parish Columbary</h2>
+            <p class="text-gray-500 text-sm mt-1">Niches, reservations, payments and inurnments. Click a niche on the map to reserve it, record a payment, or see who rests there.</p>
+          </div>
+        </div>
+
+        <p id="col-unavailable" class="community-unavailable hidden">The columbary needs a backend update (the ColumbarySection, NicheReservation and NichePayment models — see columbary.js). Once it’s deployed, the map and reservations work here.</p>
+
+        <div id="col-main" class="space-y-5">
+          <div class="col-stats" id="col-stats"></div>
+
+          <div class="col-tabs" role="tablist" aria-label="Columbary">
+            <button type="button" class="col-tab active" data-tab="map" role="tab" aria-selected="true">Niche Map</button>
+            <button type="button" class="col-tab" data-tab="list" role="tab" aria-selected="false">Reservations <span class="col-tab-count" id="col-count-requests" hidden></span></button>
+            <button type="button" class="col-tab head-admin-only" data-tab="setup" role="tab" aria-selected="false">Walls &amp; Prices</button>
+          </div>
+
+          <!-- Map -->
+          <section id="col-panel-map" class="panel col-panel" role="tabpanel">
+            <div class="col-map-head">
+              <div id="col-sections" class="col-chips" role="group" aria-label="Wall"></div>
+              <ul class="col-legend" aria-label="Legend">
+                <li><span class="col-swatch s-available"></span>Available</li>
+                <li><span class="col-swatch s-requested"></span>Request waiting</li>
+                <li><span class="col-swatch s-reserved"></span>Reserved · paying</li>
+                <li><span class="col-swatch s-paid"></span>Fully paid</li>
+                <li><span class="col-swatch s-occupied"></span>In use</li>
+                <li><span class="col-swatch s-blocked"></span>Not for sale</li>
+              </ul>
+            </div>
+            <p id="col-section-note" class="col-note"></p>
+            <div class="col-map-wrap"><div id="col-map" class="col-map"></div></div>
+            <p id="col-map-empty" class="col-empty hidden">No walls set up yet. <span class="head-admin-only">Add one under “Walls &amp; Prices.”</span></p>
+          </section>
+
+          <!-- Reservations -->
+          <section id="col-panel-list" class="panel col-panel hidden" role="tabpanel">
+            <div class="col-list-head">
+              <div id="col-filters" class="col-chips" role="group" aria-label="Show">
+                <button type="button" class="col-chip active" data-filter="requested">Requests waiting</button>
+                <button type="button" class="col-chip" data-filter="reserved">Paying</button>
+                <button type="button" class="col-chip" data-filter="paid">Fully paid</button>
+                <button type="button" class="col-chip" data-filter="dues">Maintenance due</button>
+                <button type="button" class="col-chip" data-filter="closed">Declined / Cancelled</button>
+              </div>
+              <input type="search" id="col-search" class="form-input col-search" placeholder="Search name or niche…" aria-label="Search reservations" />
+            </div>
+            <div id="col-list" class="col-list"></div>
+            <p id="col-list-empty" class="col-empty hidden"></p>
+          </section>
+
+          <!-- Setup -->
+          <section id="col-panel-setup" class="panel col-panel hidden head-admin-only" role="tabpanel">
+            <div class="col-setup-head">
+              <p class="col-note">Each wall is a grid of niches. Row 1 is the top row. Set a price for each row — a reservation keeps the price it was reserved at, so changing prices never affects families who already reserved.</p>
+              <button type="button" class="btn-lavender" id="col-add-section">+ Add Wall</button>
+            </div>
+            <div id="col-setup-list" class="col-setup-list"></div>
+          </section>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ========== NICHE / RESERVATION ========== -->
+  <div id="col-niche" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="col-niche-title">
+    <div class="modal-card col-niche-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="col-niche-title">Niche</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="col-niche-body"></div>
+      <div class="modal-footer" id="col-niche-foot"></div>
+    </div>
+  </div>
+
+  <!-- ========== WALL EDITOR ========== -->
+  <div id="col-section-modal" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="col-section-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="col-section-title">Add Wall</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body space-y-4">
+        <div class="col-form-grid">
+          <div class="col-span2">
+            <label class="form-label" for="sec-name">Wall name <span class="text-red-500">*</span></label>
+            <input id="sec-name" class="form-input" maxlength="60" placeholder="e.g. Wall A — St. Joseph" />
+          </div>
+          <div>
+            <label class="form-label" for="sec-code">Code <span class="text-red-500">*</span></label>
+            <input id="sec-code" class="form-input" maxlength="3" placeholder="A" />
+            <p class="col-hint">Starts each niche number, e.g. A-3-07.</p>
+          </div>
+          <div>
+            <label class="form-label" for="sec-order">Order on the page</label>
+            <input id="sec-order" type="number" class="form-input" min="0" value="1" />
+          </div>
+          <div>
+            <label class="form-label" for="sec-rows">Rows <span class="text-red-500">*</span></label>
+            <input id="sec-rows" type="number" class="form-input" min="1" max="30" value="6" />
+          </div>
+          <div>
+            <label class="form-label" for="sec-cols">Niches per row <span class="text-red-500">*</span></label>
+            <input id="sec-cols" type="number" class="form-input" min="1" max="60" value="10" />
+          </div>
+          <div class="col-span2">
+            <label class="form-label" for="sec-note">Note <span class="col-optional">(optional)</span></label>
+            <input id="sec-note" class="form-input" maxlength="140" placeholder="e.g. Ground floor, beside the Adoration Chapel" />
+          </div>
+        </div>
+        <div>
+          <p class="form-label">Price per row</p>
+          <p class="col-hint" style="margin-top:0">Eye-level rows are usually priced higher.</p>
+          <div id="sec-prices" class="col-prices"></div>
+        </div>
+        <p id="sec-warn" class="col-warn hidden"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="sec-delete" class="btn-danger-outline hidden">Delete Wall…</button>
+        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+        <button type="button" id="sec-save" class="btn-lavender">Save Wall</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="dashboard.js"></script>
+  <script type="module" src="columbary-admin.js"></script>
+</body>
+</html>

@@ -48,6 +48,7 @@ export const SERVICE_PAGES = {
   'funeral':               'user-service-funeral-mass.html',
   'anniversary-mass':      'user-service-anniversary-mass.html',
   'baccalaureate-mass':    'user-service-baccalaureate-mass.html',
+  'inurnment':             'user-service-inurnment.html',
 };
 
 function escapeHtml(str) {

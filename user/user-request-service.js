@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p class="svc-type-desc">${escapeHtml(s.desc)}</p>
       <div class="svc-type-sched">${schedHtml(s.name)}</div>
       <div class="svc-type-foot">
-        ${needsApproval(s.name) ? '<span class="svc-type-approval" title="The parish office approves blessing requests first">Needs approval</span>' : ''}
+        ${needsApproval(s.name) ? '<span class="svc-type-approval" title="The parish office approves this request first">Needs approval</span>' : ''}
         <span class="svc-type-cta">Start request
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 12h14M13 6l6 6-6 6"/></svg>
         </span>

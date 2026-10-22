@@ -13,7 +13,6 @@ import {
   timeOfAsking, bannsReading, fmtLong, fmtShort, ORDINAL, THIS_PARISH, isoOf,
 } from '../banns.js';
 import { printReport, esc } from '../print-report.js';
-import { logActivity } from '../activity-log.js';
 import { confirmDialog } from './admin-ui.js';
 
 const STATUS_DONE = new Set(['declined', 'cancelled']);
@@ -128,7 +127,6 @@ export function initBannsPanel(el, { showToast }) {
         couple.brideParish = el.querySelector('#bn-bride-parish').value.trim();
         const first = el.querySelector('#bn-first').value;
         await publishBanns(client, couple, first, existing?.id || null);
-        logActivity('Create', `Marriage banns — ${couple.groomName} & ${couple.brideName}, from ${fmtShort(first)}`);
         showToast('Banns published — they’re on the parish website and in the portal now.');
       } else if (act === 'withdraw') {
         const sure = await confirmDialog({
@@ -139,7 +137,6 @@ export function initBannsPanel(el, { showToast }) {
         });
         if (!sure) return;
         await withdrawBanns(client, existing.id);
-        logActivity('Edit', `Marriage banns withdrawn — ${couple.groomName} & ${couple.brideName}`);
         showToast('Banns withdrawn.');
       }
     } catch (err) {

@@ -43,6 +43,11 @@ export const REQUIREMENTS = {
     ['catechism', 'Catechism classes completed'],
     ['confession', 'First Confession done'],
   ],
+  'Inurnment': [
+    ['death-cert', 'Death Certificate received'],
+    ['cremation-cert', 'Cremation Certificate received'],
+    ['niche-paid', 'Niche fully paid (see Columbary)'],
+  ],
   'Wedding': [
     ['baptismal-certs', 'Baptismal certificates, for marriage purposes, issued within 6 months (both)'],
     ['confirmation-certs', 'Confirmation certificates, for marriage purposes (both)'],

@@ -52,6 +52,8 @@ export const SERVICE_SCHEDULES = {
 
   // Special Masses
   'Funeral Mass':                { days: WEEKDAYS,  times: ['08:00 AM', '10:00 AM', '02:00 PM'],             capacity: 1,  leadDays: 1,  windowDays: 14,  location: 'Main Church' },
+  // Columbary is open Tue–Sun and closed Mondays (parish rules)
+  'Inurnment':                   { days: [2, 3, 4, 5, 6], times: ['09:00 AM', '10:00 AM', '03:00 PM'],     capacity: 1,  leadDays: 2,  windowDays: 60,  location: 'Parish Columbary' },
   'Anniversary Mass':            { days: [5, 6],    times: ['10:00 AM', '03:00 PM'],                         capacity: 1,  leadDays: 7,  windowDays: 120, location: 'Main Church' },
   'Baccalaureate Mass':          { days: [1, 2, 3, 4, 5], times: ['09:00 AM', '02:00 PM'],                   capacity: 1,  leadDays: 14, windowDays: 180, location: 'Main Church' },
 
