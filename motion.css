@@ -64,7 +64,6 @@ main > *:nth-child(3) { animation-delay: 120ms; }
 main > *:nth-child(4) { animation-delay: 180ms; }
 main > *:nth-child(5) { animation-delay: 240ms; }
 main > *:nth-child(n + 6) { animation-delay: 300ms; }
-.admin-hero, .ann-hero { animation: sd-rise var(--dur-slow) var(--ease-out) both; }
 
 /* ---------- Sidebar: the gold highlight glides to the page you picked (motion.js) ---------- */
 #sd-nav-pill {

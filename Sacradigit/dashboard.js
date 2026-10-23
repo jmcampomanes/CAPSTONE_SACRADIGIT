@@ -30,6 +30,7 @@ import { labelTopBarIcons } from '../top-bar-labels.js';
 import { initTableCards } from '../table-cards.js';
 import { initFindPerson } from './find-person.js';
 import { initAdminPageViews } from './admin-page-view.js';
+import { mountAdminPageInfo } from './admin-page-info.js';
 
 /* ------------------------------------------
    Per-page "How to use this page" content for
@@ -367,32 +368,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   /* ------------------------------------------
-     1a. NAVY PAGE HEADER ICON
-     Each page's navy header (.admin-hero) gets
-     the same icon as its sidebar tab, like the
-     parishioner pages' headers. The rotating
-     sacred art itself is added by sacred-art.js.
+     1a. "WHAT CAN I DO HERE?" BOX
+     Same as the parishioner pages: a short note
+     on what the page is for, with the page's
+     main buttons on its right (admin-page-info.js).
   ------------------------------------------ */
-  const hero = document.querySelector('.admin-hero');
-  const activeIcon = document.querySelector('.sidebar-link.active svg');
-  if (hero && !hero.querySelector('.admin-hero-lead')) {
-    const text = hero.querySelector(':scope > div:not(.sacred-art-frame):not(.sacred-header-tint)');
-    if (text) {
-      const lead = document.createElement('div');
-      lead.className = 'admin-hero-lead';
-      if (activeIcon) {
-        const icon = document.createElement('div');
-        icon.className = 'admin-hero-icon';
-        icon.setAttribute('aria-hidden', 'true');
-        const svg = activeIcon.cloneNode(true);
-        svg.setAttribute('class', 'w-6 h-6');
-        icon.appendChild(svg);
-        lead.appendChild(icon);
-      }
-      text.replaceWith(lead);
-      lead.appendChild(text);
-    }
-  }
+  mountAdminPageInfo(currentPage);
 
 
   /* ------------------------------------------

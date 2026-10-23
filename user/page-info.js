@@ -1,6 +1,8 @@
 /* ============================================
    SacraDigit — "What can I do here?" box at the top
-   of each parishioner page (started by user-shell.js).
+   of each parishioner page (started by user-shell.js;
+   the box itself is ../page-info.js, shared with the
+   staff portals).
    Same look as Request a Service's "What can I request
    here?": an info icon, a question, a sentence or two —
    and, when the page has a main button, that button on
@@ -9,6 +11,8 @@
    own box (Request a Service, Mass Intentions) keep it;
    Mass Intentions just gets its button moved inside.
    ============================================ */
+
+import { mountPageInfo as mount } from '../page-info.js';
 
 const PAGE_INFO = {
   'user-mass-schedule.html': {
@@ -67,95 +71,4 @@ const PAGE_INFO = {
   },
 };
 
-const INFO_ICON = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
-const LIST_ICON = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>';
-
-const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
-
-/** Moves the page's main button(s) into `banner`, on the right. */
-function moveActions(banner, actionsRow) {
-  if (!actionsRow) return;
-  const buttons = [...actionsRow.children];
-  if (!buttons.length) return;
-  banner.classList.add('info-banner-with-action');
-  buttons.forEach(b => { b.classList.add('info-banner-action'); banner.appendChild(b); });
-  actionsRow.remove();
-}
-
-/* From the second visit to a page, the box folds to its title, with
-   "Show more" to open it again: returning parishioners know what the
-   page is for, and their own items move up the screen. */
-const SEEN_KEY = 'sacradigit_seen_pages';
-function foldAfterFirstVisit(banner, pageFile) {
-  let seen = [];
-  try { seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || []; } catch { /* private mode */ }
-  if (!seen.includes(pageFile)) {
-    try { localStorage.setItem(SEEN_KEY, JSON.stringify([...seen, pageFile])); } catch { /* private mode */ }
-    return;
-  }
-  const title = banner.querySelector('.info-banner-title');
-  if (!title) return;
-  const body = title.parentElement;
-  if (!body.id) body.id = `page-info-${pageFile.replace(/\W/g, '')}`;
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'info-banner-toggle';
-  btn.setAttribute('aria-controls', body.id);
-  const paint = (open) => {
-    banner.classList.toggle('is-folded', !open);
-    btn.setAttribute('aria-expanded', String(open));
-    btn.textContent = open ? 'Show less' : 'Show more';
-  };
-  btn.addEventListener('click', () => paint(banner.classList.contains('is-folded')));
-  title.append(' ', btn);
-  paint(false);
-}
-
-export function mountPageInfo(pageFile) {
-  const info = PAGE_INFO[pageFile];
-  const main = document.querySelector('main');
-  if (!info || !main || main.querySelector('.page-info')) return;
-  const actionsRow = main.querySelector('.page-actions');
-
-  // Page already has its own box: just bring its button inside.
-  const existing = main.querySelector('.info-banner');
-  if (existing) {
-    existing.classList.add('page-info');
-    const body = existing.querySelector('.info-banner-icon + div');
-    body?.classList.add('info-banner-body');
-    moveActions(existing, actionsRow);
-    foldAfterFirstVisit(existing, pageFile);
-    return;
-  }
-  if (!info.title) return;
-
-  const banner = document.createElement('div');
-  banner.className = 'info-banner page-info';
-  banner.innerHTML = `
-    <div class="info-banner-icon">${INFO_ICON}</div>
-    <div class="info-banner-body">
-      <p class="info-banner-title">${esc(info.title)}</p>
-      <p class="info-banner-text">${esc(info.text)}</p>
-    </div>`;
-
-  if (info.action) {
-    banner.classList.add('info-banner-with-action');
-    banner.insertAdjacentHTML('beforeend', `
-      <a href="${info.action.href}" class="btn-secondary info-banner-action">${info.action.icon === 'list' ? LIST_ICON : ''}${esc(info.action.label)}</a>`);
-  }
-
-  // Goes where the page's button row was (so it stays inside that view),
-  // otherwise at the very top of the page.
-  if (actionsRow) {
-    actionsRow.before(banner);
-    moveActions(banner, actionsRow);
-  } else {
-    const firstView = main.querySelector(':scope > #menu-view') || main;
-    firstView.prepend(banner);
-  }
-
-  foldAfterFirstVisit(banner, pageFile);
-
-  // Messages: the chat box is sized to the screen — make room for the box above it.
-  document.getElementById('chat-layout')?.classList.add('with-hero');
-}
+export const mountPageInfo = (pageFile) => mount(pageFile, PAGE_INFO);

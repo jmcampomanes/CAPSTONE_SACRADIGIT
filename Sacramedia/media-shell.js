@@ -15,6 +15,7 @@ import { initUiPrefs } from '../ui-prefs.js';
 import { initExtToggles } from '../name-utils.js';
 import { labelTopBarIcons } from '../top-bar-labels.js';
 import { initTableCards } from '../table-cards.js';
+import { mountMediaPageInfo } from './media-page-info.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -30,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
      highlighted no matter which page loads.
   ------------------------------------------ */
   const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+  mountMediaPageInfo(currentPage); // "What can I do here?" box, main button on the right (media-page-info.js)
   const sidebarLinks = document.querySelectorAll('.sidebar-link');
 
   sidebarLinks.forEach(link => {

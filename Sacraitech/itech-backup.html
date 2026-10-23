@@ -161,13 +161,9 @@
 
       <main class="flex-1 px-6 md:px-8 py-6 space-y-6">
 
-        <div class="backup-hero">
-          <div class="backup-hero-icon"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></div>
-          <div class="flex-1 min-w-0">
-            <h2 class="backup-hero-title">Full Backup</h2>
-            <p class="backup-hero-sub">Download every module as a single JSON file — keep it somewhere safe, off this computer.</p>
-            <p class="backup-last" id="backup-last" role="status"></p>
-          </div>
+        <!-- Main button(s): page-info.js moves them into the "What can I do here?" box -->
+        <div class="page-actions">
+          <p class="backup-last page-info-note" id="backup-last" role="status"></p>
           <button type="button" id="btn-export-all" class="btn-teal">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Export Everything

@@ -17,6 +17,7 @@ import { initUiPrefs } from '../ui-prefs.js';
 import { initExtToggles } from '../name-utils.js';
 import { labelTopBarIcons } from '../top-bar-labels.js';
 import { initTableCards } from '../table-cards.js';
+import { mountItechPageInfo } from './itech-page-info.js';
 
 export const ITECH_USER = 'Sacra ITech'; // fallback when the name isn't known
 
@@ -229,6 +230,7 @@ function initShell() {
 
   // 1. Active sidebar link — matches the current page filename
   const currentPage = window.location.pathname.split('/').pop() || 'itech-dashboard.html';
+  mountItechPageInfo(currentPage); // "What can I do here?" box, main button on the right (itech-page-info.js)
   const sidebarLinks = document.querySelectorAll('.sidebar-link');
   sidebarLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === currentPage));
 

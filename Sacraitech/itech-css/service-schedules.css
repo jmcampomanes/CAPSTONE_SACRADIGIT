@@ -2,16 +2,6 @@
    Sacra ITech — Service Schedules
    ============================================ */
 
-.ss-intro {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-left: 3px solid var(--itech, #0e7490);
-  border-radius: 0.75rem;
-  padding: 0.875rem 1.125rem;
-  font-size: 0.8125rem;
-  color: #4b5563;
-}
-
 .ss-category {
   font-size: 0.75rem;
   font-weight: 700;
@@ -93,7 +83,6 @@
 .ss-card-foot button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Dark mode */
-:root[data-theme="dark"] .ss-intro,
 :root[data-theme="dark"] .ss-card { background: #1a2131; border-color: #2c3547; color: #b6bdca; }
 :root[data-theme="dark"] .ss-card-title { color: #f1f3f7; }
 :root[data-theme="dark"] .ss-day { background: #1a2131; border-color: #3a4459; color: #b6bdca; }
