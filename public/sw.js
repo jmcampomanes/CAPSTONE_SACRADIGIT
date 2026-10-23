@@ -23,7 +23,7 @@
    Bump VERSION to drop every old cache on update.
    ============================================ */
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = `sacradigit-${VERSION}`;
 const BASE = new URL(self.registration.scope).pathname; // e.g. /CAPSTONE_SACRADIGIT/
 const OFFLINE_URL = `${BASE}offline.html`;

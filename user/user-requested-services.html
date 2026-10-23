@@ -41,7 +41,7 @@
   <link rel="stylesheet" href="../detail-table.css" />
   <link rel="stylesheet" href="../theme-dark.css" />
   <link rel="stylesheet" href="../accessibility.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -194,7 +194,7 @@
             <button type="button" class="svc-filter-chip" data-cat="sacrament" aria-pressed="false">Sacraments</button>
             <button type="button" class="svc-filter-chip" data-cat="special-mass" aria-pressed="false">Special Masses</button>
           </div>
-          <div id="requests-list" class="p-3 space-y-3"></div>
+          <div id="requests-list" class="p-3 space-y-3"><p class="sr-only-live" role="status">Loading your requests…</p><div class="sk-row" aria-hidden="true"><span class="sk sk-circle"></span><span class="sk-lines"><span class="sk sk-line w-60"></span><span class="sk sk-line w-40"></span></span></div><div class="sk-row" aria-hidden="true"><span class="sk sk-circle"></span><span class="sk-lines"><span class="sk sk-line w-60"></span><span class="sk sk-line w-40"></span></span></div><div class="sk-row" aria-hidden="true"><span class="sk sk-circle"></span><span class="sk-lines"><span class="sk sk-line w-60"></span><span class="sk sk-line w-40"></span></span></div></div>
           <div id="requests-pager" class="pager pager-in-panel" hidden></div>
           <div id="requests-empty" class="empty-state hidden py-14">
             <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>

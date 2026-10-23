@@ -455,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Donation Tracker chart --- */
   const graphModal   = document.getElementById('graph-modal');
   const chartContainer = document.getElementById('donation-chart');
+  let chartDrawn = false; // bars grow in on the first draw only (motion.css)
 
   function renderDonationChart() {
     const today = new Date();
@@ -491,10 +492,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     chartContainer.innerHTML = `
-      <svg viewBox="0 0 ${width} ${height}" width="100%" height="220" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 ${width} ${height}" width="100%" height="220" xmlns="http://www.w3.org/2000/svg"${chartDrawn ? '' : ' class="sd-grow-in"'}>
         <line x1="0" y1="${chartBottom}" x2="${width}" y2="${chartBottom}" stroke="#e5e7eb" stroke-width="1" />
         ${bars}
       </svg>`;
+    chartDrawn = true;
   }
 
   document.getElementById('btn-view-graph').addEventListener('click', () => {

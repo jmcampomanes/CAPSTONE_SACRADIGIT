@@ -20,6 +20,7 @@ import { printReport, printReadersSheet, printAltarSheets, tableHtml, esc } from
 import { formatFullName } from '../name-utils.js';
 import { createIntentionForm } from '../mass-intention-form.js';
 import { showToast, reportEmail } from './admin-ui.js';
+import { trackArrivals, isFresh } from '../motion.js'; // new rows arrive gold (motion-guide.html)
 import { notifyMassIntentionUpdate } from '../email-notify.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -283,8 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* --- Live data --- */
   client.models.MassIntention.observeQuery().subscribe({
-    next: ({ items }) => {
+    next: ({ items, isSynced }) => {
       intentions = items;
+      trackArrivals('intentions', items.map(it => it.id), isSynced);
       renderStats();
       renderTable();
       renderSheetOptions();
@@ -332,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     return `
-      <tr>
+      <tr${isFresh('intentions', it.id) ? ' class="sd-row-new"' : ''}>
         <td class="font-medium text-gray-900">${escapeHtml(it.donor)}</td>
         <td>
           ${escapeHtml(it.type)}

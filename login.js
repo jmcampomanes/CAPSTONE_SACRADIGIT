@@ -11,6 +11,7 @@ import {
   setNewPassword, loadUser, homeFor, isSignedIn, friendlyAuthError, PORTAL_ACCESS,
 } from './auth.js';
 import { initUiPrefs } from './ui-prefs.js';
+import { portalHandoff } from './motion.js';
 import { notifySignupCode, notifyPasswordReset } from './email-notify.js';
 import './Sacradigit/sacred-art.js';
 
@@ -39,7 +40,9 @@ function destinationFor(user) {
 async function finishSignIn() {
   const user = await loadUser();
   if (!user) throw new Error('Signed in, but your account could not be loaded. Please try again.');
-  window.location.replace(destinationFor(user));
+  const destination = destinationFor(user);
+  portalHandoff(destination); // "Opening Admin portal…" while it loads
+  window.location.replace(destination);
 }
 
 /* ---------- view switching ---------- */

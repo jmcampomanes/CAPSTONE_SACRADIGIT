@@ -13,6 +13,7 @@ import { notifyCertificateUpdate } from '../email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../marriage-request-form.js';
 import { createCertStepForm } from '../certificate-step-forms.js';
 import { showToast, confirmDialog, reportEmail } from './admin-ui.js';
+import { trackArrivals, isFresh } from '../motion.js'; // new rows arrive gold (motion-guide.html)
 
 // CertificateRequest has no dedicated email field — a parishioner's own
 // request carries their address in the Cognito "owner" field as
@@ -120,8 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
      3. LIVE DATA
   ------------------------------------------ */
   client.models.CertificateRequest.observeQuery().subscribe({
-    next: ({ items }) => {
+    next: ({ items, isSynced }) => {
       requests = items;
+      trackArrivals('requests', items.map(r => r.id), isSynced);
       renderStats();
       renderRequests();
     },
@@ -209,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       emptyState.classList.add('hidden');
       filtered.forEach((r) => {
         const tr = document.createElement('tr');
+        if (isFresh('requests', r.id)) tr.className = 'sd-row-new';
         const who = escapeHtml(r.requesterName);
 
         // Every row can be opened. The Head Admin and the Secretary can both

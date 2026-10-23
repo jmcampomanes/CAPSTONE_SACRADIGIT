@@ -8,26 +8,9 @@
    errors. Styles: sacradigit-css/admin-shell.css.
    ============================================ */
 
-const SUCCESS_MS = 3000;
-let toastTimer = null;
-
-export function showToast(message, isError = false) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  clearTimeout(toastTimer);
-  const msgEl = toast.querySelector('.toast-message');
-  if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-  toast.style.backgroundColor = '';
-  toast.classList.toggle('toast-error', isError);
-  toast.setAttribute('role', isError ? 'alert' : 'status');
-  toast.classList.remove('hidden');
-  requestAnimationFrame(() => toast.classList.add('show'));
-  if (isError) return;
-  toastTimer = setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.classList.add('hidden'), 200);
-  }, SUCCESS_MS);
-}
+// The toast itself (timer bar, pause on hover) is shared with the staff portals.
+import { showToast } from '../toast.js';
+export { showToast };
 
 /**
  * Shows `message` for a saved change, then — once the parishioner email

@@ -224,10 +224,23 @@ const OFFLINE_STYLE = `
   :root[data-theme="dark"] .pwa-offline { background: #8b8fc7; color: #0f1420; }
 `;
 
+/* Offline: a note slides up. When the connection returns it turns
+   green ("Back online") and slides away after 2 seconds (motion.css). */
 function paintOffline() {
   const existing = document.querySelector('.pwa-offline');
-  if (navigator.onLine) { existing?.remove(); return; }
-  if (existing || !document.body) return;
+  if (navigator.onLine) {
+    if (!existing || existing.classList.contains('is-back')) return;
+    existing.classList.add('is-back');
+    existing.querySelector('.pwa-offline-text').textContent = 'Back online';
+    setTimeout(() => {
+      existing.classList.add('is-leaving');
+      setTimeout(() => existing.remove(), 200);
+    }, 2000);
+    return;
+  }
+  if (existing?.classList.contains('is-back')) existing.remove(); // dropped again before it left
+  else if (existing) return;
+  if (!document.body) return;
   document.querySelector('.pwa-banner')?.remove();
   if (!document.getElementById('pwa-offline-style')) {
     const st = document.createElement('style');
@@ -238,7 +251,7 @@ function paintOffline() {
   const note = document.createElement('div');
   note.className = 'pwa-offline';
   note.setAttribute('role', 'status');
-  note.textContent = 'You’re offline — showing what’s saved on this device';
+  note.innerHTML = '<span class="sd-wifi" aria-hidden="true"><i></i><i></i><i></i></span><span class="pwa-offline-text">You’re offline — showing what’s saved on this device</span>';
   document.body.appendChild(note);
 }
 

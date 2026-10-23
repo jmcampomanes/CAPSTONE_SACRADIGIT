@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="../detail-table.css" />
   <link rel="stylesheet" href="../theme-dark.css" />
   <link rel="stylesheet" href="../accessibility.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -180,7 +180,7 @@
         </div>
 
         <!-- Requests list -->
-        <div id="requests-list" class="space-y-3"></div>
+        <div id="requests-list" class="space-y-3"><p class="sr-only-live" role="status">Loading your requests…</p><div class="sk-row" aria-hidden="true"><span class="sk sk-circle"></span><span class="sk-lines"><span class="sk sk-line w-60"></span><span class="sk sk-line w-40"></span></span></div><div class="sk-row" aria-hidden="true"><span class="sk sk-circle"></span><span class="sk-lines"><span class="sk sk-line w-60"></span><span class="sk sk-line w-40"></span></span></div><div class="sk-row" aria-hidden="true"><span class="sk sk-circle"></span><span class="sk-lines"><span class="sk sk-line w-60"></span><span class="sk sk-line w-40"></span></span></div></div>
         <div id="requests-pager" class="pager" hidden></div>
 
         <!-- Empty state -->

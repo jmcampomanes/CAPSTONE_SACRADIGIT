@@ -9,6 +9,10 @@
    Works with both light and dark mode.
    ============================================ */
 
+/* Animations and transitions for every page (motion-guide.html). Accessibility
+   mode also turns motion off — see motion.css. */
+@import url('./motion.css');
+
 /* ---------- Larger text ----------
    The app's sizes (Tailwind and our own CSS) are in rem, so growing
    the root font size enlarges text, spacing and controls together. */

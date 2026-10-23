@@ -407,6 +407,14 @@ export function initNotifications() {
     } catch (err) { console.warn('Could not show a pop-up notification:', err); }
   }
 
+  // The bell swings once when something new arrives while the page is open (motion.css), never on load.
+  let loadedOnce = false;
+  function ring() {
+    btn.classList.remove('pn-ring');
+    void btn.offsetWidth;
+    btn.classList.add('pn-ring');
+  }
+
   async function refresh() {
     try { items = await collectNotifications(lang); } catch (err) { console.error('Could not load notifications:', err); return; }
     // First visit on this device: don't mark 30 days of history as "new" — only the last 7 days.
@@ -424,6 +432,8 @@ export function initNotifications() {
     firstLoad = false;
     saveRead();
     paint();
+    if (loadedOnce && fresh.length) ring();
+    loadedOnce = true;
   }
 
   function open() {

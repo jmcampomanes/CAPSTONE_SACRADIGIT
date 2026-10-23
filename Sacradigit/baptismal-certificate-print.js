@@ -18,6 +18,7 @@
 
 import { client } from '../amplify-init.js';
 import { currentUserName } from '../auth.js';
+import './cert-seal.js'; // parish seal stamps onto the on-screen preview
 import { uploadData } from 'aws-amplify/storage';
 import { formatFullName } from '../name-utils.js';
 

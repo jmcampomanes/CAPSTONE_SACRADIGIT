@@ -16,6 +16,7 @@ import { initParishAssistant } from '../assistant/parish-assistant.js';
 import { initNotifications } from '../notifications/parish-notifications.js';
 import { initExtToggles } from '../name-utils.js';
 import { watchFieldErrors, FIELD_ERROR_SELECTOR } from './field-messages.js';
+import { autoHide, announceToast } from '../toast.js';
 import { initBirthDateDropdowns } from '../date-dropdowns.js';
 import { mountPageInfo } from './page-info.js';
 import { initLeaveWarning } from './leave-warning.js';
@@ -493,17 +494,16 @@ document.addEventListener('DOMContentLoaded', () => {
      the top, clear of the Next/Submit buttons, and stay until closed or
      replaced — a 3-second warning vanishes before a slow reader finishes it. */
   const toast = document.getElementById('toast');
-  let toastTimer = null;
 
   function hideToast() {
-    clearTimeout(toastTimer);
+    toast._sdCancelHide?.();
     toast.classList.remove('show');
     setTimeout(() => toast.classList.add('hidden'), 200);
   }
 
   window.showToast = function (message, isError = false) {
     if (!toast) return;
-    clearTimeout(toastTimer);
+    toast._sdCancelHide?.();
     toast.classList.toggle('toast-error', isError);
     toast.setAttribute('role', isError ? 'alert' : 'status');
     toast.style.backgroundColor = '';
@@ -524,7 +524,8 @@ document.addEventListener('DOMContentLoaded', () => {
     toast.dataset.fieldError = isError && document.querySelector(FIELD_ERROR_SELECTOR) ? '1' : '';
     toast.classList.remove('hidden');
     requestAnimationFrame(() => toast.classList.add('show'));
-    if (!isError) toastTimer = setTimeout(hideToast, 3000);
+    announceToast(isError);
+    if (!isError) autoHide(toast, hideToast, 3000); // time-left bar, pauses on hover (toast.js)
   };
 
   watchFieldErrors(() => {

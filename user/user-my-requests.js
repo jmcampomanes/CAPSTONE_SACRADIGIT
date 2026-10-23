@@ -102,6 +102,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const badgeClass = { pending: 'badge-amber', approved: 'badge-green', released: 'badge-gray', rejected: 'badge-red' };
   const statusLabel = { pending: 'Pending', approved: 'Ready', released: 'Released', rejected: 'Not approved' };
 
+  /* Pending → Ready → Released, as a gold track under the sentence (motion.css);
+     a chip whose status changed since the last visit pops once (motion.js). */
+  const TRACK_STEP = { pending: 0, approved: 1, released: 2 };
+  const trackHtml = (status) => status in TRACK_STEP
+    ? `<div class="sd-track" aria-hidden="true">${[0, 1, 2].map(i => `<i class="${i <= TRACK_STEP[status] ? 'ok' : ''}"></i>`).join('')}</div>`
+    : '';
+
   /* One plain sentence per status on each card, in place of the old
      5-step dot tracker (its 9px labels ran together on phones). */
   function statusSentence(r) {
@@ -225,9 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <p class="req-card-meta">Submitted ${formatShortDate(r.createdAt)}</p>
               <p class="req-card-purpose">${escapeHtml(r.purpose)}</p>
             </div>
-            <span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span>
+            <span class="badge ${badgeClass[r.status] || 'badge-gray'}" data-sd-status="${r.id}:${r.status}">${statusLabel[r.status] || r.status}</span>
           </div>
           <p class="req-status-line status-${r.status}">${statusSentence(r)}</p>
+          ${trackHtml(r.status)}
         </div>
         <div class="req-card-actions">
           ${hasOfficialCopy(r) ? `<button type="button" class="btn-view-cert" data-id="${r.id}">View Certificate</button>` : ''}

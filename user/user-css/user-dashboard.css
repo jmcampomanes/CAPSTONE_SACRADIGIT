@@ -368,12 +368,7 @@
   border-radius: 9999px;
   background: #ffffff;
   flex-shrink: 0;
-  animation: watchLivePulse 1.4s ease-in-out infinite;
-}
-
-@keyframes watchLivePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
-  50%      { box-shadow: 0 0 0 7px rgba(255, 255, 255, 0); }
+  /* pulse: one shared LIVE rule in ../../motion.css */
 }
 
 .watch-live-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
@@ -393,9 +388,6 @@
   font-weight: 700;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .watch-live-dot { animation: none; }
-}
 
 /* ---------- Check In at Mass card (checkin-card.js) ---------- */
 .ci-card {

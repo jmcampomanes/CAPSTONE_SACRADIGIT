@@ -15,6 +15,7 @@ import {
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
   const wallEl = $('pw-wall');
+  let justPrayed = null; // the card whose candle just lit (motion.css bumps its count once)
   const mineEl = $('pw-mine');
   const input = $('pw-body');
   const anonBox = $('pw-anonymous');
@@ -98,8 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="pw-card-body" data-no-translate>${escapeHtml(r.body)}</p>
           <div class="pw-card-foot">
             <span class="pw-card-who"><span data-no-translate>${escapeHtml(displayName(r))}</span> · ${escapeHtml(timeAgo(r.createdAt))}</span>
-            ${isMine ? `<span class="pw-pray prayed">🙏 ${n} praying for you</span>` : `<button type="button" class="pw-pray${prayed ? ' prayed' : ''}" data-pray="${escapeHtml(r.id)}" ${prayed ? 'disabled aria-pressed="true"' : 'aria-pressed="false"'}>
-              🙏 <span>${prayed ? 'You prayed' : 'I prayed for this'}</span>${n ? ` <b>${n}</b>` : ''}
+            ${isMine ? `<span class="pw-pray prayed">🙏 ${n} praying for you</span>` : `<button type="button" class="pw-pray${prayed ? ' prayed' : ''}${prayed && r.id === justPrayed ? ' just-prayed' : ''}" data-pray="${escapeHtml(r.id)}" ${prayed ? 'disabled aria-pressed="true"' : 'aria-pressed="false"'}>
+              <span class="pw-candle" aria-hidden="true"></span> <span>${prayed ? 'You prayed' : 'I prayed for this'}</span>${n ? ` <b>${n}</b>` : ''}
             </button>`}
           </div>
         </article>`;
@@ -110,6 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = e.target.closest('[data-pray]');
     if (!btn || btn.disabled) return;
     btn.disabled = true;
+    justPrayed = btn.dataset.pray;
+    setTimeout(() => { if (justPrayed === btn.dataset.pray) justPrayed = null; }, 4000);
     try {
       await prayFor(btn.dataset.pray, myKey);
     } catch (err) {

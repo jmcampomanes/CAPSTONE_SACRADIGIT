@@ -18,6 +18,7 @@
 import { client } from '../amplify-init.js';
 import { watchClosures, closureOn, logBookingAction } from '../service-schedule.js';
 import { showToast, reportEmail } from './admin-ui.js';
+import { trackArrivals, isFresh } from '../motion.js'; // new rows arrive gold (motion-guide.html)
 import { notifyServiceUpdate } from '../email-notify.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -109,8 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* --- Live data --- */
   client.models.FacilityBooking.observeQuery().subscribe({
-    next: ({ items }) => {
+    next: ({ items, isSynced }) => {
       bookings = items;
+      trackArrivals('bookings', items.map(b => b.id), isSynced);
       renderAll();
     },
     error: (err) => {
@@ -166,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <tr>
+        <tr${isFresh('bookings', b.id) ? ' class="sd-row-new"' : ''}>
           <td class="font-medium text-gray-900">${escapeHtml(b.facilityName)}</td>
           <td>${formatShortDate(b.date)}</td>
           <td>${escapeHtml(formatTimeRange(b))}</td>

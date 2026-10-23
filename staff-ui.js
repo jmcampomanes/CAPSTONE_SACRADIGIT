@@ -8,6 +8,8 @@
    stylesheet.
    ============================================ */
 
+import { showToast as sharedToast } from './toast.js';
+
 const STYLE = `
 /* ---------- Errors stay at the top until closed (staff-ui.js) ---------- */
 .toast.toast-error {
@@ -104,26 +106,10 @@ function injectStyles() {
 }
 
 
-const SUCCESS_MS = 3000;
-let toastTimer = null;
-
+// Timer bar + pause on hover come from the shared toast (toast.js).
 export function showToast(message, isError = false) {
   injectStyles();
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  clearTimeout(toastTimer);
-  const msgEl = toast.querySelector('.toast-message');
-  if (msgEl) msgEl.textContent = message; else toast.textContent = message;
-  toast.style.backgroundColor = '';
-  toast.classList.toggle('toast-error', isError);
-  toast.setAttribute('role', isError ? 'alert' : 'status');
-  toast.classList.remove('hidden');
-  requestAnimationFrame(() => toast.classList.add('show'));
-  if (isError) return;
-  toastTimer = setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.classList.add('hidden'), 200);
-  }, SUCCESS_MS);
+  sharedToast(message, isError);
 }
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

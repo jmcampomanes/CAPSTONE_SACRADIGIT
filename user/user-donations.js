@@ -432,6 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const online = method !== 'Cash';
     return `
       <div class="donate-next-head">
+        <span class="sd-motes" aria-hidden="true">${'<i></i>'.repeat(8)}</span>
         <span class="donate-next-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg></span>
         <div>
           <h4 class="mi-step-title">Thank you! Now ${online ? 'send' : 'bring'} your offering.</h4>

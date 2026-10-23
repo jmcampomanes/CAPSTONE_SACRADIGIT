@@ -11,6 +11,7 @@
      sacradigit_theme = 'light' | 'dark'
      sacradigit_lang  = 'en' | 'fil'
      sacradigit_a11y  = 'on' | 'off'   (styles: accessibility.css)
+     sacradigit_motion = 'reduce' | 'full'  (motion.js / motion.css)
    A tiny inline script in each page's <head>
    applies the saved theme before the page is
    drawn (no white flash); see THEME_BOOT below.
@@ -22,13 +23,15 @@
    ============================================ */
 
 import { installButton } from './pwa.js'; // installable app: service worker, banner, "Install app" button
+import { withViewTransition, reduceMotionOn, setReduceMotion } from './motion.js'; // animations for every page (motion-guide.html)
+export { reduceMotionOn, setReduceMotion }; // "Reduce motion" (My Settings)
 
 const THEME_KEY = 'sacradigit_theme';
 const LANG_KEY = 'sacradigit_lang';
 const A11Y_KEY = 'sacradigit_a11y';
 
 /** The inline <head> snippet every page carries (kept here for reference). */
-export const THEME_BOOT = `try{var t=localStorage.getItem('${THEME_KEY}');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('${A11Y_KEY}')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('${LANG_KEY}')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}`;
+export const THEME_BOOT = `try{var t=localStorage.getItem('${THEME_KEY}');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('${A11Y_KEY}')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('${LANG_KEY}')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}`;
 
 const read = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const write = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
@@ -47,8 +50,11 @@ export function setAccessibility(on) {
 }
 
 export function setTheme(theme) {
-  if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
-  else delete document.documentElement.dataset.theme;
+  // Colours crossfade instead of snapping (where the browser supports it).
+  withViewTransition(() => {
+    if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
+    else delete document.documentElement.dataset.theme;
+  });
   write(THEME_KEY, theme);
   document.dispatchEvent(new CustomEvent('sacradigit:theme', { detail: theme }));
 }

@@ -228,6 +228,7 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     tools.querySelectorAll('button').forEach(b => { b.disabled = on; });
     if (!on) { applyZoom(); if (doc) { $('scan-prev-page').disabled = pageNo <= 1; $('scan-next-page').disabled = pageNo >= doc.pageCount; } }
     progress.classList.toggle('hidden', !on);
+    stage.classList.toggle('sd-scanning', on); // gold scan line (motion.css)
     if (on) { progressBar.style.width = '0%'; progressTxt.textContent = text; }
   }
 

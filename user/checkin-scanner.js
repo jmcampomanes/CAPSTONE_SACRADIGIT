@@ -132,6 +132,8 @@ export function openCheckInScanner({ onCheckedIn } = {}) {
   function showDone(res) {
     stopCamera();
     overlay.classList.add('is-done');
+    // A short buzz, so whoever is holding the phone knows it worked without looking (motion.css flashes it green).
+    try { navigator.vibrate?.(40); } catch { /* not supported */ }
     overlay.querySelector('.ci-scan-stage').innerHTML = `
       <div class="ci-scan-done">
         <div class="ci-scan-done-icon" aria-hidden="true">✓</div>

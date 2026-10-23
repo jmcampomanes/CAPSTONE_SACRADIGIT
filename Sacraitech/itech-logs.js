@@ -9,6 +9,7 @@
 
 import { client } from '../amplify-init.js';
 import { escapeHtml, formatDateTime, actionKind, downloadFile, toCsv, todayStamp, logItAction, showToast } from './itech-shell.js';
+import { trackArrivals, isFresh } from '../motion.js'; // new rows arrive gold (motion-guide.html)
 
 const $ = (id) => document.getElementById(id);
 const PAGE_SIZE = 25;
@@ -40,7 +41,7 @@ function render() {
   $('log-tbody').innerHTML = slice.length === 0
     ? `<tr><td colspan="4" class="empty-state">${logs.length ? 'No log entries match these filters.' : 'No activity recorded yet.'}</td></tr>`
     : slice.map(l => `
-      <tr>
+      <tr${isFresh('logs', l.id) ? ' class="sd-row-new"' : ''}>
         <td class="text-gray-500">${escapeHtml(formatDateTime(l.createdAt))}</td>
         <td class="font-medium text-gray-900">${escapeHtml(l.userName || '—')}</td>
         <td><span class="action-tag" data-kind="${actionKind(l.action)}">${escapeHtml(l.action || '—')}</span></td>
@@ -64,7 +65,8 @@ function refreshActionOptions() {
 }
 
 client.models.AccessLog.observeQuery().subscribe({
-  next: ({ items }) => {
+  next: ({ items, isSynced }) => {
+    trackArrivals('logs', items.map(l => l.id), isSynced);
     logs = items.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     refreshActionOptions();
     render();

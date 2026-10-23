@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="svc-row-icon" style="background-color:${svc.iconBg};color:${svc.iconColor};">${svc.icon}</div>
         <div class="svc-row-body">
           <p class="svc-row-title">${escapeHtml(svc.name)}</p>
-          <p class="svc-row-status tone-${tone}">${labelFor(r)}</p>
+          <p class="svc-row-status tone-${tone}" data-sd-status="${r.id}:${tone}">${labelFor(r)}</p>
           ${when ? `<p class="svc-row-when">${fmtWhen(when, r.time)}</p>` : ''}
           ${prep ? `<div>${prep}</div>` : ''}
           <p class="svc-row-meta">Submitted ${fmtDate(r.createdAt)}</p>
