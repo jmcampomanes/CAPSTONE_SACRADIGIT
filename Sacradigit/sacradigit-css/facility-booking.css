@@ -325,6 +325,16 @@ body.booking-screen-open { overflow: hidden; }
   max-width: 1080px;
 }
 
+/* Note under the Confirm step — same as the parishioner booking screen */
+.booking-policy-note { display: flex; gap: 0.625rem; margin-top: 1rem; background-color: rgba(139, 143, 199, 0.1); border: 1px solid rgba(139, 143, 199, 0.25); border-radius: 0.625rem; padding: 0.75rem 0.875rem; color: #5b5fa8; }
+:root[data-theme="dark"] .booking-policy-note { background-color: rgba(139, 143, 199, 0.14); border-color: rgba(139, 143, 199, 0.3); color: #a8aad1; }
+:root[data-theme="dark"] .booking-policy-note p { color: #cbd3e6; }
+
+/* Who the booking is for (Ministry Bookings), above every step */
+.booking-fullscreen-body:has(> .booking-context:not(.hidden)) { flex-direction: column; align-items: center; gap: 1rem; }
+.booking-context { width: 100%; max-width: 1080px; flex: none; }
+.booking-context.hidden { display: none; }
+
 .booking-step-cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -417,6 +427,7 @@ body.booking-screen-open { overflow: hidden; }
     display: block;
   }
   .booking-step { margin: 0 auto; }
+  .booking-context { margin: 0 auto 1rem; }
 }
 
 /* Two columns need ~1100px of window once the 264px sidebar is showing */

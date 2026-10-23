@@ -41,6 +41,10 @@ const PAGE_INFO = {
     title: 'What’s on this page?',
     text: 'Bookings for parish rooms, halls and chapels. Check what’s taken in the calendar, add a booking, or cancel one.',
   },
+  'ministry-bookings.html': {
+    title: 'Who can book here?',
+    text: 'People who serve the parish use its rooms with no fee. Type their name: anyone on the Ministry Roster, or vouched for by the Head Admin in the last 6 months, is verified automatically. Anyone else needs the Head Admin’s word.',
+  },
   'donations.html': {
     title: 'What’s on this page?',
     text: 'Parish donations, collections and giving goals. See the last 7 days in a chart, set a new goal, or export a report.',

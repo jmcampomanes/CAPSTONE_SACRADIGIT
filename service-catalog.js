@@ -9,7 +9,60 @@
    capacity) live in service-schedule.js.
    ============================================ */
 
-import { MAP_PIN_LABEL } from './service-schedule.js';
+import { MAP_PIN_LABEL, describeSchedule } from './service-schedule.js';
+
+/* "What do you need?" — the three big choices on Request a Service (and on the
+   admin walk-in screen), each opening one category's services. */
+export const SERVICE_NEEDS = [
+  { key: 'blessing', label: 'Blessing', title: 'Blessings', hint: 'House, vehicle, business, or pet',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>' },
+  { key: 'sacrament', label: 'Sacrament', title: 'Sacraments', hint: 'Baptism, confirmation, wedding, and more',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3C8 3 5 6 5 9c0 4 7 12 7 12s7-8 7-12c0-3-3-6-7-6z"/>' },
+  { key: 'special-mass', label: 'Mass for an occasion', title: 'Masses for an occasion', hint: 'Funeral, anniversary, or graduation',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>' },
+];
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const CLOCK_ICON = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+const ARROW_ICON = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+/** "Mon–Sat · 09:00 AM, 10:30 AM" → days on one line, times as plain text underneath. */
+export function scheduleHtml(name) {
+  const [days, times = ''] = describeSchedule(name).split(' · ');
+  const list = times.split(', ').filter(Boolean).map(t => t.replace(/^0(d)/, '$1')).join(', ');
+  return `<span class="svc-sched-days">${CLOCK_ICON}${esc(days)}</span>${list ? `<span class="svc-sched-times">${esc(list)}</span>` : ''}`;
+}
+
+/** "What do you need?" buttons. */
+export const needButtonsHtml = () => SERVICE_NEEDS.map(n => `
+  <button type="button" class="svc-need-btn" data-need="${n.key}" aria-pressed="false">
+    <svg class="svc-need-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">${n.icon}</svg>
+    <span class="svc-need-text">
+      <span class="svc-need-label">${esc(n.label)}</span>
+      <span class="svc-need-hint">${esc(n.hint)}</span>
+    </span>
+  </button>`).join('');
+
+/**
+ * One service card (icon, name, description, schedule, approval tag, button).
+ * With href it's a link (parishioner pages); without, a button with data-id.
+ */
+export function serviceCardHtml(s, { href = '', cta = 'Start request', showApproval = true } = {}) {
+  const inner = `
+    <div class="svc-type-head">
+      <div class="svc-icon" style="background-color:${s.iconBg};color:${s.iconColor};">${s.icon}</div>
+      <p class="svc-type-name">${esc(s.name)}</p>
+    </div>
+    <p class="svc-type-desc">${esc(s.desc)}</p>
+    <div class="svc-type-sched">${scheduleHtml(s.name)}</div>
+    <div class="svc-type-foot">
+      ${showApproval && needsApproval(s.name) ? '<span class="svc-type-approval" title="The parish office approves this request first">Needs approval</span>' : ''}
+      <span class="svc-type-cta">${esc(cta)} ${ARROW_ICON}</span>
+    </div>`;
+  return href
+    ? `<a href="${href}" class="svc-type-card" data-id="${s.id}">${inner}</a>`
+    : `<button type="button" class="svc-type-card" data-id="${s.id}">${inner}</button>`;
+}
 
 // Groups the catalog below into three rows on the "Services We Offer"
 // panel — Blessings, Sacraments, Special Masses (in that order) — each

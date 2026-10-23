@@ -1,24 +1,35 @@
 /* ============================================
    SacraDigit Admin — "+ Service" walk-in booking
    For parishioners who come to (or call) the
-   parish office instead of booking online. The
-   office picks the service, fills in the same
-   form the parishioner would, and books a fixed
-   slot for them. Used on Schedule Offers and
-   Blessings.
+   parish office instead of booking online. Used on
+   Schedule Offers and Blessings.
+
+   It works like the parishioner's own Request a
+   Service, so the office and parishioners see the
+   same thing:
+     1. "What do they need?" — the same Blessing /
+        Sacrament / Mass buttons and service cards
+        (../service-catalog.js).
+     2. The same form: a "Details" column (the
+        service's own fields in the same order, then
+        contact and notes) and "Choose a Schedule"
+        with the same slot calendar, the map under it.
+   The office also types who asked, can add an email
+   for reminders, and books any open slot from
+   tomorrow on (no lead time, no approval wait).
 
    The screen is built here (no HTML needed on the
-   page) using the full-screen "svc-screen" styles
-   in ../service-schedule.css. It saves a normal
-   Blessing record (status 'scheduled'), exactly
-   like an online booking, so it shows up on both
-   admin pages and in the parishioner's Requested
-   Services if the name matches.
+   page) using the full-screen "svc-screen" styles in
+   ../service-schedule.css. It saves a normal Blessing
+   record (status 'scheduled'), exactly like an online
+   booking, so it shows up on both admin pages and in
+   the parishioner's Requested Services if the name
+   matches.
    ============================================ */
 
 import { client } from '../amplify-init.js';
-import { SERVICE_CATEGORIES, SERVICE_TYPES } from '../service-catalog.js';
-import { createSlotPicker, slotHasRoom, locationFor, describeSchedule, logBookingAction, MAP_PIN_LABEL, googleMapsUrl } from '../service-schedule.js';
+import { SERVICE_CATEGORIES, SERVICE_TYPES, SERVICE_NEEDS, serviceCardHtml, needButtonsHtml } from '../service-catalog.js';
+import { createSlotPicker, slotHasRoom, locationFor, logBookingAction, MAP_PIN_LABEL, googleMapsUrl } from '../service-schedule.js';
 import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../name-utils.js';
 import { createPinMap, formatLatLng } from '../pin-map.js';
 import { notifyServiceUpdate } from '../email-notify.js';
@@ -34,6 +45,13 @@ const detailText = (v) => (v && typeof v === 'object')
   : String(v ?? '');
 const fmtLongDate = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
+const BACK_ICON = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>';
+const INFO_ICON = '<svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#5b5fa8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+const PLUS_ICON = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>';
+
+const PICK_TITLE = 'New Walk-in Request';
+const PICK_SUB = 'For parishioners who asked at the parish office or by phone. Choose what they need.';
+
 /**
  * getRecords()  — every Blessing record (so full slots show as taken)
  * getClosures() — 'No Services' closure ranges
@@ -43,34 +61,34 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
   document.body.insertAdjacentHTML('beforeend', `
   <section id="walkin-screen" class="svc-screen hidden" role="dialog" aria-modal="true" aria-labelledby="walkin-title">
     <header class="svc-screen-bar">
-      <button type="button" id="walkin-back" class="svc-screen-back">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        ${escapeHtml(backLabel)}
-      </button>
+      <button type="button" id="walkin-back" class="svc-screen-back">${BACK_ICON}<span id="walkin-back-label">${escapeHtml(backLabel)}</span></button>
+      <div id="walkin-icon" class="svc-icon svc-screen-icon hidden" aria-hidden="true"></div>
       <div class="svc-screen-heading">
-        <h2 class="svc-screen-title" id="walkin-title">New Service — Walk-in</h2>
-        <p class="svc-screen-sub">For parishioners who asked at the parish office. The office can book any open slot from tomorrow onward.</p>
+        <h2 class="svc-screen-title" id="walkin-title">${PICK_TITLE}</h2>
+        <p class="svc-screen-sub" id="walkin-sub">${PICK_SUB}</p>
       </div>
     </header>
 
     <div class="svc-screen-body" id="walkin-body">
-      <div class="svc-screen-cols">
-        <!-- Left: who and what -->
+      <!-- 1. What do they need? (same as Request a Service) -->
+      <div id="walkin-pick" class="walkin-pick">
+        <h3 class="svc-need-title">What do they need?</h3>
+        <div class="svc-need-options" id="walkin-need-options" role="group" aria-label="What do they need?">${needButtonsHtml()}</div>
+        <div id="walkin-list" class="walkin-list hidden">
+          <p class="svc-category-desc" id="walkin-cat-desc"></p>
+          <div class="svc-type-row" id="walkin-type-row"></div>
+        </div>
+      </div>
+
+      <!-- 2. The form (same layout as the parishioner's service page) -->
+      <div id="walkin-form" class="svc-screen-cols hidden">
         <div class="svc-screen-col">
-          <h3 class="svc-screen-col-title">Service &amp; Requester</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="sm:col-span-2">
-              <label class="form-label" for="walkin-service">Service <span class="text-red-500">*</span></label>
-              <select id="walkin-service" class="form-input">
-                <option value="">Select a service</option>
-                ${SERVICE_CATEGORIES.map(cat => `
-                  <optgroup label="${escapeHtml(cat.label)}">
-                    ${SERVICE_TYPES.filter(s => s.category === cat.key).map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
-                  </optgroup>`).join('')}
-              </select>
-              <p class="text-xs text-gray-400 mt-1 hidden" id="walkin-service-sched"></p>
-            </div>
-            ${nameFieldsHtml('walkin-requester', 'Requester (person who asked)', { required: true, spanFull: true })}
+          <h3 class="svc-screen-col-title">Details</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            ${nameFieldsHtml('walkin-requester', 'Person who asked', { required: true, spanFull: true })}
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4" id="walkin-fields"></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
             <div>
               <label class="form-label" for="walkin-contact">Contact Number <span class="text-red-500">*</span></label>
               <input type="tel" id="walkin-contact" class="form-input" data-mobile inputmode="numeric" autocomplete="tel" placeholder="e.g. 09171234567" />
@@ -80,46 +98,47 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
               <input type="email" id="walkin-email" class="form-input" placeholder="for reminders" />
             </div>
           </div>
-
-          <div id="walkin-fields-wrap" class="hidden mt-4">
-            <h3 class="svc-screen-col-title" id="walkin-fields-title">Service Details</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="walkin-fields"></div>
-          </div>
-
           <div class="mt-4">
-            <label class="form-label" for="walkin-notes">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
-            <textarea id="walkin-notes" class="form-input" rows="2" placeholder="e.g. Paid the stipend at the office; bring baptismal candle."></textarea>
+            <label class="form-label" for="walkin-notes">Additional Notes (optional)</label>
+            <textarea id="walkin-notes" class="form-input" rows="3" placeholder="e.g. Paid the stipend at the office; bring baptismal candle."></textarea>
+          </div>
+          <div class="req-info-note mt-4">
+            ${INFO_ICON}
+            <p class="text-xs text-gray-600 leading-relaxed">These are the parish’s fixed schedules. A walk-in is booked right away — no approval needed — and the office can book any open slot from tomorrow on.</p>
           </div>
         </div>
 
-        <!-- Right: the slot -->
         <div class="svc-screen-col">
-          <h3 class="svc-screen-col-title">Pick a Schedule <span class="text-red-500">*</span></h3>
-          <div id="walkin-slot-picker" class="slot-picker"><p class="slot-empty">Choose a service first.</p></div>
-          <p id="walkin-slot-summary" class="slot-summary hidden"></p>
+          <h3 class="svc-screen-col-title">Choose a Schedule <span class="text-red-500">*</span></h3>
+          <div>
+            <div id="walkin-slot-picker" class="slot-picker"></div>
+            <p id="walkin-slot-summary" class="slot-summary hidden"></p>
+          </div>
+          <div id="walkin-map-slot"></div>
         </div>
       </div>
     </div>
 
     <footer class="svc-screen-footer">
       <button type="button" id="walkin-cancel" class="btn-secondary">Cancel</button>
-      <button type="button" id="walkin-submit" class="btn-lavender">Book Service</button>
+      <button type="button" id="walkin-submit" class="btn-lavender hidden">${PLUS_ICON} Book Service</button>
     </footer>
   </section>`);
 
   const $ = (id) => document.getElementById(id);
   const screen     = $('walkin-screen');
-  const serviceSel = $('walkin-service');
-  const fieldsWrap = $('walkin-fields-wrap');
+  const pickEl     = $('walkin-pick');
+  const formEl     = $('walkin-form');
   const fieldsEl   = $('walkin-fields');
   const pickerEl   = $('walkin-slot-picker');
   const summaryEl  = $('walkin-slot-summary');
   const submitBtn  = $('walkin-submit');
+  const iconEl     = $('walkin-icon');
 
+  let chosen = null;   // the service being booked
   let picker = null;
   let pinMap = null;
-
-  const currentService = () => SERVICE_TYPES.find(s => s.id === serviceSel.value) || null;
+  const currentService = () => chosen;
 
   /* ---------- field errors ---------- */
   function setFieldError(input, message) {
@@ -135,60 +154,73 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
   }
   screen.addEventListener('input', (e) => { if (e.target.matches('.form-input')) clearFieldError(e.target); });
 
-  /* ---------- open / close ---------- */
-  function open() {
-    reset();
-    screen.classList.remove('hidden', 'is-closing');
-    document.body.classList.add('svc-screen-open');
+  /* ---------- 1. What do they need? ---------- */
+  function showNeed(key) {
+    const need = SERVICE_NEEDS.find(n => n.key === key);
+    const cat = SERVICE_CATEGORIES.find(c => c.key === key);
+    $('walkin-need-options').querySelectorAll('.svc-need-btn').forEach(b => {
+      const on = b.dataset.need === key;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    $('walkin-list').classList.toggle('hidden', !need);
+    if (!need) return;
+    $('walkin-cat-desc').textContent = cat?.desc || '';
+    // Walk-ins are booked right away, so no "Needs approval" tag here.
+    $('walkin-type-row').innerHTML = SERVICE_TYPES.filter(s => s.category === key)
+      .map(s => serviceCardHtml(s, { cta: 'Book for them', showApproval: false })).join('');
+  }
+  $('walkin-need-options').addEventListener('click', (e) => {
+    const btn = e.target.closest('.svc-need-btn');
+    if (btn) showNeed(btn.dataset.need);
+  });
+  $('walkin-type-row').addEventListener('click', (e) => {
+    const card = e.target.closest('.svc-type-card');
+    if (card) chooseService(SERVICE_TYPES.find(s => s.id === card.dataset.id));
+  });
+
+  function showPick() {
+    destroyPinMap();
+    chosen = null;
+    picker = null;
+    pickEl.classList.remove('hidden');
+    formEl.classList.add('hidden');
+    submitBtn.classList.add('hidden');
+    iconEl.classList.add('hidden');
+    $('walkin-title').textContent = PICK_TITLE;
+    $('walkin-sub').textContent = PICK_SUB;
+    $('walkin-back-label').textContent = backLabel;
     $('walkin-body').scrollTop = 0;
-    serviceSel.focus({ preventScroll: true });
   }
 
-  function close() {
-    if (screen.classList.contains('hidden')) return;
-    document.body.classList.remove('svc-screen-open');
-    const finish = () => { screen.classList.add('hidden'); destroyPinMap(); };
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
-    screen.classList.add('is-closing');
-    screen.addEventListener('animationend', () => {
-      screen.classList.remove('is-closing');
-      if (!document.body.classList.contains('svc-screen-open')) finish();
-    }, { once: true });
-  }
-
-  function reset() {
-    serviceSel.value = '';
-    setNameFields('walkin-requester', null);
-    ['walkin-contact', 'walkin-email', 'walkin-notes'].forEach(id => { $(id).value = ''; });
-    screen.querySelectorAll('.form-input.has-error').forEach(clearFieldError);
+  /* ---------- 2. The form ---------- */
+  function chooseService(svc) {
+    if (!svc) return;
+    chosen = svc;
+    pickEl.classList.add('hidden');
+    formEl.classList.remove('hidden');
+    submitBtn.classList.remove('hidden');
+    $('walkin-title').textContent = `Walk-in — ${svc.name}`;
+    $('walkin-sub').textContent = svc.desc;
+    $('walkin-back-label').textContent = 'Change service';
+    iconEl.style.backgroundColor = svc.iconBg;
+    iconEl.style.color = svc.iconColor;
+    iconEl.innerHTML = svc.icon;
+    iconEl.classList.remove('hidden');
     renderServiceFields();
+    $('walkin-body').scrollTop = 0;
+    $('walkin-requester-first')?.focus({ preventScroll: true });
   }
 
-  $('walkin-back').addEventListener('click', close);
-  $('walkin-cancel').addEventListener('click', close);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !screen.classList.contains('hidden')) close(); });
-
-  /* ---------- service-specific fields + slot picker ---------- */
   function renderServiceFields() {
     destroyPinMap();
     const svc = currentService();
     summaryEl.classList.add('hidden');
     pickerEl.classList.remove('has-error');
-    $('walkin-service-sched').classList.toggle('hidden', !svc);
-
-    if (!svc) {
-      picker = null;
-      pickerEl.innerHTML = '<p class="slot-empty">Choose a service first.</p>';
-      fieldsWrap.classList.add('hidden');
-      fieldsEl.innerHTML = '';
-      return;
-    }
-
-    $('walkin-service-sched').textContent = `Regular schedule: ${describeSchedule(svc.name)}`;
-    $('walkin-fields-title').textContent = `${svc.name} Details`;
+    // Same order as the parishioner's page: the service's own fields, the map under the schedule.
     fieldsEl.innerHTML = svc.fields.map(f => {
       if (f.kind === 'name') return nameFieldsHtml(`walkin-f-${f.id}`, escapeHtml(f.label), { required: f.required, spanFull: true });
-      if (f.kind === 'map') return pinFieldHtml(f);
+      if (f.kind === 'map') return '';
       if (f.kind === 'note') return `<p class="svc-field-note sm:col-span-2">${escapeHtml(f.text)}</p>`;
       return `
         <div class="${f.span2 ? 'sm:col-span-2' : ''}">
@@ -196,9 +228,10 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
           <input type="text" id="walkin-f-${f.id}" class="form-input" placeholder="${escapeHtml(f.placeholder || '')}" />
         </div>`;
     }).join('');
-    fieldsWrap.classList.toggle('hidden', !svc.fields.length);
+    fieldsEl.classList.toggle('hidden', !fieldsEl.innerHTML.trim());
 
     const mapField = svc.fields.find(f => f.kind === 'map');
+    $('walkin-map-slot').innerHTML = mapField ? pinFieldHtml(mapField) : '';
     if (mapField) initPinMap(mapField);
 
     picker = createSlotPicker(pickerEl, {
@@ -215,21 +248,57 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
     });
   }
 
-  serviceSel.addEventListener('change', () => { clearFieldError(serviceSel); renderServiceFields(); });
+  /* ---------- open / close ---------- */
+  function open() {
+    reset();
+    showPick();
+    showNeed(null);
+    screen.classList.remove('hidden', 'is-closing');
+    document.body.classList.add('svc-screen-open');
+    $('walkin-need-options').querySelector('.svc-need-btn')?.focus({ preventScroll: true });
+  }
 
-  /* ---------- Map pin (House Blessing, Business Dedication) ---------- */
+  function close() {
+    if (screen.classList.contains('hidden')) return;
+    document.body.classList.remove('svc-screen-open');
+    const finish = () => { screen.classList.add('hidden'); destroyPinMap(); };
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+    screen.classList.add('is-closing');
+    screen.addEventListener('animationend', () => {
+      screen.classList.remove('is-closing');
+      if (!document.body.classList.contains('svc-screen-open')) finish();
+    }, { once: true });
+  }
+
+  function reset() {
+    setNameFields('walkin-requester', null);
+    ['walkin-contact', 'walkin-email', 'walkin-notes'].forEach(id => { $(id).value = ''; });
+    screen.querySelectorAll('.form-input.has-error').forEach(clearFieldError);
+  }
+
+  // Back: from the form to the service list ("Change service"); from the list, out.
+  $('walkin-back').addEventListener('click', () => {
+    if (chosen) { const cat = chosen.category; showPick(); showNeed(cat); }
+    else close();
+  });
+  $('walkin-cancel').addEventListener('click', close);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !screen.classList.contains('hidden')) close(); });
+
+  /* ---------- Map pin (House Blessing, Business Dedication) — under the schedule, like the parishioner page ---------- */
   function pinFieldHtml(f) {
+    const place = f.place === 'business' ? 'business' : 'house';
     return `
-      <div class="sm:col-span-2" id="walkin-q-${f.id}">
-        <p class="form-label">Pin the Exact Location <span class="pin-map-optional">(recommended)</span></p>
+      <div class="pin-map-field mt-4" id="walkin-q-${f.id}">
+        <p class="form-label">Pin the location on the map <span class="pin-map-optional">(optional)</span></p>
+        <p class="pin-map-why">Helps the priest find the ${place}. You can skip this.</p>
         <div class="pin-map-wrap">
-          <div id="walkin-f-${f.id}" class="pin-map" role="application" aria-label="Map — click to place a pin on the ${f.place || 'house'}"></div>
+          <div id="walkin-f-${f.id}" class="pin-map" role="application" aria-label="Map — click to place a pin on the ${place}"></div>
           <div class="pin-map-actions">
             <button type="button" class="pin-map-btn" data-pin-action="find">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
               Find the address
             </button>
-            <span id="walkin-f-${f.id}-status" class="pin-map-status">Type the address below, then “Find the address”, or click the map.</span>
+            <span id="walkin-f-${f.id}-status" class="pin-map-status">Type the address, then “Find the address”, or click the map.</span>
           </div>
         </div>
       </div>`;
@@ -246,7 +315,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       const btn = e.target.closest('[data-pin-action]');
       if (!btn || !pinMap) return;
       const address = $(`walkin-f-${field.addressField}`)?.value.trim();
-      if (!address) { setStatus('Type the address below first, then click “Find the address”.', 'error'); return; }
+      if (!address) { setStatus('Type the address first, then click “Find the address”.', 'error'); return; }
       btn.disabled = true;
       try { setStatus('Looking up the address…'); await pinMap.findAddress(address); }
       catch (err) { setStatus(err.message, 'error'); }
@@ -261,13 +330,12 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
   /* ---------- save ---------- */
   submitBtn.addEventListener('click', async () => {
     const svc = currentService();
+    if (!svc) return;
     let hasError = false;
-
-    if (!svc) { setFieldError(serviceSel, 'Please choose a service.'); showToast('Please choose a service.', true); return; }
 
     const reqLast = $('walkin-requester-last');
     [$('walkin-requester-first'), reqLast].forEach(clearFieldError);
-    if (!nameFieldsFilled('walkin-requester')) { setFieldError(reqLast, 'Requester’s first and last name are required.'); hasError = true; }
+    if (!nameFieldsFilled('walkin-requester')) { setFieldError(reqLast, 'First and last name of the person who asked are required.'); hasError = true; }
 
     const contactEl = $('walkin-contact');
     clearFieldError(contactEl);
@@ -289,7 +357,11 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
     const slot = picker && picker.getValue();
     if (!slot) { pickerEl.classList.add('has-error'); hasError = true; }
 
-    if (hasError) { showToast(slot ? 'Please fill in the highlighted fields.' : 'Please fill in the highlighted fields and pick a schedule.', true); return; }
+    if (hasError) {
+      showToast(slot ? 'Please fill in the highlighted fields.' : 'Please fill in the highlighted fields and pick a schedule.', true);
+      screen.querySelector('.has-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
     // Same details shape the parishioner form saves, keyed by field label.
     const details = {};

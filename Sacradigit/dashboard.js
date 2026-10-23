@@ -194,6 +194,16 @@ const HELP_CONTENT = {
       'How many lectors, choir members, altar servers and ushers each Mass needs is set in ministry.js.',
     ],
   },
+  'ministry-bookings.html': {
+    title: 'Ministry Bookings',
+    intro: 'Parish rooms for people who serve the parish, with no fee — once the office has verified that they serve here.',
+    steps: [
+      'Click “New Ministry Booking” and type the person’s name. Anyone who served at a Mass in the last 90 days (or is signed up for one) is verified from the Ministry Roster automatically.',
+      'Someone the Head Admin vouched for in the last 6 months is “on file” and verified automatically too.',
+      'Anyone else (parish staff, other ministries): record their ministry, role and who confirmed it. The Head Admin’s word verifies them; a booking filed by the Secretary holds the room as “Waiting” until the Head Admin clicks Verify.',
+      'Then pick the room, date and time on the same booking screen as Facility Booking, so ministry and regular bookings never clash.',
+    ],
+  },
   'attendance.html': {
     title: 'Attendance Insights',
     intro: 'How full each Mass is, built from parishioners’ QR check-ins. For the Head Admin.',
@@ -272,6 +282,16 @@ document.addEventListener('DOMContentLoaded', () => {
           </li>`);
   }
   const fbLi = document.querySelector('#sidebar a.sidebar-link[href="facility-booking.html"]')?.closest('li');
+  /* "Ministry Bookings" — rooms with no fee for people who serve the parish, under Facility Booking. */
+  if (fbLi && !document.querySelector('#sidebar a.sidebar-link[href="ministry-bookings.html"]')) {
+    fbLi.insertAdjacentHTML('afterend', `
+          <li>
+            <a href="ministry-bookings.html" data-nav="ministry-bookings" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Ministry Bookings
+            </a>
+          </li>`);
+  }
   if (fbLi && !document.querySelector('#sidebar a.sidebar-link[href="ministry-roster.html"]')) {
     fbLi.insertAdjacentHTML('afterend', `
           <li>
@@ -325,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const NAV_GROUPS = [
     ['Main', ['dashboard.html']],
     ['Masses', ['masses.html', 'special-schedules.html', 'ministry-roster.html', 'attendance.html']],
-    ['Requests', ['record-requests.html', 'schedule-offers.html', 'blessings.html', 'facility-booking.html', 'mass-intentions.html']],
+    ['Requests', ['record-requests.html', 'schedule-offers.html', 'blessings.html', 'facility-booking.html', 'ministry-bookings.html', 'mass-intentions.html']],
     ['Records & Finance', ['digital-archives.html', 'donations.html', 'columbary.html']],
     ['Communications', ['announcements.html', 'messages.html', 'prayer-wall.html', 'badge-maker.html', 'parish-info.html']],
   ];

@@ -1,0 +1,89 @@
+/* ============================================
+   SacraDigit Admin — Ministry Bookings
+   Pairs with ministry-bookings.html + .js. The booking
+   screen itself is facility-booking.css.
+   ============================================ */
+
+/* "No fee" tag — also used on Facility Booking for ministry bookings */
+.mb-fee {
+  display: inline-flex; align-items: center; margin-left: 0.35rem; padding: 0.1rem 0.5rem; border-radius: 999px;
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; vertical-align: 0.05em;
+  background: rgba(201, 168, 76, 0.16); color: #8a6d1f;
+}
+.mb-sub { display: block; font-size: 0.75rem; font-weight: 500; color: #6b7280; margin-top: 0.1rem; }
+
+/* ---------- Waiting for verification ---------- */
+.mb-intro { padding: 0.75rem 1.25rem 0.25rem; font-size: 0.8125rem; color: #6b7280; line-height: 1.5; }
+.mb-table .row-actions { flex-wrap: nowrap; }
+.mb-waiting-list { margin: 0; padding: 0; list-style: none; }
+.mb-waiting-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  padding: 0.875rem 1.25rem; border-top: 1px solid #f0f1f4;
+}
+.mb-person { font-size: 0.875rem; font-weight: 600; color: #1f2937; }
+.mb-meta { font-size: 0.75rem; color: #6b7280; margin-top: 0.1rem; }
+
+/* ---------- Who can book (rules) ---------- */
+.mb-rules { margin: 0; padding: 0.75rem 1.25rem 1.25rem; list-style: none; display: grid; gap: 0.875rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.mb-rules li { display: flex; gap: 0.75rem; align-items: flex-start; }
+.mb-rule-num {
+  flex: none; width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center;
+  font-size: 0.8125rem; font-weight: 700; background: rgba(139, 143, 199, 0.16); color: #4b50a0;
+}
+.mb-rule-title { font-size: 0.875rem; font-weight: 700; color: #1f2937; }
+.mb-rule-text { font-size: 0.8125rem; color: #6b7280; line-height: 1.5; margin-top: 0.15rem; }
+
+/* ---------- Who is booking? ---------- */
+.mb-who-card { max-width: 34rem; }
+.mb-check { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.875rem 1rem; border-radius: 0.75rem; border: 1px solid; }
+.mb-check.hidden { display: none; }
+.mb-check.is-verified { background: #f0fdf4; border-color: #bbf7d0; }
+.mb-check.is-unknown { background: #fffbeb; border-color: #fde68a; }
+.mb-check-icon { flex: none; width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; }
+.is-verified .mb-check-icon { background: #15803d; }
+.is-unknown .mb-check-icon { background: #b45309; }
+.mb-check-title { font-size: 0.875rem; font-weight: 700; color: #1f2937; }
+.mb-check-text { font-size: 0.8125rem; color: #4b5563; line-height: 1.5; margin-top: 0.15rem; }
+.mb-vouch { display: grid; gap: 1rem; }
+.mb-vouch.hidden { display: none; }
+.mb-attest { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.8125rem; color: #374151; cursor: pointer; padding: 0.5rem 0.625rem; border-radius: 0.5rem; border: 1.5px solid transparent; }
+.mb-attest input { margin-top: 0.15rem; width: 1.05rem; height: 1.05rem; flex: none; accent-color: #1e2a4a; }
+.mb-attest.has-error { border-color: #fca5a5; background: #fef2f2; }
+.mb-vouch-note { font-size: 0.75rem; color: #92400e; }
+.mb-vouch-note:empty { display: none; }
+
+/* ---------- Banner on the booking screen (who it's for) ---------- */
+.mb-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+  padding: 0.75rem 1rem; border-radius: 0.875rem; border: 1px solid rgba(201, 168, 76, 0.45);
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.12), rgba(201, 168, 76, 0.03));
+}
+.mb-banner-name { font-size: 0.9375rem; font-weight: 700; color: #1f2937; }
+.mb-banner-meta { font-size: 0.8125rem; color: #6b7280; margin-top: 0.1rem; }
+
+@media (max-width: 640px) {
+  .mb-waiting-item { padding: 0.875rem 1rem; }
+  .mb-waiting-item .act-row { width: 100%; }
+  .mb-table .row-actions { flex-wrap: wrap; }
+}
+
+/* ---------- Dark mode ---------- */
+:root[data-theme="dark"] .mb-fee { background: rgba(201, 168, 76, 0.2); color: #f3dca0; }
+:root[data-theme="dark"] .mb-intro,
+:root[data-theme="dark"] .mb-sub,
+:root[data-theme="dark"] .mb-meta,
+:root[data-theme="dark"] .mb-rule-text,
+:root[data-theme="dark"] .mb-banner-meta { color: #9aa3b5; }
+:root[data-theme="dark"] .mb-person,
+:root[data-theme="dark"] .mb-rule-title,
+:root[data-theme="dark"] .mb-check-title,
+:root[data-theme="dark"] .mb-banner-name { color: #f1f3f7; }
+:root[data-theme="dark"] .mb-waiting-item { border-color: #2c3548; }
+:root[data-theme="dark"] .mb-rule-num { background: rgba(139, 143, 199, 0.22); color: #c7cbe8; }
+:root[data-theme="dark"] .mb-check.is-verified { background: rgba(21, 128, 61, 0.16); border-color: rgba(134, 239, 172, 0.3); }
+:root[data-theme="dark"] .mb-check.is-unknown { background: rgba(180, 83, 9, 0.16); border-color: rgba(252, 211, 77, 0.3); }
+:root[data-theme="dark"] .mb-check-text { color: #cbd3e6; }
+:root[data-theme="dark"] .mb-attest { color: #cbd3e6; }
+:root[data-theme="dark"] .mb-attest.has-error { background: rgba(185, 28, 28, 0.16); border-color: #7f1d1d; }
+:root[data-theme="dark"] .mb-vouch-note { color: #fcd34d; }
+:root[data-theme="dark"] .mb-banner { border-color: rgba(201, 168, 76, 0.35); }
