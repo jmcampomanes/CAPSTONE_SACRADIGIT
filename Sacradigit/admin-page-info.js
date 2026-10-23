@@ -41,9 +41,13 @@ const PAGE_INFO = {
     title: 'What’s on this page?',
     text: 'Bookings for parish rooms, halls and chapels. Check what’s taken in the calendar, add a booking, or cancel one.',
   },
+  'parish-servers.html': {
+    title: 'What’s on this page?',
+    text: 'Parishioners who serve the parish ask here to be verified as Parish Servers. Check with the person they named, then approve or decline. Approval lasts a year.',
+  },
   'ministry-bookings.html': {
     title: 'Who can book here?',
-    text: 'People who serve the parish use its rooms with no fee. Type their name: anyone on the Ministry Roster, or vouched for by the Head Admin in the last 6 months, is verified automatically. Anyone else needs the Head Admin’s word.',
+    text: 'People who serve the parish use its rooms with no fee. Type their name: verified Parish Servers, anyone on the Ministry Roster, and anyone the Head Admin vouched for in the last 6 months are verified automatically. Anyone else needs the Head Admin’s word.',
   },
   'donations.html': {
     title: 'What’s on this page?',

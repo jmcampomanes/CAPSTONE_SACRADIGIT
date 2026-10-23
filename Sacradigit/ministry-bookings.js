@@ -22,6 +22,7 @@ import { client } from '../amplify-init.js';
 import { currentUserName, isHeadAdmin } from '../auth.js';
 import { logBookingAction } from '../service-schedule.js';
 import { ministryReady } from '../ministry.js';
+import { serversReady, listApplications } from '../parish-servers.js';
 import { isMobile, mobileDigits, MOBILE_HINT } from '../mobile-number.js';
 import { trackArrivals, isFresh } from '../motion.js';
 import { showToast, confirmDialog, reasonDialog } from './admin-ui.js';
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let bookings = [];   // every FacilityBooking (all of them block rooms)
   let signups = [];    // recent Ministry Roster sign-ups
+  let servers = [];    // Parish Server applications (verified ones count)
   let pending = null;  // the person being booked for: { name, contact, info }
 
   /* ---------- Data ---------- */
@@ -79,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   loadSignups();
+  if (serversReady()) listApplications().then((apps) => { servers = apps; fillNameSuggestions(); }).catch(err => console.error('Failed to load Parish Servers:', err));
 
   /* ---------- Lists ---------- */
   const ministryBookings = () => bookings.map(b => ({ b, info: readMinistry(b) })).filter(x => x.info);
@@ -257,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const OTHER = GROUPS[GROUPS.length - 1];
 
   function fillNameSuggestions() {
-    $('mb-names').innerHTML = servantNames({ signups, bookings, today: today() }).map(n => `<option value="${esc(n)}"></option>`).join('');
+    $('mb-names').innerHTML = servantNames({ signups, bookings, servers, today: today() }).map(n => `<option value="${esc(n)}"></option>`).join('');
   }
 
   const fieldsToClear = ['mb-name', 'mb-contact', 'mb-group', 'mb-group-other', 'mb-role', 'mb-confirmed-with'];
@@ -275,16 +278,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let found = null; // checkServant() result for the typed name
   function runCheck() {
     const name = nameInput.value.trim();
-    found = name.length >= 3 ? checkServant(name, { signups, bookings, today: today() }) : null;
+    found = name.length >= 3 ? checkServant(name, { signups, bookings, servers, today: today() }) : null;
     checkBox.classList.toggle('hidden', name.length < 3);
     if (name.length < 3) { vouchBox.classList.add('hidden'); return; }
     if (found) {
       checkBox.className = 'mb-check is-verified';
       checkBox.innerHTML = `
         <span class="mb-check-icon" aria-hidden="true">✓</span>
-        <div><p class="mb-check-title">Verified — ${found.method === 'roster' ? 'on the Ministry Roster' : 'on file'}</p>
+        <div><p class="mb-check-title">Verified — ${{ server: 'a Parish Server', roster: 'on the Ministry Roster' }[found.method] || 'on file'}</p>
         <p class="mb-check-text">${esc(found.proof)}</p>
-        ${found.validUntil ? `<p class="mb-check-text">On file until ${longDate(found.validUntil)}.</p>` : ''}
+        ${found.validUntil ? `<p class="mb-check-text">${found.method === 'server' ? 'Verified' : 'On file'} until ${longDate(found.validUntil)}.</p>` : ''}
         <p class="mb-check-text"><strong>No fee</strong> for this booking.</p></div>`;
       vouchBox.classList.add('hidden');
     } else {

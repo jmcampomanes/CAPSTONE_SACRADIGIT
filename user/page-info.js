@@ -53,6 +53,10 @@ const PAGE_INFO = {
     title: 'What is the Prayer Wall?',
     text: 'Share a prayer request and the parish community will pray with you. Tap “I prayed for this” on someone’s request to let them know.',
   },
+  'user-parish-server.html': {
+    title: 'Who is this for?',
+    text: 'Anyone who serves the parish — lectors, choir, altar servers, ushers, catechists, office staff and parish groups. Apply here; the parish office verifies it.',
+  },
   'user-ministry.html': {
     title: 'How do I volunteer?',
     text: 'Pick your ministry, find a Mass that still needs people, and tap Volunteer. You can withdraw until the day before; after that, ask for a swap so someone else can take your place.',

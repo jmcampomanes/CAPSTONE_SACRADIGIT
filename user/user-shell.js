@@ -68,6 +68,16 @@ const HELP_CONTENT = {
       'Serving 4 times earns the Faithful Servant badge.',
     ],
   },
+  'user-parish-server.html': {
+    title: 'Parish Server',
+    intro: 'If you serve the parish — in a ministry, a parish group or the office — ask to be verified as a Parish Server.',
+    steps: [
+      'Choose your ministry or group, your role, and who can confirm that you serve (your coordinator or the parish priest).',
+      'Press Send for Verification. The Head Admin checks with them, then approves it — you’ll get a notice (🔔).',
+      'Once verified, your account shows “Parish Server”, and parish rooms booked for your ministry through the office have no fee.',
+      'It lasts a year. Near the end, this page asks you to renew.',
+    ],
+  },
   'user-badges.html': {
     title: 'My Badges',
     intro: 'Your Faith Journey — badges for coming to Mass, giving, and parish life.',
@@ -205,6 +215,7 @@ const PAGES_WITHOUT_ASSISTANT = new Set([
   'user-request-certificate.html',
   'user-request-service.html',
   'user-facility-booking.html',
+  'user-parish-server.html',
   'user-mass-intentions.html',
 ]);
 
@@ -318,6 +329,15 @@ document.addEventListener('DOMContentLoaded', () => {
         </ul>`);
   }
 
+
+  /* "Parish Server" (user-parish-server.html) — apply to be verified as serving the parish, after Ministry Sign-ups. */
+  const minLink = sidebarNav?.querySelector('[data-nav="ministry"]');
+  if (minLink && !sidebarNav.querySelector('[data-nav="parish-server"]')) {
+    minLink.closest('li').insertAdjacentHTML('afterend', `
+          <li><a href="user-parish-server.html" data-nav="parish-server" class="sidebar-link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            Parish Server</a></li>`);
+  }
 
   /* "Columbary" (user-columbary.html), after Facility Booking. */
   const fbLink = sidebarNav?.querySelector('[data-nav="facility-booking"]');

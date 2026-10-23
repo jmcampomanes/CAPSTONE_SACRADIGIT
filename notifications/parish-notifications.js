@@ -139,7 +139,7 @@ export async function collectNotifications(lang = currentLang()) {
   const out = [];
   const add = (n) => out.push(n);
 
-  const [certs, services, bookings, intentions, donations, announcements, weekly, live] = await Promise.all([
+  const [certs, services, bookings, intentions, donations, announcements, weekly, live, serverApps] = await Promise.all([
     prefs['certificate-status'] ? safe(listAll(client.models.CertificateRequest).then(mine)) : [],
     prefs['service-status'] ? safe(listAll(client.models.Blessing).then(mine)) : [],
     prefs['facility-booking-status'] ? safe(listAll(client.models.FacilityBooking).then(mine)) : [],
@@ -148,7 +148,21 @@ export async function collectNotifications(lang = currentLang()) {
     prefs.announcements ? safe(listAll(client.models.Announcement, { filter: { published: { eq: true } } })) : [],
     prefs['mass-schedule-changes'] ? safe(listAll(client.models.WeeklyMassSchedule)) : [],
     prefs.announcements ? safe(listAll(client.models.LivestreamStatus)) : [],
+    prefs['service-status'] && client.models.ServerApplication ? safe(listAll(client.models.ServerApplication).then(mine)) : [],
   ]);
+
+  // Parish Server verification decided by the Head Admin (../parish-servers.js).
+  for (const r of serverApps.filter(r => recent(r) && changedLater(r))) {
+    const msg = {
+      approved: fil ? ['Isa ka nang Parish Server', `Napatunayan ka bilang ${esc(r.role)}, ${esc(r.ministry)}.`]
+                    : ['You’re now a verified Parish Server', `${esc(r.role)}, ${esc(r.ministry)}.`],
+      declined: fil ? ['Hindi naaprubahan ang iyong Parish Server application', r.reason ? esc(r.reason) : 'Makipag-ugnayan sa parish office.']
+                    : ['Your Parish Server application wasn’t approved', r.reason ? esc(r.reason) : 'Please contact the parish office.'],
+      revoked: fil ? ['Inalis ang iyong Parish Server role', r.reason ? esc(r.reason) : '']
+                   : ['Your Parish Server role was removed', r.reason ? esc(r.reason) : ''],
+    }[r.status];
+    if (msg) add({ id: `server-${r.id}-${r.status}`, kind: 'server', at: r.updatedAt, title: msg[0], body: msg[1], href: 'user-parish-server.html' });
+  }
 
   for (const r of certs.filter(recent)) {
     const name = esc(r.certificateType);
@@ -265,9 +279,10 @@ const ICONS = {
   donation: '<path d="M4.3 6.3a4.5 4.5 0 000 6.4L12 20.4l7.7-7.7a4.5 4.5 0 00-6.4-6.4L12 7.6l-1.3-1.3a4.5 4.5 0 00-6.4 0z"/>',
   announcement: '<path d="M11 5.9v13.3a1.8 1.8 0 01-3.4.6l-2.2-6.1M18 13a3 3 0 100-6M5.4 13.7A4 4 0 017 6h1.8c4.1 0 7.6-1.2 9.2-3v14c-1.5-1.8-5.1-3-9.2-3H7a4 4 0 01-1.6-.3z"/>',
   schedule: '<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+  server: '<path d="M9 12l2 2 4-4m5.6-4A12 12 0 0112 2.9 12 12 0 013.4 6 12 12 0 003 9c0 5.6 3.8 10.3 9 11.6 5.2-1.3 9-6 9-11.6 0-1-.1-2-.4-3z"/>',
   live: '<path d="M15 10l4.6-2.3A1 1 0 0121 8.6v6.8a1 1 0 01-1.4.9L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>',
 };
-const TONE = { certificate: '#4b50a0', service: '#0f8a7a', reminder: '#b45309', facility: '#6c91c2', intention: '#b5943e', donation: '#15803d', announcement: '#c2410c', schedule: '#1d4ed8', live: '#dc2626' };
+const TONE = { server: '#8a6d1f', certificate: '#4b50a0', service: '#0f8a7a', reminder: '#b45309', facility: '#6c91c2', intention: '#b5943e', donation: '#15803d', announcement: '#c2410c', schedule: '#1d4ed8', live: '#dc2626' };
 
 const STYLE = `
   .pn-wrap { position: relative; display: inline-flex; }

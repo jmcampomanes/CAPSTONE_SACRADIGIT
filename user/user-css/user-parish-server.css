@@ -1,0 +1,52 @@
+/* ============================================
+   SacraDigit — Parish Server (parishioner side)
+   Pairs with user-parish-server.html + .js.
+   ============================================ */
+
+.ps-note {
+  padding: 0.875rem 1.125rem; border-radius: 0.875rem; font-size: 0.875rem; line-height: 1.5;
+  background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+}
+.ps-note.hidden { display: none; }
+
+/* Where your application stands */
+.ps-status { display: flex; align-items: flex-start; gap: 0.875rem; flex-wrap: wrap; padding: 1rem 1.25rem; border-radius: 0.875rem; border: 1px solid; }
+.ps-status.hidden { display: none; }
+.ps-status.is-ok { background: #f0fdf4; border-color: #bbf7d0; }
+.ps-status.is-wait { background: #fffbeb; border-color: #fde68a; }
+.ps-status.is-no, .ps-status.is-error { background: #fef2f2; border-color: #fecaca; }
+.ps-status-icon { flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; }
+.is-ok .ps-status-icon { background: #15803d; }
+.is-wait .ps-status-icon { background: #b45309; }
+.is-no .ps-status-icon { background: #b91c1c; }
+.ps-status-title { font-size: 0.9375rem; font-weight: 700; color: #1f2937; }
+.ps-status-text { font-size: 0.8125rem; color: #4b5563; line-height: 1.5; margin-top: 0.15rem; }
+.ps-status-action { align-self: center; }
+
+.ps-hint { font-size: 0.75rem; color: #6b7280; margin-top: 0.3rem; }
+.ps-attest { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.875rem; color: #374151; cursor: pointer; padding: 0.625rem 0.75rem; border-radius: 0.625rem; border: 1.5px solid transparent; }
+.ps-attest input { margin-top: 0.15rem; width: 1.1rem; height: 1.1rem; flex: none; accent-color: #1e2a4a; }
+.ps-attest.has-error { border-color: #fca5a5; background: #fef2f2; }
+
+/* What a Parish Server gets */
+.ps-perks { margin: 0; padding: 1rem 1.25rem 1.25rem; list-style: none; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.ps-perks li { display: flex; gap: 0.75rem; align-items: flex-start; }
+.ps-perk-icon { flex: none; width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.8125rem; background: rgba(201, 168, 76, 0.18); color: #8a6d1f; }
+.ps-perk-title { font-size: 0.875rem; font-weight: 700; color: #1f2937; }
+.ps-perk-text { font-size: 0.8125rem; color: #6b7280; line-height: 1.5; margin-top: 0.15rem; }
+
+@media (max-width: 640px) {
+  .ps-status-action { width: 100%; }
+}
+
+/* Dark mode */
+:root[data-theme="dark"] .ps-note { background: rgba(180, 83, 9, 0.16); border-color: rgba(252, 211, 77, 0.3); color: #fcd34d; }
+:root[data-theme="dark"] .ps-status.is-ok { background: rgba(21, 128, 61, 0.16); border-color: rgba(134, 239, 172, 0.3); }
+:root[data-theme="dark"] .ps-status.is-wait { background: rgba(180, 83, 9, 0.16); border-color: rgba(252, 211, 77, 0.3); }
+:root[data-theme="dark"] .ps-status.is-no,
+:root[data-theme="dark"] .ps-status.is-error { background: rgba(185, 28, 28, 0.16); border-color: rgba(252, 165, 165, 0.3); }
+:root[data-theme="dark"] :is(.ps-status-title, .ps-perk-title) { color: #f1f3f7; }
+:root[data-theme="dark"] :is(.ps-status-text, .ps-attest) { color: #cbd3e6; }
+:root[data-theme="dark"] :is(.ps-hint, .ps-perk-text) { color: #9aa3b5; }
+:root[data-theme="dark"] .ps-attest.has-error { background: rgba(185, 28, 28, 0.16); border-color: #7f1d1d; }
+:root[data-theme="dark"] .ps-perk-icon { background: rgba(201, 168, 76, 0.2); color: #f3dca0; }

@@ -194,6 +194,16 @@ const HELP_CONTENT = {
       'How many lectors, choir members, altar servers and ushers each Mass needs is set in ministry.js.',
     ],
   },
+  'parish-servers.html': {
+    title: 'Parish Servers',
+    intro: 'Parishioners who serve the parish apply on their portal to be verified. The Head Admin approves or declines each one.',
+    steps: [
+      'New applications appear under “Waiting for Approval”, with their ministry, role, and who can confirm it.',
+      'Check with that person first, then click Approve. They’re verified for a year and get the Parish Server role.',
+      'Click Decline (with a reason) if they don’t serve here — they see the reason and can apply again.',
+      '“Remove role” ends someone’s verification early. Verified servers book parish rooms with no fee on Ministry Bookings.',
+    ],
+  },
   'ministry-bookings.html': {
     title: 'Ministry Bookings',
     intro: 'Parish rooms for people who serve the parish, with no fee — once the office has verified that they serve here.',
@@ -301,6 +311,17 @@ document.addEventListener('DOMContentLoaded', () => {
             </a>
           </li>`);
   }
+  /* "Parish Servers" — approve parishioners who serve the parish, after Ministry Roster. */
+  const rosterLi = document.querySelector('#sidebar a.sidebar-link[href="ministry-roster.html"]')?.closest('li');
+  if (rosterLi && !document.querySelector('#sidebar a.sidebar-link[href="parish-servers.html"]')) {
+    rosterLi.insertAdjacentHTML('afterend', `
+          <li>
+            <a href="parish-servers.html" data-nav="parish-servers" class="sidebar-link">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              Parish Servers
+            </a>
+          </li>`);
+  }
   watchPendingPrayers(document.querySelector('#sidebar a.sidebar-link[href="prayer-wall.html"]'));
 
   /* "Columbary" (columbary.html) — niches, reservations and payments, after Donations. */
@@ -344,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
      page's copy of the sidebar ends up in the same order. */
   const NAV_GROUPS = [
     ['Main', ['dashboard.html']],
-    ['Masses', ['masses.html', 'special-schedules.html', 'ministry-roster.html', 'attendance.html']],
+    ['Masses', ['masses.html', 'special-schedules.html', 'ministry-roster.html', 'parish-servers.html', 'attendance.html']],
     ['Requests', ['record-requests.html', 'schedule-offers.html', 'blessings.html', 'facility-booking.html', 'ministry-bookings.html', 'mass-intentions.html']],
     ['Records & Finance', ['digital-archives.html', 'donations.html', 'columbary.html']],
     ['Communications', ['announcements.html', 'messages.html', 'prayer-wall.html', 'badge-maker.html', 'parish-info.html']],

@@ -51,6 +51,9 @@ export const ROLES = {
   itech:       { label: 'IT Team',           home: 'Sacraitech/itech-dashboard.html' },
   media:       { label: 'Media Team',        home: 'Sacramedia/media-dashboard.html' },
   parishioner: { label: 'Parishioner',       home: 'user/user-dashboard.html' },
+  // A parishioner the Head Admin verified as serving the parish (../parish-servers.js).
+  // It's an extra group on top of being a parishioner — same portal, same sign-in.
+  server:      { label: 'Parish Server',     home: 'user/user-dashboard.html' },
 };
 
 /** Which roles may open each portal. */
@@ -58,7 +61,7 @@ export const PORTAL_ACCESS = {
   admin:       ['admin', 'staff'],
   itech:       ['itech'],
   media:       ['media', 'admin'],
-  parishioner: ['parishioner', 'admin', 'staff', 'itech', 'media'],
+  parishioner: ['parishioner', 'server', 'admin', 'staff', 'itech', 'media'],
 };
 
 // When someone is in several groups, their "home" portal follows this order.
@@ -98,6 +101,9 @@ export const currentUserName = () => currentUser()?.name || '';
 
 /** Head Admin only: publishing, deleting, changing schedules. (The Secretary can approve certificate requests too.) */
 export const isHeadAdmin = (user = currentUser()) => !!user && (user.groups || []).includes('admin');
+
+/** Verified Parish Server (the 'server' group — see ../parish-servers.js). */
+export const isParishServer = (user = currentUser()) => !!user && (user.groups || []).includes('server');
 
 export function hasRole(user, ...roles) {
   return !!user && roles.some(r => r === 'parishioner' || (user.groups || []).includes(r));
@@ -214,7 +220,7 @@ function paintUserCard(user) {
     const lines = card.querySelectorAll('p');
     if (avatar) avatar.textContent = initials;
     if (lines[0]) lines[0].textContent = user.name;
-    if (lines[1]) lines[1].textContent = (ROLES[user.role] || ROLES.parishioner).label;
+    if (lines[1]) lines[1].textContent = (user.role === 'parishioner' && isParishServer(user) ? ROLES.server : ROLES[user.role] || ROLES.parishioner).label;
   }
   const sidebarName = document.getElementById('sidebar-user-name');
   if (sidebarName) sidebarName.textContent = user.name;

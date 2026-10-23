@@ -7,6 +7,9 @@
    verified that they serve here.
 
    How someone is verified (checkServant):
+     0. Verified Parish Server — the Head Admin approved
+        their Parish Server application (../parish-servers.js)
+        and it hasn't expired.
      1. Ministry Roster — they served at a Mass in
         the last 90 days, or are signed up for one in
         the next 60 (MinistrySignup, ../ministry.js).
@@ -25,6 +28,7 @@
    ============================================ */
 
 import { MINISTRIES } from '../ministry.js';
+import { SERVER_GROUPS, isVerified as serverVerified } from '../parish-servers.js';
 
 export const ROSTER_BACK_DAYS = 90;
 export const ROSTER_AHEAD_DAYS = 60;
@@ -32,14 +36,7 @@ export const VOUCH_MONTHS = 6;
 const TAG = 'ministry-booking';
 
 /** Ministries and parish groups offered when the Head Admin vouches for someone. */
-export const GROUPS = [
-  ...MINISTRIES.map(m => m.label),
-  'Parish office staff',
-  'Parish Pastoral Council',
-  'Catechists',
-  'Youth Ministry',
-  'Another parish ministry or organization',
-];
+export const GROUPS = SERVER_GROUPS;
 
 /** The verification saved with a booking, or null for an ordinary booking. */
 export function readMinistry(booking) {
@@ -68,9 +65,19 @@ const ministryOf = (id) => MINISTRIES.find(m => m.id === id) || { label: id, one
  * Is this person verified as serving the parish?
  * Returns { method: 'roster' | 'on-file', group, role, proof, validUntil? } or null.
  */
-export function checkServant(name, { signups = [], bookings = [], today = isoDay(new Date()) } = {}) {
+export function checkServant(name, { signups = [], bookings = [], servers = [], today = isoDay(new Date()) } = {}) {
   const key = nameKey(name);
   if (!key) return null;
+
+  // 0. A verified Parish Server (they applied on the parishioner portal; the Head Admin approved).
+  const server = servers.filter(a => nameKey(a.applicantName) === key && serverVerified(a, today))
+    .sort((a, b) => String(b.validUntil).localeCompare(String(a.validUntil)))[0];
+  if (server) {
+    return {
+      method: 'server', group: server.ministry, role: server.role, validUntil: server.validUntil,
+      proof: `Verified Parish Server — ${server.role}, ${server.ministry} (approved by ${server.reviewedBy || 'the Head Admin'})`,
+    };
+  }
 
   // 1. Ministry Roster: the latest Mass they served (or the next one they're down for).
   const from = addDays(today, -ROSTER_BACK_DAYS), to = addDays(today, ROSTER_AHEAD_DAYS);
@@ -100,8 +107,9 @@ export function checkServant(name, { signups = [], bookings = [], today = isoDay
 }
 
 /** Names to suggest while typing: everyone on the recent roster, plus anyone on file. */
-export function servantNames({ signups = [], bookings = [], today = isoDay(new Date()) } = {}) {
+export function servantNames({ signups = [], bookings = [], servers = [], today = isoDay(new Date()) } = {}) {
   const names = new Map();
+  servers.filter(a => serverVerified(a, today)).forEach(a => names.set(nameKey(a.applicantName), a.applicantName));
   const from = addDays(today, -ROSTER_BACK_DAYS), to = addDays(today, ROSTER_AHEAD_DAYS);
   signups.filter(s => s.volunteerName && s.massDate >= from && s.massDate <= to).forEach(s => names.set(nameKey(s.volunteerName), s.volunteerName));
   bookings.filter(b => readMinistry(b)?.method === 'vouched' && b.requesterName).forEach(b => names.set(nameKey(b.requesterName), b.requesterName));
@@ -112,6 +120,7 @@ export function servantNames({ signups = [], bookings = [], today = isoDay(new D
 export function verificationLabel(info) {
   if (!info) return null;
   if (info.waiting) return { text: 'Waiting for Head Admin', cls: 'badge-amber' };
+  if (info.method === 'server') return { text: 'Parish Server', cls: 'badge-green' };
   if (info.method === 'roster') return { text: 'Ministry Roster', cls: 'badge-green' };
   if (info.method === 'on-file') return { text: 'On file', cls: 'badge-green' };
   return { text: 'Vouched by Head Admin', cls: 'badge-green' };

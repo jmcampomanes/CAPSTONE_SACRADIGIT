@@ -1,0 +1,33 @@
+/* ============================================
+   SacraDigit Admin — Parish Servers
+   Pairs with parish-servers.html + .js.
+   ============================================ */
+
+.ps-note {
+  padding: 0.875rem 1.125rem; border-radius: 0.875rem; font-size: 0.875rem; line-height: 1.5;
+  background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+}
+.ps-note.hidden { display: none; }
+
+.ps-list { margin: 0; padding: 0; list-style: none; }
+.ps-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  padding: 0.875rem 1.25rem; border-top: 1px solid #f0f1f4;
+}
+.ps-list > li:first-child { border-top: 0; }
+.ps-name { font-size: 0.9375rem; font-weight: 600; color: #1f2937; }
+.ps-meta { font-size: 0.8125rem; color: #6b7280; margin-top: 0.1rem; }
+.ps-meta strong { color: #374151; font-weight: 600; }
+.ps-msg { font-size: 0.8125rem; color: #4b5563; font-style: italic; margin-top: 0.3rem; }
+
+@media (max-width: 640px) {
+  .ps-item { padding: 0.875rem 1rem; }
+  .ps-item .act-row { width: 100%; }
+}
+
+:root[data-theme="dark"] .ps-note { background: rgba(180, 83, 9, 0.16); border-color: rgba(252, 211, 77, 0.3); color: #fcd34d; }
+:root[data-theme="dark"] .ps-item { border-color: #2c3548; }
+:root[data-theme="dark"] .ps-name { color: #f1f3f7; }
+:root[data-theme="dark"] .ps-meta { color: #9aa3b5; }
+:root[data-theme="dark"] .ps-meta strong,
+:root[data-theme="dark"] .ps-msg { color: #cbd3e6; }
