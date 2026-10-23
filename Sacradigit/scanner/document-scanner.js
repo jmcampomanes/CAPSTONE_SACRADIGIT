@@ -9,7 +9,7 @@
    the browser.
    ============================================ */
 
-import { enhanceImage, wordsFromTesseract, buildRows, rowsToText, averageConfidence } from './scan-engine.js';
+import { readPage } from './scan-engine.js';
 
 // Long side of a source page before clean-up. Bigger adds time, not accuracy.
 const MAX_SOURCE_SIDE = 4200;
@@ -130,11 +130,18 @@ export function warmUpOcr() {
   getWorker().catch(() => {});
 }
 
+const toCanvas = ({ width, height, data }) => {
+  const c = canvasOf(width, height);
+  c.getContext('2d').putImageData(new ImageData(data, width, height), 0, 0);
+  return c;
+};
+
 /**
- * Cleans up and reads one page.
+ * Cleans up and reads one page (scan-engine.js readPage: one full read,
+ * then a second, closer look at every unclear cell).
  *   source    — canvas of the page (already rotated the right way up)
  *   threshold — true for faint ink / shadowy phone photos
- *   onProgress({ stage, progress }) — stage: 'enhance' | 'load' | 'ocr'
+ *   onProgress({ stage, progress }) — stage: 'enhance' | 'load' | 'ocr' | 'recheck'
  * Returns { canvas (the cleaned image the word boxes refer to), words,
  *           rows, text, confidence, skew }.
  */
@@ -142,24 +149,30 @@ export async function scanPage(source, { threshold = false, onProgress = () => {
   onProgress({ stage: 'enhance', progress: 0 });
   // Let the progress UI paint before the (synchronous) clean-up runs.
   await new Promise(r => setTimeout(r, 30));
-  const ctx = source.getContext('2d');
-  const img = ctx.getImageData(0, 0, source.width, source.height);
-  const clean = enhanceImage(img, { targetWidth: 2400, threshold });
+  const img = source.getContext('2d').getImageData(0, 0, source.width, source.height);
 
-  const out = canvasOf(clean.width, clean.height);
-  out.getContext('2d').putImageData(new ImageData(clean.data, clean.width, clean.height), 0, 0);
-
-  onProgress({ stage: 'load', progress: 0 });
+  let worker = null;
+  let stage = 'ocr'; // the whole page; single cells report through readPage instead
   progressListener = (m) => {
-    if (m.status === 'recognizing text') onProgress({ stage: 'ocr', progress: m.progress || 0 });
+    if (m.status === 'recognizing text') { if (stage === 'ocr') onProgress({ stage: 'ocr', progress: m.progress || 0 }); }
     else onProgress({ stage: 'load', progress: m.progress || 0 });
   };
   try {
-    const worker = await getWorker();
-    const { data } = await worker.recognize(out, {}, { blocks: true });
-    const words = wordsFromTesseract(data);
-    const rows = buildRows(words);
-    return { canvas: out, words, rows, text: rowsToText(rows), confidence: averageConfidence(rows), skew: clean.skew };
+    const result = await readPage(img, {
+      threshold,
+      onProgress: (p) => {
+        if (p.stage === 'recheck') stage = 'recheck';
+        if (p.stage !== 'ocr') onProgress(p);
+      },
+      recognize: async (image, params) => {
+        if (!worker) { onProgress({ stage: 'load', progress: 0 }); worker = await getWorker(); }
+        await worker.setParameters(params);
+        const { data } = await worker.recognize(toCanvas(image), {}, { blocks: true });
+        return data;
+      },
+    });
+    const { image, words, rows, text, confidence, skew } = result;
+    return { canvas: toCanvas(image), words, rows, text, confidence, skew };
   } finally {
     progressListener = null;
   }

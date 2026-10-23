@@ -164,6 +164,33 @@ function flattenBackground(src) {
   return { w, h, g: out };
 }
 
+/** Light blur ([1 2 1] each way, `passes` times): smooths camera grain and paper texture. */
+function soften(src, passes = 1) {
+  const { w, h } = src;
+  let g = src.g;
+  for (let p = 0; p < passes; p++) {
+    const tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      tmp[i] = (g[x > 0 ? i - 1 : i] + 2 * g[i] + g[x < w - 1 ? i + 1 : i]) / 4;
+    }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      out[i] = (tmp[y > 0 ? i - w : i] + 2 * tmp[i] + tmp[y < h - 1 ? i + w : i]) / 4;
+    }
+    g = out;
+  }
+  return { w, h, g };
+}
+
+/** Unsharp mask: crisps letter edges softened by focus blur or upscaling. */
+function sharpen(src, amount = 0.8) {
+  const soft = soften(src, 2);
+  const out = new Float32Array(src.g.length);
+  for (let i = 0; i < out.length; i++) out[i] = Math.max(0, Math.min(255, src.g[i] + amount * (src.g[i] - soft.g[i])));
+  return { ...src, g: out };
+}
+
 /** Stretches levels so the darkest ink is black and the paper is white. */
 function stretchContrast(src) {
   const { g } = src;
@@ -208,7 +235,8 @@ function sauvola(src, win, k = 0.3, R = 128) {
 }
 
 /**
- * Full clean-up pipeline. Returns { width, height, data (RGBA), skew, scale }.
+ * Full clean-up pipeline. Returns { width, height, data (RGBA), skew, scale,
+ * gray (the cleaned page before any black-and-white step) }.
  *   targetWidth  — upscale/downscale so text is big enough for OCR
  *   threshold    — true = Sauvola black/white (faint ink, phone photos)
  *   deskew       — true = straighten a slightly tilted page
@@ -221,7 +249,8 @@ export function enhanceImage(imageData, { targetWidth = 2400, threshold = false,
   const scale = Math.max(0.5, Math.min(4, targetWidth / img.w));
   if (Math.abs(scale - 1) > 0.05) img = resizeGray(img, Math.round(img.w * scale), Math.round(img.h * scale));
 
-  img = stretchContrast(flattenBackground(img));
+  img = sharpen(stretchContrast(flattenBackground(soften(img, 1))));
+  const gray = img; // kept for second looks at single cells (readPage)
   if (threshold) img = sauvola(img, Math.max(25, Math.round(img.w / 60)) | 1);
 
   const data = new Uint8ClampedArray(img.w * img.h * 4);
@@ -230,7 +259,7 @@ export function enhanceImage(imageData, { targetWidth = 2400, threshold = false,
     data[p] = data[p + 1] = data[p + 2] = v;
     data[p + 3] = 255;
   }
-  return { width: img.w, height: img.h, data, skew, scale };
+  return { width: img.w, height: img.h, data, skew, scale, gray };
 }
 
 
@@ -338,6 +367,98 @@ export function averageConfidence(rows) {
 
 
 /* ------------------------------------------
+   2b. READING A PAGE, WITH A SECOND LOOK
+   readPage() cleans the page and reads it once.
+   Then every cell the reader wasn't sure of is
+   cut out, enlarged, and read again as one line
+   — as it is, and as pure black-and-white — and
+   whichever reading is clearest is kept. This is
+   what fixes a smudged "12" read as "Lo", or a
+   name blurred by a shaky photo.
+------------------------------------------ */
+
+const RECHECK_BELOW = 80;   // cells read with less confidence than this get a second look
+const RECHECK_MAX = 30;     // …at most this many per page (each takes a moment)
+const RECHECK_TEXT_H = 42;  // letters are enlarged to about this many pixels tall
+
+const grayToRgba = ({ w, h, g }) => {
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0, p = 0; i < g.length; i++, p += 4) { data[p] = data[p + 1] = data[p + 2] = g[i]; data[p + 3] = 255; }
+  return { width: w, height: h, data };
+};
+
+/** Cuts a box out of a page, whitening long rules (the underline under a typed value). */
+function cropGray({ w, h, g }, x0, y0, x1, y1) {
+  x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0));
+  x1 = Math.min(w, Math.ceil(x1)); y1 = Math.min(h, Math.ceil(y1));
+  const cw = Math.max(1, x1 - x0), ch = Math.max(1, y1 - y0);
+  const out = new Float32Array(cw * ch);
+  for (let y = 0; y < ch; y++) {
+    let dark = 0;
+    for (let x = 0; x < cw; x++) { const v = g[(y0 + y) * w + x0 + x]; out[y * cw + x] = v; if (v < 110) dark++; }
+    if (dark > cw * 0.6) out.fill(255, y * cw, (y + 1) * cw);
+  }
+  return { w: cw, h: ch, g: out };
+}
+
+const readableWords = (ws) => ws.filter(w => !isDebris(w.text));
+const meanConf = (ws) => (ws.length ? ws.reduce((a, w) => a + w.conf, 0) / ws.length : 0);
+
+/**
+ * Cleans and reads one page.
+ *   imageData  { width, height, data (RGBA) }
+ *   recognize(rgbaImage, tesseractParams) → Tesseract's result (data with .blocks)
+ *   threshold  true for faint ink / shadowy phone photos
+ *   onProgress({ stage: 'enhance' | 'ocr' | 'recheck', progress })
+ * Returns { image (the cleaned RGBA page the word boxes refer to), words,
+ *           rows, text, confidence, skew, rechecked }.
+ */
+export async function readPage(imageData, { recognize, threshold = false, onProgress = () => {}, targetWidth = 2400 } = {}) {
+  onProgress({ stage: 'enhance', progress: 0 });
+  const clean = enhanceImage(imageData, { targetWidth, threshold });
+  onProgress({ stage: 'ocr', progress: 0 });
+  let words = wordsFromTesseract(await recognize(clean, { tessedit_pageseg_mode: '11' }));
+
+  // Second look at the cells the reader wasn't sure of.
+  const weak = buildRows(words)
+    .flatMap(r => r.segments.map(s => ({ s, h: r.y1 - r.y0 })))
+    .filter(({ s }) => s.conf < RECHECK_BELOW && meaningful(s.text))
+    .sort((a, b) => a.s.conf - b.s.conf)
+    .slice(0, RECHECK_MAX);
+  let rechecked = 0;
+  for (let i = 0; i < weak.length; i++) {
+    onProgress({ stage: 'recheck', progress: i / weak.length });
+    const { s, h } = weak[i];
+    const x0 = Math.min(...s.words.map(w => w.x0)), x1 = Math.max(...s.words.map(w => w.x1));
+    const y0 = Math.min(...s.words.map(w => w.y0)), y1 = Math.max(...s.words.map(w => w.y1));
+    const lineH = Math.max(y1 - y0, h * 0.6, 8);
+    const padX = lineH * 0.8, padY = lineH * 0.45;
+    const box = cropGray(clean.gray, x0 - padX, y0 - padY, x1 + padX, y1 + padY);
+    const k = Math.max(1, Math.min(3, RECHECK_TEXT_H / lineH));
+    const big = k > 1.05 ? resizeGray(box, Math.round(box.w * k), Math.round(box.h * k)) : box;
+    const variants = [big, sauvola(big, Math.max(15, Math.round(RECHECK_TEXT_H * 1.2)) | 1)];
+    let best = { conf: meanConf(readableWords(s.words)) + 3, words: null }; // a new reading has to be clearly better
+    for (const v of variants) {
+      const got = readableWords(wordsFromTesseract(await recognize(grayToRgba(v), { tessedit_pageseg_mode: '7' })));
+      if (!got.length) continue;
+      const c = meanConf(got);
+      if (c > best.conf) best = { conf: c, words: got };
+    }
+    if (!best.words) continue;
+    // back to page coordinates
+    const ox = Math.max(0, Math.floor(x0 - padX)), oy = Math.max(0, Math.floor(y0 - padY));
+    const mapped = best.words.map(w => ({ ...w, x0: ox + w.x0 / k, x1: ox + w.x1 / k, y0: oy + w.y0 / k, y1: oy + w.y1 / k }));
+    const old = new Set(s.words.map(w => `${w.x0},${w.y0},${w.text}`));
+    words = words.filter(w => !old.has(`${w.x0},${w.y0},${w.text}`)).concat(mapped);
+    rechecked++;
+  }
+
+  const rows = buildRows(words);
+  return { image: clean, words, rows, text: rowsToText(rows), confidence: averageConfidence(rows), skew: clean.skew, rechecked };
+}
+
+
+/* ------------------------------------------
    3. VALUE PARSERS
 ------------------------------------------ */
 
@@ -365,10 +486,24 @@ const validDate = (y, m, d) => y >= 1800 && y <= 2100 && m >= 1 && m <= 12 && d 
 /** Finds a date in free text → 'YYYY-MM-DD', or '' if none. */
 export function parseDate(text) {
   if (!text) return '';
-  const t = text.toUpperCase().replace(/(\d)(ST|ND|RD|TH)\b/g, '$1').replace(/\bDAY OF\b/g, ' ').replace(/[,.]/g, ' ').replace(/\s+/g, ' ');
+  const t = text.toUpperCase().replace(/(\d)(ST|ND|RD|TH)\b/g, '$1').replace(/\bDAY OF\b/g, ' ').replace(/[,.]/g, ' ').replace(/\s+/g, ' ')
+    // letters misread inside numbers: "2O00", "l998", "1S" → 2000, 1998, 15
+    .replace(/\b[0-9OILSB]*\d[0-9OILSB]*\b/g, (n) => n.replace(/O/g, '0').replace(/[IL]/g, '1').replace(/S/g, '5').replace(/B/g, '8'));
+  const found = datePattern(t);
+  if (found) return found;
+  // Stray words between the parts ("December oer 12, 1998"): keep only month names and numbers.
+  const bare = t.split(' ').filter(w => /\d/.test(w) || MONTH_WORD.test(w)).join(' ');
+  return bare !== t ? datePattern(bare) : '';
+}
+
+function datePattern(t) {
   const monthRe = Object.keys(MONTHS).sort((a, b) => b.length - a.length).join('|');
   let m;
-  // May 22 2000
+  // May 22 2000 — also with a stray mark or two before a 4-digit year ("Dec 12 22 1998")
+  if ((m = t.match(new RegExp(`\\b(${monthRe})\\s+(\\d{1,2})\\b(?:\\s+\\S{1,3}){0,2}?\\s+(\\d{4})\\b`)))) {
+    const y = +m[3], mo = MONTHS[m[1]], d = +m[2];
+    if (validDate(y, mo, d)) return `${y}-${pad2(mo)}-${pad2(d)}`;
+  }
   if ((m = t.match(new RegExp(`\\b(${monthRe})\\s+(\\d{1,2})\\s+(\\d{2,4})\\b`)))) {
     const y = fullYear(+m[3]), mo = MONTHS[m[1]], d = +m[2];
     if (validDate(y, mo, d)) return `${y}-${pad2(mo)}-${pad2(d)}`;
@@ -548,6 +683,51 @@ const STOP_LABELS = [
 const HINT_WORD = /^\(?(?:FIRST|MIDDLE|LAST|GIVEN|SURNAME|MAIDEN|NAME|NAM|NAMF|NARNE|DAY|MONTH|YEAR|MO|YR)\)?[.,:;]?$/i;
 
 const normalize = (s) => s.toUpperCase().replace(/[^A-Z0-9ÑÁÉÍÓÚ.]/g, ' ');
+
+/* Printed label words, and the letter mix-ups OCR makes on them ("Date of
+   Marnage", "Place of Bunal", "0F"). Label words read slightly wrong are
+   put right before labels are looked for, so the label is still found.
+   Values are never changed this way. */
+const LABEL_WORDS = new Set(`NAME FATHER MOTHER PARENTS CHILD CERTIFY BORN BIRTH PLACE DATE BAPTISM BAPTIZED BAPTISED
+  SPONSOR SPONSORS GODPARENT GODPARENTS PADRINO PADRINOS MADRINA MINISTER OFFICIATING BOOK LIBRO PAGE LINE
+  CONFIRMATION CONFIRMED BISHOP CHURCH HUSBAND GROOM WIFE BRIDE MARRIAGE MARRIED SOLEMNIZING OFFICER WITNESS
+  WITNESSES REGISTRY DECEASED DEATH DIED CAUSE CAUSES IMMEDIATE BURIAL BURIED CEMETERY MAIDEN CITIZENSHIP
+  RELIGION OCCUPATION RESIDENCE WEIGHT ATTENDANT INFORMANT PREPARED RECEIVED REMARKS ANNOTATION SIGNATURE
+  CERTIFICATION CIVIL STATUS NATIONALITY ADDRESS OF`.split(/\s+/));
+const OCR_SLIPS = [['N', 'RI'], ['RN', 'M'], ['M', 'RN'], ['M', 'NI'], ['M', 'RI'], ['M', 'RR'], ['II', 'U'], ['U', 'II'], ['LI', 'H'], ['H', 'LI'], ['CL', 'D'],
+  ['VV', 'W'], ['0', 'O'], ['1', 'I'], ['1', 'L'], ['5', 'S'], ['8', 'B'], ['I', 'L'], ['L', 'I'], ['E', 'F'], ['F', 'E'], ['C', 'G'], ['G', 'C']];
+const labelWordCache = new Map();
+function fixLabelWord(t) {
+  if (t.length < 2 || LABEL_WORDS.has(t) || !/[A-Z]/.test(t)) return t;
+  if (labelWordCache.has(t)) return labelWordCache.get(t);
+  // Longer words: one more stray letter is still the same label.
+  const near = (v) => {
+    if (LABEL_WORDS.has(v)) return v;
+    if (v.length < 6) return null;
+    for (const lw of LABEL_WORDS) if (lw[0] === v[0] && Math.abs(lw.length - v.length) <= 1 && editDistance(lw, v) <= 1) return lw;
+    return null;
+  };
+  let fixed = near(t) || t;
+  search:
+  for (const [bad, good] of OCR_SLIPS) {
+    if (fixed !== t) break;
+    for (let i = t.indexOf(bad); i >= 0; i = t.indexOf(bad, i + 1)) {
+      const v = near(t.slice(0, i) + good + t.slice(i + bad.length)); // "MAMAGE" → "MARIAGE" → MARRIAGE
+      if (v) { fixed = v; break search; }
+    }
+  }
+  labelWordCache.set(t, fixed);
+  return fixed;
+}
+/** Upper-cased text with label words put right — for finding labels only. */
+const labelNorm = (s) => normalize(s).replace(/[A-Z0-9ÑÁÉÍÓÚ]+/g, fixLabelWord);
+/** A cell's words as label text, with where each word starts in it. */
+function labelText(words) {
+  const starts = [];
+  let text = '';
+  for (const w of words) { if (text) text += ' '; starts.push(text.length); text += labelNorm(w.text); }
+  return { text, starts };
+}
 const letters = (s) => (s.match(/[A-Za-zÑñÁÉÍÓÚáéíóú]/g) || []).length;
 const meaningful = (t) => (t.match(/[A-Za-z0-9ÑñÁÉÍÓÚáéíóú]/g) || []).length >= 2;
 
@@ -573,6 +753,10 @@ function cleanWords(words, field) {
     if (field && field.ignore && field.ignore.test(t.toUpperCase())) return;
     out.push(w);
   });
+  // Specks read as words ("December oer nf. 12, 1998"): drop words the reader
+  // was very unsure of when the rest of the value is clear.
+  const clear = out.filter(w => w.conf >= 70).length;
+  if (clear >= 2 && clear < out.length) for (let i = out.length - 1; i >= 0; i--) if (out[i].conf < 40) out.splice(i, 1);
   // "the sponsors being Pedro Cruz…" → drop connecting words before the value
   if (field && field.kind === 'text') while (out.length > 1 && LEADING_FILLER.test(out[0].text)) out.shift();
   return out;
@@ -592,7 +776,7 @@ function plausible(kind, text) {
 }
 
 function labelHit(text, allLabels) {
-  const n = normalize(text);
+  const n = labelNorm(text);
   return allLabels.some(re => re.test(n));
 }
 
@@ -703,11 +887,16 @@ export function extractFields(rows, docTypeKey) {
       const segs = rows[ri].segments;
       for (let si = 0; si < segs.length; si++) {
         const re = new RegExp(field.match.source, 'g');
-        const n = normalize(segs[si].text);
+        const n = labelText(segs[si].words).text;
         let m;
         while ((m = re.exec(n))) {
           if (!m[0].length) { re.lastIndex++; continue; }
-          if (++seen === (field.occurrence || 1)) { hit = { ri, si, end: m.index + m[0].length }; break outer; }
+          if (++seen === (field.occurrence || 1)) {
+            // "by Rev. Fr. …" / "Rev. …": the title is part of the value, not the label
+            const title = m[0].search(/(?:REV|FR|MSGR|MOST)/);
+            hit = { ri, si, end: m.index + (title > 0 || (title === 0 && !/^s*(?:MINISTER|OFFICIATING)/.test(m[0])) ? title : m[0].length) };
+            break outer;
+          }
         }
       }
     }
@@ -718,13 +907,13 @@ export function extractFields(rows, docTypeKey) {
     const seg = row.segments[hit.si];
 
     // words of the label cell that come after the label text
-    const restWords = [];
-    let pos = 0;
-    for (const w of seg.words) {
-      const start = seg.text.indexOf(w.text, pos);
-      pos = start + w.text.length;
-      if (start >= hit.end) restWords.push(w);
-    }
+    const { starts } = labelText(seg.words);
+    const restWords = seg.words.filter((w, i) => starts[i] >= hit.end);
+    // the rest of a longer label ("Officiating | Minister:") isn't the value
+    const ownLabel = new RegExp(field.match.source);
+    const isOwnLabelWord = (t) => { const n = labelNorm(t).trim(); return LABEL_WORDS.has(n) && ownLabel.test(n); };
+    while (restWords.length && isOwnLabelWord(restWords[0].text)) restWords.shift();
+    const otherLabels = allLabels.filter(re => re !== field.match);
     const laterSegs = row.segments.slice(hit.si + 1);
     const rowHasHints = restWords.some(w => /[()]/.test(w.text)) ||
       (laterSegs[0] && /[()]/.test(laterSegs[0].text));
@@ -743,7 +932,7 @@ export function extractFields(rows, docTypeKey) {
     // a) same cell, up to the next label
     if (!valueWords.length && inlineAllowed) {
       let words = restWords;
-      const cut = words.findIndex(w => allLabels.some(re => re !== field.match && re.test(normalize(w.text))));
+      const cut = words.findIndex(w => otherLabels.some(re => re.test(labelNorm(w.text))));
       if (cut >= 0) words = words.slice(0, cut);
       words = cleanWords(words, field);
       if (plausible(field.kind, joinWords(words))) { valueWords = words; valueText = joinWords(words); }
@@ -754,7 +943,9 @@ export function extractFields(rows, docTypeKey) {
       let prevX1 = seg.x1;
       for (const s of laterSegs) {
         if (s.x0 - prevX1 > pageW * 0.45) break;
-        if (labelHit(s.text, allLabels)) break;
+        if (labelHit(s.text, otherLabels)) break; // (its own pattern can be part of the value: "Rev. …")
+        // the rest of its own label, read as a separate cell ("Officiating | Minister:")
+        if (s.words.every(w => isOwnLabelWord(w.text))) { prevX1 = s.x1; continue; }
         const words = cleanWords(s.words, field);
         const t = joinWords(words);
         if (!meaningful(t)) { prevX1 = s.x1; continue; }

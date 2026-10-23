@@ -244,7 +244,8 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
         onProgress: ({ stage: s, progress: p }) => {
           if (s === 'enhance') { progressTxt.textContent = 'Straightening and cleaning up the image…'; progressBar.style.width = '8%'; }
           if (s === 'load') { progressTxt.textContent = 'Loading the text reader (first scan only)…'; progressBar.style.width = `${8 + p * 12}%`; }
-          if (s === 'ocr') { progressTxt.textContent = `Reading text… ${Math.round(p * 100)}%`; progressBar.style.width = `${20 + p * 80}%`; }
+          if (s === 'ocr') { progressTxt.textContent = `Reading text… ${Math.round(p * 100)}%`; progressBar.style.width = `${20 + p * 65}%`; }
+          if (s === 'recheck') { progressTxt.textContent = 'Taking a closer look at unclear words…'; progressBar.style.width = `${85 + p * 15}%`; }
         },
       });
       st.scan = scan;
