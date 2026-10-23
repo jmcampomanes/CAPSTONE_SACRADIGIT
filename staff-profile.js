@@ -17,6 +17,7 @@ import { getUrl, uploadData } from 'aws-amplify/storage';
 import { currentUser, currentUserName, isHeadAdmin } from './auth.js';
 import { getPreference, preferencesReady, saveProfileDetails } from './mass-checkin.js';
 import { setCardPhoto } from './profile-photo.js';
+import { isMobile, mobileDigits, MOBILE_HINT } from './mobile-number.js';
 
 const ROLE = {
   admin: { role: 'Head Admin', dept: 'Parish Office' },
@@ -95,7 +96,9 @@ export function initStaffProfile({ showToast }) {
 
   saveBtn.addEventListener('click', async () => {
     if (!ready) { showToast('Profile details can’t be saved right now.', true); return; }
-    const next = { phone: fields.phone.value.trim(), about: fields.about.value.trim() };
+    const phone = fields.phone.value.trim();
+    if (phone && !isMobile(phone)) { fields.phone.focus(); showToast(MOBILE_HINT, true); return; }
+    const next = { phone: phone && mobileDigits(phone), about: fields.about.value.trim() };
     saveBtn.disabled = true;
     try {
       const rec = await saveProfileDetails(name, next);

@@ -10,6 +10,7 @@
 import { client } from '../amplify-init.js';
 import { currentUser, currentUserName } from '../auth.js';
 import { parishionerKey } from '../badges.js';
+import { isMobile, mobileDigits, MOBILE_HINT } from '../mobile-number.js';
 import {
   columbaryReady, listSections, readReservation, availableCount, nicheCode, cellKey, watch, create,
   ACTIVE, peso, fmtDate,
@@ -134,11 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
   $('uq-submit').addEventListener('click', async () => {
     if (!picked) return;
     const name = $('uq-name').value.trim();
-    const contact = $('uq-contact').value.trim();
+    const contact = mobileDigits($('uq-contact').value);
     const bad = (el, msg) => { el.classList.add('border-red-400'); el.focus(); toast(msg, true); };
     [$('uq-name'), $('uq-contact')].forEach(el => el.classList.remove('border-red-400'));
     if (!name) return bad($('uq-name'), 'Type the name of the buyer.');
-    if (!/^[0-9+()\-\s]{7,}$/.test(contact)) return bad($('uq-contact'), 'Type a contact number the office can call.');
+    if (!isMobile(contact)) return bad($('uq-contact'), MOBILE_HINT);
     const { section, row, col } = picked;
     if (myActiveAt(section, row, col)) { toast('You already asked for this niche.', true); return; }
 

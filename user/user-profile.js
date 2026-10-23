@@ -39,6 +39,7 @@ import { initPasswordChange } from '../password-change.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { getPreference, preferencesReady, saveProfileDetails } from '../mass-checkin.js';
 import { markSaved } from './leave-warning.js';
+import { isMobile, mobileDigits, MOBILE_HINT } from '../mobile-number.js';
 import { setCardPhoto } from '../profile-photo.js';
 import { NOTIF_TYPES, loadPrefs, savePrefs, enableDeviceAlerts } from '../notifications/parish-notifications.js';
 
@@ -244,10 +245,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const phone = pfPhone.value.trim();
+    if (phone && !isMobile(phone)) { setFieldError(pfPhone, MOBILE_HINT); pfPhone.focus(); showToast(MOBILE_HINT, true); return; }
     pfSave.disabled = true;
     try {
       await saveProfileDetails(DONOR_NAME, {
-        phone: pfPhone.value.trim(),
+        phone: phone && mobileDigits(phone),
         address: pfAddress.value.trim(),
         about: pfBio.value.trim(),
       });

@@ -14,10 +14,18 @@ const STYLE = `
   table.has-cards,
   table.has-cards > tbody,
   table.has-cards > tbody > tr { display: block; width: 100%; }
-  table.has-cards > tbody > tr { padding: 0.75rem 1rem; border-bottom: 1px solid #eef0f4; }
-  table.has-cards > tbody > tr:last-child { border-bottom: none; }
+  /* each record is its own card, with room between them */
+  table.has-cards > tbody { padding: 0.75rem; }
+  table.has-cards > tbody > tr {
+    padding: 0.875rem 1rem; margin-bottom: 0.75rem;
+    border: 1px solid #e8eaf0; border-radius: 0.875rem; background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  table.has-cards > tbody > tr:last-child { margin-bottom: 0; }
+  /* no line under every line of a card (the dark theme draws one on table cells) */
+  table.has-cards > tbody > tr > td { border: 0 !important; }
   table.has-cards > tbody > tr > td[data-label],
-  table.has-cards > tbody > tr > td.td-actions { display: block; border: 0; padding: 0.125rem 0; white-space: normal; text-align: left; }
+  table.has-cards > tbody > tr > td.td-actions { display: block; padding: 0.15rem 0; white-space: normal; text-align: left; }
   table.has-cards > tbody > tr > td[data-label]:not(.td-primary)::before {
     content: attr(data-label) ": "; font-weight: 600; color: #6b7280;
   }
@@ -30,7 +38,10 @@ const STYLE = `
   table.has-cards .row-reject { margin-left: 0; }
   table.has-cards > tbody > tr > td[data-label] { color: #374151; }
 }
-:root[data-theme="dark"] table.has-cards > tbody > tr { border-color: #2c3547; }
+@media (max-width: 640px) {
+  :root[data-theme="dark"] table.has-cards > tbody > tr { background: #1a2131; border-color: #2c3547; box-shadow: none; }
+  :root[data-theme="dark"] table.has-cards > tbody > tr:hover { background: #1f2738; }
+}
 :root[data-theme="dark"] table.has-cards > tbody > tr > td.td-primary { color: #f1f3f7; }
 :root[data-theme="dark"] table.has-cards > tbody > tr > td[data-label] { color: #cbd3e6; }
 :root[data-theme="dark"] table.has-cards > tbody > tr > td[data-label]:not(.td-primary)::before { color: #9aa3b5; }

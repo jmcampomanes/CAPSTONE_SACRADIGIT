@@ -245,6 +245,14 @@
 @media (max-width: 480px) {
   .request-actions { padding-left: 0; }
 }
+/* Phones: the buttons in a tidy 2 × 2 grid (Approve | Reschedule / View | Decline),
+   each a full half-width target, instead of three squeezed in a row and one left over. */
+@media (max-width: 640px) {
+  .request-row { padding: 1rem 1.25rem; row-gap: 0.75rem; }
+  :is(body, #act-scope) .request-actions.act-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .request-actions.act-row > .act-btn { width: 100%; justify-content: center; margin-left: 0 !important; }
+  .request-actions.act-row > .act-btn:only-child { grid-column: 1 / -1; }
+}
 
 /* ---------- Detail grid (Blessing Details modal) ---------- */
 .so-detail-grid {

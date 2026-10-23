@@ -30,6 +30,7 @@ import { notifyServiceUpdate } from '../email-notify.js';
 import { printReport, esc } from '../print-report.js';
 import { logActivity } from '../activity-log.js';
 import { showToast, confirmDialog, reasonDialog, reportEmail } from './admin-ui.js';
+import { isMobile, mobileDigits, MOBILE_HINT } from '../mobile-number.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
@@ -223,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <h4 class="col-h">Reserve for a family (walk-in)</h4>
         <div class="col-form-grid">
           <div class="col-span2"><label class="form-label" for="rv-owner">Name of the buyer <span class="text-red-500">*</span></label><input id="rv-owner" class="form-input" maxlength="80" /></div>
-          <div><label class="form-label" for="rv-contact">Contact number</label><input id="rv-contact" class="form-input" maxlength="30" /></div>
+          <div><label class="form-label" for="rv-contact">Contact number</label><input type="tel" id="rv-contact" class="form-input" data-mobile inputmode="numeric" autocomplete="tel" placeholder="e.g. 09171234567" /></div>
           <div><label class="form-label" for="rv-email">Email</label><input id="rv-email" type="email" class="form-input" maxlength="80" /></div>
           <div><label class="form-label" for="rv-plan">Payment</label><select id="rv-plan" class="form-input"><option value="installment">Installment</option><option value="cash">Cash (full)</option></select></div>
           <div><label class="form-label" for="rv-price">Price</label><input id="rv-price" type="number" class="form-input" min="0" step="0.01" value="${rowPrice}" /></div>
@@ -334,11 +335,12 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'reserve': {
         const owner = val('rv-owner');
         if (!owner) flag('rv-owner', 'Type the buyer’s name.');
+        if (val('rv-contact') && !isMobile(val('rv-contact'))) flag('rv-contact', MOBILE_HINT);
         if (activeOf(section.id, row, col)) throw new Error('Someone just reserved this niche.');
         const price = Number(val('rv-price')) || section.rowPrices[row - 1];
         const r = await create(client, 'NicheReservation', {
           sectionId: section.id, row, col, nicheCode: nicheCode(section, row, col),
-          ownerName: owner, ownerKey: parishionerKey(owner), contact: val('rv-contact'), email: val('rv-email'),
+          ownerName: owner, ownerKey: parishionerKey(owner), contact: mobileDigits(val('rv-contact')), email: val('rv-email'),
           price, paymentPlan: val('rv-plan'), status: 'reserved', notes: val('rv-notes'),
           occupants: '[]', requestedOnline: false,
         });

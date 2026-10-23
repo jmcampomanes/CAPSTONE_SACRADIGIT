@@ -24,6 +24,7 @@ import { createSlotPicker, slotHasRoom, locationFor, watchClosures } from '../se
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '../name-utils.js';
 import { createPinMap, formatLatLng, addressFromLatLng } from '../pin-map.js';
 import { SERVICE_TYPES, needsApproval } from '../service-catalog.js';
+import { isMobile, mobileDigits, MOBILE_HINT } from '../mobile-number.js';
 
 // A pending blessing holds its slot until the office decides, so one person
 // can only have this many waiting at once (keeps spam from filling the calendar).
@@ -364,6 +365,7 @@ export function initServiceRequestPage(serviceId) {
 
     clearFieldError(svcContactInput);
     if (!svcContactInput.value.trim()) { setFieldError(svcContactInput, 'Please enter a contact number.'); missing.push(['Contact Number', svcContactInput]); }
+    else if (!isMobile(svcContactInput.value)) { setFieldError(svcContactInput, MOBILE_HINT); missing.push(['Contact Number', svcContactInput]); }
 
     // The schedule's own message ("Please pick a date and time.") is written
     // under the calendar by field-messages.js when it turns red.
@@ -425,7 +427,7 @@ export function initServiceRequestPage(serviceId) {
         requesterName: REQUESTER_NAME,
         type: svc.name,
         email: currentUser()?.email || undefined, // where approval/decline emails go
-        contact: svcContactInput.value.trim(),
+        contact: mobileDigits(svcContactInput.value),
         notes: svcNotesInput.value.trim() || undefined,
         details: JSON.stringify({ ...details, [REMINDER_FIELD]: 'Email' }),
         location: locationFor(svc.name, details),

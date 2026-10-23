@@ -605,11 +605,24 @@ body.booking-screen-open { overflow: hidden; }
 .bktime-slot.selected {
   border-color: #1e2a4a;
   background-color: #1e2a4a;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.45);
 }
 
 .bktime-slot.selected .bktime-slot-label,
 .bktime-slot.selected .bktime-slot-status {
   color: #ffffff;
+}
+
+/* Dark mode: theme-dark.css repaints every slot the same, which hid the pick
+   (same fix as the parishioner booking page). */
+:root[data-theme="dark"] .bktime-slot.selected {
+  background-color: #8b8fc7;
+  border-color: #a3a6d6;
+  box-shadow: 0 0 0 3px rgba(163, 166, 214, 0.35);
+}
+:root[data-theme="dark"] .bktime-slot.selected .bktime-slot-label,
+:root[data-theme="dark"] .bktime-slot.selected .bktime-slot-status {
+  color: #0f1420;
 }
 
 /* ---------- New Booking wizard: step indicator ---------- */

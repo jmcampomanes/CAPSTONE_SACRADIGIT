@@ -23,6 +23,7 @@ import { nameFieldsHtml, readNameFields, setNameFields, nameFieldsFilled, isName
 import { createPinMap, formatLatLng } from '../pin-map.js';
 import { notifyServiceUpdate } from '../email-notify.js';
 import { reportEmail } from './admin-ui.js';
+import { isMobile, mobileDigits, MOBILE_HINT } from '../mobile-number.js';
 
 // Added to every walk-in's details so staff can tell how it was booked.
 export const BOOKED_BY_LABEL = 'Booked By';
@@ -72,7 +73,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
             ${nameFieldsHtml('walkin-requester', 'Requester (person who asked)', { required: true, spanFull: true })}
             <div>
               <label class="form-label" for="walkin-contact">Contact Number <span class="text-red-500">*</span></label>
-              <input type="tel" id="walkin-contact" class="form-input" placeholder="e.g. 0917 123 4567" />
+              <input type="tel" id="walkin-contact" class="form-input" data-mobile inputmode="numeric" autocomplete="tel" placeholder="e.g. 09171234567" />
             </div>
             <div>
               <label class="form-label" for="walkin-email">Email <span class="text-gray-400 font-normal">(optional)</span></label>
@@ -271,6 +272,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
     const contactEl = $('walkin-contact');
     clearFieldError(contactEl);
     if (!contactEl.value.trim()) { setFieldError(contactEl, 'Contact number is required.'); hasError = true; }
+    else if (!isMobile(contactEl.value)) { setFieldError(contactEl, MOBILE_HINT); hasError = true; }
 
     svc.fields.filter(f => f.required && f.kind !== 'map').forEach(f => {
       if (f.kind === 'name') {
@@ -314,7 +316,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       const result = await client.models.Blessing.create({
         requesterName,
         type: svc.name,
-        contact: $('walkin-contact').value.trim(),
+        contact: mobileDigits($('walkin-contact').value),
         ...(email ? { email } : {}),
         notes: $('walkin-notes').value.trim() || undefined,
         details: JSON.stringify(details),
@@ -337,7 +339,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
         reportEmail(notifyServiceUpdate({
           to: email, name: requesterName, serviceType: svc.name, status: 'scheduled',
           date: fmtLongDate(slot.date), time: slot.time, location: locationFor(svc.name, details),
-          contact: $('walkin-contact').value.trim(), detailsLines,
+          contact: mobileDigits($('walkin-contact').value), detailsLines,
         }), requesterName, bookedMsg);
       } else showToast(bookedMsg); // no email typed in — nothing to report
       close();
