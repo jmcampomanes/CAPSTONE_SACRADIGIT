@@ -18,7 +18,7 @@ export const CHECKLIST_KEY = 'Preparation Checklist';
 
 /** Requirements per service (keys = Blessing.type, i.e. the service name).
     Baptism and Wedding follow the parish's published rules (same as the
-    homepage, home.html). Item ids are what's saved on each request, so
+    homepage, index.html). Item ids are what's saved on each request, so
     keep an id when only its wording changes. */
 export const REQUIREMENTS = {
   'Baptism': [

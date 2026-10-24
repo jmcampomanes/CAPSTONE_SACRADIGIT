@@ -6,7 +6,7 @@
    the parish priest. The Secretary publishes them
    from a Wedding booking on Schedule Offers; they
    then appear
-     - on the public homepage (home.html),
+     - on the public homepage (index.html),
      - in the parishioner portal's Announcements,
      - on a printout for the priest to read at Mass,
        for the bulletin board, and as a request

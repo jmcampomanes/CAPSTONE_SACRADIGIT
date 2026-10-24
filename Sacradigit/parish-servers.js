@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="font-medium text-gray-900">${esc(a.applicantName)}</td>
           <td>${esc(a.ministry)}</td>
           <td>${esc(a.role)}</td>
-          <td><span class="badge ${label.cls}">${label.text}</span></td>
+          <td><span class="badge ${label.cls}" data-sd-status="s-${a.id}:${s}">${label.text}</span></td>
           <td>${a.validUntil && a.status === 'approved' ? longDate(a.validUntil) : '—'}</td>
           <td class="text-right"><div class="row-actions">
             <button type="button" class="act-btn" data-view="${a.id}">View</button>

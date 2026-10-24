@@ -78,12 +78,13 @@ main > *:nth-child(n + 6) { animation-delay: 300ms; }
 .sidebar-link.sd-pill-target { background-color: transparent !important; }
 
 /* ---------- Buttons: lift on hover, press on click ---------- */
-:is(.btn-lavender, .btn-secondary, .btn-primary, .btn-danger-outline, .hp-btn, .lg-btn, .bm-btn) {
+/* Every portal's main buttons: Parishioner/Admin lavender, Admin gold, ITech teal, Media media-btn. */
+:is(.btn-lavender, .btn-secondary, .btn-primary, .btn-danger-outline, .btn-danger, .btn-gold, .btn-teal, .btn-solid, .media-btn, .hp-btn, .lg-btn, .bm-btn) {
   transition: transform var(--dur-instant) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out),
     background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
-:is(.btn-lavender, .btn-primary, .hp-btn, .lg-btn):not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(30, 42, 74, 0.16); }
-:is(.btn-lavender, .btn-secondary, .btn-primary, .btn-danger-outline, .hp-btn, .lg-btn, .bm-btn):not(:disabled):active { transform: scale(0.97); box-shadow: none; }
+:is(.btn-lavender, .btn-primary, .btn-gold, .btn-teal, .btn-solid, .media-btn, .hp-btn, .lg-btn):not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(30, 42, 74, 0.16); }
+:is(.btn-lavender, .btn-secondary, .btn-primary, .btn-danger-outline, .btn-danger, .btn-gold, .btn-teal, .btn-solid, .media-btn, .hp-btn, .lg-btn, .bm-btn):not(:disabled):active { transform: scale(0.97); box-shadow: none; }
 
 /* ---------- Busy → success buttons (motion.js adds .sd-busy while a save runs, .sd-done when it worked) ---------- */
 .sd-busy { cursor: progress !important; }
@@ -134,7 +135,8 @@ main > *:nth-child(n + 6) { animation-delay: 300ms; }
 .donate-next-icon { animation: sd-pop var(--dur-slow) var(--ease-spring) both; }
 
 /* ---------- Status: a gently breathing dot on things still waiting; a pop when it changes ---------- */
-:is(.svc-row-status.tone-pending, .req-status-line.status-pending, .pw-status-pending)::before {
+:is(.svc-row-status.tone-pending, .req-status-line.status-pending, .pw-status-pending,
+  .badge[data-sd-status$=":pending"], .badge[data-sd-status$=":badge-amber"])::before {
   content: ''; display: inline-block; width: 0.5rem; height: 0.5rem; margin-right: 0.45rem; border-radius: 50%;
   background: #d97706; vertical-align: 0.05em; animation: sd-breathe 2.4s ease-in-out infinite;
 }

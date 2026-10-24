@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${esc(b.facilityName)} <span class="mb-fee">No fee</span></td>
           <td>${formatShortDate(b.date)}</td>
           <td>${esc(timeRange(b))}</td>
-          <td><span class="badge ${v.cls}">${esc(v.text)}</span></td>
+          <td><span class="badge ${v.cls}" data-sd-status="s-${b.id}:${v.cls}">${esc(v.text)}</span></td>
           <td class="text-right">
             <div class="row-actions">
               ${info.waiting && headAdmin() ? `<button type="button" class="act-btn act-approve" data-verify="${b.id}">Verify</button>` : ''}

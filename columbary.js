@@ -6,7 +6,7 @@
                                  payments, setup)
      user/user-columbary.html   (parishioners: availability
                                  map, request a niche)
-     home.html                  (public "N niches available")
+     index.html                  (public "N niches available")
    Inurnments are booked like any other service
    ('Inurnment' in service-catalog.js).
 

@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${formatDate(r.date)}</td>
         <td>${escapeHtml(r.location)}</td>
         <td>${escapeHtml(r.contact)}</td>
-        <td><span class="badge badge-${status}">${capitalize(status)}</span></td>
+        <td><span class="badge badge-${status}" data-sd-status="s-${r.id}:${status}">${capitalize(status)}</span></td>
         <td class="text-right whitespace-nowrap">
           ${status === 'pending' ? `
             <button type="button" class="row-action row-action-approve" data-approve="${r.id}">Approve</button>

@@ -14,7 +14,7 @@
    Baptism and Wedding requirements and the contact
    details below follow the parish's own published
    rules (the old parish website, the same text as
-   the homepage, home.html) — keep the two in step.
+   the homepage, index.html) — keep the two in step.
 
    ⚠ REVIEW WITH THE PARISH OFFICE: the other
    services' requirements are the ones most

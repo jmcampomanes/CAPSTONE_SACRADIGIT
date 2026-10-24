@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${formatDate(e.date)}</td>
         <td>${escapeHtml(e.title)}</td>
         <td>${escapeHtml(e.platform)}</td>
-        <td><span class="badge badge-${status}">${capitalize(status)}</span></td>
+        <td><span class="badge badge-${status}" data-sd-status="s-${e.id}:${status}">${capitalize(status)}</span></td>
         <td class="text-right whitespace-nowrap">
           ${status !== 'published' ? `<button type="button" class="row-action" data-announce="${e.id}" title="Open the announcement composer with this entry, scheduled for its date">Schedule as Announcement</button>` : ''}
           <button type="button" class="row-action" data-edit="${e.id}">Edit</button>

@@ -374,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </a>
           </li>
           <li>
-            <a href="../index.html" data-nav="logout" data-action="logout" class="sidebar-link sidebar-link-logout">
+            <a href="../login.html" data-nav="logout" data-action="logout" class="sidebar-link sidebar-link-logout">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 16l4-4m0 0l-4-4m4 4H7m6 5v1a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h5a2 2 0 012 2v1"/></svg>
               Log out
             </a>
@@ -623,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (item.dataset.action === 'settings') {
         window.location.href = 'user-settings.html';
       } else if (item.dataset.action === 'logout') {
-        window.location.href = '../index.html';
+        window.location.href = '../login.html';
       }
     });
   }

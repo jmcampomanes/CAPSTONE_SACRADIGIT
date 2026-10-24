@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (item.dataset.action === 'profile') {
         window.location.href = 'profile.html';
       } else if (item.dataset.action === 'logout') {
-        window.location.href = '../index.html';
+        window.location.href = '../login.html';
       }
     });
   }

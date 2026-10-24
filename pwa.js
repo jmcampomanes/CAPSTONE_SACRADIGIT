@@ -50,8 +50,8 @@ function dismissedThisVisit() {
 const VISITS_KEY = 'sacradigit_visits';
 const SHOWN_KEY = 'sacradigit_install_shown';
 const path = window.location.pathname;
-// Sign In is the site root (index.html); login.html kept for old links.
-const isSignIn = /^\/(index\.html|login\.html)?$/.test(path);
+// Sign In is login.html; the site root (index.html) is the public homepage.
+const isSignIn = /\/login\.html$/.test(path);
 const isParishioner = /\/user\/[^/]*$/.test(path);
 const isParishionerHome = /\/user\/user-dashboard\.html$/.test(path);
 const isAdminPortal = /\/Sacradigit\/[^/]*$/.test(path);

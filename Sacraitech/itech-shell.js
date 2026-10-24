@@ -284,7 +284,7 @@ function initShell() {
       const item = e.target.closest('.user-menu-item');
       if (!item) return;
       close();
-      window.location.href = item.dataset.action === 'profile' ? 'profile.html' : '../index.html';
+      window.location.href = item.dataset.action === 'profile' ? 'profile.html' : '../login.html';
     });
   }
 

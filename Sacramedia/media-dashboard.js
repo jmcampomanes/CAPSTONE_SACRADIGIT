@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="list-name truncate">${escapeHtml(c.title)}</p>
           <p class="list-time">${formatDate(c.date)} · ${escapeHtml(c.platform || '')}</p>
         </div>
-        <span class="badge badge-${status}">${capitalize(status)}</span>
+        <span class="badge badge-${status}" data-sd-status="s-${c.id}:${status}">${capitalize(status)}</span>
       </li>`;
     }).join('');
   }

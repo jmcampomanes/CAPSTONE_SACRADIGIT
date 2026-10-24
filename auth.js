@@ -17,7 +17,7 @@
    its portal. The page stays hidden (html.auth-
    pending, set by the <head> snippet) until the
    check passes; otherwise the visitor is sent to
-   index.html, the sign-in page (not signed in) or to their own portal
+   login.html, the sign-in page (not signed in) or to their own portal
    (signed in, wrong role).
 
    The signed-in person's name/email/role is also
@@ -67,7 +67,7 @@ export const PORTAL_ACCESS = {
 // When someone is in several groups, their "home" portal follows this order.
 const ROLE_ORDER = ['admin', 'itech', 'staff', 'media'];
 
-/* ---------- paths (pages live one folder deep, index.html (sign-in) at the root) ---------- */
+/* ---------- paths (pages live one folder deep, login.html (sign-in) and index.html (homepage) at the root) ---------- */
 
 function siteRoot() {
   // e.g. /CAPSTONE_SACRADIGIT/Sacradigit/masses.html → /CAPSTONE_SACRADIGIT/
@@ -82,7 +82,7 @@ export const homeFor = (role) => pageUrl((ROLES[role] || ROLES.parishioner).home
 
 function goToLogin() {
   const next = window.location.pathname + window.location.search;
-  window.location.replace(`${pageUrl('index.html')}?next=${encodeURIComponent(next)}`);
+  window.location.replace(`${pageUrl('login.html')}?next=${encodeURIComponent(next)}`);
 }
 
 /* ---------- the signed-in person ---------- */
@@ -276,7 +276,7 @@ export async function isSignedIn() {
 export async function signOut() {
   clearCache();
   try { await cognitoSignOut(); } catch { /* already signed out */ }
-  window.location.replace(pageUrl('index.html'));
+  window.location.replace(pageUrl('login.html'));
 }
 
 /** Cognito error → a sentence a parishioner can act on. */

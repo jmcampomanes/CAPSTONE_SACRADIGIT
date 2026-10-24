@@ -5,8 +5,8 @@
    Imported by ui-prefs.js, so it runs on every
    portal page, the homepage and the sign-in page.
 
-     splash         once per browser session, while the
-                    sign-in check runs (html.auth-pending)
+     splash         once per browser session, on the first
+                    page opened (homepage, sign-in or portal)
      progress bar   thin gold bar when a link is clicked;
                     it runs most of the way at once and the
                     next page finishes it, so it always
@@ -69,14 +69,33 @@ function pageLink(e) {
   return a;
 }
 
-/* ---------- Splash (first page of the visit) ---------- */
+/* ---------- Splash (first page of the visit) ----------
+   Once per browser session, on whichever page opens first:
+   portal pages (html.auth-pending) close it when the sign-in check
+   passes; the homepage and sign-in page (html.sd-splash-pending, set
+   in their <head> so they don't flash first) close it once loaded. */
 const SPLASH_KEY = 'sdSplashSeen';
 const STAGES = ['Checking your sign-in…', 'Loading parish info…', 'Opening your portal…', 'Almost ready…'];
+const PUBLIC_STAGES = ['Preparing your parish…', 'Loading parish info…', 'Gathering this week’s Masses…', 'Almost ready…'];
+const SPLASH_MIN_MS = 1400; // long enough for the bar and status to read
+
+/** Runs `fn` once the page and its images have loaded (capped, so a slow image never holds it). */
+function whenLoaded(fn) {
+  if (document.readyState === 'complete') { requestAnimationFrame(fn); return; }
+  const done = () => { clearTimeout(cap); window.removeEventListener('load', done); fn(); };
+  window.addEventListener('load', done);
+  const cap = setTimeout(done, 4000);
+}
 
 function splash() {
+  const gated = root.classList.contains('auth-pending');
+  const held = root.classList.contains('sd-splash-pending');
+  const release = () => root.classList.remove('sd-splash-pending');
   let seen = false;
-  try { seen = sessionStorage.getItem(SPLASH_KEY) === '1'; sessionStorage.setItem(SPLASH_KEY, '1'); } catch { seen = true; }
-  if (seen || motionReduced() || !root.classList.contains('auth-pending')) return;
+  try { seen = sessionStorage.getItem(SPLASH_KEY) === '1'; } catch { seen = true; }
+  if (seen || motionReduced() || !(gated || held)) { release(); return; }
+  try { sessionStorage.setItem(SPLASH_KEY, '1'); } catch { /* private mode */ }
+  const stages = gated ? STAGES : PUBLIC_STAGES;
 
   const logo = new URL('./sacradigit-images/scaradigit-logo.png', import.meta.url).href;
   const el = document.createElement('div');
@@ -94,16 +113,17 @@ function splash() {
       <p class="sd-splash-name">SacraDigit</p>
       <p class="sd-splash-parish">Our Lady of Fatima Parish</p>
       <div class="sd-splash-bar" aria-hidden="true"><span></span></div>
-      <p class="sd-splash-status">${STAGES[0]}</p>
+      <p class="sd-splash-status">${stages[0]}</p>
     </div>`;
   root.appendChild(el); // on <html>: <body> stays hidden until sign-in is confirmed
+  release(); // the splash covers the page now
 
   const bar = el.querySelector('.sd-splash-bar span');
   const status = el.querySelector('.sd-splash-status');
   let stage = 0;
   const advance = () => {
-    stage = Math.min(stage + 1, STAGES.length - 1);
-    status.textContent = STAGES[stage];
+    stage = Math.min(stage + 1, stages.length - 1);
+    status.textContent = stages[stage];
     bar.style.transform = `scaleX(${0.3 + stage * 0.2})`;
   };
   requestAnimationFrame(() => { bar.style.transform = 'scaleX(0.3)'; });
@@ -111,16 +131,18 @@ function splash() {
 
   const shownAt = performance.now();
   const finish = () => {
-    clearInterval(timer);
-    bar.style.transform = 'scaleX(1)';
-    status.textContent = 'Welcome!';
     // Long enough to read, never long enough to be in the way.
     setTimeout(() => {
-      el.classList.add('is-leaving');
-      setTimeout(() => el.remove(), 320);
-    }, Math.max(0, 450 - (performance.now() - shownAt)));
+      clearInterval(timer);
+      bar.style.transform = 'scaleX(1)';
+      status.textContent = 'Welcome!';
+      setTimeout(() => {
+        el.classList.add('is-leaving');
+        setTimeout(() => el.remove(), 320);
+      }, 350);
+    }, Math.max(0, SPLASH_MIN_MS - (performance.now() - shownAt)));
   };
-  whenShown(finish);
+  (gated ? whenShown : whenLoaded)(finish);
 }
 
 /* ---------- Top progress bar on page links ----------

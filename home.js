@@ -1,5 +1,5 @@
 /* ============================================
-   SacraDigit — Public homepage (home.html)
+   SacraDigit — Public homepage (index.html)
    The page anyone can open without signing in:
    welcome pop-up, Mass schedule, parish info,
    sacrament guides, and the footer contacts.

@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${escapeHtml(r.certificateType)}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td class="purpose-cell" title="${escapeHtml(r.purpose)}">${escapeHtml(r.purpose) || '—'}</td>
-          <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}">${label}</span></td>
+          <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}" data-sd-status="s-${r.id}:${r.status}">${label}</span></td>
           <td class="text-right"><div class="row-actions">${certBtn}${viewBtn}${decision}</div></td>
         `;
         tbody.appendChild(tr);

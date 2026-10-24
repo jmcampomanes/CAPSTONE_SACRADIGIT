@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <td>${recordTypeLabel(r.type)}</td>
               <td>${formatShortDate(r.createdAt)}</td>
               <td>${r.addedByName || '—'}</td>
-              <td><span class="badge ${statusBadge[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span></td>
+              <td><span class="badge ${statusBadge[r.status] || 'badge-gray'}" data-sd-status="s-${r.id}:${r.status}">${statusLabel[r.status] || r.status}</span></td>
               <td class="text-right"><a href="digital-archives.html" class="act-btn list-action">View</a></td>
             </tr>`).join('');
     },

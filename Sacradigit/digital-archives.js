@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${escapeHtml(recordTypeLabel(r.type))}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td>${escapeHtml(r.addedByName)}</td>
-          <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}">${statusLabel[r.status] || r.status}</span></td>
+          <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}" data-sd-status="s-${r.id}:${r.status}">${statusLabel[r.status] || r.status}</span></td>
           <td class="text-right whitespace-nowrap">
             <button type="button" class="act-btn row-action row-view" data-id="${r.id}">View</button>
             <button type="button" class="act-btn row-action row-edit head-admin-only" data-id="${r.id}">Edit</button>

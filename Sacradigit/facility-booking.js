@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="font-medium text-gray-900">${escapeHtml(b.facilityName)}${ministry ? ` <span class="mb-fee">Ministry · No fee</span>` : ''}${b.requesterName ? `<span class="mb-sub">${escapeHtml(b.requesterName)}</span>` : ''}</td>
           <td>${formatShortDate(b.date)}</td>
           <td>${escapeHtml(formatTimeRange(b))}</td>
-          <td>${ministry?.waiting ? '<span class="badge badge-amber">Waiting to verify</span>' : `<span class="badge ${badgeClass[b.status] || 'badge-gray'}">${statusLabel[b.status] || b.status}</span>`}</td>
+          <td>${ministry?.waiting ? '<span class="badge badge-amber">Waiting to verify</span>' : `<span class="badge ${badgeClass[b.status] || 'badge-gray'}" data-sd-status="s-${b.id}:${b.status}">${statusLabel[b.status] || b.status}</span>`}</td>
           <td class="text-right">${actionsHtml}</td>
         </tr>
       `;

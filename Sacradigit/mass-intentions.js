@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </td>
         <td>${massDateLabel}</td>
         <td class="offering-amount">${formatPeso(it.offering)}</td>
-        <td><span class="badge ${badgeClass[it.status] || 'badge-gray'}">${statusLabel[it.status] || it.status}</span></td>
+        <td><span class="badge ${badgeClass[it.status] || 'badge-gray'}" data-sd-status="s-${it.id}:${it.status}">${statusLabel[it.status] || it.status}</span></td>
         <td class="text-right no-print">${actionHtml}</td>
       </tr>
     `;
