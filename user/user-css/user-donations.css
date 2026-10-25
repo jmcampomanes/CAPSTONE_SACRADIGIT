@@ -501,6 +501,37 @@
 }
 .donate-copy:hover { border-color: #8b8fc7; }
 
+/* GCash / Maya QR with the amount filled in (qrph.js) */
+.donate-qr {
+  margin: 0 0 1.25rem;
+  padding: 1.25rem 1rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+.donate-qr-code { width: min(15rem, 100%); aspect-ratio: 1; background-color: #ffffff; }
+.donate-qr-code svg { display: block; width: 100%; height: 100%; }
+.donate-qr figcaption { display: flex; flex-direction: column; gap: 0.15rem; }
+.donate-qr-amount { font-size: 1.5rem; font-weight: 700; color: #1e2a4a; }
+.donate-qr-to { font-size: 0.9375rem; color: #4b5563; }
+.donate-qr-save {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid #c9cbe6;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #5b5fa8;
+  cursor: pointer;
+}
+.donate-qr-save:hover { border-color: #8b8fc7; }
+
 @media (max-width: 767px) {
   .mi-page .donate-fund-selector { grid-template-columns: minmax(0, 1fr); }
   .donate-next-steps li { font-size: 1rem; }
@@ -517,3 +548,9 @@
 :root[data-theme="dark"] :is(.donate-next-steps, .donate-next-after) a { color: #c7cbe8; }
 :root[data-theme="dark"] .donate-next-after { color: #a0a8b6; }
 :root[data-theme="dark"] .donate-copy { background-color: #1a2131; border-color: #2c3548; color: #c7cbe8; }
+/* The QR itself stays black on white so scanners can read it. */
+:root[data-theme="dark"] .donate-qr { background-color: #1a2131; border-color: #2c3548; }
+:root[data-theme="dark"] .donate-qr-code { padding: 0.5rem; border-radius: 0.5rem; }
+:root[data-theme="dark"] .donate-qr-amount { color: #f1f3f7; }
+:root[data-theme="dark"] .donate-qr-to { color: #a0a8b6; }
+:root[data-theme="dark"] .donate-qr-save { background-color: #1a2131; border-color: #2c3548; color: #c7cbe8; }

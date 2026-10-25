@@ -13,6 +13,9 @@ import { currentUserName } from '../auth.js';
 import { mountFaithfulGivers } from './faith-journey-widgets.js';
 import { loadParishContact } from '../parish-info.js';
 import { PAYMENT_ACCOUNTS, CONFIRM_WITHIN } from '../donation-payment-info.js';
+import { withAmount, qrPhField } from '../qrph.js';
+import QRCode from 'qrcode';
+import { downloadDonationReceipt } from '../donation-receipt.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -217,35 +220,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('history-tbody').addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-download-receipt');
-    if (btn) downloadReceipt(btn.dataset.id);
+    if (btn) downloadReceipt(btn.dataset.id, btn);
   });
 
-  function downloadReceipt(id) {
+  async function downloadReceipt(id, btn) {
     const d = myDonations.find(x => x.id === id);
-    if (!d) return;
+    if (!d || btn.disabled) return;
 
-    const refNumber = `SD-${(d.date || '').replace(/-/g, '')}-${d.id.slice(0, 6).toUpperCase()}`;
-    const donorName = d.anonymous ? 'Anonymous Donor' : DONOR_NAME;
-
-    const lines = [
-      'SacraDigit Parish Portal', 'Official Donation Receipt', '----------------------------------------',
-      `Reference No.: ${refNumber}`, `Date: ${formatShortDate(d.date)}`, `Donor: ${donorName}`,
-      `Fund / Purpose: ${d.purpose}`, `Amount: ${formatPeso(d.amount)}`, `Payment Method: ${d.method}`,
-      '----------------------------------------', 'Thank you for your generous offering.',
-      'This receipt is generated electronically and does not require a signature.', '',
-    ];
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `receipt-${refNumber}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    window.showToast(`Receipt downloaded for ${formatPeso(d.amount)} to ${d.purpose}.`);
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    try {
+      await downloadDonationReceipt({
+        ref: `SD-${(d.date || '').replace(/-/g, '')}-${d.id.slice(0, 6).toUpperCase()}`,
+        date: d.date,
+        donor: d.anonymous ? 'Anonymous Donor' : DONOR_NAME,
+        purpose: d.purpose,
+        amount: d.amount,
+        method: d.method,
+        contact,
+      });
+      window.showToast(`Receipt downloaded for ${formatPeso(d.amount)} to ${d.purpose}.`);
+    } catch (err) {
+      console.error('Failed to make receipt:', err);
+      window.showToast('Couldn\'t make the receipt. Please try again.', true);
+    } finally {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+    }
   }
 
   /* ------------------------------------------
@@ -396,9 +397,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const note = `<strong>${escapeHtml(ref)}</strong>`;
     const call = `call the parish office at <a href="tel:${officePhone().replace(/[^\d+]/g, '')}">${escapeHtml(officePhone())}</a>`;
     const acct = PAYMENT_ACCOUNTS[method] || {};
+    // GCash / Maya: a QR with this offering's amount already filled in.
+    const qr = (method === 'GCash' || method === 'Maya') && acct.qr ? withAmount(acct.qr, amount) : null;
     let items;
+    let qrBlock = '';
 
-    if (method === 'GCash' || method === 'Maya') {
+    if (qr) {
+      const payee = acct.accountName || qrPhField(qr, '59');
+      qrBlock = `
+      <figure class="donate-qr">
+        <div class="donate-qr-code" data-qr="${escapeHtml(qr)}" role="img" aria-label="${method} QR code for ${formatPeso(amount)}"></div>
+        <figcaption>
+          <span class="donate-qr-amount">${formatPeso(amount)}</span>
+          <span class="donate-qr-to">to ${escapeHtml(payee)} · ${method}</span>
+        </figcaption>
+        <button type="button" class="donate-qr-save" data-qr-name="SacraDigit-${method}-${escapeHtml(ref)}.png">Save QR to phone</button>
+      </figure>`;
+      items = [
+        `Open the <strong>${method}</strong> app and tap <strong>${method === 'GCash' ? 'QR' : 'Scan'}</strong>.`,
+        `Scan the QR code above. On this same phone? Tap <strong>Save QR to phone</strong>, then choose <strong>Upload QR</strong> in ${method} and pick it from your gallery.`,
+        `Check that the amount shows ${peso}, then send.`,
+        `In the message box, type ${note} so the office knows it's yours.`,
+        `Keep the receipt screen (take a screenshot) until the office confirms.`,
+      ];
+    } else if (method === 'GCash' || method === 'Maya') {
       const to = acct.number
         ? `<strong>${escapeHtml(acct.number)}</strong>${acct.accountName ? ` (${escapeHtml(acct.accountName)})` : ''}${copyBtn(acct.number)}`
         : `the parish's ${method} number — ${call} to get it`;
@@ -440,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<strong>No money has left your account yet.</strong> It only leaves when you send it in ${method === 'Bank Transfer' ? 'your bank' : method}.`
             : '<strong>Nothing has been paid yet.</strong> You pay when you visit the office.'}</p>
         </div>
-      </div>
+      </div>${qrBlock}
       <ol class="donate-next-steps">${items.map(t => `<li>${t}</li>`).join('')}</ol>
       <div class="mi-review-card">
         <dl class="mi-review-rows">
@@ -459,6 +481,16 @@ document.addEventListener('DOMContentLoaded', () => {
     steps.forEach(s => s.classList.add('hidden'));
     stepBar.classList.add('hidden');
     nextPanel.innerHTML = nextStepsHtml(data);
+    // Black on white with a wide margin: what GCash / Maya scanners read best.
+    const qrBox = nextPanel.querySelector('.donate-qr-code');
+    if (qrBox) {
+      QRCode.toString(qrBox.dataset.qr, { type: 'svg', margin: 2, errorCorrectionLevel: 'M' })
+        .then(svg => { qrBox.innerHTML = svg; })
+        .catch(err => {
+          console.error('Failed to draw QR:', err);
+          nextPanel.querySelector('.donate-qr')?.remove();
+        });
+    }
     nextPanel.classList.remove('hidden');
     backBtn.classList.add('hidden');
     nextBtn.classList.add('hidden');
@@ -469,6 +501,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   nextPanel.addEventListener('click', async (e) => {
+    const save = e.target.closest('.donate-qr-save');
+    if (save) {
+      try {
+        const qr = nextPanel.querySelector('.donate-qr-code').dataset.qr;
+        const link = document.createElement('a');
+        link.href = await QRCode.toDataURL(qr, { width: 720, margin: 4, errorCorrectionLevel: 'M' });
+        link.download = save.dataset.qrName;
+        link.click();
+      } catch {
+        window.showToast('Couldn\'t save the QR — please take a screenshot instead.', true);
+      }
+      return;
+    }
     const btn = e.target.closest('.donate-copy');
     if (!btn) return;
     try {
