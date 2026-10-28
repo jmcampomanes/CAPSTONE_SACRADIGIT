@@ -45,7 +45,8 @@
       (AdminAddUserToGroup / AdminRemoveUserFromGroup, like
       setUserRole), allowed for the 'admin' group only:
         setServerRole: a.mutation()
-          .arguments({ sub: a.string().required(), on: a.boolean().required() })
+          .arguments({ sub: a.string().required(), enabled: a.boolean().required() })
+        (Not `on`: AppSync rejects it as an argument name.)
           .returns(a.json())
           .authorization((allow) => [allow.group('admin')])
           .handler(a.handler.function(setServerRoleFn)),
@@ -131,8 +132,11 @@ export const STANDING_LABEL = {
 export async function setServerRole(sub, on) {
   if (!serverRoleReady() || !sub) return 'unavailable';
   try {
-    const { errors } = await client.mutations.setServerRole({ sub, on });
+    const { data, errors } = await client.mutations.setServerRole({ sub, enabled: on });
     if (errors?.length) throw new Error(errors.map(e => e.message).join('; '));
+    // Returns { success } or { success: false, error } (AWSJSON may arrive as a string).
+    const res = typeof data === 'string' ? JSON.parse(data) : data;
+    if (!res?.success) throw new Error(res?.error || 'No result');
     return 'done';
   } catch (err) {
     console.error('Could not change the Parish Server role:', err);
