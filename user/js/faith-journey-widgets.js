@@ -1,0 +1,100 @@
+/* ============================================
+   SacraDigit — Faith Journey widgets
+   Small, self-loading pieces of the My Badges
+   page used elsewhere in the user portal:
+     mountBadgeStrip(el)      — Dashboard
+     mountFaithfulGivers(el)  — Donations
+   Styles live in user-shell.css ("Faith Journey widgets").
+   ============================================ */
+
+import { client } from '../../shared/js/amplify-init.js';
+import { loadFaithfulGivers } from '../../shared/js/public-data.js';
+import { currentUserName } from '../../shared/js/auth.js';
+import { computeBadges, badgeIconSvg, parishionerKey, streakLabel } from '../../shared/js/badges.js';
+import { checkInReady, listCheckInsFor, optedOutKeys } from '../../shared/js/mass-checkin.js';
+import { loadMyCustomBadges } from '../../shared/js/custom-badges.js';
+
+const PARISHIONER_NAME = currentUserName(); // the signed-in parishioner (auth.js)
+const MY_KEY = parishionerKey(PARISHIONER_NAME);
+
+const escapeHtml = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
+/** Latest earned badges + the closest one still to earn. */
+export function mountBadgeStrip(el) {
+  if (!el) return;
+  const data = { checkIns: [], donations: [], intentions: [], blessings: [] };
+  const loaded = { donations: false, intentions: false, blessings: false, checkIns: false, custom: false };
+  let extra = { custom: [], awards: [] }; // parish-made badges (../../shared/js/custom-badges.js)
+
+  const render = () => {
+    if (!Object.values(loaded).every(Boolean)) return;
+    const ready = checkInReady();
+    const badges = computeBadges(data, new Date(), extra).filter(b => ready || !b.needsCheckIn || b.earned);
+    const earned = badges.filter(b => b.earned);
+    const next = badges
+      .filter(b => !b.earned && b.progress && b.progress.target > b.progress.current)
+      .sort((a, z) => z.progress.current / z.progress.target - a.progress.current / a.progress.target)[0];
+
+    el.innerHTML = `
+      <div class="fjw-strip">
+        ${earned.length
+          ? earned.slice(0, 6).map(b => `
+            <div class="fjw-medal tier-${b.tier}" title="${escapeHtml(b.name)} — ${escapeHtml(b.desc)}">${badgeIconSvg(b, 'w-5 h-5')}</div>`).join('')
+          : '<p class="fjw-empty">No badges yet — your first one is close!</p>'}
+        ${earned.length > 6 ? `<span class="fjw-more">+${earned.length - 6}</span>` : ''}
+      </div>
+      <p class="fjw-caption">
+        <strong>${earned.length}</strong> badge${earned.length === 1 ? '' : 's'} earned${next ? ` · Next: <strong>${escapeHtml(next.name)}</strong> (${next.progress.current}/${next.progress.target} ${escapeHtml(next.progress.label)})` : ''}
+      </p>`;
+  };
+
+  client.models.Donation.observeQuery().subscribe({
+    next: ({ items }) => { data.donations = items.filter(d => parishionerKey(d.donor) === MY_KEY); loaded.donations = true; render(); },
+    error: (err) => console.error('Failed to load donations:', err),
+  });
+  client.models.MassIntention.observeQuery({ filter: { donor: { eq: PARISHIONER_NAME } } }).subscribe({
+    next: ({ items }) => { data.intentions = items; loaded.intentions = true; render(); },
+    error: (err) => console.error('Failed to load intentions:', err),
+  });
+  client.models.Blessing.observeQuery({ filter: { requesterName: { eq: PARISHIONER_NAME } } }).subscribe({
+    next: ({ items }) => { data.blessings = items; loaded.blessings = true; render(); },
+    error: (err) => console.error('Failed to load blessings:', err),
+  });
+  loadMyCustomBadges(PARISHIONER_NAME)
+    .then(r => { extra = r; })
+    .catch(err => console.error('Failed to load parish badges:', err))
+    .finally(() => { loaded.custom = true; render(); });
+  (checkInReady() ? listCheckInsFor(PARISHIONER_NAME) : Promise.resolve([]))
+    .then(items => { data.checkIns = items; })
+    .catch(err => console.error('Failed to load check-ins:', err))
+    .finally(() => { loaded.checkIns = true; render(); });
+}
+
+/** Faithful Givers list (names + months in a row, never amounts). */
+export function mountFaithfulGivers(el, { limit = 12 } = {}) {
+  if (!el) return;
+  let optedOut = new Set();
+  let ready = false;
+
+  const render = () => {
+    if (!ready) return;
+    const shown = givers.filter(g => !optedOut.has(g.key));
+    const mine = shown.find(g => g.key === MY_KEY);
+    el.innerHTML = shown.length ? `
+      <ol class="fjw-givers">
+        ${shown.slice(0, limit).map(g => `
+          <li class="fjw-giver${g.key === MY_KEY ? ' is-me' : ''}">
+            <span class="fjw-giver-name">${escapeHtml(g.name)}${g.key === MY_KEY ? ' <span class="fjw-you">You</span>' : ''}</span>
+            <span class="fjw-giver-streak">${escapeHtml(streakLabel(g.streak))}</span>
+          </li>`).join('')}
+      </ol>
+      ${shown.length > limit ? `<p class="fjw-caption">and ${shown.length - limit} more faithful givers — thank you!</p>` : ''}
+      ${mine ? '' : '<p class="fjw-caption">Give any amount 3 months in a row to join this list.</p>'}`
+      : '<p class="fjw-caption">No one has given 3 months in a row yet — be the first!</p>';
+  };
+
+  let givers = [];
+  Promise.all([loadFaithfulGivers(), optedOutKeys().catch(() => new Set())])
+    .then(([list, keys]) => { givers = list; optedOut = keys; ready = true; render(); })
+    .catch(err => console.error('Failed to load Faithful Givers:', err));
+}

@@ -1,7 +1,7 @@
 /* ============================================
    SacraDigit — dark theme generator
    Run:  node tools/build-dark-theme.mjs
-   Writes: theme-dark.css (project root)
+   Writes: shared/css/theme-dark.css
 
    Every app stylesheet was written for a light
    page. Instead of hand-writing a dark copy of
@@ -27,15 +27,15 @@ const require = createRequire(import.meta.url);
 const postcss = require('postcss');
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = path.join(ROOT, 'theme-dark.css');
+const OUT = path.join(ROOT, 'shared/css/theme-dark.css');
 const PREFIX = ':root[data-theme="dark"]';
 
 const SOURCES = [
-  'service-schedule.css',
-  'marriage-request-form.css',
-  'detail-table.css',
-  'mass-intention-form.css',
-  ...['Sacradigit/sacradigit-css', 'user/user-css', 'Sacraitech/itech-css', 'Sacramedia/media-css']
+  'shared/css/service-schedule.css',
+  'shared/css/marriage-request-form.css',
+  'shared/css/detail-table.css',
+  'shared/css/mass-intention-form.css',
+  ...['Sacradigit/css', 'user/css', 'Sacraitech/css', 'Sacramedia/css']
     .flatMap(dir => fs.readdirSync(path.join(ROOT, dir)).filter(f => f.endsWith('.css')).map(f => `${dir}/${f}`)),
 ].filter(f => !/print|\/style\.css$/.test(f)); // certificate print pages + the public landing page stay light
 

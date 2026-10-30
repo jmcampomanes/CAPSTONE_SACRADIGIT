@@ -1,0 +1,45 @@
+/* ============================================
+   SacraDigit — Columbary (parishioner)
+   The map itself uses ../../Sacradigit/css/columbary.css.
+   ============================================ */
+
+.ucol-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 1.25rem; padding: 1.25rem; }
+.ucol-intro-text p { margin: 0.5rem 0 0; font-size: 0.875rem; color: #4b5563; line-height: 1.6; }
+.ucol-inurn { display: inline-flex; margin-top: 1rem; }
+.ucol-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+.ucol-fact { padding: 0.75rem 0.875rem; border-radius: 0.75rem; background: #f7f8fb; border: 1px solid #eceef3; }
+.ucol-fact h3 { margin: 0; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #8a6d1f; }
+.ucol-fact p { margin: 0.25rem 0 0; font-size: 0.8125rem; color: #374151; line-height: 1.5; }
+.ucol-map-body { padding: 1rem 1.25rem 1.25rem; }
+.col-grid span.col-cell { display: inline-flex; align-items: center; justify-content: center; cursor: default; }
+.col-grid span.col-cell:hover { transform: none; box-shadow: none; }
+
+.ucol-mine { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+.ucol-req { display: flex; gap: 0.875rem; align-items: flex-start; padding: 0.75rem 0.875rem; border-radius: 0.75rem; border: 1px solid #eceef3; }
+.ucol-req-code { flex: none; min-width: 4.5rem; font-weight: 800; color: #1e2a4a; }
+.ucol-req-main { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.ucol-req-main small { font-size: 0.75rem; color: #6b7280; }
+.ucol-status { font-size: 0.875rem; }
+.ucol-status.is-wait { color: #b45309; }
+.ucol-status.is-ok { color: #15803d; }
+.ucol-status.is-no { color: #b91c1c; }
+.ucol-reason { font-style: italic; }
+
+.ucol-pick { display: flex; align-items: center; gap: 0.875rem; padding: 0.75rem; border-radius: 0.75rem; background: #f7f8fb; }
+.ucol-pick-medal { padding: 0.5rem 0.75rem; border-radius: 0.5rem; background: #1e2a4a; color: #ffffff; font-weight: 800; }
+.ucol-pick-where { margin: 0; font-size: 0.8125rem; color: #4b5563; }
+.ucol-pick-price { margin: 0.125rem 0 0; font-size: 1.125rem; font-weight: 800; color: #111827; }
+
+@media (max-width: 860px) { .ucol-intro { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .ucol-facts { grid-template-columns: 1fr; } .ucol-map-body { padding: 0.75rem; } }
+
+:root[data-theme="dark"] :is(.ucol-fact, .ucol-pick) { background: #151b28; border-color: #2c3548; }
+:root[data-theme="dark"] .ucol-fact h3 { color: #e0c271; }
+:root[data-theme="dark"] :is(.ucol-fact p, .ucol-intro-text p, .ucol-pick-where, .ucol-req-main small) { color: #cfd4de; }
+:root[data-theme="dark"] .ucol-req { border-color: #2c3548; }
+:root[data-theme="dark"] .ucol-req-code { color: #c9cbf0; }
+:root[data-theme="dark"] .ucol-pick-price { color: #f1f3f7; }
+:root[data-theme="dark"] .ucol-pick-medal { background: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] .ucol-status.is-wait { color: #fcd34d; }
+:root[data-theme="dark"] .ucol-status.is-ok { color: #86efac; }
+:root[data-theme="dark"] .ucol-status.is-no { color: #fca5a5; }

@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- The site has its own Light/Dark switch: keep the browser's dark mode off the page (theme-dark.css sets dark when chosen) -->
+  <meta name="color-scheme" content="only light" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Installable app (PWA): see pwa.js and public/manifest.webmanifest -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -44,7 +46,7 @@
   </script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="sacradigit-css/style.css" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -262,7 +264,7 @@
   </footer>
 
   <!-- Custom JS -->
-  <script type="module" src="sacred-art.js"></script>
-  <script type="module" src="scripts.js"></script>
+  <script type="module" src="../shared/js/sacred-art.js"></script>
+  <script type="module" src="js/scripts.js"></script>
 </body>
 </html>

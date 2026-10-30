@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- The site has its own Light/Dark switch: keep the browser's dark mode off the page (theme-dark.css sets dark when chosen) -->
+  <meta name="color-scheme" content="only light" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Installable app (PWA): see pwa.js and public/manifest.webmanifest -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -44,16 +46,18 @@
   </script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="../Sacradigit/sacradigit-css/admin-shell.css" />
-  <link rel="stylesheet" href="media-css/media-shell.css" />
-  <link rel="stylesheet" href="media-css/content-calendar.css" />
-  <!-- Sign-in check (see ../auth.js): the page stays hidden until the portal confirms who you are -->
+  <link rel="stylesheet" href="../Sacradigit/css/admin-shell.css" />
+  <link rel="stylesheet" href="css/media-shell.css" />
+  <link rel="stylesheet" href="css/content-calendar.css" />
+  <!-- Sign-in check (see ../shared/js/auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
-  <script>document.documentElement.classList.add('auth-pending');setTimeout(function(){document.documentElement.classList.remove('auth-pending')},8000)</script>
-  <!-- Light/Dark + English/Filipino (see ../ui-prefs.js) -->
-  <link rel="stylesheet" href="../theme-dark.css" />
-  <link rel="stylesheet" href="../accessibility.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script>(function(){var h=document.documentElement,c='auth-pending';try{if(sessionStorage.getItem('sdAuthOk')==='1')c='auth-soft'}catch(e){}h.classList.add(c);setTimeout(function(){h.classList.remove(c)},8000)})()</script>
+  <!-- Page transitions (see shared/js/motion.js): names the sidebar, top bar, content and banner before the first frame, keeps the sidebar's scroll, fills in the signed-in name, and sets the role (hides Head Admin–only links for the Secretary) -->
+  <script>(function(){var h=document.documentElement,K='sdNavScroll';try{var cu=JSON.parse(localStorage.getItem('sacradigit_user')||'null');if(cu&&cu.role)h.dataset.role=(cu.groups||[]).indexOf('admin')>=0?'admin':cu.role}catch(x){}function q(s){return document.querySelector(s)}function dir(){return location.pathname.split('/').slice(0,-1).join('/')}window.sdViewParts=function(on){var m=q('main'),hd=m&&m.parentElement.querySelector(':scope > header'),art=q('main [data-sacred-art]'),hero=q('main .ann-hero, main [data-sacred-header]')||(art&&art.parentElement);[[q('#sidebar'),'sd-sidebar'],[hd,'sd-topbar'],[m,'sd-main'],[hero,'sd-hero']].forEach(function(p){if(p[0]&&p[0].getClientRects().length)p[0].style.viewTransitionName=on?p[1]:''})};addEventListener('pageswap',function(e){var n=q('#sidebar nav');try{sessionStorage.setItem(K,JSON.stringify({d:dir(),y:n?n.scrollTop:0}))}catch(x){}if(e.viewTransition)sdViewParts(true)});addEventListener('pagereveal',function(e){try{var u=JSON.parse(localStorage.getItem('sacradigit_user')||'null'),c=q('#user-menu-btn'),sp=c&&c.querySelector('span'),ps=c?c.querySelectorAll('p'):[],L={admin:'Head Admin',staff:'Secretary',itech:'IT Team',media:'Media Team',parishioner:'Parishioner',server:'Parish Server'};if(u){if(sp&&!sp.textContent.trim())sp.textContent=(((u.firstName||u.name||'')[0]||'')+((u.lastName||'')[0]||'')).toUpperCase();if(ps[0]&&!ps[0].textContent.trim())ps[0].textContent=u.name||'';if(ps[1]&&!ps[1].textContent.trim())ps[1].textContent=L[u.role]||''}}catch(x){}try{var s=JSON.parse(sessionStorage.getItem(K)||'null'),n=q('#sidebar nav');sessionStorage.removeItem(K);if(s&&n&&s.d===dir())n.scrollTop=s.y}catch(x){}var v=e.viewTransition;if(!v)return;if(h.dataset.a11y==='on'||h.dataset.motion==='reduce'||matchMedia('(prefers-reduced-motion: reduce)').matches){v.skipTransition();return}h.classList.add('sd-vt');sdViewParts(true);v.finished.finally(function(){sdViewParts(false)})});addEventListener('pageshow',function(){sdViewParts(false)})})()</script>
+  <!-- Light/Dark + English/Filipino (see ../shared/js/ui-prefs.js) -->
+  <link rel="stylesheet" href="../shared/css/theme-dark.css" />
+  <link rel="stylesheet" href="../shared/css/accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -139,11 +143,11 @@
       <div class="px-3 py-4 border-t border-gray-100">
         <button id="user-menu-btn" class="user-card w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-50 transition-colors text-left" aria-haspopup="true" aria-expanded="false">
           <div class="w-9 h-9 rounded-full bg-lavender flex items-center justify-center shrink-0">
-            <span class="text-white font-semibold text-xs">MT</span>
+            <span class="text-white font-semibold text-xs"></span>
           </div>
           <div class="leading-tight min-w-0">
-            <p class="font-medium text-gray-900 text-sm truncate">Media Team</p>
-            <p class="text-gray-400 text-xs truncate">Communications</p>
+            <p class="font-medium text-gray-900 text-sm truncate"></p>
+            <p class="text-gray-400 text-xs truncate"></p>
           </div>
         </button>
       </div>
@@ -158,7 +162,7 @@
       <!-- Top bar -->
       <header class="bg-white border-b border-gray-200 px-6 md:px-8 py-4 flex items-center justify-between gap-4" style="border-bottom-color:#8b8fc7;border-bottom-width:3px;">
         <div class="flex items-center gap-3">
-          <button id="sidebar-toggle" class="md:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
+          <button id="sidebar-toggle" class="lg:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
           <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:rgba(139,143,199,0.16);color:#6c6fb0;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
@@ -251,7 +255,7 @@
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <!-- Custom JS -->
-  <script type="module" src="media-shell.js"></script>
-  <script type="module" src="content-calendar.js"></script>
+  <script type="module" src="js/media-shell.js"></script>
+  <script type="module" src="js/content-calendar.js"></script>
 </body>
 </html>

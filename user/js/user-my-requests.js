@@ -1,0 +1,362 @@
+/* ============================================
+   SacraDigit — User My Requests Scripts (AWS Amplify)
+   Runs after user-shell.js.
+   No login yet, so this shows ALL CertificateRequest
+   records rather than one person's — same caveat as
+   the dashboard's "My Recent Requests" panel.
+   ============================================ */
+
+import { client } from '../../shared/js/amplify-init.js';
+import { getUrl } from 'aws-amplify/storage';
+import { formatFullName, isNameEmpty } from '../../shared/js/name-utils.js';
+import { createPager } from './pager.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Detail keys that are purely internal/derived — never shown to the
+  // parishioner ('birthplace' is a combined City+Region string kept only
+  // so the admin's Generate Certificate modal can prefill from it, since
+  // the same info already appears here as separate Region/City lines;
+  // 'baptism-church' on a Confirmation Certificate request is never
+  // actually asked of the requester — it's always Our Lady of Fatima
+  // Parish — so showing it back would just be redundant noise).
+  const HIDDEN_DETAIL_KEYS = new Set(['birthplace', 'baptism-church', 'place-of-death']);
+
+  const DETAIL_LABEL_OVERRIDES = {
+    'birth-region': 'Region of Birth',
+    'birth-city': 'City/Municipality of Birth',
+    'extraGodparents': 'Additional Godparents',
+    'confirmation-name': 'Confirmation Name (Saint Name)',
+    'groom-name': "Groom's Full Name",
+    'groom-guardian': "Groom's Guardian",
+    'groom-father': "Groom's Father's Name",
+    'groom-mother': "Groom's Mother's Maiden Name",
+    'bride-name': "Bride's Full Name",
+    'bride-guardian': "Bride's Guardian",
+    'bride-father': "Bride's Father's Name",
+    'bride-mother': "Bride's Mother's Maiden Name",
+    'marriage-place': 'Place of Marriage',
+    'deceased-name': 'Full Name of Deceased',
+    'place-of-death-region': 'Region of Death',
+    'place-of-death-city': 'City/Municipality of Death',
+    'requester-rel': 'Relationship to the Deceased',
+  };
+
+  function humanizeDetailLabel(key) {
+    return DETAIL_LABEL_OVERRIDES[key] || key
+      .replace(/[-_]+/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function isNameShaped(v) {
+    return !!v && typeof v === 'object' && !Array.isArray(v) &&
+      ('firstName' in v || 'middleName' in v || 'lastName' in v || 'extension' in v);
+  }
+
+  // Every certificate type's `details` blob is a flat, freely-shaped JSON
+  // object — most values are plain strings, but name fields are
+  // {firstName, middleName, lastName, extension} objects (see
+  // name-utils.js), the Baptismal Certificate's guardian info is a small
+  // nested object, and its extra godparents are an array. This turns any
+  // of those shapes into one display-ready string, or null to skip the
+  // row entirely (e.g. an untouched, still-blank optional name field).
+  function formatDetailValue(key, value) {
+    if (isNameShaped(value)) return isNameEmpty(value) ? null : formatFullName(value);
+
+    // Matches 'guardian' (Baptismal/Confirmation) as well as
+    // 'groom-guardian'/'bride-guardian' (Marriage, one per side).
+    if (key.endsWith('guardian') && value && typeof value === 'object') {
+      const name = formatFullName(value.name);
+      if (!name) return null;
+      const bday = value.birthdate ? formatShortDate(value.birthdate) : '';
+      return `${name} (${value.relationship || 'Guardian'})${bday ? ` — b. ${bday}` : ''}`;
+    }
+
+    if (Array.isArray(value)) {
+      const parts = value
+        .map(g => {
+          const name = formatFullName(g && g.name);
+          return name ? `${name}${g.role ? ` (${g.role})` : ''}` : null;
+        })
+        .filter(Boolean);
+      return parts.length ? parts.join(', ') : null;
+    }
+
+    return value === null || value === undefined || value === '' ? null : String(value);
+  }
+
+  const STEPS = ['Submitted', 'Under Review', 'Approved', 'Ready for Pick-up', 'Released'];
+  const stepIndexFor = { pending: 0, approved: 2, released: 4, rejected: -1 };
+
+  let requests = [];
+  let activeFilter = 'All';
+  let currentDetailId = null;
+
+  // Just All / Pending / Ready — released and rejected ones are under All.
+  const filterMap = {
+    'Pending':  ['pending'],
+    'Ready':    ['approved'], // schema has no separate "ready" status yet: approved = ready at the office
+  };
+
+  const badgeClass = { pending: 'badge-amber', approved: 'badge-green', released: 'badge-gray', rejected: 'badge-red' };
+  const statusLabel = { pending: 'Pending', approved: 'Ready', released: 'Released', rejected: 'Not approved' };
+
+  /* Pending → Ready → Released, as a gold track under the sentence (motion.css);
+     a chip whose status changed since the last visit pops once (motion.js). */
+  const TRACK_STEP = { pending: 0, approved: 1, released: 2 };
+  const trackHtml = (status) => status in TRACK_STEP
+    ? `<div class="sd-track" aria-hidden="true">${[0, 1, 2].map(i => `<i class="${i <= TRACK_STEP[status] ? 'ok' : ''}"></i>`).join('')}</div>`
+    : '';
+
+  /* One plain sentence per status on each card, in place of the old
+     5-step dot tracker (its 9px labels ran together on phones). */
+  function statusSentence(r) {
+    switch (r.status) {
+      case 'pending':  return 'Being checked by the parish office. Usually ready in 3–5 working days.';
+      case 'approved': return 'Ready! Pick it up at the parish office during office hours.';
+      case 'released': return hasOfficialCopy(r)
+        ? 'Released. You can also view your certificate online.'
+        : 'Released — you have received this certificate.';
+      case 'rejected': return 'Not approved. Tap Details to see why.';
+      default:         return '';
+    }
+  }
+
+  const list        = document.getElementById('requests-list');
+  const emptyState   = document.getElementById('requests-empty');
+  // 5 per page instead of one long scroll (./pager.js)
+  const pager = createPager(document.getElementById('requests-pager'), { onChange: () => renderList(), scrollTo: list });
+  const detailModal  = document.getElementById('detail-modal');
+
+  const modalCancelBtn    = document.getElementById('modal-cancel-request');
+  const modalViewCertBtn  = document.getElementById('modal-view-cert');
+  const cancelRequestModal = document.getElementById('cancel-request-modal');
+  const cancelRequestTypeEl = document.getElementById('cancel-request-type');
+  const cancelRequestConfirm = document.getElementById('cancel-request-confirm');
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+  function formatShortDate(input) {
+    if (!input) return '';
+    const d = new Date(input);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function getDetails(r) {
+    if (!r.details) return {};
+    try { return JSON.parse(r.details); } catch { return {}; }
+  }
+  function hasOfficialCopy(r) {
+    return r.status === 'released' && !!r.linkedRecordId;
+  }
+
+  const certUrlCache = new Map();
+  async function openOfficialCertificate(requestId, triggerBtn) {
+    const r = requests.find(x => x.id === requestId);
+    if (!r || !r.linkedRecordId) return;
+
+    const originalLabel = triggerBtn ? triggerBtn.textContent : '';
+    if (triggerBtn) { triggerBtn.disabled = true; triggerBtn.textContent = 'Opening…'; }
+
+    try {
+      const cached = certUrlCache.get(r.linkedRecordId);
+      let url;
+      if (cached && cached.expiresAt > Date.now()) {
+        url = cached.url;
+      } else {
+        const recordResult = await client.models.ParishRecord.get({ id: r.linkedRecordId });
+        if (recordResult.errors) throw new Error(recordResult.errors.map(e => e.message).join('; '));
+        const record = recordResult.data;
+        if (!record || !record.fileURL) throw new Error('No certificate file found for this record.');
+
+        const { url: resolvedUrl } = await getUrl({ path: record.fileURL, options: { expiresIn: 3600 } });
+        url = resolvedUrl.toString();
+        certUrlCache.set(r.linkedRecordId, { url, expiresAt: Date.now() + 55 * 60 * 1000 });
+      }
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error('Failed to open the official certificate:', err);
+      window.showToast(err.message || "Couldn't open the certificate.", true);
+    } finally {
+      if (triggerBtn) { triggerBtn.disabled = false; triggerBtn.textContent = originalLabel || 'View Certificate'; }
+    }
+  }
+
+  client.models.CertificateRequest.observeQuery().subscribe({
+    next: ({ items }) => {
+      requests = items;
+      renderStats();
+      renderList();
+    },
+    error: (err) => {
+      console.error('Failed to load requests:', err);
+      list.innerHTML = `<p class="text-center text-red-500 text-sm py-8">Couldn't load requests.</p>`;
+    },
+  });
+
+  function renderStats() {
+    document.getElementById('stat-total').textContent   = requests.length;
+    document.getElementById('stat-pending').textContent = requests.filter(r => r.status === 'pending').length;
+    document.getElementById('stat-ready').textContent   = requests.filter(r => r.status === 'approved').length;
+  }
+
+  function renderList() {
+    const filtered = activeFilter === 'All'
+      ? requests
+      : requests.filter(r => (filterMap[activeFilter] || []).includes(r.status));
+
+    const sorted = filtered.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    list.innerHTML = '';
+    const pageItems = pager.page(sorted);
+    if (sorted.length === 0) {
+      emptyState.classList.remove('hidden');
+      return;
+    }
+    emptyState.classList.add('hidden');
+
+    pageItems.forEach((r) => {
+      const card = document.createElement('div');
+      card.className = 'req-card';
+      card.innerHTML = `
+        <div class="req-card-icon" style="background-color:rgba(139,143,199,0.16);color:#5b5fa8;">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div class="req-card-body">
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <p class="req-card-title">${escapeHtml(r.certificateType)}</p>
+              <p class="req-card-meta">Submitted ${formatShortDate(r.createdAt)}</p>
+              <p class="req-card-purpose">${escapeHtml(r.purpose)}</p>
+            </div>
+            <span class="badge ${badgeClass[r.status] || 'badge-gray'}" data-sd-status="${r.id}:${r.status}">${statusLabel[r.status] || r.status}</span>
+          </div>
+          <p class="req-status-line status-${r.status}">${statusSentence(r)}</p>
+          ${trackHtml(r.status)}
+        </div>
+        <div class="req-card-actions">
+          ${hasOfficialCopy(r) ? `<button type="button" class="btn-view-cert" data-id="${r.id}">View Certificate</button>` : ''}
+          <button type="button" class="btn-view-details" data-id="${r.id}">Details</button>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  list.addEventListener('click', (e) => {
+    const detailsBtn = e.target.closest('.btn-view-details');
+    if (detailsBtn) openDetail(detailsBtn.dataset.id);
+
+    const certBtn = e.target.closest('.btn-view-cert');
+    if (certBtn) openOfficialCertificate(certBtn.dataset.id, certBtn);
+  });
+
+  document.querySelectorAll('.status-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.status-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      activeFilter = tab.dataset.filter;
+      pager.reset();
+      renderList();
+    });
+  });
+
+  function openDetail(id) {
+    const r = requests.find(x => x.id === id);
+    if (!r) return;
+    const isRejected = r.status === 'rejected';
+    const details = getDetails(r);
+
+    currentDetailId = id;
+    modalCancelBtn.classList.toggle('hidden', r.status !== 'pending');
+    modalViewCertBtn.classList.toggle('hidden', !hasOfficialCopy(r));
+
+    document.getElementById('modal-title').textContent = r.certificateType;
+    document.getElementById('modal-date').textContent  = `Submitted ${formatShortDate(r.createdAt)}`;
+
+    const statusBadge = document.getElementById('modal-status-badge');
+    statusBadge.textContent = statusLabel[r.status] || r.status;
+    statusBadge.className   = `badge ${badgeClass[r.status] || 'badge-gray'}`;
+
+    const detailGrid = document.getElementById('modal-details');
+    detailGrid.innerHTML = Object.entries(details)
+      .filter(([key]) => !HIDDEN_DETAIL_KEYS.has(key))
+      .map(([key, value]) => [key, formatDetailValue(key, value)])
+      .filter(([, value]) => value)
+      .map(([key, value]) => `
+        <div><p class="modal-detail-item-label">${escapeHtml(humanizeDetailLabel(key))}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>`).join('');
+
+    const purposeWrap = document.getElementById('modal-purpose-wrap');
+    if (r.purpose) { purposeWrap.classList.remove('hidden'); document.getElementById('modal-purpose').textContent = r.purpose; }
+    else purposeWrap.classList.add('hidden');
+
+    const rejWrap = document.getElementById('modal-rejection-wrap');
+    if (isRejected && r.rejectionReason) { rejWrap.classList.remove('hidden'); document.getElementById('modal-rejection').textContent = r.rejectionReason; }
+    else rejWrap.classList.add('hidden');
+
+    const stepIdx = stepIndexFor[r.status] ?? 0;
+    const timeline = document.getElementById('modal-timeline');
+    timeline.innerHTML = STEPS.map((step, i) => {
+      let cls = '', sub = '';
+      if (isRejected) {
+        if (i === 0) { cls = 'done'; sub = formatShortDate(r.createdAt); }
+        else if (i === 1) { cls = 'rejected'; sub = 'Request rejected'; }
+      } else {
+        if (i < stepIdx) { cls = 'done'; sub = 'Completed'; }
+        else if (i === stepIdx) { cls = 'current'; sub = 'Current status'; }
+        else sub = 'Pending';
+        if (i === 0) sub = formatShortDate(r.createdAt);
+      }
+      return `<div class="req-timeline-step ${cls}">
+        <div class="req-timeline-dot">${cls === 'done' ? '<svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : ''}</div>
+        <div class="req-timeline-content"><p class="req-timeline-label">${step}</p>${sub ? `<p class="req-timeline-sub">${sub}</p>` : ''}</div>
+      </div>`;
+    }).join('');
+
+    detailModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetail() {
+    detailModal.classList.add('hidden');
+    cancelRequestModal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeDetail));
+  [detailModal, cancelRequestModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) closeDetail(); }));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+
+  modalViewCertBtn.addEventListener('click', () => {
+    if (!currentDetailId) return;
+    openOfficialCertificate(currentDetailId, modalViewCertBtn);
+  });
+
+  modalCancelBtn.addEventListener('click', () => {
+    if (!currentDetailId) return;
+    const r = requests.find(x => x.id === currentDetailId);
+    if (!r) return;
+    cancelRequestTypeEl.textContent = r.certificateType;
+    cancelRequestModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  });
+
+  cancelRequestConfirm.addEventListener('click', async () => {
+    if (!currentDetailId) return;
+    const removed = requests.find(x => x.id === currentDetailId);
+    try {
+      const result = await client.models.CertificateRequest.delete({ id: currentDetailId });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      closeDetail();
+      window.showToast(`${removed ? removed.certificateType : 'Request'} cancelled.`);
+      currentDetailId = null;
+    } catch (err) {
+      console.error('Failed to cancel request:', err);
+      window.showToast(err.message || "Couldn't cancel the request.", true);
+    }
+  });
+
+});

@@ -24,7 +24,7 @@ function findHtmlFiles(dir, base = dir) {
 
 const root = resolve(__dirname);
 
-// Vercel serves from the domain root; GitHub Pages serves under /CAPSTONE_SACRADIGIT/.
+// Vercel serves from the domain root; GitHub Pages serves under /CAPSTONE_SACRADIGIT/ (the repo name).
 // Vercel sets VERCEL=1 during its build, so detect it automatically.
 const base = process.env.VERCEL ? '/' : '/CAPSTONE_SACRADIGIT/';
 

@@ -1,0 +1,713 @@
+/* ============================================
+   SacraDigit Admin — Schedule Offers Scripts (AWS Amplify)
+   Runs after dashboard.js.
+
+   Backed by the same Blessing model as Sacradigit/blessings.js and
+   user/user-request-service.js — despite the model's name, it's used
+   as the general parishioner service-request record for everything in
+   user-request-service.js's catalog (sacraments, special masses, and
+   literal blessings alike), so this page reviews all of it, not just
+   blessings. Status mapping: scheduled -> Scheduled, completed -> Completed,
+   declined -> Cancelled.
+
+   Parishioners book fixed slots (../../shared/js/service-schedule.js), which only
+   offers a slot that still has room, so records arrive already
+   'scheduled' — there is no Pending status on this page. (A leftover
+   'pending' row from before fixed slots is shown as Scheduled too.)
+   Upcoming bookings can be Cancelled, and Rescheduled (moved to another
+   open slot, with a reason) up to the day before their date.
+   ============================================ */
+
+import { client } from '../../shared/js/amplify-init.js';
+import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl, canReschedule, isPastSchedule } from '../../shared/js/service-schedule.js';
+import { initWalkInService } from './walk-in-service.js';
+import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithChecklistItem } from '../../shared/js/sacrament-prep.js';
+import { currentUserName } from '../../shared/js/auth.js';
+import { logActivity } from '../../shared/js/activity-log.js';
+import { showToast, reportEmail } from './admin-ui.js';
+import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
+import { initBannsPanel } from './banns-panel.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+
+  let offers = []; // kept in sync via observeQuery, each has .id
+  let closures = []; // 'No Services (Parish Closed)' date ranges from Special Schedules
+
+  // "+ Service" — book a walk-in parishioner (see walk-in-service.js).
+  // showToast is a function declaration further down, so it's available here.
+  const walkIn = initWalkInService({
+    showToast,
+    getRecords: () => offers,
+    getClosures: () => closures,
+    backLabel: 'Back to Schedule Offers',
+  });
+  document.getElementById('btn-add-service').addEventListener('click', () => walkIn.open());
+
+  watchClosures(client, (next) => {
+    closures = next;
+    if (reschedulePicker) reschedulePicker.setClosures(closures);
+    walkIn.refresh();
+  });
+
+  const statusLabel = { pending: 'Scheduled', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+  const badgeClass = { Scheduled: 'badge-green', Cancelled: 'badge-red', Completed: 'badge-blue' };
+
+  // A scheduled booking whose date has passed already happened — nothing ever
+  // flips it to 'completed' in the database, so it's shown as Completed here
+  // instead of sitting as "Scheduled" forever.
+  const effectiveStatus = (o) => isPastSchedule(o, todayISO) ? 'completed' : o.status;
+
+  // A booking the office can still cancel: scheduled and not yet past.
+  const isOpenBooking = (o) => o.status === 'pending' || (o.status === 'scheduled' && (o.date || '') >= todayISO);
+  // Rescheduling closes a day earlier — only up to the day before the booking.
+  const isReschedulable = (o) => o.status === 'pending' || canReschedule(o);
+
+  const tbody       = document.getElementById('offers-tbody');
+  const offersEmpty  = document.getElementById('offers-empty');
+  const resultsCount  = document.getElementById('results-count');
+  const searchInput   = document.getElementById('search-input');
+  const typeFilter     = document.getElementById('type-filter');
+  const statusFilter    = document.getElementById('status-filter');
+
+  function escapeHtml(str) {
+    const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+    });
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // record.details is stored as an AWSJSON string (see
+  // user-request-service.js's create() call) — parse it defensively,
+  // since a malformed or missing value shouldn't break the row/modal.
+  function parseDetails(record) {
+    if (!record.details) return {};
+    if (typeof record.details !== 'string') return record.details;
+    try {
+      const parsed = JSON.parse(record.details);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  // A detail value can be a plain string, or a { firstName, middleName,
+  // lastName, extension } name object (see name-utils.js) for any
+  // name-kind field in the request form.
+  function formatDetailValue(value) {
+    if (value && typeof value === 'object') {
+      return [value.firstName, value.middleName, value.lastName].filter(Boolean).join(' ') +
+        (value.extension ? ` ${value.extension}` : '');
+    }
+    return value;
+  }
+
+  function setFieldError(input, message) {
+    input.classList.add('has-error');
+    let msg = input.parentElement.querySelector('.form-error-msg');
+    if (!msg) {
+      msg = document.createElement('p');
+      msg.className = 'form-error-msg';
+      input.insertAdjacentElement('afterend', msg);
+    }
+    msg.textContent = message;
+  }
+
+  function clearFieldError(input) {
+    input.classList.remove('has-error');
+    const msg = input.parentElement.querySelector('.form-error-msg');
+    if (msg) msg.remove();
+  }
+
+
+  /* --- Live data --- */
+  client.models.Blessing.observeQuery().subscribe({
+    next: ({ items }) => {
+      offers = items;
+      renderTypeFilterOptions();
+      renderStats();
+      renderTable();
+      if (reschedulePicker) reschedulePicker.refresh(offers);
+      walkIn.refresh();
+    },
+    error: (err) => {
+      console.error('Failed to load schedule requests:', err);
+      tbody.innerHTML = '';
+      offersEmpty.classList.remove('hidden');
+      offersEmpty.querySelector('p').textContent = "Couldn't load schedule requests from the database.";
+    },
+  });
+
+  // Built from whatever service types actually exist in the live data
+  // (rather than a hardcoded list) so it can never drift out of sync
+  // with user-request-service.js's catalog of requestable services.
+  let lastTypeOptions = null;
+  function renderTypeFilterOptions() {
+    const types = [...new Set(offers.map(o => o.type).filter(Boolean))].sort();
+    const key = types.join('|');
+    if (key === lastTypeOptions) return; // avoid clobbering an open selection on every live update
+    lastTypeOptions = key;
+
+    const current = typeFilter.value;
+    typeFilter.innerHTML = `<option value="">All Services</option>` +
+      types.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+    if (types.includes(current)) typeFilter.value = current;
+  }
+
+
+  /* ------------------------------------------
+     1. STAT BOXES
+  ------------------------------------------ */
+  function renderStats() {
+    const weekStart = new Date(todayISO + 'T00:00:00');
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    const weekCount = offers.filter(o => {
+      if (!o.date) return false;
+      const d = new Date(o.date + 'T00:00:00');
+      return d >= weekStart && d < weekEnd;
+    }).length;
+
+    document.getElementById('stat-total').textContent    = offers.length;
+    document.getElementById('stat-approved').textContent  = offers.filter(o => statusLabel[effectiveStatus(o)] === 'Scheduled').length;
+    document.getElementById('stat-completed').textContent = offers.filter(o => effectiveStatus(o) === 'completed').length;
+    document.getElementById('stat-week').textContent     = weekCount;
+
+    updateActiveStatCard();
+  }
+
+  /* ------------------------------------------
+     1b. STAT CARDS AS QUICK FILTERS
+     Total clears the status filter; Scheduled /
+     Completed set it and jump straight to the
+     matching rows. "This Week" isn't a status,
+     so it stays informational only.
+  ------------------------------------------ */
+  const statCardTotal    = document.getElementById('stat-total').closest('.stat-card');
+  const statCardApproved  = document.getElementById('stat-approved').closest('.stat-card');
+  const statCardCompleted = document.getElementById('stat-completed').closest('.stat-card');
+
+  const statCardsByStatus = [
+    { card: statCardTotal,     status: '' },
+    { card: statCardApproved,  status: 'Scheduled' },
+    { card: statCardCompleted, status: 'Completed' },
+  ];
+
+  statCardsByStatus.forEach(({ card, status }) => {
+    card.classList.add('stat-card-clickable');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.addEventListener('click', () => {
+      statusFilter.value = status;
+      renderTable();
+    });
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        statusFilter.value = status;
+        renderTable();
+      }
+    });
+  });
+
+  function updateActiveStatCard() {
+    statCardsByStatus.forEach(({ card, status }) => {
+      card.classList.toggle('stat-card-active', statusFilter.value === status);
+    });
+  }
+
+
+  /* ------------------------------------------
+     2. RENDER TABLE
+  ------------------------------------------ */
+  function renderTable() {
+    const query     = searchInput.value.trim().toLowerCase();
+    const typeVal    = typeFilter.value;
+    const statusVal   = statusFilter.value;
+
+    updateActiveStatCard();
+
+    const filtered = offers.filter(o => {
+      const label = statusLabel[effectiveStatus(o)] || effectiveStatus(o);
+      const matchQuery  = !query || (o.requesterName || '').toLowerCase().includes(query) || (o.type || '').toLowerCase().includes(query);
+      const matchType    = !typeVal   || o.type === typeVal;
+      const matchStatus  = !statusVal || label  === statusVal;
+      return matchQuery && matchType && matchStatus;
+    });
+
+    const sorted = filtered.slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    resultsCount.textContent = `${sorted.length} request${sorted.length === 1 ? '' : 's'}`;
+
+    if (sorted.length === 0) {
+      tbody.innerHTML = '';
+      offersEmpty.querySelector('p').textContent = 'No requests match your filters';
+      offersEmpty.classList.remove('hidden');
+      return;
+    }
+    offersEmpty.classList.add('hidden');
+
+    tbody.innerHTML = sorted.map(o => {
+      const label = statusLabel[effectiveStatus(o)] || effectiveStatus(o);
+
+      let actionsHtml = '';
+      if (isOpenBooking(o)) {
+        actionsHtml = `
+          <div class="row-actions">
+            <button type="button" class="act-btn row-view" data-id="${o.id}">View</button>
+            ${isReschedulable(o) ? `<button type="button" class="act-btn row-reschedule" data-id="${o.id}">Reschedule</button>` : ''}
+            <button type="button" class="act-btn act-danger row-reject row-cancel" data-id="${o.id}">Cancel…</button>
+          </div>`;
+      } else {
+        actionsHtml = `
+          <div class="row-actions">
+            <button type="button" class="act-btn row-view" data-id="${o.id}">View</button>
+          </div>`;
+      }
+
+      return `
+        <tr>
+          <td class="font-medium text-gray-900">${escapeHtml(o.requesterName)}</td>
+          <td>
+            <span class="service-type-tag">${escapeHtml(o.type)}</span>${progressChipHtml(o)}
+          </td>
+          <td>
+            ${o.date
+              ? `${fmtDate(o.date)}${o.time ? `<span class="text-gray-400"> · ${escapeHtml(o.time)}</span>` : ''}`
+              : `${fmtDate(o.preferredDate)} <span class="text-gray-400">(preferred)</span>`}
+          </td>
+          <td class="text-gray-400">${fmtDateTime(o.createdAt)}</td>
+          <td><span class="badge ${badgeClass[label] || 'badge-gray'}">${escapeHtml(label)}</span></td>
+          <td class="text-right">${actionsHtml}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Wire filters
+  searchInput.addEventListener('input', renderTable);
+  typeFilter.addEventListener('change', renderTable);
+  statusFilter.addEventListener('change', renderTable);
+  document.getElementById('btn-clear-filters').addEventListener('click', () => {
+    searchInput.value = '';
+    typeFilter.value   = '';
+    statusFilter.value  = '';
+    renderTable();
+  });
+
+  // Delegate row actions
+  tbody.addEventListener('click', e => {
+    const rescheduleBtn = e.target.closest('.row-reschedule');
+    const rejectBtn   = e.target.closest('.row-reject');
+    const viewBtn      = e.target.closest('.row-view');
+
+    if (rescheduleBtn) openRescheduleScreen(rescheduleBtn.dataset.id);
+    if (rejectBtn)  openRejectModal(rejectBtn.dataset.id, { cancelBooking: rejectBtn.classList.contains('row-cancel') });
+    if (viewBtn)    openViewModal(viewBtn.dataset.id);
+  });
+
+
+  /* ------------------------------------------
+     3. RESCHEDULE SCREEN
+     Moves a booking to another fixed slot
+     (its old slot is freed), on a full-screen
+     view beside the
+     sidebar (request on the left, calendar on
+     the right) — same as the Blessings page.
+     The office isn't bound by the parishioner
+     lead-time rule (ignoreLead).
+  ------------------------------------------ */
+  const rescheduleScreen    = document.getElementById('reschedule-screen');
+  const reschedulePickerEl  = document.getElementById('reschedule-slot-picker');
+  const rescheduleSummary   = document.getElementById('reschedule-summary');
+  const rescheduleSubmitBtn = document.getElementById('reschedule-submit');
+  const rescheduleReason    = createReasonField(document.getElementById('reschedule-reason-wrap'));
+
+  let rescheduleTargetId = null;
+  let reschedulePicker = null;
+
+  function rescheduleFactsHtml(o) {
+    const fact = (label, value) => `<div><p class="svc-screen-fact-label">${escapeHtml(label)}</p><p class="svc-screen-fact-value">${escapeHtml(value)}</p></div>`;
+    const extra = Object.entries(parseDetails(o))
+      .filter(([k]) => !isPrepKey(k))
+      .map(([k, v]) => [k === RESCHEDULE_REASON_LABEL ? 'Last Rescheduled' : k, formatDetailValue(v)])
+      .filter(([, v]) => v)
+      .map(([k, v]) => fact(k, v));
+    return [
+      fact('Requester', o.requesterName),
+      fact('Location', o.location || locationFor(o.type, parseDetails(o))),
+      ...(o.contact ? [fact('Contact', o.contact)] : []),
+      fact('Submitted', fmtDateTime(o.createdAt)),
+      ...extra,
+    ].join('');
+  }
+
+  function openRescheduleScreen(id) {
+    const o = offers.find(x => x.id === id);
+    if (!o) return;
+    rescheduleTargetId = id;
+
+    document.getElementById('reschedule-title').textContent = `Reschedule — ${o.type}`;
+    document.getElementById('reschedule-sub').textContent = `For ${o.requesterName}`;
+    document.getElementById('reschedule-current-label').textContent = o.date ? 'Currently Scheduled' : 'Requested (not yet booked)';
+    document.getElementById('reschedule-current').textContent =
+      `${fmtDate(o.date || o.preferredDate)}${o.time ? ` at ${o.time}` : ''}`;
+    document.getElementById('reschedule-facts').innerHTML = rescheduleFactsHtml(o);
+
+    rescheduleReason.reset();
+    rescheduleSummary.classList.add('hidden');
+    reschedulePickerEl.classList.remove('has-error');
+    reschedulePicker = createSlotPicker(reschedulePickerEl, {
+      type: o.type,
+      records: offers,
+      closures,
+      excludeId: id,
+      ignoreLead: true,
+      layout: 'calendar',
+      onChange: (slot) => {
+        reschedulePickerEl.classList.remove('has-error');
+        rescheduleSummary.classList.toggle('hidden', !slot);
+        if (slot) rescheduleSummary.textContent = `New schedule: ${fmtDate(slot.date)} at ${slot.time}`;
+      },
+    });
+
+    rescheduleScreen.classList.remove('hidden', 'is-closing');
+    document.body.classList.add('svc-screen-open');
+    document.getElementById('reschedule-body').scrollTop = 0;
+  }
+
+  function closeRescheduleScreen() {
+    if (rescheduleScreen.classList.contains('hidden')) return;
+    rescheduleTargetId = null;
+    reschedulePicker = null;
+    document.body.classList.remove('svc-screen-open');
+    const finish = () => rescheduleScreen.classList.add('hidden');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+    rescheduleScreen.classList.add('is-closing');
+    rescheduleScreen.addEventListener('animationend', () => {
+      rescheduleScreen.classList.remove('is-closing');
+      if (!document.body.classList.contains('svc-screen-open')) finish(); // reopened mid-animation
+    }, { once: true });
+  }
+
+  document.getElementById('reschedule-back').addEventListener('click', closeRescheduleScreen);
+  document.getElementById('reschedule-cancel').addEventListener('click', closeRescheduleScreen);
+
+  rescheduleSubmitBtn.addEventListener('click', async () => {
+    const o = offers.find(x => x.id === rescheduleTargetId);
+    const slot = reschedulePicker && reschedulePicker.getValue();
+    const reason = rescheduleReason.value();
+    if (!o) return;
+    if (!reason) { rescheduleReason.showError(); showToast('Please give a reason for rescheduling.', true); return; }
+    if (!slot) { reschedulePickerEl.classList.add('has-error'); showToast('Please pick a new date and time.', true); return; }
+    if (!slotHasRoom(o.type, offers, slot.date, slot.time, { excludeId: o.id, closures })) {
+      showToast('That slot was just taken. Please pick another.', true);
+      reschedulePicker.refresh(offers);
+      return;
+    }
+
+    rescheduleSubmitBtn.disabled = true;
+    try {
+      const result = await client.models.Blessing.update({
+        id: o.id,
+        status: 'scheduled',
+        date: slot.date,
+        time: slot.time,
+        location: o.location || locationFor(o.type, parseDetails(o)),
+        details: detailsWithRescheduleReason(o.details, reason, 'Parish Office'),
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      logBookingAction(client, { action: 'Reschedule', record: { ...o, date: slot.date, time: slot.time }, reason });
+      closeRescheduleScreen();
+      reportEmail(notifyServiceUpdate({
+        to: o.email || '', name: o.requesterName, serviceType: o.type, status: 'rescheduled', declineReason: reason,
+        date: fmtDate(slot.date), time: slot.time, location: o.location || locationFor(o.type, parseDetails(o)), contact: o.contact,
+      }), o.requesterName, `${o.type} for ${o.requesterName} rescheduled to ${fmtDate(slot.date)} at ${slot.time}.`);
+    } catch (err) {
+      console.error('Failed to reschedule request:', err);
+      showToast(err.message || "Couldn't reschedule request.", true);
+    } finally {
+      rescheduleSubmitBtn.disabled = false;
+    }
+  });
+
+
+  /* ------------------------------------------
+     4. REJECT MODAL
+  ------------------------------------------ */
+  const rejectModal  = document.getElementById('reject-modal');
+  const rejectName    = document.getElementById('reject-name');
+  const rejectReason   = document.getElementById('reject-reason');
+  const rejectTitle    = document.getElementById('reject-title');
+  const rejectVerb     = document.getElementById('reject-verb');
+  const rejectSubmitBtn = document.getElementById('reject-submit');
+  let rejectTargetId = null;
+  let rejectIsCancel = false;
+
+  // Also used to cancel a booked slot — status 'declined' frees the
+  // slot and shows the reason to the parishioner.
+  function openRejectModal(id, { cancelBooking = false } = {}) {
+    const o = offers.find(x => x.id === id);
+    if (!o) return;
+    rejectTargetId = id;
+    rejectIsCancel = cancelBooking;
+    rejectTitle.textContent = cancelBooking ? 'Cancel Booking' : 'Decline Request';
+    rejectVerb.textContent = cancelBooking
+      ? `Cancelling the ${o.type} booking on ${fmtDate(o.date)}${o.time ? ` at ${o.time}` : ''} for`
+      : 'Declining request from';
+    rejectSubmitBtn.textContent = cancelBooking ? 'Cancel Booking' : 'Decline Request';
+    rejectName.textContent = o.requesterName;
+    rejectReason.value      = '';
+    clearFieldError(rejectReason);
+    openModal(rejectModal);
+  }
+
+  rejectReason.addEventListener('input', () => clearFieldError(rejectReason));
+
+  document.getElementById('reject-submit').addEventListener('click', async () => {
+    if (rejectTargetId === null) return;
+    const reason = rejectReason.value.trim();
+    if (!reason) {
+      setFieldError(rejectReason, rejectIsCancel ? 'Please tell the parishioner why it was cancelled.' : 'Please provide a reason for declining.');
+      showToast('Please fix the highlighted fields.', true);
+      return;
+    }
+    clearFieldError(rejectReason);
+
+    const o = offers.find(x => x.id === rejectTargetId);
+    const submitBtn = document.getElementById('reject-submit');
+    submitBtn.disabled = true;
+
+    try {
+      const result = await client.models.Blessing.update({
+        id: rejectTargetId,
+        status: 'declined',
+        declineReason: reason,
+      });
+      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      closeModal(rejectModal);
+      logBookingAction(client, { action: rejectIsCancel ? 'Cancel' : 'Decline', record: o, reason });
+      const doneMsg = rejectIsCancel
+        ? `Booking for ${o ? o.requesterName : 'requester'} cancelled — the slot is open again.`
+        : `Request from ${o ? o.requesterName : 'requester'} declined.`;
+      if (o) {
+        reportEmail(notifyServiceUpdate({
+          to: o.email || '', name: o.requesterName, serviceType: o.type,
+          status: rejectIsCancel ? 'cancelled' : 'declined', declineReason: reason,
+          date: o.date ? fmtDate(o.date) : '', time: o.time,
+        }), o.requesterName, doneMsg);
+      } else showToast(doneMsg);
+      rejectTargetId = null;
+    } catch (err) {
+      console.error('Failed to decline request:', err);
+      showToast(err.message || "Couldn't decline request.", true);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+
+  /* ------------------------------------------
+     5. VIEW DETAILS MODAL
+     One label/value table, grouped into
+     Schedule, Requester, Request Information,
+     and Reasons & Notes (each group only when
+     it has rows). The footer offers the same
+     actions as the row (Reschedule and Cancel
+     Booking for upcoming bookings).
+  ------------------------------------------ */
+  const viewModal            = document.getElementById('view-modal');
+  const viewType              = document.getElementById('view-type');
+  const viewName              = document.getElementById('view-name');
+  const viewStatusBadge       = document.getElementById('view-status-badge');
+  const viewTable             = document.getElementById('view-table');
+  const viewRescheduleBtn     = document.getElementById('view-reschedule');
+  const viewCancelBookingBtn  = document.getElementById('view-cancel-booking');
+  let viewTargetId = null;
+
+  const hasValue = (v) => v !== undefined && v !== null && String(v).trim() !== '';
+
+  /** One <tbody> per group: a header row, then label/value rows.
+      rows: [label, valueHtml, extraClass?] — valueHtml must already be escaped. */
+  function tableGroupHtml(title, rows) {
+    if (!rows.length) return '';
+    return `
+      <tbody>
+        <tr class="vd-group"><th colspan="2" scope="colgroup">${escapeHtml(title)}</th></tr>
+        ${rows.map(([label, valueHtml, cls]) => `
+          <tr${cls ? ` class="${cls}"` : ''}>
+            <th scope="row">${escapeHtml(label)}</th>
+            <td>${valueHtml}</td>
+          </tr>`).join('')}
+      </tbody>`;
+  }
+
+  function openViewModal(id) {
+    const o = offers.find(x => x.id === id);
+    if (!o) return;
+    viewTargetId = id;
+
+    const label = statusLabel[effectiveStatus(o)] || effectiveStatus(o);
+    const details = parseDetails(o);
+
+    viewType.textContent = o.type || 'Service Request';
+    viewName.textContent = o.requesterName || '—';
+    viewStatusBadge.textContent = label;
+    viewStatusBadge.className = `badge ${badgeClass[label] || 'badge-gray'}`;
+
+    const longDate = (iso) => new Date(iso + 'T00:00:00')
+      .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+    const scheduleRows = [];
+    if (o.date) {
+      scheduleRows.push([o.status === 'declined' ? 'Was Scheduled For' : 'Confirmed Date', escapeHtml(longDate(o.date))]);
+    }
+    if (o.time) scheduleRows.push(['Time', escapeHtml(o.time)]);
+    if (o.preferredDate && o.preferredDate !== o.date) {
+      scheduleRows.push([o.date ? 'Originally Preferred' : 'Preferred Date (not yet booked)', escapeHtml(longDate(o.preferredDate))]);
+    }
+    const location = o.location || (o.date ? locationFor(o.type, details) : '');
+    if (location) scheduleRows.push(['Location', escapeHtml(location)]);
+    if (!scheduleRows.length) scheduleRows.push(['Date', 'No date yet']);
+
+    const requesterRows = [
+      ['Name', escapeHtml(o.requesterName) || '—'],
+      ['Contact', escapeHtml(o.contact) || '—'],
+      ['Submitted', fmtDateTime(o.createdAt)],
+    ];
+
+    const infoRows = Object.entries(details)
+      .filter(([k]) => k !== RESCHEDULE_REASON_LABEL && k !== MAP_PIN_LABEL && !isPrepKey(k))
+      .map(([k, v]) => [k, formatDetailValue(v)])
+      .filter(([, v]) => hasValue(v))
+      .map(([k, v]) => [k, escapeHtml(v)]);
+    const pin = details[MAP_PIN_LABEL];
+    if (pin) {
+      infoRows.push(['Pinned Location',
+        `<a href="${escapeHtml(googleMapsUrl(pin))}" target="_blank" rel="noopener" class="map-pin-link">Open in Google Maps ↗</a>`]);
+    }
+
+    const noteRows = [];
+    if (o.status === 'declined') noteRows.push(['Cancellation Reason', escapeHtml(o.declineReason || 'No reason given'), 'vd-row-red']);
+    const rescheduled = formatDetailValue(details[RESCHEDULE_REASON_LABEL]);
+    if (hasValue(rescheduled)) noteRows.push(['Last Rescheduled', escapeHtml(rescheduled), 'vd-row-lavender']);
+    if (hasValue(o.notes)) noteRows.push(['Notes', escapeHtml(o.notes)]);
+
+    viewTable.innerHTML =
+      tableGroupHtml('Schedule', scheduleRows) +
+      tableGroupHtml('Requester', requesterRows) +
+      tableGroupHtml('Request Information', infoRows) +
+      tableGroupHtml('Reasons & Notes', noteRows);
+
+    renderViewChecklist(o);
+    bannsPanel.render(o);
+    viewRescheduleBtn.classList.toggle('hidden', !isReschedulable(o));
+    viewCancelBookingBtn.classList.toggle('hidden', !isOpenBooking(o));
+
+    openModal(viewModal);
+  }
+
+  /* --- Sacrament preparation checklist (../../shared/js/sacrament-prep.js) ---
+     Baptism / Confirmation / First Communion / Wedding requests show
+     their requirements here; each tick saves straight away and the
+     parishioner sees it on their Requested Services page. */
+  const viewChecklist = document.getElementById('view-checklist');
+
+  // Wedding bookings: publish / print / withdraw the marriage banns (./banns-panel.js)
+  const bannsPanel = initBannsPanel(document.getElementById('view-banns'), { showToast });
+
+  function renderViewChecklist(o) {
+    viewChecklist.innerHTML = hasChecklist(o.type) ? checklistHtml(o, { editable: true }) : '';
+  }
+
+  viewChecklist.addEventListener('change', async (e) => {
+    const box = e.target.closest('[data-prep-item]');
+    if (!box || !viewTargetId) return;
+    const o = offers.find(x => x.id === viewTargetId);
+    if (!o) return;
+    box.disabled = true;
+    const by = currentUserName() || 'Parish Office';
+    try {
+      const result = await client.models.Blessing.update({
+        id: o.id,
+        details: detailsWithChecklistItem(o.details, box.dataset.prepItem, box.checked, by),
+      });
+      if (result.errors) throw new Error(result.errors.map(er => er.message).join('; '));
+      Object.assign(o, result.data || {});
+      renderViewChecklist(o);
+      const label = box.closest('label')?.querySelector('span')?.firstChild?.textContent || box.dataset.prepItem;
+      logActivity(box.checked ? 'Approve' : 'Edit', `Preparation — ${o.type} for ${o.requesterName}: ${box.checked ? '✓' : 'un-ticked'} ${label}`);
+    } catch (err) {
+      console.error('Failed to update checklist:', err);
+      showToast(err.message || "Couldn't save the checklist.", true);
+      box.checked = !box.checked;
+      box.disabled = false;
+    }
+  });
+
+  viewRescheduleBtn.addEventListener('click', () => {
+    if (!viewTargetId) return;
+    closeModal(viewModal);
+    openRescheduleScreen(viewTargetId);
+  });
+
+  viewCancelBookingBtn.addEventListener('click', () => {
+    if (!viewTargetId) return;
+    closeModal(viewModal);
+    openRejectModal(viewTargetId, { cancelBooking: true });
+  });
+
+
+  /* ------------------------------------------
+     6. MODAL HELPERS
+  ------------------------------------------ */
+  document.querySelectorAll('[data-close-modal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closeModal(rejectModal);
+      closeModal(viewModal);
+    });
+  });
+
+  [rejectModal, viewModal].forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) closeModal(m); });
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal(rejectModal);
+      closeModal(viewModal);
+      closeRescheduleScreen();
+    }
+  });
+
+  function openModal(m) {
+    m.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(m) {
+    if (m.classList.contains('hidden')) return;
+    m.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+
+  /* ------------------------------------------
+     7. TOAST
+  ------------------------------------------ */
+
+
+});

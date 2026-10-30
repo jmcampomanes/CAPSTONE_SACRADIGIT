@@ -1,0 +1,1235 @@
+/* ============================================
+   SacraDigit — User Portal Shell Styles
+   Shared across ALL user pages (user-shell.css)
+   Mirrors admin dashboard.css for visual parity
+   ============================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body { background-color: #f7f8fa; }
+
+/* ---------- Shell layout ---------- */
+.user-shell { background-color: #f7f8fa; }
+
+.sidebar {
+  width: 264px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 40;
+  transition: transform 0.25s ease;
+}
+
+/* ---------- Sidebar labels ---------- */
+.sidebar-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  padding: 0 0.625rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* ---------- Sidebar links ---------- */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+  color: #9ca3af;
+  transition: color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background-color: #f3f4f6;
+  color: #1e2a4a;
+}
+
+.sidebar-link:hover svg { color: #1e2a4a; }
+
+.sidebar-link.active {
+  background-color: rgba(201, 168, 76, 0.18);
+  color: #1e2a4a;
+  font-weight: 600;
+}
+
+.sidebar-link.active svg { color: #c9a84c; }
+
+/* ---------- Per-tab sidebar icon colors (user) ---------- */
+.sidebar-link[data-nav="dashboard"] svg,
+.sidebar-link[data-nav="dashboard"]:hover svg { color: #8a3040; }
+.sidebar-link[data-nav="dashboard"].active { background-color: rgba(138,48,64,0.12); color: #8a3040; }
+.sidebar-link[data-nav="dashboard"].active svg { color: #8a3040; }
+
+.sidebar-link[data-nav="mass-schedule"] svg,
+.sidebar-link[data-nav="mass-schedule"]:hover svg { color: #2166a8; }
+.sidebar-link[data-nav="mass-schedule"].active { background-color: rgba(33,102,168,0.12); color: #2166a8; }
+.sidebar-link[data-nav="mass-schedule"].active svg { color: #2166a8; }
+
+.sidebar-link[data-nav="announcements"] svg,
+.sidebar-link[data-nav="announcements"]:hover svg { color: #c2701c; }
+.sidebar-link[data-nav="announcements"].active { background-color: rgba(194,112,28,0.14); color: #c2701c; }
+.sidebar-link[data-nav="announcements"].active svg { color: #c2701c; }
+
+.sidebar-link[data-nav="request-certificate"] svg,
+.sidebar-link[data-nav="request-certificate"]:hover svg { color: #5b5fa8; }
+.sidebar-link[data-nav="request-certificate"].active { background-color: rgba(91,95,168,0.14); color: #5b5fa8; }
+.sidebar-link[data-nav="request-certificate"].active svg { color: #5b5fa8; }
+
+.sidebar-link[data-nav="my-requests"] svg,
+.sidebar-link[data-nav="my-requests"]:hover svg { color: #0f8a7a; }
+.sidebar-link[data-nav="my-requests"].active { background-color: rgba(15,138,122,0.12); color: #0f8a7a; }
+.sidebar-link[data-nav="my-requests"].active svg { color: #0f8a7a; }
+
+.sidebar-link[data-nav="request-service"] svg,
+.sidebar-link[data-nav="request-service"]:hover svg { color: #7a4ea8; }
+.sidebar-link[data-nav="request-service"].active { background-color: rgba(122,78,168,0.12); color: #7a4ea8; }
+.sidebar-link[data-nav="request-service"].active svg { color: #7a4ea8; }
+
+.sidebar-link[data-nav="requested-services"] svg,
+.sidebar-link[data-nav="requested-services"]:hover svg { color: #1590a8; }
+.sidebar-link[data-nav="requested-services"].active { background-color: rgba(21,144,168,0.12); color: #1590a8; }
+.sidebar-link[data-nav="requested-services"].active svg { color: #1590a8; }
+
+.sidebar-link[data-nav="blessings"] svg,
+.sidebar-link[data-nav="blessings"]:hover svg { color: #b5476e; }
+.sidebar-link[data-nav="blessings"].active { background-color: rgba(181,71,110,0.12); color: #b5476e; }
+.sidebar-link[data-nav="blessings"].active svg { color: #b5476e; }
+
+.sidebar-link[data-nav="mass-intentions"] svg,
+.sidebar-link[data-nav="mass-intentions"]:hover svg { color: #b5943e; }
+.sidebar-link[data-nav="mass-intentions"].active { background-color: rgba(201,168,76,0.16); color: #b5943e; }
+.sidebar-link[data-nav="mass-intentions"].active svg { color: #b5943e; }
+
+.sidebar-link[data-nav="facility-booking"] svg,
+.sidebar-link[data-nav="facility-booking"]:hover svg { color: #1e2a4a; }
+.sidebar-link[data-nav="facility-booking"].active { background-color: rgba(30,42,74,0.08); color: #1e2a4a; }
+.sidebar-link[data-nav="facility-booking"].active svg { color: #1e2a4a; }
+
+.sidebar-link-logout, .sidebar-link-logout svg { color: #b91c1c; }
+.sidebar-link-logout:hover { background-color: #fef2f2; color: #991b1b; }
+.sidebar-link-logout:hover svg { color: #991b1b; }
+
+.sidebar-link[data-nav="donations"] svg,
+.sidebar-link[data-nav="donations"]:hover svg { color: #15803d; }
+.sidebar-link[data-nav="donations"].active { background-color: rgba(21,128,61,0.12); color: #15803d; }
+.sidebar-link[data-nav="donations"].active svg { color: #15803d; }
+
+
+/* ---------- Mobile sidebar overlay ---------- */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  z-index: 30;
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid #f1f2f5;
+}
+
+.panel-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.panel-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c6fb0;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.panel-link:hover { color: #1e2a4a; }
+
+/* ---------- List rows ---------- */
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.list-time {
+  font-weight: 600;
+  color: #111827;
+  width: 5.5rem;
+  flex-shrink: 0;
+}
+
+/* ---------- Section heading ---------- */
+.section-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin-bottom: 0.75rem;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.badge-green  { background-color: #ecfdf3; color: #15803d; }
+.badge-amber  { background-color: #fffbeb; color: #b45309; }
+.badge-gray   { background-color: #f3f4f6; color: #6b7280; }
+.badge-red    { background-color: #fef2f2; color: #b91c1c; }
+.badge-blue   { background-color: #eef2ff; color: #4338ca; }
+
+/* ---------- User table ---------- */
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.user-table thead th {
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  padding: 0.625rem 1.25rem;
+  border-bottom: 1px solid #f1f2f5;
+  white-space: nowrap;
+}
+
+.user-table tbody td {
+  padding: 0.75rem 1.25rem;
+  color: #4b5563;
+  border-bottom: 1px solid #f5f6f8;
+  white-space: nowrap;
+}
+
+.user-table tbody tr:last-child td { border-bottom: none; }
+.user-table tbody tr:hover { background-color: #fafbfc; }
+
+/* ---------- Request cards (replaces a 3-column table so Status
+   never gets cut off on narrow screens) ---------- */
+.request-cards { display: flex; flex-direction: column; }
+
+.request-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #f5f6f8;
+}
+.request-row:last-child { border-bottom: none; }
+.request-row:hover { background-color: #fafbfc; }
+
+.request-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.request-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.request-date { font-size: 0.75rem; color: #9ca3af; }
+.request-right { flex-shrink: 0; }
+
+/* ---------- Buttons ---------- */
+.btn-gold,
+.btn-lavender,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn-gold     { background-color: #c9a84c; color: #1e2a4a; }
+.btn-gold:hover { background-color: #b5943e; }
+
+/* Main actions (Next, Submit, Confirm Offering, Check In…): solid navy so they
+   read as pressable. Pale grey is kept only for buttons that are truly disabled. */
+.btn-lavender { background-color: #1e2a4a; color: #ffffff; min-height: 2.75rem; justify-content: center; }
+.btn-lavender:hover { background-color: #2a3963; }
+:is(.btn-gold, .btn-lavender, .btn-secondary):disabled,
+:is(.btn-gold, .btn-lavender, .btn-secondary)[aria-disabled="true"] {
+  background-color: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+:root[data-theme="dark"] .btn-lavender { background-color: #8b8fc7; color: #0f1420; }
+:root[data-theme="dark"] .btn-lavender:hover { background-color: #a3a6d6; }
+:root[data-theme="dark"] :is(.btn-gold, .btn-lavender, .btn-secondary):disabled { background-color: #2c3547; color: #9aa3b5; }
+@media (max-width: 640px) {
+  .btn-lavender { min-height: 3rem; font-size: 0.9375rem; }
+}
+
+.btn-secondary { background-color: #f3f4f6; color: #374151; }
+.btn-secondary:hover { background-color: #e5e7eb; }
+
+/* ---------- Form elements ---------- */
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.3rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  color: #111827;
+  background-color: #ffffff;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input::placeholder { color: #9ca3af; }
+.form-input:focus {
+  outline: none;
+  border-color: #8b8fc7;
+  box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.15);
+}
+
+/* ---------- Name field group (First / Middle / Last / Ext.) ----------
+   Shared across every form that collects a person's name — certificate
+   requests, service requests, mass intentions — so first/middle/last/
+   extension are always separate inputs (and separate variables), which
+   is what lets generated documents format a name correctly. */
+.name-field-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.3fr 1.3fr 0.9fr;
+  gap: 0.5rem;
+}
+
+.name-ext-input {
+  min-width: 0;
+}
+
+/* Phones (one box per line, "Add extension" checkbox): styles come with
+   initExtToggles() in ../../shared/js/name-utils.js, shared by every portal. */
+
+/* ---------- Checkbox (shared) ---------- */
+.checkbox-input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #8b8fc7;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ---------- N/A checkbox beside a field label ----------
+   Used to mark a name field (e.g. Father's Name, Mother's
+   Maiden Name) as "Not Applicable / Prefer not to say"
+   without leaving it blank-and-required-looking. */
+.field-na-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.field-na-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ---------- Expandable sub-section (e.g. Guardian info) ----------
+   A bordered, slightly recessed block that appears under a
+   checkbox toggle, grouping fields that only apply when the
+   checkbox is checked. */
+.form-subblock {
+  grid-column: 1 / -1;
+  border: 1px dashed #d8d9e8;
+  border-radius: 0.5rem;
+  padding: 0.875rem;
+  background: #fafafd;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-subblock > .sm\:col-span-2 {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .form-subblock {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Repeatable row (e.g. extra godparents) ---------- */
+.repeatable-row {
+  grid-column: 1 / -1;
+  border: 1px solid #ececf5;
+  border-radius: 0.5rem;
+  padding: 0.875rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.repeatable-row-remove {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.625rem;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.125rem;
+  line-height: 0;
+}
+
+.repeatable-row-remove:hover {
+  color: #dc2626;
+}
+
+.btn-add-row {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: start;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #5b5fa8;
+  background: none;
+  border: 1px dashed #b9bce3;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.btn-add-row:hover {
+  background: rgba(139, 143, 199, 0.08);
+}
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 100;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  animation: modalIn 0.18s ease;
+}
+
+/* Wider variant for modals showing data-dense grids (e.g. a request's
+   full submitted details) that feel cramped at the default 480px. */
+.modal-card-wide {
+  max-width: 720px;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.125rem 1.375rem;
+  border-bottom: 1px solid #f1f2f5;
+}
+
+.modal-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.modal-close {
+  color: #9ca3af;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.4rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.modal-close:hover { background-color: #f3f4f6; color: #374151; }
+
+.modal-body   { padding: 1.375rem; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 1rem 1.375rem;
+  border-top: 1px solid #f1f2f5;
+}
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background-color: #1e2a4a;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.7rem 1.25rem;
+  border-radius: 0.6rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Warnings ("Please pick a schedule"…) sit at the TOP, clear of the
+   Next/Submit buttons, and stay until closed or replaced. */
+.toast.toast-error {
+  top: calc(0.75rem + env(safe-area-inset-top));
+  bottom: auto;
+  width: max-content;
+  max-width: min(34rem, calc(100% - 1.5rem));
+  align-items: flex-start;
+  gap: 0.6rem;
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1.5px solid #fca5a5;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  transform: translateX(-50%) translateY(-10px);
+}
+.toast.toast-error:not(.hidden) { display: flex; }
+.toast.toast-error.show { transform: translateX(-50%) translateY(0); }
+.toast-icon { flex-shrink: 0; width: 1.25rem; height: 1.25rem; margin-top: 0.05rem; }
+.toast-text { flex: 1; min-width: 0; }
+.toast-close {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.65rem -0.1rem -0.65rem 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  color: #991b1b;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.toast-close:hover { background-color: #fee2e2; }
+:root[data-theme="dark"] .toast.toast-error { background-color: #3b1219; color: #fecaca; border-color: #7f1d1d; }
+:root[data-theme="dark"] .toast-close { color: #fecaca; }
+:root[data-theme="dark"] .toast-close:hover { background-color: #4c1d24; }
+
+/* ---------- Empty state ---------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+/* ---------- Focus ---------- */
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible, summary:focus-visible,
+input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible {
+  outline: 3px solid #5b5fa8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:root[data-theme="dark"] :is(a, button, [role="button"], summary, input[type="checkbox"], input[type="radio"]):focus-visible {
+  outline-color: #c7cbe8;
+}
+
+/* Skip straight past the menu to the page (keyboard users) */
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -5rem;
+  z-index: 300;
+  background: #1e2a4a;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+}
+.skip-link:focus { top: 0.75rem; }
+
+/* No 300ms wait between a tap and the response */
+a, button, input, select, textarea, label, summary, [role="button"] { touch-action: manipulation; }
+
+/* ---------- Responsive: collapsible sidebar on mobile ---------- */
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%);
+  }
+
+  /* Shadow only while open — otherwise it bleeds onto the page's left edge. */
+  .sidebar.open { transform: translateX(0); box-shadow: 0 0 24px rgba(0,0,0,0.12); }
+}
+
+@media (min-width: 1024px) {
+  .sidebar-overlay { display: none !important; }
+}
+
+/* ---------- User dropdown menu ---------- */
+.user-menu-dropdown {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0.75rem;
+  right: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  padding: 0.4rem;
+  z-index: 45;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.user-menu-item:hover { background-color: #f3f4f6; }
+
+.user-menu-item[aria-disabled="true"] { color: #9ca3af; cursor: default; }
+.user-menu-item[aria-disabled="true"]:hover { background-color: transparent; }
+
+.user-menu-item-soon {
+  margin-left: auto;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9ca3af;
+  background-color: #f3f4f6;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+
+.user-menu-item-danger { color: #b91c1c; }
+.user-menu-item-danger:hover { background-color: #fef2f2; }
+
+/* ============================================
+   Sacred Art — rotating icon-style background
+   Shared base rules for any [data-sacred-art] frame
+   on the parishioner side (dashboard + profile pages).
+   The rotator logic lives in sacred-art.js.
+   ============================================ */
+.sacred-art-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sacred-art-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+
+.sacred-art-layer.sacred-art-visible {
+  opacity: 1;
+}
+
+.sacred-art-layer svg,
+.sacred-art-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sacred-art-layer .sacred-kb-group {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: sacred-kb 46s ease-in-out infinite alternate;
+}
+
+@keyframes sacred-kb {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.12) translate(-1.5%, -1%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sacred-art-layer .sacred-kb-group { animation: none; }
+}
+
+/* ---------- Page actions ----------
+   The page's main button (Give Now, Book a Facility…), right-aligned
+   under the top bar — the page name is already in the top bar. */
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .page-actions > a, .page-actions > button { width: 100%; justify-content: center; }
+}
+
+.user-menu-divider {
+  height: 1px;
+  background-color: #f0f1f4;
+  margin: 0.3rem 0.2rem;
+}
+/* ============================================
+   Faith Journey widgets (faith-journey-widgets.js)
+   Badge strip on the Dashboard and the Faithful
+   Givers list on Donations.
+   ============================================ */
+.fjw-strip { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; min-height: 2.5rem; }
+
+.fjw-medal {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.15), 0 2px 6px rgba(30, 42, 74, 0.18);
+}
+
+.fjw-medal.tier-bronze { background: linear-gradient(145deg, #d99a6c, #9a5a2c); }
+.fjw-medal.tier-silver { background: linear-gradient(145deg, #a9b3c7, #5d6a86); }
+.fjw-medal.tier-gold   { background: linear-gradient(145deg, #e8c96a, #a8801f); }
+
+.fjw-more { font-size: 0.75rem; font-weight: 700; color: #6b7280; }
+.fjw-empty { font-size: 0.8125rem; color: #6b7280; }
+.fjw-caption { margin-top: 0.625rem; font-size: 0.75rem; color: #6b7280; }
+.fjw-caption strong { color: #1e2a4a; }
+
+.fjw-givers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fjw-giver {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.625rem;
+  background-color: #f7f8fa;
+  border-left: 3px solid #c9a84c;
+}
+
+.fjw-giver.is-me { background-color: rgba(201, 168, 76, 0.12); }
+.fjw-giver-name { font-size: 0.8125rem; font-weight: 700; color: #111827; }
+.fjw-giver-streak { font-size: 0.6875rem; color: #6b7280; }
+
+.fjw-you {
+  margin-left: 0.25rem;
+  padding: 0 0.375rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #c9a84c;
+}
+
+/* ============================================
+   PHONES (≤ 640px)
+   (The top bar's phone layout is shared by every
+   portal — see ui-prefs.js.) Selectors are a notch
+   more specific than the Tailwind utility classes
+   in the markup (the Tailwind CDN's styles load
+   after this file).
+   ============================================ */
+@media (max-width: 640px) {
+  /* Page body: slightly tighter side gutters. */
+  body main.px-6 { padding-left: 1rem; padding-right: 1rem; }
+
+  /* Stat boxes: side by side instead of one full-width card each. */
+  .grid.grid-cols-1:has(> .stat-card, > .donation-stat-card, > .mi-stat-card) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .grid.grid-cols-1:has(> .stat-card:nth-child(4)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid > .stat-card, .grid > .donation-stat-card, .grid > .mi-stat-card { padding: 0.75rem; }
+  .grid > .stat-card .stat-icon { display: none; }
+  .grid > .stat-card > div:first-child { margin-bottom: 0.375rem; }
+  .grid > * > .stat-label, .grid > * > div > .stat-label, .grid > * > .donation-stat-label { font-size: 0.6875rem; line-height: 1.25; }
+  .grid > * > .stat-value, .grid > * > .donation-stat-value { font-size: 1.375rem; }
+  .grid > * > .stat-sub, .grid > * > .donation-stat-sub { font-size: 0.6875rem; line-height: 1.3; }
+
+  /* Panel headers: let the title and its extras (tabs, notes) stack. */
+  .panel-header { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem; }
+
+  /* Tables stay scrollable sideways, with tighter cells so more fits. */
+  .user-table thead th, .user-table tbody td { padding-left: 0.875rem; padding-right: 0.875rem; }
+}
+
+/* Very small phones (≤ 360px, e.g. older Androids). */
+@media (max-width: 360px) {
+  .grid.grid-cols-1:has(> .stat-card, > .donation-stat-card, > .mi-stat-card) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Unread messages badge on the sidebar "Messages" link (../../shared/js/chat.js) ---------- */
+.chat-unread-badge {
+  margin-left: auto;
+  min-width: 1.15rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+  color: #ffffff;
+  background-color: #b91c1c;
+  border-radius: 999px;
+}
+
+.chat-unread-badge.hidden {
+  display: none;
+}
+
+/* Top bar order (date first) and no "Install app" button: shared by every
+   portal, see ../../shared/js/ui-prefs.js. */
+
+/* ---------- iPhone/iPad (Safari) form fixes ----------
+   Safari gives date/time boxes a fixed built-in width, so in a narrow
+   column they stick out past the card's right edge. Make them fit, keep
+   the same height as the other boxes, and keep the date text left-aligned. */
+input[type="date"].form-input,
+input[type="time"].form-input,
+input[type="datetime-local"].form-input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+input[type="date"].form-input::-webkit-date-and-time-value { text-align: left; }
+
+/* Long checkbox sentences (e.g. "I confirm this … took place at Our Lady of
+   Fatima Parish") wrap instead of being cut off on phones. */
+#common-fields .field-na-label,
+.field-na-label:has(> span) { white-space: normal; }
+
+/* ---------- Message under a box that's missing something (user-shell.js) ---------- */
+.field-msg {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #b91c1c;
+}
+.field-msg::before { content: "⚠"; flex-shrink: 0; }
+:root[data-theme="dark"] .field-msg { color: #fca5a5; }
+
+/* ---------- Birth dates: Month / Day / Year dropdowns (../../shared/js/date-dropdowns.js) ---------- */
+.date-dd {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 0.5rem;
+}
+.date-dd-select { min-height: 2.75rem; cursor: pointer; }
+/* Small phones, or Bigger text: "September" doesn't fit a third of the row,
+   so Month gets its own line and Day / Year share the next one. */
+@media (max-width: 420px) {
+  .date-dd { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .date-dd > .date-dd-select:first-child { grid-column: 1 / -1; }
+}
+:root[data-a11y="on"] .date-dd { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+:root[data-a11y="on"] .date-dd > .date-dd-select:first-child { grid-column: 1 / -1; }
+.date-dd-invalid .date-dd-select { border-color: #f87171; }
+.date-dd-invalid .date-dd-select:invalid,
+.date-dd-invalid .date-dd-select:has(option[value=""]:checked) { background-color: #fef2f2; }
+:root[data-theme="dark"] .date-dd-invalid .date-dd-select:has(option[value=""]:checked) { background-color: #3a1a1a; }
+/* The original date box: still holds the value, never shown. */
+input.date-dd-source { display: none !important; }
+
+/* Top-bar icon words and 44px tap areas: ../../shared/js/top-bar-labels.js (shared with the admin portal).
+   Phones: Dark mode and Language live on My Settings, leaving room for
+   Alerts · Bigger text · Help with their words. */
+@media (max-width: 640px) {
+  header .help-date-wrap #ui-theme-btn,
+  header .help-date-wrap .ui-prefs-lang-wrap { display: none !important; }
+}
+
+/* ============================================
+   Readable text: no pale grey on white for words
+   people need to read (4.5:1 contrast or better).
+   ============================================ */
+:root:not([data-theme="dark"]) body main :is(.text-gray-400, .text-gray-300):not(.greeting-banner *):not(svg) { color: #6b7280; }
+.request-date { color: #6b7280; font-size: 0.8125rem; }
+.form-input::placeholder { color: #6b7280; }
+.sidebar-label { color: #6b7280; }
+.form-label { font-size: 0.8125rem; color: #374151; }
+.badge { font-size: 0.75rem; }
+.sidebar-link { font-size: 0.875rem; min-height: 2.75rem; }
+
+/* ============================================
+   "Start request" and "Volunteer" are real buttons
+   ============================================ */
+body .cert-type-cta,
+body .svc-type-cta {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.75rem;
+  margin-top: 0.625rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.6rem;
+  background-color: #1e2a4a;
+  color: #ffffff;
+  font-size: 0.875rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+body .cert-type-card:hover .cert-type-cta,
+body .svc-type-card:hover .svc-type-cta { background-color: #2a3963; color: #ffffff; }
+body .min-volunteer {
+  width: 100%;
+  justify-content: center;
+  min-height: 2.75rem;
+  background-color: #1e2a4a;
+  color: #ffffff;
+}
+body .min-volunteer:hover { background-color: #2a3963; }
+:root[data-theme="dark"] body :is(.cert-type-cta, .svc-type-cta, .min-volunteer) { background-color: #8b8fc7; color: #0f1420; }
+
+/* ============================================
+   First sign-in: "Would you like bigger letters?"
+   ============================================ */
+.textsize-ask-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.5);
+}
+.textsize-ask-card {
+  width: 100%;
+  max-width: 24rem;
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
+}
+.textsize-ask-card .textsize-ask-sample { font-family: Georgia, 'Times New Roman', serif; font-size: 2.5rem; font-weight: 700; color: #1e2a4a; line-height: 1; margin: 0 0 0.75rem; }
+.textsize-ask-card h2 { font-size: 1.375rem; font-weight: 700; color: #111827; margin: 0 0 0.5rem; }
+.textsize-ask-card p { font-size: 1rem; color: #374151; line-height: 1.5; margin: 0 0 1.25rem; }
+.textsize-ask-actions { display: flex; flex-direction: column; gap: 0.625rem; }
+.textsize-ask-actions button { min-height: 3rem; font-size: 1.0625rem; justify-content: center; width: 100%; }
+:root[data-theme="dark"] .textsize-ask-card { background: #1a2131; }
+:root[data-theme="dark"] .textsize-ask-card h2 { color: #f1f3f7; }
+:root[data-theme="dark"] .textsize-ask-card p { color: #cbd3e6; }
+:root[data-theme="dark"] .textsize-ask-sample { color: #c7cbe8; }
+
+/* ============================================
+   Respect the phone's "Reduce motion" setting
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   "Check in at Mass" camera scanner (Dashboard Quick Action + My Badges)
+   (checkin-scanner.js; also used on My Badges)
+   ============================================ */
+/* Full-screen camera */
+.ci-scan {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  background-color: #0b1020;
+  color: #ffffff;
+}
+.ci-scan-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem;
+}
+.ci-scan-title { font-size: 1.125rem; font-weight: 700; }
+.ci-scan-close {
+  width: 2.75rem; height: 2.75rem; border-radius: 999px; border: 0;
+  background-color: rgba(255, 255, 255, 0.14); color: #ffffff;
+  font-size: 1.75rem; line-height: 1; cursor: pointer;
+}
+.ci-scan-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.ci-scan-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ci-scan-frame {
+  position: relative;
+  width: min(70vw, 18rem); aspect-ratio: 1;
+  border-radius: 1.25rem;
+  box-shadow: 0 0 0 100vmax rgba(11, 16, 32, 0.55);
+  outline: 3px solid #ffffff;
+}
+.ci-scan-status {
+  position: absolute; left: 1rem; right: 1rem; bottom: 1rem;
+  padding: 0.75rem 1rem; border-radius: 0.75rem;
+  background-color: rgba(11, 16, 32, 0.8);
+  font-size: 1rem; font-weight: 600; text-align: center; line-height: 1.4;
+}
+.ci-scan-status[data-state="error"] { background-color: #7f1d1d; }
+.ci-scan-bottom {
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+  background-color: #0b1020;
+}
+.ci-scan-hint { font-size: 1rem; text-align: center; color: #e5e7eb; }
+.ci-scan-type {
+  min-height: 2.75rem; padding: 0.5rem 1.25rem; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.5); background: transparent; color: #ffffff;
+  font: inherit; font-size: 0.9375rem; font-weight: 600; cursor: pointer;
+}
+.ci-scan-type.hidden, .ci-scan-form.hidden { display: none; }
+.ci-scan-form { width: 100%; max-width: 24rem; }
+.ci-scan-label { display: block; margin-bottom: 0.35rem; font-size: 0.875rem; color: #e5e7eb; }
+.ci-scan-form-row { display: flex; gap: 0.5rem; }
+.ci-scan-input {
+  flex: 1; min-width: 0; min-height: 3rem;
+  font-size: 1.125rem !important; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.ci-scan-form .btn-lavender { min-height: 3rem; background-color: #8b8fc7; color: #0f1420; }
+
+/* After a successful check-in */
+.ci-scan.is-done .ci-scan-stage { background-color: #0b1020; }
+.ci-scan-done { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 1.5rem; text-align: center; }
+.ci-scan-done-icon {
+  width: 4.5rem; height: 4.5rem; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  background-color: #16a34a; color: #ffffff; font-size: 2.25rem; font-weight: 700;
+}
+.ci-scan-done-title { font-size: 1.375rem; font-weight: 700; line-height: 1.3; }
+.ci-scan-done-sub { font-size: 1rem; color: #d1d5db; }
+.ci-scan-done-btn { width: 100%; max-width: 24rem; min-height: 3.25rem; font-size: 1.0625rem; background-color: #8b8fc7; color: #0f1420; }
+
+
+/* ============================================
+   "What can I do here?" box at the top of each page (page-info.js) —
+   same look as Request a Service's "What can I request here?", with the
+   page's main button on the right (below the text on phones).
+   ============================================ */
+.info-banner {
+  display: flex;
+  gap: 0.875rem;
+  background: linear-gradient(90deg, rgba(139, 143, 199, 0.1), rgba(139, 143, 199, 0.03));
+  border: 1px solid rgba(139, 143, 199, 0.28);
+  border-left: 3px solid #8b8fc7;
+  border-radius: 0.875rem;
+  padding: 1rem 1.25rem;
+}
+.info-banner-icon {
+  width: 2.25rem; height: 2.25rem; flex-shrink: 0; margin-top: 0.1rem;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background-color: rgba(139, 143, 199, 0.18); color: #5b5fa8;
+}
+.info-banner-title { font-size: 0.875rem; font-weight: 700; color: #383b6e; margin-bottom: 0.2rem; }
+.info-banner-text { font-size: 0.8125rem; color: #4a4e8a; line-height: 1.55; }
+.info-banner-with-action { align-items: center; }
+.info-banner-body { flex: 1; min-width: 0; }
+.info-banner-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; flex-shrink: 0; }
+.info-banner-action {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  flex-shrink: 0; white-space: nowrap;
+}
+.page-info-note { margin-top: 0.35rem; font-size: 0.75rem; color: #5b5fa8; }
+.page-info-note:empty { display: none; }
+@media (max-width: 640px) {
+  .info-banner-with-action { flex-wrap: wrap; align-items: flex-start; }
+  .info-banner-body { flex-basis: calc(100% - 3.25rem); }
+  .info-banner-actions { width: 100%; }
+  .info-banner-action { width: 100%; }
+}
+
+/* ============================================
+   "More below ↓" at the bottom edge of the menu (user-shell.js) —
+   shown only while the menu has more items further down.
+   ============================================ */
+.sidebar-more {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 100%;
+  height: 3rem;
+  margin-top: -3rem;               /* sits over the last bit of the menu */
+  padding-bottom: 0.4rem;
+  border: 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff 65%);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #5b5fa8;
+  cursor: pointer;
+}
+.sidebar-more.hidden { display: none; }
+.sidebar-more:hover { color: #1e2a4a; }
+.sidebar-more:focus-visible { outline: 2px solid #8b8fc7; outline-offset: -2px; }
+:root[data-theme="dark"] .sidebar-more {
+  background: linear-gradient(to bottom, rgba(26, 33, 49, 0), #1a2131 65%);
+  color: #c7cbe8;
+}
+
+/* Links/buttons in normal case and a readable size (small capitals are harder to read). */
+body .intention-details-btn,
+body .btn-view-details,
+body .btn-view-cert { text-transform: none; letter-spacing: 0; font-size: 0.875rem; }
+
+/* Intro box folded to its title after the first visit (page-info.js). */
+.info-banner.is-folded { padding-top: 0.625rem; padding-bottom: 0.625rem; align-items: center; }
+.info-banner.is-folded .info-banner-icon { width: 1.75rem; height: 1.75rem; margin-top: 0; }
+.info-banner.is-folded .info-banner-title { margin-bottom: 0; }
+.info-banner.is-folded .info-banner-title ~ * { display: none; }
+.info-banner-toggle {
+  margin-left: 0.35rem; padding: 0.25rem 0.4rem; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 0.8125rem; font-weight: 600; color: #4b50a0; text-decoration: underline;
+  min-height: 2rem;
+}
+:root[data-theme="dark"] .info-banner-toggle { color: #b3b6e6; }
+
+/* ---------- Page numbers (../js/pager.js) — My Requests, Requested Services ---------- */
+.pager {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;
+  margin-top: 1rem; padding: 0.75rem 1rem; border-radius: 0.875rem;
+  background: #ffffff; border: 1px solid #eceef3;
+}
+.pager[hidden] { display: none; }
+.pager.pager-in-panel { margin: 0; border: 0; border-top: 1px solid #f0f1f4; border-radius: 0 0 0.875rem 0.875rem; }
+.pager-info { margin: 0; font-size: 0.8125rem; color: #6b7280; }
+.pager-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+.pager-btn {
+  min-width: 2.5rem; height: 2.5rem; padding: 0 0.5rem; border-radius: 0.625rem;
+  border: 1px solid #e5e7eb; background: #ffffff; color: #374151;
+  font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+.pager-btn:hover:not(:disabled):not(.is-current) { border-color: #a8acda; color: #1e2a4a; }
+.pager-btn.is-current { background: #1e2a4a; border-color: #1e2a4a; color: #ffffff; cursor: default; }
+.pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pager-btn:focus-visible { outline: 3px solid rgba(139, 143, 199, 0.55); outline-offset: 2px; }
+.pager-gap { min-width: 1.25rem; text-align: center; color: #9ca3af; }
+@media (max-width: 480px) {
+  .pager { justify-content: center; text-align: center; }
+  .pager-info { width: 100%; }
+}
+:root[data-theme="dark"] .pager { background: #1a2131; border-color: #2c3548; }
+:root[data-theme="dark"] .pager.pager-in-panel { border-top-color: #2c3548; }
+:root[data-theme="dark"] .pager-info { color: #b6bdca; }
+:root[data-theme="dark"] .pager-btn { background: #1a2131; border-color: #2c3548; color: #e5e7eb; }
+:root[data-theme="dark"] .pager-btn.is-current { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }

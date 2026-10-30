@@ -1,0 +1,566 @@
+/* ============================================
+   SacraDigit — Mass Intention form (3 numbered steps)
+   1 Intention → 2 Prayer List & Weekend → 3 Confirm.
+   Styles for mass-intention-form.js, shared by the
+   parishioner's Submit a Mass Intention page and the
+   admin's Add / Edit Mass Intention on Mass Intentions.
+   The numbered bar comes from marriage-request-form.css.
+   Dark mode: generated into theme-dark.css by
+   tools/build-dark-theme.mjs.
+   ============================================ */
+
+/* Basics the form needs that a page may not define (zero specificity — page styles win) */
+:where(.mi-page) :where(.offering-input-wrap) { position: relative; }
+:where(.mi-page) :where(.offering-peso) { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 0.875rem; font-weight: 700; color: #6b7280; pointer-events: none; }
+:where(.mi-page) :where(.offering-input) { padding-left: 1.75rem !important; }
+:where(.mi-page) :where(.checkbox-input) { width: 1rem; height: 1rem; accent-color: #8b8fc7; cursor: pointer; flex-shrink: 0; }
+:where(.mi-page) :where(.mi-field-select) { width: 100%; }
+
+/* ---------- Submit Intention page ----------
+   The "Submit a Mass Intention" window opens as its own page beside the
+   sidebar (not a pop-up): a top bar with Back, the five steps in one
+   centred column, and Back/Next pinned below. */
+.modal-overlay.mi-page {
+  inset: 0 0 0 264px;          /* beside the parishioner sidebar */
+  padding: 0;
+  background: #f4f5f9;
+  align-items: stretch;
+  justify-content: stretch;
+  z-index: 60;
+}
+
+.mi-page > .modal-card {
+  max-width: none;
+  width: 100%;
+  max-height: none;
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f4f5f9;
+  animation: mi-page-in 0.26s ease;
+}
+@keyframes mi-page-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+.mi-page-header {
+  justify-content: flex-start;
+  gap: 1rem;
+  padding: 0.875rem 2rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+.mi-page-back {
+  display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
+  font-size: 0.875rem; font-weight: 600; color: #5b5fa8;
+  background: none; border: 0; padding: 0.4rem 0.75rem 0.4rem 0; cursor: pointer;
+  border-right: 1px solid #e5e7eb;
+}
+.mi-page-back:hover { color: #1e2a4a; }
+.mi-page-header .modal-title { font-size: 1.125rem; }
+.mi-page-sub { font-size: 0.8125rem; color: #6b7280; margin-top: 0.1rem; }
+
+.mi-page-body { flex: 1; overflow-y: auto; padding: 1.75rem 2rem 2.5rem; }
+
+/* ---------- Submit Intention: five-step wizard ----------
+   One centred column, the same on desktop and phone. Big text and
+   buttons for parishioners who aren't used to forms. */
+.mi-wiz { max-width: 42rem; margin: 0 auto; }
+
+/* Progress: "Step 2 of 5 · Name" + five dots */
+.mi-progress {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.mi-progress-text { font-size: 0.9375rem; color: #6b7280; }
+.mi-progress-text strong { color: #1e2a4a; }
+.mi-progress-dots { display: flex; gap: 0.4rem; list-style: none; margin: 0; padding: 0; }
+.mi-progress-dots li {
+  width: 2.25rem; height: 0.4rem; border-radius: 999px; background: #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+.mi-progress-dots li.done { background: #8b8fc7; }
+.mi-progress-dots li.current { background: #1e2a4a; }
+
+.mi-step {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  animation: mi-step-in 0.22s ease;
+}
+.mi-step.hidden { display: none; }
+@keyframes mi-step-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.mi-step-title { font-size: 1.375rem; font-weight: 700; color: #111827; line-height: 1.3; }
+.mi-step-title-2 { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #eef0f4; }
+.mi-step-hint { font-size: 1rem; color: #6b7280; margin: 0.35rem 0 1.25rem; line-height: 1.5; }
+
+.mi-label { display: block; font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 0.4rem; }
+.mi-input { font-size: 1.0625rem !important; min-height: 3.25rem; }
+
+/* Step 1 · category tiles (tap one or more) */
+.mi-cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.mi-cat {
+  position: relative;
+  display: flex; align-items: center; gap: 0.875rem;
+  min-height: 4.75rem;
+  padding: 0.875rem 3rem 0.875rem 0.875rem;
+  text-align: left;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mi-cat:hover { border-color: #c7c9e6; }
+.mi-cat:focus-visible { outline: 3px solid #8b8fc7; outline-offset: 2px; }
+.mi-cat.selected { border-color: #5b5fa8; background: #f5f5fc; box-shadow: 0 0 0 3px rgba(91, 95, 168, 0.12); }
+.mi-cat-icon {
+  width: 3rem; height: 3rem; border-radius: 0.875rem; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.mi-cat-icon svg { width: 1.625rem; height: 1.625rem; }
+.mi-cat-text { display: flex; flex-direction: column; min-width: 0; }
+.mi-cat-title { font-size: 1.0625rem; font-weight: 700; color: #111827; }
+.mi-cat-hint { font-size: 0.875rem; color: #6b7280; margin-top: 0.1rem; }
+.mi-cat-check {
+  position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%);
+  width: 1.75rem; height: 1.75rem; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid #d1d5db; color: transparent; background: #ffffff;
+}
+.mi-cat-check svg { width: 1rem; height: 1rem; }
+.mi-cat.selected .mi-cat-check { background: #5b5fa8; border-color: #5b5fa8; color: #ffffff; }
+.mi-cat-grid.mi-invalid .mi-cat { border-color: #fca5a5; }
+
+/* Category chips (step 2 header, prayer list, review) */
+.mi-chips { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; }
+.mi-chip {
+  display: inline-flex; align-items: center;
+  padding: 0.2rem 0.65rem; border-radius: 999px;
+  font-size: 0.875rem; font-weight: 600;
+  background: var(--chip-bg); color: var(--chip-fg);
+}
+
+.mi-link {
+  font-size: 0.9375rem; font-weight: 700; color: #5b5fa8;
+  background: none; border: 0; padding: 0.35rem 0.25rem; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.mi-link:hover { color: #1e2a4a; }
+
+/* Step 2 · name */
+.mi-chosen {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  margin: 0.75rem 0 1.5rem; padding: 0.75rem 1rem;
+  background: #f8f8fc; border-radius: 0.875rem;
+}
+.mi-chosen-label { font-size: 0.9375rem; color: #6b7280; font-weight: 600; }
+.mi-chosen .mi-link { margin-left: auto; }
+.mi-name-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 2fr);
+  gap: 1rem;
+}
+.mi-field-ext { grid-column: 1 / 2; }
+
+/* Step 3 · prayer list */
+.mi-list { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.mi-person {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem; border: 1px solid #e5e7eb; border-radius: 1rem; background: #ffffff;
+}
+.mi-person-num {
+  width: 2.25rem; height: 2.25rem; border-radius: 999px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700; color: #ffffff; background: #1e2a4a;
+}
+.mi-person-body { flex: 1; min-width: 0; }
+.mi-person-name { font-size: 1.125rem; font-weight: 700; color: #111827; margin-bottom: 0.35rem; overflow-wrap: anywhere; }
+.mi-person-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+.mi-person-btn {
+  min-height: 2.75rem; padding: 0 1rem;
+  font-size: 0.9375rem; font-weight: 600; color: #1e2a4a;
+  background: #ffffff; border: 1.5px solid #d1d5db; border-radius: 0.75rem; cursor: pointer;
+}
+.mi-person-btn:hover { border-color: #5b5fa8; color: #5b5fa8; }
+.mi-person-btn-remove { color: #b91c1c; }
+.mi-person-btn-remove:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+.mi-add-person {
+  width: 100%; min-height: 3.5rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-size: 1.0625rem; font-weight: 700; color: #5b5fa8;
+  background: #f8f8fc; border: 2px dashed #c7c9e6; border-radius: 1rem; cursor: pointer;
+}
+.mi-add-person:hover { background: #f0f0fa; border-color: #8b8fc7; }
+
+/* Step 4 · offering presets */
+.mi-offer-row { display: flex; flex-wrap: wrap; gap: 0.625rem; margin-bottom: 1rem; }
+.mi-offer {
+  position: relative;
+  min-height: 3.25rem; min-width: 6.5rem; padding: 0 1.25rem;
+  font-size: 1.125rem; font-weight: 700; color: #1e2a4a;
+  background: #ffffff; border: 2px solid #e5e7eb; border-radius: 0.875rem; cursor: pointer;
+}
+.mi-offer:hover { border-color: #c7c9e6; }
+.mi-offer.selected { border-color: #5b5fa8; background: #f5f5fc; color: #5b5fa8; }
+.mi-offer-badge {
+  position: absolute; left: 50%; top: -0.6rem; transform: translateX(-50%);
+  padding: 0 0.4rem; font-size: 0.6875rem; font-weight: 700; color: #b5943e;
+  background: #ffffff; border-radius: 999px; white-space: nowrap;
+}
+.mi-offer-input { max-width: 16rem; }
+.mi-offer-input .offering-peso { font-size: 1.0625rem; }
+.mi-offer-input .offering-input { padding-left: 2rem !important; }
+
+/* Step 5 · review */
+.mi-review-card { border: 1px solid #e5e7eb; border-radius: 1rem; overflow: hidden; }
+.mi-review-card + .mi-review-card { margin-top: 1rem; }
+.mi-review-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.625rem 1rem; background: #f8f8fc; border-bottom: 1px solid #eef0f4;
+  font-size: 0.9375rem; font-weight: 700; color: #374151;
+}
+.mi-review-people { list-style: none; margin: 0; padding: 0; }
+.mi-review-people li { display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 1rem; }
+.mi-review-people li + li { border-top: 1px solid #f1f2f6; }
+.mi-review-rows { margin: 0; }
+.mi-review-rows > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; font-size: 1rem; }
+.mi-review-rows > div + div { border-top: 1px solid #f1f2f6; }
+.mi-review-rows dt { color: #6b7280; }
+.mi-review-rows dd { color: #111827; font-weight: 600; text-align: right; margin: 0; }
+.mi-review-total { font-size: 1.25rem; color: #1e2a4a !important; }
+
+/* Back / Next pinned at the bottom */
+.mi-page-footer {
+  background: #ffffff;
+  padding: 0.875rem 2rem;
+  box-shadow: 0 -4px 14px rgba(15, 23, 42, 0.06);
+  justify-content: center;
+}
+.mi-nav-btn {
+  min-width: 11rem; min-height: 3.25rem;
+  font-size: 1.0625rem !important; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+}
+.mi-nav-btn.hidden { display: none; }
+
+/* Phones: full screen, one column, full-width buttons */
+@media (max-width: 767px) {
+  .modal-overlay.mi-page { inset: 0; }
+  .mi-page-header { padding: 0.75rem 1rem; gap: 0.75rem; }
+  .mi-page-sub { display: none; }
+  .mi-page-body { padding: 1rem 1rem 1.5rem; }
+  .mi-progress { margin-bottom: 1rem; }
+  .mi-progress-dots li { width: 1.25rem; }
+  .mi-step { padding: 1.25rem 1rem; border-radius: 1rem; }
+  .mi-step-title { font-size: 1.25rem; }
+  .mi-cat-grid { grid-template-columns: minmax(0, 1fr); }
+  .mi-name-grid { grid-template-columns: minmax(0, 1fr) 5.5rem; }
+  .mi-field-first, .mi-field-last { grid-column: 1 / -1; }
+  .mi-field-mi { grid-column: 1 / 2; }
+  .mi-field-ext { grid-column: 2 / 3; }
+  .mi-person { flex-wrap: wrap; }
+  .mi-person-body { flex-basis: calc(100% - 3.25rem); }
+  .mi-person-actions { width: 100%; }
+  .mi-person-btn { flex: 1; }
+  .mi-offer { flex: 1 1 calc(50% - 0.625rem); }
+  .mi-offer-input { max-width: none; }
+  .mi-page-footer { padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); }
+  .mi-nav-btn { flex: 1; min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .mi-page > .modal-card, .mi-step { animation: none; } }
+
+/* ---------- 3-step version (Prayer List → Weekend & Offering → Confirm) ----------
+   Numbered bar from ./marriage-request-form.css; these tune step 1. */
+.mi-step-bar { margin-bottom: 1.5rem; }
+.mi-optional { font-weight: 400; color: #9ca3af; }
+
+/* First · Middle · Last · Ext. on one row (Ext. narrow) */
+.mi-name-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.55fr); }
+.mi-field-ext { grid-column: auto; }
+.mi-name-grid + .mi-add-person { margin-top: 1rem; }
+
+.mi-list-wrap { margin-top: 0; padding-top: 0; }
+.mi-list-wrap.hidden { display: none; }
+.mi-person.is-editing { border-color: #8b8fc7; box-shadow: 0 0 0 3px rgba(139, 143, 199, 0.2); }
+
+@media (max-width: 767px) {
+  /* Phones: one box per line */
+  .mi-name-grid { grid-template-columns: minmax(0, 1fr); }
+  .mi-field-first, .mi-field-mi, .mi-field-last, .mi-field-ext { grid-column: 1 / -1; }
+  .mi-step-bar .mstep-label { font-size: 0.625rem; }
+}
+
+/* ---------- Compact, two-column layout (tablets & computers) ----------
+   Step 1: "What would you like to pray for?" | "Who is this Mass for?"
+   Step 2: "Which weekend?" | "Your offering".  Sized to fit one screen;
+   phones (below 768px) keep one column and scroll. */
+.mi-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.mi-col { min-width: 0; }
+.mi-cols > .mi-col > .mi-step-title:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+
+@media (min-width: 768px) {
+  .mi-page-header { padding: 0.625rem 1.5rem; }
+  .mi-page-body { padding: 1rem 1.5rem; }
+  .mi-page-footer { padding: 0.625rem 1.5rem; }
+  .mi-wiz { max-width: 64rem; }
+  .mi-step-bar { margin-bottom: 0.875rem; }
+
+  .mi-step { padding: 1.125rem 1.25rem; border-radius: 1rem; }
+  .mi-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.75rem; }
+  .mi-cols > .mi-col + .mi-col { border-left: 1px solid #eef0f4; padding-left: 1.75rem; }
+
+  .mi-step-title { font-size: 1rem; }
+  .mi-step-title-2 { margin-top: 1rem; padding-top: 0.875rem; }
+  .mi-step-hint { font-size: 0.8125rem; margin: 0.15rem 0 0.75rem; }
+  .mi-label { font-size: 0.8125rem; margin-bottom: 0.25rem; }
+  .mi-input { font-size: 0.9375rem !important; min-height: 2.5rem; }
+
+  /* categories: compact single-column list */
+  .mi-cat-grid { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+  .mi-cat { min-height: 0; padding: 0.55rem 2.5rem 0.55rem 0.625rem; gap: 0.625rem; border-radius: 0.75rem; }
+  .mi-cat-icon { width: 2rem; height: 2rem; }
+  .mi-cat-title { font-size: 0.875rem; }
+  .mi-cat-hint { font-size: 0.75rem; }
+  .mi-cat-check { width: 1.375rem; height: 1.375rem; right: 0.625rem; }
+
+  /* name: First | Middle on one row, Last | Ext. on the next */
+  .mi-name-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.625rem; }
+  .mi-name-grid + .mi-add-person { margin-top: 0.75rem; }
+  .mi-add-person { min-height: 2.5rem; font-size: 0.875rem; border-radius: 0.75rem; }
+
+  /* prayer list scrolls inside its column if it gets long */
+  .mi-list-wrap { margin-top: 0; padding-top: 0; }
+  .mi-list { max-height: 11rem; overflow-y: auto; gap: 0.4rem; margin-bottom: 0.4rem; }
+  .mi-person { padding: 0.5rem 0.625rem; gap: 0.625rem; border-radius: 0.75rem; }
+  .mi-person-num { width: 1.625rem; height: 1.625rem; font-size: 0.8125rem; }
+  .mi-person-name { font-size: 0.875rem; margin-bottom: 0.15rem; }
+  .mi-person-btn { min-height: 2rem; padding: 0 0.625rem; font-size: 0.8125rem; border-radius: 0.5rem; }
+  .mi-chip { font-size: 0.6875rem; }
+
+  /* step 2 */
+  .mi-step .wkcal { padding: 0.75rem; max-width: none; }
+  .mi-step .wkcal-day { height: 2.125rem; font-size: 0.8125rem; }
+  .mi-step .wkcal-nav { width: 2rem; height: 2rem; }
+  .mi-offer-row { gap: 0.5rem; margin-bottom: 0.75rem; }
+  .mi-offer { min-height: 2.5rem; min-width: 5rem; font-size: 0.9375rem; padding: 0 0.875rem; border-radius: 0.75rem; }
+
+  /* step 3: the two summary cards side by side */
+  #mi-review { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  #mi-review .mi-review-card + .mi-review-card { margin-top: 0; }
+  .mi-review-people { max-height: 14rem; overflow-y: auto; }
+
+  .mi-nav-btn { min-height: 2.5rem; font-size: 0.875rem; }
+}
+
+/* ---------- Extension (Jr., Sr., III): checkbox, box shows only when ticked ---------- */
+.mi-ext-toggle { display: flex; align-items: center; gap: 0.5rem; min-height: 2.5rem; font-size: 0.875rem; color: #4b5563; cursor: pointer; }
+#mi-name-ext.hidden { display: none; }
+.mi-field-ext { align-self: end; }
+
+/* ---------- Confirm: each person's intentions in a column under the name ---------- */
+.mi-review-people li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.4rem; align-items: start; }
+.mi-review-people li .mi-chips { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+
+/* ---------- Desktop: use the whole width and height ---------- */
+@media (min-width: 768px) {
+  .mi-page-body { display: flex; }
+  .mi-wiz { max-width: none; width: 100%; display: flex; flex-direction: column; }
+  .mi-step:not(.hidden) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .mi-cols { flex: 1; min-height: 0; gap: 2.5rem; }
+  .mi-cols > .mi-col + .mi-col { padding-left: 2.5rem; }
+  .mi-col { display: flex; flex-direction: column; min-height: 0; }
+
+  /* categories fill their column in two columns of cards */
+  .mi-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* prayer list grows into the space left in the column */
+  .mi-list-wrap:not(.hidden) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .mi-list { flex: 1; max-height: none; min-height: 4rem; }
+
+  /* weekend calendar uses its column */
+  .mi-step .wkcal { max-width: 34rem; }
+
+  /* confirm: two cards fill the width */
+  #mi-review { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+  .mi-review-people { max-height: 26rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
+  .mi-review-people li + li { border-top: 0; }
+  .mi-review-people li { border-bottom: 1px solid #f1f2f6; }
+}
+
+/* ---------- Latest layout tweaks ---------- */
+/* Prayer list: one tidy row per person — number · name · intentions · Edit/Remove */
+.mi-person { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; }
+.mi-person-body { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.75rem; min-width: 0; }
+.mi-person-name { margin: 0; }
+.mi-person .mi-chips { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
+
+@media (min-width: 768px) {
+  /* categories back to one column */
+  .mi-cat-grid { grid-template-columns: minmax(0, 1fr); }
+
+  /* First · Middle · Last side by side; the extension checkbox below */
+  .mi-name-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mi-field-first { grid-column: 1; }
+  .mi-field-mi { grid-column: 2; }
+  .mi-field-last { grid-column: 3; }
+  .mi-field-ext { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .mi-field-ext #mi-name-ext { max-width: 12rem; }
+
+  /* prayer list rows stay compact */
+  .mi-person { padding: 0.5rem 0.75rem; }
+  .mi-person-actions { width: auto; }
+}
+
+@media (max-width: 767px) {
+  /* phones: name boxes stacked; list rows wrap the buttons underneath */
+  .mi-name-grid { grid-template-columns: minmax(0, 1fr); }
+  .mi-person { grid-template-columns: auto minmax(0, 1fr); }
+  .mi-person-actions { grid-column: 1 / -1; display: flex; gap: 0.5rem; }
+  .mi-person-actions .mi-person-btn { flex: 1; }
+}
+
+/* ---------- Step 1 in three columns: categories | name | prayer list ---------- */
+.mi-table-wrap { border: 1px solid #e5e7eb; border-radius: 0.75rem; overflow: hidden; background: #ffffff; }
+.mi-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.mi-table.hidden { display: none; }
+.mi-table thead th {
+  text-align: left; padding: 0.55rem 0.75rem; font-size: 0.6875rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; background: #f8f8fc; border-bottom: 1px solid #eef0f4;
+}
+.mi-table td { padding: 0.55rem 0.75rem; vertical-align: middle; border-bottom: 1px solid #f1f2f6; }
+.mi-table tbody tr:last-child td { border-bottom: 0; }
+.mi-table tbody tr:nth-child(even) { background: #fbfbfd; }
+.mi-th-num, .mi-td-num { width: 2.5rem; }
+.mi-th-act, .mi-td-act { width: 1%; white-space: nowrap; text-align: right; }
+.mi-td-name { font-weight: 600; color: #111827; overflow-wrap: anywhere; }
+.mi-td-cats .mi-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.mi-td-act .mi-person-btn { min-height: 2rem; padding: 0 0.625rem; font-size: 0.8125rem; border-radius: 0.5rem; }
+.mi-td-act .mi-person-btn + .mi-person-btn { margin-left: 0.35rem; }
+.mi-person-row.is-editing td { background: #f3f3ff; }
+.mi-person-row.is-editing td:first-child { box-shadow: inset 3px 0 0 #8b8fc7; }
+.mi-table .mi-person-num { width: 1.625rem; height: 1.625rem; font-size: 0.8125rem; }
+.mi-list-empty { padding: 1.25rem 1rem; font-size: 0.8125rem; color: #9ca3af; text-align: center; }
+.mi-list-empty.hidden { display: none; }
+.mi-list-wrap { margin-top: 0; padding-top: 0; border-top: 0; }
+
+@media (min-width: 768px) {
+  .mi-cols-3 { grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.5fr); gap: 1.75rem; }
+  .mi-cols-3 > .mi-col + .mi-col { padding-left: 1.75rem; }
+
+  /* middle column: First, Middle, Last stacked */
+  .mi-cols-3 .mi-name-grid { grid-template-columns: minmax(0, 1fr); gap: 0.625rem; }
+  .mi-cols-3 .mi-field-first, .mi-cols-3 .mi-field-mi, .mi-cols-3 .mi-field-last, .mi-cols-3 .mi-field-ext { grid-column: 1; }
+  .mi-cols-3 .mi-field-ext #mi-name-ext { max-width: none; flex: 1; }
+
+  /* the table fills the third column and scrolls inside it if long */
+  .mi-col-list .mi-list-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .mi-col-list .mi-table-wrap { flex: 1; min-height: 0; overflow-y: auto; }
+  .mi-col-list .mi-table thead th { position: sticky; top: 0; z-index: 1; }
+}
+
+/* Phones: the three parts stack; table rows become cards */
+@media (max-width: 767px) {
+  .mi-col-list { margin-top: 0.5rem; }
+  .mi-table thead { display: none; }
+  .mi-table, .mi-table tbody { display: block; }
+  .mi-table tr { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.35rem 0.75rem; padding: 0.75rem; border-bottom: 1px solid #f1f2f6; }
+  .mi-table td { padding: 0; border: 0; }
+  .mi-td-num { grid-row: span 2; }
+  .mi-td-act { grid-column: 1 / -1; text-align: left; display: flex; gap: 0.5rem; }
+  .mi-td-act .mi-person-btn { flex: 1; min-height: 2.75rem; }
+  .mi-td-act .mi-person-btn + .mi-person-btn { margin-left: 0; }
+}
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* ---------- Final layout ----------
+   Step 1: categories | name.   Step 2: prayer list | weekend, offering below. */
+.mi-chip-cat { border: 0; font-weight: 600; }
+.mi-add-another { margin-top: 0.75rem; }
+
+@media (min-width: 768px) {
+  .mi-cols-2b { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+  .mi-col-list .mi-table-wrap { flex: 0 1 auto; max-height: calc(100vh - 21rem); }
+  .mi-cols-2b .mi-step .wkcal, .mi-cols-2b .wkcal { max-width: none; }
+}
+
+/* "2 people on your prayer list" under the Add button (step 1) */
+.mi-added-note { margin-top: 0.625rem; padding: 0.5rem 0.75rem; border-radius: 0.625rem; font-size: 0.8125rem; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; }
+.mi-added-note.hidden { display: none; }
+
+/* ---------- Step 2 calendar: weekends only, so the offering fits below ---------- */
+.mi-step .wkcal-weekends { max-width: none; width: fit-content; }
+.mi-step .wkcal-weekends .wkcal-day { height: 2rem; }
+.mi-step #mi-date-cal + #mi-date + .mi-step-title-2, .mi-step .mi-step-title-2 { margin-top: 1rem; }
+
+/* ---------- Confirm: people as a table (like the prayer list) ---------- */
+.mi-review-table { max-height: 22rem; overflow-y: auto; }
+.mi-review-table .mi-table thead th { position: sticky; top: 0; z-index: 1; }
+@media (max-width: 767px) {
+  .mi-review-table .mi-table tr { grid-template-columns: auto minmax(0, 1fr); }
+}
+
+/* ---------- Step 2 on desktop: calendar on one row, offering in view without scrolling ---------- */
+@media (min-width: 768px) {
+  .mi-cols-2b { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.75rem; }
+  .mi-cols-2b > .mi-col + .mi-col { padding-left: 1.75rem; }
+
+  /* weekends stay on one row; scrolls sideways only if the window is very narrow */
+  .mi-step .wkcal-weekends { width: 100%; max-width: 100%; padding: 0.625rem 0.75rem; }
+  .mi-step .wkcal-weekends .wkcal-grid { flex-wrap: nowrap; justify-content: space-between; overflow-x: auto; gap: 0.25rem; }
+  .mi-step .wkcal-wk { grid-template-columns: repeat(2, minmax(1.875rem, 1fr)); flex: 1 1 0; min-width: 4.25rem; padding: 0.2rem; }
+  .mi-step .wkcal-wk .wkcal-day { height: 1.875rem; font-size: 0.8125rem; }
+  .mi-step .wkcal-weekends .wkcal-foot { margin-top: 0.5rem; padding-top: 0.5rem; font-size: 0.8125rem; }
+
+  /* tighter headings/hints and offering in this step */
+  .mi-cols-2b .mi-step-hint { margin-bottom: 0.5rem; }
+  .mi-cols-2b .mi-step-title-2 { margin-top: 0.875rem; padding-top: 0.75rem; }
+  .mi-cols-2b .mi-offer-row { margin-bottom: 0.5rem; }
+  .mi-cols-2b .mi-offer { min-height: 2.25rem; }
+  .mi-cols-2b .mi-offer-input .offering-input { min-height: 2.25rem; }
+}
+
+/* Prayer list without numbers: on phones, name + intentions fill the card */
+@media (max-width: 767px) {
+  .mi-col-list .mi-table tr { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Phones: prayer list + confirm table as stacked cards ----------
+     Name
+     [intention] [intention]
+     [ Edit ] [ Remove ]          (Edit/Remove only on the prayer list) */
+@media (max-width: 767px) {
+  .mi-table thead { display: none; }
+  .mi-table, .mi-table tbody { display: block; width: 100%; }
+  .mi-table tr,
+  .mi-col-list .mi-table tr,
+  .mi-review-table .mi-table tr {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f1f2f6;
+  }
+  .mi-table tbody tr:last-child { border-bottom: 0; }
+  .mi-table td { display: block; padding: 0; border: 0; width: auto; text-align: left; }
+  .mi-td-name { font-size: 1rem; }
+  .mi-td-cats .mi-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .mi-td-act { display: flex; gap: 0.5rem; margin-top: 0.25rem; white-space: normal; }
+  .mi-td-act .mi-person-btn { flex: 1; min-height: 2.75rem; margin: 0; }
+  .mi-td-act .mi-person-btn + .mi-person-btn { margin-left: 0; }
+}
+
+/* ---------- Admin extras (role: 'admin') ---------- */
+.mi-donor { margin-bottom: 0.25rem; }
+.mi-admin-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; margin-top: 0.75rem; }
+.mi-page .mi-locked-note {
+  margin-bottom: 0.75rem; padding: 0.625rem 0.875rem; border-radius: 0.625rem;
+  font-size: 0.8125rem; color: #92400e; background: #fffbeb; border: 1px solid #fde68a;
+}
+.mi-page .mi-locked-note.hidden { display: none; }
+@media (max-width: 767px) { .mi-admin-row { grid-template-columns: minmax(0, 1fr); } }

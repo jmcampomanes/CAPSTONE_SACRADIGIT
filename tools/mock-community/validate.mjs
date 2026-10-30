@@ -416,7 +416,7 @@ check('every scenario category has cases', (fail) => {
 /* ---------- what the app's own duplicate check does with this data ---------- */
 
 async function appFindings() {
-  const source = readFileSync(resolve(ROOT, 'Sacradigit/record-duplicates.js'), 'utf8')
+  const source = readFileSync(resolve(ROOT, 'Sacradigit/js/record-duplicates.js'), 'utf8')
     .replace(/^import \{ confirmDialog.*$/m, 'const confirmDialog = async () => true;')
     .replace(/^import \{ formatFullName.*$/m, "const formatFullName = (n) => (n ? [n.firstName, n.middleName, n.lastName, n.extension].filter(Boolean).join(' ') : '');");
   const { personKey, samePerson, duplicateIds, parentsByRecord, parentsFromDetails } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);

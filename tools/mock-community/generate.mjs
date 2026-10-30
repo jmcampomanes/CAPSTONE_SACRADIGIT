@@ -48,8 +48,8 @@ const EMPTY_NAME = { firstName: '', middleName: '', lastName: '', extension: '' 
 
 /* The app's source files are ES modules in a CommonJS package, so load them as data: URLs. */
 const loadAppModule = (file) => import(`data:text/javascript;base64,${readFileSync(resolve(ROOT, file)).toString('base64')}`);
-const { PH_REGIONS } = await loadAppModule('ph-locations.js');
-const { formatFullName } = await loadAppModule('name-utils.js');
+const { PH_REGIONS } = await loadAppModule('shared/js/ph-locations.js');
+const { formatFullName } = await loadAppModule('shared/js/name-utils.js');
 
 /* ---------- seeded randomness ---------- */
 

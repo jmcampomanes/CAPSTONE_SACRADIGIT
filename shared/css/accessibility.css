@@ -1,0 +1,190 @@
+/* ============================================
+   SacraDigit — Accessibility mode
+   Larger text + higher contrast, for senior
+   parishioners (and anyone who needs it). Turned
+   on with the "Aa" gauge next to the dark-mode
+   and language controls (ui-prefs.js); the <head>
+   snippet on every page sets
+   <html data-a11y="on"> and --sd-text-scale (the
+   size picked on the gauge) before the page is drawn.
+   Works with both light and dark mode.
+   ============================================ */
+
+/* Animations and transitions for every page (motion-guide.html). Accessibility
+   mode also turns motion off — see motion.css. */
+@import url('./motion.css');
+/* Portal look: slate-indigo sidebar, soft cards (every portal) — see sanctuary.css. */
+@import url('./sanctuary.css');
+
+
+/* ---------- Larger text ----------
+   The app's sizes (Tailwind and our own CSS) are in rem, so growing
+   the root font size enlarges text, spacing and controls together. */
+:root[data-a11y="on"] {
+  font-size: calc(var(--sd-text-scale, 1.18) * 100%);
+}
+
+:root[data-a11y="on"] body {
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Nothing smaller than 16px ----------
+   Growing the root size alone leaves 10–11px labels at only ~13px.
+   0.8475rem is 16px at the 1.18 size, and keeps growing above it. */
+:root[data-a11y="on"] body :is(
+  .text-xs, .text-\[9px\], .text-\[10px\], .text-\[11px\], .text-\[12px\],
+  small, .badge, .form-label, .sidebar-label, .panel-title, .panel-link,
+  [class*="-sub"], [class*="-meta"], [class*="-label"], [class*="-note"],
+  [class*="-time"], [class*="-hint"], [class*="-date"], [class*="-caption"], [class*="-tag"]
+):not(svg):not(svg *) {
+  font-size: max(16px, 0.8475rem) !important;
+}
+
+/* ---------- Buttons and icons at least 44×44px ---------- */
+:root[data-a11y="on"] body :is(
+  button, [role="button"], select, .btn-gold, .btn-lavender, .btn-secondary,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]),
+  .sidebar-link
+):not([class*="cal-day"]):not(.slot-day):not(.repeatable-row-remove) {
+  min-height: 44px;
+}
+
+:root[data-a11y="on"] body :is(
+  .modal-close, .help-icon-btn, .pn-btn, .ui-prefs-btn, .ui-prefs-lang,
+  .pn-close, .pa-close, .pa-send, .toast-close, .repeatable-row-remove
+) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* The top bar's icons drop to a row under the page title when they no longer fit beside it. */
+:root[data-a11y="on"] body #sidebar ~ * > header {
+  flex-wrap: wrap;
+  row-gap: 0.375rem;
+}
+
+:root[data-a11y="on"] body #sidebar ~ * > header :is(.help-date-wrap, .ui-prefs) {
+  margin-left: auto;
+  max-width: 100%;
+  flex-shrink: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Rows that are one line at normal size wrap instead of pushing the page sideways. */
+:root[data-a11y="on"] .ann-kind-tabs {
+  flex-wrap: wrap;
+}
+
+:root[data-a11y="on"] .info-banner-actions {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+:root[data-a11y="on"] .quick-action-label {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+:root[data-a11y="on"] body .panel-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+:root[data-a11y="on"] body :is(input[type="checkbox"], input[type="radio"]) {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+:root[data-a11y="on"] body header .help-date-wrap :is(.pn-btn, .ui-prefs-btn, .help-icon-btn) svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* ---------- Clear focus ring for keyboard users ---------- */
+:root[data-a11y="on"] :focus-visible {
+  outline: 3px solid #1d4ed8 !important;
+  outline-offset: 2px !important;
+}
+
+:root[data-a11y="on"][data-theme="dark"] :focus-visible {
+  outline-color: #93c5fd !important;
+}
+
+/* ---------- Links read as links ---------- */
+:root[data-a11y="on"] main a:not([class*="btn"]):not(.sidebar-link):not(.certificate-chip) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------- Higher contrast: light mode ----------
+   Faint grey helper text becomes near-black; field borders darken. */
+:root[data-a11y="on"]:not([data-theme="dark"]) :is(
+  .text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600,
+  [class*="-sub"], [class*="-meta"], [class*="-label"], [class*="-note"], [class*="-time"], [class*="-hint"],
+  .pagination-info, .empty-state, .form-error-msg
+):not(button *):not(.badge):not(.badge *):not([class*="btn"] *):not(.chat-msg.is-mine *) {
+  color: #1f2937 !important;
+}
+
+:root[data-a11y="on"]:not([data-theme="dark"]) :is(input, select, textarea, .form-input, .filter-select, .search-input, .chat-input) {
+  border-color: #4b5563 !important;
+}
+
+:root[data-a11y="on"]:not([data-theme="dark"]) ::placeholder {
+  color: #4b5563 !important;
+  opacity: 1;
+}
+
+:root[data-a11y="on"]:not([data-theme="dark"]) :is(.panel, .stat-card, .modal-card, .schedule-card, .template-card) {
+  border-color: #9ca3af !important;
+}
+
+/* ---------- Higher contrast: dark mode ----------
+   Dim grey text becomes bright; borders become visible. */
+:root[data-a11y="on"][data-theme="dark"] :is(
+  .text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600,
+  [class*="-sub"], [class*="-meta"], [class*="-label"], [class*="-note"], [class*="-time"], [class*="-hint"],
+  .pagination-info, .empty-state
+):not(.badge):not(.badge *) {
+  color: #f3f4f6 !important;
+}
+
+:root[data-a11y="on"][data-theme="dark"] body {
+  color: #ffffff;
+}
+
+:root[data-a11y="on"][data-theme="dark"] :is(input, select, textarea, .form-input, .filter-select, .search-input, .chat-input) {
+  border-color: #9ca3af !important;
+}
+
+:root[data-a11y="on"][data-theme="dark"] ::placeholder {
+  color: #d1d5db !important;
+  opacity: 1;
+}
+
+:root[data-a11y="on"][data-theme="dark"] :is(.panel, .stat-card, .modal-card, .schedule-card, .template-card) {
+  border-color: #6b7280 !important;
+}
+
+/* ---------- The "Aa" button itself ---------- */
+.ui-prefs-a11y {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.75rem !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ui-prefs-a11y[data-on="true"] {
+  background: #1e2a4a !important;
+  border-color: #1e2a4a !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .ui-prefs-a11y[data-on="true"] {
+  background: #f3f4f6 !important;
+  border-color: #f3f4f6 !important;
+  color: #111827 !important;
+}

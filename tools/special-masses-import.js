@@ -8,7 +8,7 @@
    you've run the import you need.
    ============================================ */
 
-import { client } from '../amplify-init.js';
+import { client } from '../shared/js/amplify-init.js';
 import { SPECIAL_MASSES_2026_PH } from './special-masses-2026-ph-data.js';
 
 document.addEventListener('DOMContentLoaded', () => {

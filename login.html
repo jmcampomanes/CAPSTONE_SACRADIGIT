@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- The site has its own Light/Dark switch: keep the browser's dark mode off the page (theme-dark.css sets dark when chosen) -->
+  <meta name="color-scheme" content="only light" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Installable app (PWA): see pwa.js and public/manifest.webmanifest -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -14,11 +16,11 @@
   <link rel="icon" type="image/png" href="sacradigit-images/scaradigit-logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="Sacradigit/sacradigit-css/admin-shell.css" />
-  <link rel="stylesheet" href="login.css" />
+  <link rel="stylesheet" href="Sacradigit/css/admin-shell.css" />
+  <link rel="stylesheet" href="landing/login.css" />
   <!-- Light/Dark + English/Filipino (see ui-prefs.js) -->
-  <link rel="stylesheet" href="accessibility.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on')document.documentElement.dataset.a11y='on';if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="shared/css/accessibility.css" />
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
   <!-- First page of the visit: stay hidden until motion.js puts up the splash -->
   <style>.sd-splash-pending{background:#0f1730}.sd-splash-pending body{visibility:hidden}</style>
   <script>try{if(sessionStorage.getItem('sdSplashSeen')!=='1'&&localStorage.getItem('sacradigit_motion')!=='reduce'&&localStorage.getItem('sacradigit_a11y')!=='on'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('sd-splash-pending');setTimeout(function(){document.documentElement.classList.remove('sd-splash-pending')},5000)}}catch(e){}</script>
@@ -179,6 +181,6 @@
     </section>
   </main>
 
-  <script type="module" src="login.js"></script>
+  <script type="module" src="landing/login.js"></script>
 </body>
 </html>

@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- The site has its own Light/Dark switch: keep the browser's dark mode off the page (theme-dark.css sets dark when chosen) -->
+  <meta name="color-scheme" content="only light" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Installable app (PWA): see pwa.js and public/manifest.webmanifest -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -31,7 +33,7 @@
     };
   </script>
 
-  <link rel="stylesheet" href="sacradigit-css/admin-shell.css" />
+  <link rel="stylesheet" href="css/admin-shell.css" />
 
   <style>
     body { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 3rem 1.5rem; }
@@ -111,6 +113,6 @@
 
   </div>
 
-  <script type="module" src="seed-mock-masses-schedules.js"></script>
+  <script type="module" src="js/seed-mock-masses-schedules.js"></script>
 </body>
 </html>

@@ -1,0 +1,35 @@
+/* ============================================
+   SacraDigit — Request page accent colours
+   One file for every Request a Service / Request a
+   Certificate page (was one tiny CSS file per page).
+   Each page sets <html data-page="..."> to pick its colour.
+   Shared form styles: user-request-service.css and
+   user-request-certificate.css
+   ============================================ */
+
+/* ---------- Page header ---------- */
+.page-header-icon {
+  background-color: var(--page-accent-soft);
+  color: var(--page-accent);
+}
+
+/* ---------- Accent per page ---------- */
+:root[data-page="request-baptismal-certificate"] { --page-accent: #5b5fa8; --page-accent-soft: rgba(139,143,199,0.16); }
+:root[data-page="request-confirmation-certificate"] { --page-accent: #b5943e; --page-accent-soft: rgba(201,168,76,0.16); }
+:root[data-page="request-first-communion-certificate"] { --page-accent: #8a6d1f; --page-accent-soft: rgba(180,140,60,0.16); }
+:root[data-page="request-marriage-certificate"] { --page-accent: #dc2626; --page-accent-soft: rgba(239,68,68,0.1); }
+:root[data-page="service-anniversary-mass"] { --page-accent: #dc2626; --page-accent-soft: rgba(239,68,68,0.1); }
+:root[data-page="service-anointing-of-the-sick"] { --page-accent: #15803d; --page-accent-soft: rgba(21,128,61,0.1); }
+:root[data-page="service-baccalaureate-mass"] { --page-accent: #1d4ed8; --page-accent-soft: rgba(29,78,216,0.12); }
+:root[data-page="service-baptism"] { --page-accent: #5b5fa8; --page-accent-soft: rgba(139,143,199,0.16); }
+:root[data-page="service-business-dedication"] { --page-accent: #5b5fa8; --page-accent-soft: rgba(139,143,199,0.16); }
+:root[data-page="service-confession"] { --page-accent: #7a4ea8; --page-accent-soft: rgba(122,78,168,0.14); }
+:root[data-page="service-confirmation"] { --page-accent: #0f8a7a; --page-accent-soft: rgba(15,138,122,0.14); }
+:root[data-page="service-first-communion"] { --page-accent: #b5943e; --page-accent-soft: rgba(201,168,76,0.16); }
+:root[data-page="service-funeral-mass"] { --page-accent: #6b7280; --page-accent-soft: rgba(107,114,128,0.12); }
+:root[data-page="service-holy-orders"] { --page-accent: #c2701c; --page-accent-soft: rgba(194,112,28,0.14); }
+:root[data-page="service-house-blessing"] { --page-accent: #b5943e; --page-accent-soft: rgba(201,168,76,0.16); }
+:root[data-page="service-inurnment"] { --page-accent: #6b7280; --page-accent-soft: rgba(107,114,128,0.12); }
+:root[data-page="service-pet-blessing"] { --page-accent: #a16207; --page-accent-soft: rgba(161,98,7,0.14); }
+:root[data-page="service-vehicle-item-blessing"] { --page-accent: #15803d; --page-accent-soft: rgba(21,128,61,0.1); }
+:root[data-page="service-wedding"] { --page-accent: #dc2626; --page-accent-soft: rgba(239,68,68,0.1); }
