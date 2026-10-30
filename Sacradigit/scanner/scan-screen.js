@@ -380,7 +380,9 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
 
     let fullName = formatFullName(name);
     if (docTypeSel.value === 'marriage' && nameFieldsFilled('scan-spouse')) fullName += ` & ${formatFullName(readNameFields('scan-spouse'))}`;
-    if (!(await confirmNotDuplicate(getRecords(), { fullName, type, dateOfEvent: $('scan-date').value }))) return;
+    const scannedName = (key) => fieldsWrap.querySelector(`input[data-key="${key}"]`)?.value.trim() || '';
+    const parents = [{ father: scannedName('fatherName'), mother: scannedName('motherName') }];
+    if (!(await confirmNotDuplicate(getRecords(), { fullName, type, dateOfEvent: $('scan-date').value, parents }))) return;
 
     const fields = {};
     fieldsWrap.querySelectorAll('input[data-key]').forEach(i => {

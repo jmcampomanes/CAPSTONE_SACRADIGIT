@@ -16,3 +16,6 @@ testung
 bc sample*
 *.docx
 ocr-result-*.md
+
+# Mock community data: rebuild with tools/mock-community/generate.mjs (about 40 MB).
+mock-data/*.json

@@ -8,12 +8,16 @@ import { currentUserName, isHeadAdmin } from '../auth.js';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../name-utils.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { initScanScreen, SCAN_SUFFIX } from './scanner/scan-screen.js';
-import { confirmNotDuplicate, duplicateIds } from './record-duplicates.js';
+import { confirmNotDuplicate, duplicateIds, parentsByRecord } from './record-duplicates.js';
 import { showToast, confirmDialog } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   let records = []; // kept in sync via observeQuery, each has .id
+  let linkedParents = new Map(); // record id -> parents named on its released certificate
+
+  // Records plus their parents, for the duplicate check to tell namesakes apart.
+  const recordsWithParents = () => records.map(r => ({ ...r, parents: linkedParents.get(r.id) }));
 
   const tbody         = document.getElementById('records-tbody');
   const emptyState     = document.getElementById('empty-state');
@@ -65,6 +69,26 @@ document.addEventListener('DOMContentLoaded', () => {
     fileUrlCache.set(path, { url: resolved, expiresAt: Date.now() + 55 * 60 * 1000 });
     return resolved;
   }
+
+  /* Parents aren't on ParishRecord; a released certificate's request holds them.
+     If this fails the duplicate check still works, it just can't use parents. */
+  async function loadLinkedParents() {
+    try {
+      const rows = [];
+      let nextToken = null;
+      do {
+        const res = await client.models.CertificateRequest.list({ limit: 1000, nextToken, filter: { linkedRecordId: { attributeExists: true } } });
+        if (res.errors) throw new Error(res.errors.map(e => e.message).join('; '));
+        rows.push(...res.data);
+        nextToken = res.nextToken;
+      } while (nextToken);
+      linkedParents = parentsByRecord(rows);
+      renderRecords();
+    } catch (err) {
+      console.error("Couldn't load parents for the duplicate check:", err);
+    }
+  }
+  loadLinkedParents();
 
   /* --- Live data --- */
   client.models.ParishRecord.observeQuery().subscribe({
@@ -147,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateVal = dateFilter.value;
     const now = new Date();
 
-    const dupes = duplicateIds(records);
+    const dupes = duplicateIds(recordsWithParents());
     const filtered = records.filter(r => {
       const matchesQuery = !query ||
         (r.fullName || '').toLowerCase().includes(query) ||
@@ -298,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Scan Document — OCR screen (see scanner/scan-screen.js). showToast is a
   // function declaration further down, so it's already available here.
-  const scanScreen = initScanScreen({ showToast, getRecords: () => records });
+  const scanScreen = initScanScreen({ showToast, getRecords: recordsWithParents });
   document.getElementById('btn-scan').addEventListener('click', () => scanScreen.open());
   document.getElementById('btn-new-record').addEventListener('click', () => openModal(newRecordModal));
 
@@ -430,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const officiant = document.getElementById('edit-officiant').value.trim();
 
     if (!fullName || !type) { showToast('Please fill in name and type.', true); return; }
-    if (!(await confirmNotDuplicate(records, { fullName, type, dateOfEvent: document.getElementById('edit-date').value }, { excludeId: editingId }))) return;
+    if (!(await confirmNotDuplicate(recordsWithParents(), { fullName, type, dateOfEvent: document.getElementById('edit-date').value }, { excludeId: editingId }))) return;
 
     const submitBtn = document.getElementById('edit-record-submit');
     submitBtn.disabled = true;
@@ -491,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!type || !nameFieldsFilled('upload-name')) { showToast('Please fill in record type and name.', true); return; }
 
     const fullName = formatFullName(name);
-    if (!(await confirmNotDuplicate(records, { fullName, type: type.toLowerCase() }))) return;
+    if (!(await confirmNotDuplicate(recordsWithParents(), { fullName, type: type.toLowerCase() }))) return;
     const file = fileInput.files[0];
     const submitBtn = document.getElementById('upload-submit');
     submitBtn.disabled = true;
@@ -536,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!nameFieldsFilled('new-name') || !type || !date) { showToast('Please fill in name, type, and date.', true); return; }
 
     const fullName = formatFullName(name);
-    if (!(await confirmNotDuplicate(records, { fullName, type: type.toLowerCase(), dateOfEvent: date }))) return;
+    if (!(await confirmNotDuplicate(recordsWithParents(), { fullName, type: type.toLowerCase(), dateOfEvent: date }))) return;
 
     try {
       const result = await client.models.ParishRecord.create({
