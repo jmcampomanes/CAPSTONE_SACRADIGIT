@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPage = 1;
 
   const badgeClass = { scheduled: 'badge-green', completed: 'badge-blue', cancelled: 'badge-red' };
-  const statusLabel = { scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
+  const statusLabel = { pending: 'Payment Being Checked', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
 
   /* Which of the 3 Reader's Sheet categories each intention type
      belongs to. Shared by the Add/Edit type picker (which uses it

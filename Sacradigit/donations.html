@@ -59,6 +59,7 @@
   <link rel="stylesheet" href="../shared/css/theme-dark.css" />
   <link rel="stylesheet" href="../shared/css/accessibility.css" />
   <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';var sdp=localStorage.getItem('sacradigit_palette');if(sdp)document.documentElement.dataset.palette=sdp;var sdn=localStorage.getItem('sacradigit_density');if(sdn)document.documentElement.dataset.density=sdn;if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../shared/css/parish-common.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -308,6 +309,12 @@
         </div>
 
         <!-- Recent Donations -->
+        <section class="panel hidden" id="pay-queue-panel">
+          <div class="panel-header"><h2 class="panel-title">Payments to Verify</h2><p id="pay-queue-count" class="text-xs text-gray-400 font-medium"></p></div>
+          <p class="px-5 pt-3 text-xs text-gray-600">Check each transaction number against the GCash or Maya history before verifying. Only verified payments count.</p>
+          <div id="pay-queue" class="p-5 space-y-3"></div>
+        </section>
+
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">Recent Donations</h2>

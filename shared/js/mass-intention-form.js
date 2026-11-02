@@ -23,10 +23,7 @@
 
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from './name-utils.js';
 import { createWeekendCalendar, formatWeekend, formatDay } from './weekend-calendar.js';
-
-/** Lowest offering a parishioner can give for one intention (any number of names).
-    The Parish Assistant quotes the same amount (assistant-knowledge.js). */
-export const MIN_INTENTION_OFFERING = 50;
+import { parishRules } from './parish-rules.js';
 
 const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
 const peso = (n) => '₱' + (n || 0).toLocaleString('en-US');
@@ -166,7 +163,7 @@ function markup({ admin, title, sub }) {
  * @param {Array<{id,label,iconBg,iconColor,icon}>} opts.intentionTypes
  * @param {(data: object) => Promise<void>} opts.onSubmit  throws to keep the form open
  * @param {(msg: string, isError?: boolean) => void} [opts.toast]
- * @param {number} [opts.minOffering]  parishioner: MIN_INTENTION_OFFERING (one offering covers the whole intention)
+ * The parishioner minimum is parish-rules.js's massIntentionMin (one offering covers the whole intention)
  * @returns {{ open(prefill?: object): void, close(): void }}
  *   prefill (admin edit): { title, submitLabel, donor, people:[{name,typeIds}], offering, massDate, massTime24, status, locked }
  *   onSubmit data: { donor, people, records:[{name,typeId,offering}], offering, massDate, massTime24, status, lockedOnly }
@@ -176,9 +173,10 @@ export function createIntentionForm(modal, {
   intentionTypes,
   onSubmit,
   toast = (...a) => window.showToast?.(...a),
-  minOffering = role === 'admin' ? 1 : MIN_INTENTION_OFFERING,
 }) {
   const admin = role === 'admin';
+  // Lowest offering for one intention, however many names it has (parish-rules.js).
+  const minOffering = () => (admin ? 1 : parishRules().fees.massIntentionMin);
   const defaults = admin
     ? { title: 'Add Mass Intention', sub: 'Log an intention for a walk-in or phone request.', submitLabel: 'Save Intention' }
     : { title: 'Submit a Mass Intention', sub: 'Offer a Mass for a loved one — living or departed, in thanksgiving or for healing.', submitLabel: 'Submit Intention' };
@@ -329,10 +327,10 @@ export function createIntentionForm(modal, {
   function renderOffering() {
     offeringHint.textContent = admin
       ? 'The amount the donor gave for this whole intention.'
-      : `The minimum offering is ₱${minOffering}. One offering covers your whole intention, no matter how many names or intentions are on your list.`;
-    if (!offeringTouched && !offeringInput.value) offeringInput.value = admin ? '' : minOffering;
+      : `The minimum offering is ₱${minOffering()}. One offering covers your whole intention, no matter how many names or intentions are on your list.`;
+    if (!offeringTouched && !offeringInput.value) offeringInput.value = admin ? '' : minOffering();
     const current = Number(offeringInput.value);
-    presetsEl.innerHTML = [MIN_INTENTION_OFFERING, 100, 300, 500].map((a) => `
+    presetsEl.innerHTML = [...new Set([minOffering(), 100, 300, 500])].map((a) => `
       <button type="button" class="mi-offer${current === a ? ' selected' : ''}" data-amount="${a}" aria-pressed="${current === a}" ${locked ? 'disabled' : ''}>${peso(a)}</button>`).join('');
   }
   presetsEl.addEventListener('click', (e) => {
@@ -437,9 +435,9 @@ export function createIntentionForm(modal, {
       return false;
     }
     const amount = parseInt(offeringInput.value, 10);
-    if (!amount || amount < minOffering) {
+    if (!amount || amount < minOffering()) {
       flag(offeringInput);
-      toast(minOffering > 1 ? `The offering must be at least ₱${minOffering}.` : 'Please enter the offering amount.', true);
+      toast(minOffering() > 1 ? `The offering must be at least ₱${minOffering()}.` : 'Please enter the offering amount.', true);
       return false;
     }
     return true;

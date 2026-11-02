@@ -27,6 +27,7 @@
 import { client } from './amplify-init.js';
 import { faithfulGivers as computeGivers, isoDate } from './badges.js';
 import { optedOutKeys } from './mass-checkin.js';
+import { isCounted } from './payments.js';
 
 const hasQuery = (name) => !!(client.queries && client.queries[name]);
 const parseJson = (v) => (typeof v === 'string' ? JSON.parse(v) : v);
@@ -85,7 +86,7 @@ export async function loadFaithfulGivers() {
     client.models.Donation.list({ limit: 1000 }),
     optedOutKeys().catch(() => new Set()),
   ]);
-  return computeGivers(data || [], { optedOut });
+  return computeGivers((data || []).filter(isCounted), { optedOut });
 }
 
 /* ---------- fund totals ---------- */
@@ -100,7 +101,7 @@ export async function loadDonationTotals() {
   }
   const { data } = await client.models.Donation.list({ limit: 1000 });
   const totals = {};
-  (data || []).forEach(d => { totals[d.purpose] = (totals[d.purpose] || 0) + (d.amount || 0); });
+  (data || []).filter(isCounted).forEach(d => { totals[d.purpose] = (totals[d.purpose] || 0) + (d.amount || 0); });
   return totals;
 }
 
@@ -114,5 +115,5 @@ export async function loadCommunityIntentions() {
     return (parseJson(res.data) || []).map(r => ({ ...r, names: typeof r.names === 'string' ? r.names : JSON.stringify(r.names || []) }));
   }
   const { data } = await client.models.MassIntention.list({ limit: 1000 });
-  return (data || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected');
+  return (data || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'pending');
 }

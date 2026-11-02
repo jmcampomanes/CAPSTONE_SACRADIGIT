@@ -6,6 +6,10 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
+import { isCounted, paymentsReady, listPayments, reviewPayment, duplicateReferences, normalizeReference, goalFieldsReady, donationFieldsReady } from '../../shared/js/payments.js';
+import { reasonDialog } from '../../shared/js/staff-ui.js';
+import { currentUserName } from '../../shared/js/auth.js';
+import { logActivity } from '../../shared/js/activity-log.js';
 import { showToast } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   client.models.Donation.observeQuery().subscribe({
     next: ({ items }) => {
+      items = items.filter(isCounted); // what was actually received
       donations = items;
       renderStats();
       renderTable();
@@ -176,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${reached ? '<span class="goal-badge-reached">Goal Reached</span>' : (g.active === false ? '<span class="goal-badge-inactive">Inactive</span>' : '')}
             </div>
             ${g.description ? `<p class="goal-desc">${escapeHtml(g.description)}</p>` : ''}
+            ${g.closedReason ? `<p class="goal-desc">Closed: ${escapeHtml(g.closedReason)}</p>` : ''}
             ${g.deadline ? `
               <div class="goal-deadline">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -193,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
           <div class="goal-card-footer">
+            ${g.active === false ? '' : `<button type="button" class="act-btn goal-close head-admin-only" data-id="${g.id}">Close Goal…</button>`}
             <button type="button" class="act-btn goal-edit head-admin-only" data-id="${g.id}">Edit</button>
             <button type="button" class="act-btn act-danger goal-delete head-admin-only" data-id="${g.id}">Delete…</button>
           </div>
@@ -292,6 +299,82 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(err.message || "Couldn't save the goal.", true);
     }
   });
+
+  /* --- Close a goal, e.g. when a calamity drive ends. Kept for reports. --- */
+  goalsGrid.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.goal-close');
+    if (!btn) return;
+    const goal = goals.find(g => g.id === btn.dataset.id);
+    const reason = await reasonDialog({
+      title: 'Close this goal?',
+      message: 'Parishioners will no longer see it or give to it. It stays in your reports.',
+      detail: goal.name,
+      input: { label: 'Reason', placeholder: 'e.g. Relief drive finished' },
+      confirmLabel: 'Close Goal',
+    });
+    if (!reason) return;
+    try {
+      const result = await client.models.DonationGoal.update({
+        id: goal.id, active: false,
+        ...(goalFieldsReady() ? { closedReason: reason } : { description: [goal.description, `Closed: ${reason}`].filter(Boolean).join(' ') }),
+      });
+      if (result.errors) throw new Error(result.errors.map(er => er.message).join('; '));
+      showToast(`"${goal.name}" closed.`);
+    } catch (err) {
+      console.error('Failed to close the goal:', err);
+      showToast(err.message || "Couldn't close the goal.", true);
+    }
+  });
+
+  /* --- Payments to Verify: donations and Mass intentions wait here. --- */
+  const queueEl = document.getElementById('pay-queue');
+  let queue = [];
+  let allPayments = [];
+  async function loadQueue() {
+    if (!paymentsReady()) return;
+    allPayments = await listPayments();
+    queue = allPayments.filter(p => p.status === 'submitted' && p.requestType !== 'Service');
+    const dup = duplicateReferences(allPayments);
+    document.getElementById('pay-queue-panel').classList.toggle('hidden', !queue.length);
+    document.getElementById('pay-queue-count').textContent = `${queue.length} waiting`;
+    queueEl.innerHTML = queue.map(p => `
+      <div class="bt-admin-date">
+        <p class="bt-admin-title">${escapeHtml(p.payerName)}: ${formatPeso(p.amount)} (${escapeHtml(p.requestType)})</p>
+        <p class="bt-admin-sub">${escapeHtml(p.method)}, transaction no. <strong>${escapeHtml(p.referenceNumber)}</strong></p>
+        ${dup.has(normalizeReference(p.referenceNumber)) ? '<p class="bt-admin-warn">This transaction number was used on another payment.</p>' : ''}
+        <div class="flex gap-2 mt-2">
+          <button type="button" class="btn-lavender" data-pay="verified" data-id="${p.id}">Verify</button>
+          <button type="button" class="btn-danger-outline" data-pay="rejected" data-id="${p.id}">Reject</button>
+        </div>
+      </div>`).join('');
+  }
+  queueEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-pay]');
+    if (!btn) return;
+    const p = queue.find(x => x.id === btn.dataset.id);
+    const status = btn.dataset.pay;
+    btn.disabled = true;
+    try {
+      await reviewPayment(p.id, status, currentUserName() || 'Parish Office');
+      if (p.requestType === 'Donation' && donationFieldsReady()) {
+        const res = await client.models.Donation.update({ id: p.requestId, status });
+        if (res.errors) throw new Error(res.errors.map(er => er.message).join('; '));
+      }
+      if (p.requestType === 'Mass Intention') {
+        // One payment can cover several intention records (their ids are in the note).
+        const ids = (p.note || p.requestId).split(',').filter(Boolean);
+        await Promise.all(ids.map(id => client.models.MassIntention.update({ id, status: status === 'verified' ? 'scheduled' : 'cancelled', ...(status === 'rejected' ? { cancelReason: 'Payment could not be found.' } : {}) })));
+      }
+      logActivity(status === 'verified' ? 'Approve' : 'Decline', `Payment ${status} — ${p.requestType} from ${p.payerName}`, { targetType: 'PaymentRecord', targetId: p.id });
+      showToast(status === 'verified' ? 'Payment verified.' : 'Payment rejected.');
+      await loadQueue();
+    } catch (err) {
+      console.error('Failed to review the payment:', err);
+      showToast(err.message || "Couldn't save that.", true);
+      btn.disabled = false;
+    }
+  });
+  loadQueue().catch(err => console.error('Failed to load payments to verify:', err));
 
   /* --- Delete Goal Confirmation Modal --- */
   const goalDeleteModal      = document.getElementById('goal-delete-modal');

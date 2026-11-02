@@ -9,13 +9,15 @@
 
 import { client } from '../../shared/js/amplify-init.js';
 import { loadDonationTotals } from '../../shared/js/public-data.js';
-import { currentUserName } from '../../shared/js/auth.js';
 import { mountFaithfulGivers } from './faith-journey-widgets.js';
 import { loadParishContact } from '../../shared/js/parish-info.js';
 import { PAYMENT_ACCOUNTS, CONFIRM_WITHIN } from '../../shared/js/donation-payment-info.js';
 import { withAmount, qrPhField } from '../../shared/js/qrph.js';
 import QRCode from 'qrcode';
 import { downloadDonationReceipt } from '../../shared/js/donation-receipt.js';
+import { mountPaymentBox } from '../../shared/js/payment-box.js';
+import { paymentsReady, submitPayment, donationFieldsReady, isCounted } from '../../shared/js/payments.js';
+import { currentUserName } from '../../shared/js/auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -48,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(refreshTotals, 0);
   setInterval(refreshTotals, 60000);
   let myDonations = [];
+  let allMine = [];
   let goals = []; // fundraising goals, kept in sync via observeQuery
 
   // Looked up early (before any observeQuery fires) so renderGoalGrid can
@@ -70,7 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
   client.models.Donation.observeQuery().subscribe({
     next: ({ items }) => {
       allDonations = items;
-      myDonations = items.filter(d => d.donor === DONOR_NAME);
+      allMine = items.filter(d => d.donor === DONOR_NAME);
+      myDonations = allMine.filter(isCounted); // what's been received; the history shows the rest too
       renderFundGrid();
       renderGoalGrid();
       renderStats();
@@ -197,14 +201,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     count.textContent = `${myDonations.length} transaction${myDonations.length === 1 ? '' : 's'}`;
 
-    if (myDonations.length === 0) {
+    if (allMine.length === 0) {
       tbody.innerHTML = '';
       empty.classList.remove('hidden');
       return;
     }
     empty.classList.add('hidden');
 
-    const sorted = myDonations.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = allMine.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
 
     tbody.innerHTML = sorted.map(d => `
       <tr>
@@ -212,9 +216,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="donation-amount">${formatPeso(d.amount)}</td>
         <td><span class="payment-pill">${escapeHtml(d.method)}</span></td>
         <td class="text-gray-400">${formatShortDate(d.date)}</td>
-        <td><button type="button" class="btn-download-receipt" data-id="${d.id}">
+        <td>${!isCounted(d) ? `<span class="badge badge-amber">${d.status === 'rejected' ? 'Not found' : 'Being checked'}</span>` : `<button type="button" class="btn-download-receipt" data-id="${d.id}">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>Receipt
-        </button></td>
+        </button>`}</td>
       </tr>`).join('');
   }
 
@@ -562,8 +566,8 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.setAttribute('aria-busy', 'true');
     submitBtn.textContent = 'Saving your offering…';
 
-    try {
-      const date = new Date().toLocaleDateString('en-CA');
+    const date = new Date().toLocaleDateString('en-CA');
+    const save = async (referenceNumber) => {
       const result = await client.models.Donation.create({
         donor: DONOR_NAME,
         amount,
@@ -571,8 +575,34 @@ document.addEventListener('DOMContentLoaded', () => {
         purpose: fund.name,
         date,
         anonymous: anonymousCheck.checked,
+        ...(donationFieldsReady() ? { status: 'submitted', referenceNumber } : {}),
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      if (paymentsReady() && referenceNumber) {
+        await submitPayment({ requestType: 'Donation', requestId: result.data.id, payerName: DONOR_NAME, amount, method: selectedMethod, referenceNumber });
+      }
+      return result;
+    };
+
+    /* GCash / Maya: nothing is saved until they say they've paid, so leaving
+       this screen first records nothing. */
+    if (selectedMethod === 'GCash' || selectedMethod === 'Maya') {
+      showNextSteps({ amount, fundName: fund.name, method: selectedMethod, ref: '' });
+      submitBtn.disabled = false;
+      submitBtn.removeAttribute('aria-busy');
+      submitBtn.textContent = submitLabel;
+      mountPaymentBox(nextPanel, {
+        amount, title: `Your offering to ${fund.name}`,
+        onConfirm: async ({ referenceNumber }) => {
+          await save(referenceNumber);
+          nextPanel.innerHTML = `<div class="pay-box"><p class="pay-title">Thank you!</p><p class="pay-hint">The parish office will check your payment, usually ${escapeHtml(CONFIRM_WITHIN)}. Your receipt appears in your history once it’s confirmed.</p></div>`;
+        },
+      });
+      return;
+    }
+
+    try {
+      const result = await save('');
 
       // Same reference number as the receipt download (downloadReceipt above).
       const id = result.data?.id || '';

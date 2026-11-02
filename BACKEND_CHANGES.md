@@ -179,3 +179,23 @@ Until then, the form sends `confirmWith: 'Not asked'`, keeps the answers in `mes
 **Enforce who can take a slot.** The check that only assessed servers can volunteer runs in the browser. Add a `volunteerForSlot` mutation that reads the caller's approved `ServerApplication` before creating the row, and remove owner `create` from `MinistrySignup`.
 
 **Known weakness:** `MinistrySignup` allows any signed-in user to `update`, so anyone can take over or edit another person's slot. That rule exists only so `takeOver` works. Replace it with a `takeOverSlot` mutation that checks `swapRequested` is true and the caller is approved for that ministry, then remove `allow.authenticated().to(['read', 'update'])`'s update.
+
+## 11. Donations and Mass intentions
+
+```ts
+// Donation
+status: a.string(),            // 'submitted' | 'verified' | 'rejected'; empty = older, counts as verified
+referenceNumber: a.string(),
+
+// DonationGoal
+closedReason: a.string(),
+```
+
+Give `staff` `update` on `Donation` so the Secretary can verify payments, and remove owner `update` and `delete`, or a donor can mark their own gift verified.
+
+Change these queries to count only rows with no status or `status = 'verified'`:
+
+- `donationTotals`
+- `faithfulGivers`
+
+`communityIntentions` must skip `status = 'pending'`, so unpaid intentions aren't prayed for by name yet.

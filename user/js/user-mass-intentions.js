@@ -7,6 +7,9 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
+import { paymentsReady, submitPayment } from '../../shared/js/payments.js';
+import { mountPaymentBox } from '../../shared/js/payment-box.js';
+import { loadParishRules } from '../../shared/js/parish-rules.js';
 import { printReadersSheet } from '../../shared/js/print-report.js';
 import { loadCommunityIntentions } from '../../shared/js/public-data.js';
 import { currentUserName, currentUser } from '../../shared/js/auth.js';
@@ -41,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let myIntentions = [];
 
   const badgeClass = { scheduled: 'badge-green', completed: 'badge-blue', cancelled: 'badge-red' };
-  const statusLabel = { scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
+  const statusLabel = { pending: 'Payment being checked', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
 
   const list          = document.getElementById('intentions-list');
   const emptyState      = document.getElementById('intentions-empty');
@@ -132,21 +135,44 @@ document.addEventListener('DOMContentLoaded', () => {
      Intention). Saved like before: one MassIntention record per
      person per category, the offering split across them.
   ------------------------------------------ */
+  loadParishRules(client);
   const intentionForm = createIntentionForm(document.getElementById('intention-modal'), {
     role: 'parishioner',
     intentionTypes,
     async onSubmit({ people, records, offering, massDate }) {
-      const results = await Promise.all(records.map(r => client.models.MassIntention.create({
+      const saveAll = (status) => Promise.all(records.map(r => client.models.MassIntention.create({
         donor: DONOR_NAME,
         email: currentUser()?.email || undefined, // where cancelled / offered emails go
         type: typeConfig(r.typeId).label,
         names: JSON.stringify([r.name]),
         massDate: massDate || undefined,
         offering: r.offering,
-        status: 'scheduled',
+        status,
       })));
-      const failed = results.find(r => r.errors);
-      if (failed) throw new Error(failed.errors.map(e => e.message).join('; '));
+      const failure = (results) => results.find(r => r.errors)?.errors.map(e => e.message).join('; ');
+
+      /* The amount is a commitment: it stays pending until staff verify the
+         payment. Nothing is recorded until the person says they've paid. */
+      if (paymentsReady()) {
+        const box = document.getElementById('intention-pay-body');
+        mountPaymentBox(box, {
+          amount: offering, title: 'Your Mass offering',
+          onConfirm: async ({ method, referenceNumber }) => {
+            const results = await saveAll('pending');
+            const problem = failure(results);
+            if (problem) throw new Error(problem);
+            const ids = results.map(r => r.data.id);
+            await submitPayment({ requestType: 'Mass Intention', requestId: ids[0], payerName: DONOR_NAME, amount: offering, method, referenceNumber, note: ids.join(',') });
+            hideModal(document.getElementById('intention-pay-modal'));
+            window.showToast('Thank you. The parish office will check your payment, then schedule your intention.');
+          },
+        });
+        showModal(document.getElementById('intention-pay-modal'));
+        return;
+      }
+
+      const problem = failure(await saveAll('scheduled'));
+      if (problem) throw new Error(problem);
       window.showToast(`Mass intention submitted — ${people.length} ${people.length === 1 ? 'person' : 'people'}, ${formatPeso(offering)}.`);
     },
   });

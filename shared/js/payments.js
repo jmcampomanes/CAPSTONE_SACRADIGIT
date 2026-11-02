@@ -20,11 +20,21 @@
    ============================================ */
 
 import { client } from './amplify-init.js';
+import outputs from '../../amplify_outputs.json';
 
 export const PAYMENT_METHODS = ['GCash', 'Maya', 'Cash', 'Bank Transfer'];
 export const PAYMENT_STATUS_LABELS = { submitted: 'Waiting for check', verified: 'Verified', rejected: 'Rejected' };
 
 export const paymentsReady = () => !!client.models.PaymentRecord;
+
+const fieldsOf = (model) => outputs.data?.model_introspection?.models?.[model]?.fields || {};
+/** Donation.status and referenceNumber, and DonationGoal.closedReason (BACKEND_CHANGES.md).
+    Sending a field the model lacks fails the whole save. */
+export const donationFieldsReady = () => !!fieldsOf('Donation').status;
+export const goalFieldsReady = () => !!fieldsOf('DonationGoal').closedReason;
+
+/** Older donations have no status and count as received. */
+export const isCounted = (donation) => !donation.status || donation.status === 'verified';
 
 const errorsOf = (res) => (res.errors?.length ? new Error(res.errors.map(e => e.message).join('; ')) : null);
 

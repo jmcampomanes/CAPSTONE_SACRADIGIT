@@ -24,6 +24,7 @@ import {
   setServerRole, todayIso, addMonthsIso, longDate,
 } from '../../shared/js/parish-servers.js';
 import { ASSESSMENTS, parseConditions } from '../../shared/js/parish-servers.js';
+import { openDialog } from '../../shared/js/staff-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
@@ -134,8 +135,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function approve(a) {
     const until = addMonthsIso(todayIso(), APPROVAL_MONTHS);
-    const outcome = document.getElementById('ps-outcome')?.value || ASSESSMENTS[0];
-    const note = document.getElementById('ps-outcome-note')?.value.trim() || '';
+    const outcome = await openDialog({
+      title: 'Assess this application',
+      detail: summary(a),
+      select: { label: 'Outcome', options: ASSESSMENTS.map(v => ({ value: v, label: v })), value: ASSESSMENTS[0] },
+      confirmLabel: 'Next',
+    });
+    if (!outcome) return;
+    const note = await openDialog({ title: `${outcome}: add a note?`, input: { label: 'Note (optional)', required: false }, confirmLabel: 'Next' });
+    if (note === null) return;
     const ok = await confirmDialog({
       title: `${outcome}: Parish Server?`,
       message: `Check their answers first. They’ll be a verified Parish Server until ${longDate(until)}, and parish rooms booked for their ministry have no fee.`,

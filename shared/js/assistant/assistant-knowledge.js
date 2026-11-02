@@ -122,7 +122,7 @@ export const CERTIFICATES = {
 };
 
 /** Minimum Mass intention offering — one offering covers the whole intention, however many names.
-    Same as MIN_INTENTION_OFFERING in mass-intention-form.js. */
+    Same as massIntentionMin in parish-rules.js. */
 export const OFFERING_PER_INTENTION = 50;
 
 /** Filipino names for the services in service-catalog.js. */
