@@ -21,7 +21,7 @@
 import { client } from '../../shared/js/amplify-init.js';
 import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl, canReschedule, isPastSchedule } from '../../shared/js/service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
-import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithChecklistItem, detailsWithUploadReview, uploadsOf } from '../../shared/js/sacrament-prep.js';
+import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithChecklistItem, detailsWithUploadReview, uploadsOf, PRIEST_KEY } from '../../shared/js/sacrament-prep.js';
 import { currentUserName } from '../../shared/js/auth.js';
 import { logActivity } from '../../shared/js/activity-log.js';
 import { showToast, reportEmail } from './admin-ui.js';
@@ -634,6 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderViewChecklist(o);
     bannsPanel.render(o);
     approval.mount(document.getElementById('view-approval'), o);
+    document.getElementById('view-priest').value = details[PRIEST_KEY] || '';
     viewRescheduleBtn.classList.toggle('hidden', !isReschedulable(o));
     viewCancelBookingBtn.classList.toggle('hidden', !isOpenBooking(o));
 
@@ -668,6 +669,21 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   initPublicBaptismPanel({ showToast, getRecords: () => offers });
+
+  document.getElementById('view-priest-save').addEventListener('click', async () => {
+    const o = offers.find(x => x.id === viewTargetId);
+    if (!o) return;
+    try {
+      const priest = document.getElementById('view-priest').value.trim();
+      const result = await client.models.Blessing.update({ id: o.id, details: JSON.stringify({ ...parseDetails(o), [PRIEST_KEY]: priest }) });
+      if (result.errors) throw new Error(result.errors.map(er => er.message).join('; '));
+      Object.assign(o, result.data || {});
+      showToast(priest ? `${priest} assigned.` : 'Priest removed.');
+    } catch (err) {
+      console.error('Failed to save the priest:', err);
+      showToast(err.message || "Couldn't save the priest.", true);
+    }
+  });
 
   const approval = initRequestApproval({ showToast, onChange: (o) => openViewModal(o.id) });
 

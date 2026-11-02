@@ -21,6 +21,7 @@ import { AGE_DOCS_KEY } from './wedding-rules.js';
 
 export const CHECKLIST_KEY = 'Preparation Checklist';
 export const UPLOADS_KEY = 'Uploaded Requirements';
+export const PRIEST_KEY = 'Assigned Priest';
 
 /* Things that can't be sent as a file: seminars, interviews, payments, and the
    items the parish must see in person. Everything else may be uploaded. */

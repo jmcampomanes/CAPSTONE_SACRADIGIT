@@ -81,3 +81,23 @@
 :root[data-theme="dark"] .prep-before { background: #1a2131; border-color: #2c3548; }
 :root[data-theme="dark"] .prep-before summary { color: #f3f4f6; }
 :root[data-theme="dark"] .prep-before li { color: #cfd4de; }
+
+/* Statistics chart: one series, so one color and no legend; the table below it is the text view. */
+.st-chart { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0.25rem; height: 13rem; border-bottom: 1px solid #e5e7eb; }
+.st-col { position: relative; display: grid; grid-template-rows: 1.25rem 1fr 1.25rem; justify-items: center; min-width: 0; padding: 0; background: none; border: 0; border-radius: 0.375rem; cursor: pointer; }
+.st-col:hover, .st-col:focus-visible { background: #f3f4f8; outline: none; }
+.st-bar { align-self: end; grid-row: 2; width: 60%; max-width: 1.75rem; min-height: 0; border-radius: 4px 4px 0 0; background: #8b8fc7; }
+.st-col.is-current .st-bar { background: #5b5fa8; }
+.st-value { grid-row: 1; font-size: 0.6875rem; font-weight: 600; color: #374151; }
+.st-label { grid-row: 3; font-size: 0.6875rem; color: #6b7280; }
+.st-col:hover::after, .st-col:focus-visible::after {
+  content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; z-index: 5; transform: translateX(-50%);
+  padding: 0.25rem 0.5rem; border-radius: 0.375rem; background: #1e2a4a; color: #fff; font-size: 0.6875rem; white-space: nowrap; pointer-events: none;
+}
+:root[data-theme="dark"] .st-chart { border-color: #2c3548; }
+:root[data-theme="dark"] .st-col:hover, :root[data-theme="dark"] .st-col:focus-visible { background: #232c40; }
+:root[data-theme="dark"] .st-bar { background: #6f73b5; }
+:root[data-theme="dark"] .st-col.is-current .st-bar { background: #b4b7e6; }
+:root[data-theme="dark"] .st-value { color: #e5e7eb; }
+:root[data-theme="dark"] .st-label { color: #b6bdca; }
+@media (max-width: 480px) { .st-label { font-size: 0.5625rem; } }

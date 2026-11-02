@@ -25,13 +25,16 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
-import { isHeadAdmin } from '../../shared/js/auth.js';
+import { isHeadAdmin, currentUser, currentUserName } from '../../shared/js/auth.js';
 import { createTimePicker, displayTime } from '../../shared/js/time-picker.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { showToast, confirmDialog } from './admin-ui.js';
 import { isBanns } from '../../shared/js/banns.js';
 import { isPublicBaptism } from '../../shared/js/public-baptism.js';
 import { CALL_FOR_HELP } from '../../shared/js/call-for-help.js';
+import { reviewOf, canReview, authorStamp, mediaWithReview } from '../../shared/js/announcement-review.js';
+import { logActivity } from '../../shared/js/activity-log.js';
+import { reasonDialog } from '../../shared/js/staff-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -353,7 +356,13 @@ document.addEventListener('DOMContentLoaded', () => {
       // announcements stay Head Admin only.
       const isPost = parseMediaField(a.media).kind === 'post';
       const adminOnly = isPost ? '' : ' head-admin-only';
-      const statusActions = a.published
+      const review = reviewOf(a);
+      // Never reviewed means it can't go out from here: it has to be sent for review first.
+      const statusActions = canReview(currentUser(), a)
+        ? `<button type="button" class="post-icon-btn ann-approve" data-id="${a.id}" title="Approve and publish"><span>Approve</span></button>
+           <button type="button" class="post-icon-btn ann-return" data-id="${a.id}" title="Return with a note"><span>Return</span></button>`
+        : !a.published && review?.status !== 'approved' ? ''
+        : a.published
         ? `<button type="button" class="post-icon-btn ann-unpublish${adminOnly}" data-id="${a.id}" title="Unpublish">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/></svg>
             <span>Unpublish</span>
@@ -367,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const media = resolvedMedia[i];
       const cover = media[0];
       const status = getPostStatus(a);
+      const reviewTag = review?.status === 'for-review' ? '<span class="badge badge-amber">For review</span>' : review?.status === 'returned' ? `<span class="badge badge-red" title="${escapeHtml(review.note)}">Returned: ${escapeHtml(review.note)}</span>` : '';
 
       const coverHtml = cover
         ? (cover.type === 'video'
@@ -379,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : activeTab === 'draft'
         ? (status === 'scheduled'
             ? `<span class="post-status-badge scheduled">Scheduled</span>`
-            : `<span class="post-status-badge draft">Draft</span>`)
+            : reviewTag || `<span class="post-status-badge draft">Draft</span>`)
         : `<span class="post-status-badge live">Live</span>`;
 
       let metaDateText;
@@ -430,6 +440,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteBtn      = e.target.closest('.ann-delete');
 
     if (editBtn) { openEditModal(editBtn.dataset.id); return; }
+
+    const approveBtn = e.target.closest('.ann-approve');
+    const returnBtn = e.target.closest('.ann-return');
+    if (approveBtn || returnBtn) {
+      const a = announcements.find(x => x.id === (approveBtn || returnBtn).dataset.id);
+      if (!a || !canReview(currentUser(), a)) return;
+      const stamp = { reviewedBy: currentUserName() || 'Staff', reviewedAt: new Date().toISOString() };
+      try {
+        if (approveBtn) {
+          const res = await client.models.Announcement.update({ id: a.id, published: true, media: mediaWithReview(a, { ...stamp, status: 'approved' }) });
+          if (res.errors) throw new Error(res.errors.map(er => er.message).join('; '));
+          showToast(`"${a.title}" approved and published.`);
+        } else {
+          const note = await reasonDialog({ title: 'Return this post?', message: 'The author will see your note and can fix it.', detail: a.title, input: { label: 'What needs fixing?' }, confirmLabel: 'Return' });
+          if (!note) return;
+          const res = await client.models.Announcement.update({ id: a.id, media: mediaWithReview(a, { ...stamp, status: 'returned', note }) });
+          if (res.errors) throw new Error(res.errors.map(er => er.message).join('; '));
+          showToast(`"${a.title}" returned.`);
+        }
+      } catch (err) {
+        console.error('Review failed:', err);
+        showToast(err.message || "Couldn't save the review.", true);
+      }
+      return;
+    }
 
     if (deleteBtn && !isHeadAdmin()) return;
     if ((unpublishBtn || republishBtn) && !isHeadAdmin()) {
@@ -634,6 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
       openUnpublishModal(detailAnnId);
       return;
     }
+    if (reviewOf(a)?.status !== 'approved') { showToast('Send this for review first.', true); return; }
     try {
       const result = await client.models.Announcement.update({ id: detailAnnId, published: true });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
@@ -729,9 +765,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const ANNOUNCEMENT_HINT = durationHint.textContent;
 
   const currentKind = () => kindRadios.find(r => r.checked)?.value || 'announcement';
+  const isMediaAuthor = () => !isHeadAdmin() && currentUser()?.role === 'media';
 
-  /* Posts: no End Date (they archive themselves), and "Post Now" instead
-     of the Head Admin's "Publish Now". */
+  /* Posts: no End Date (they archive themselves). Everything goes to a
+     second person for review (announcement-review.js). */
   function applyKindUI(kind, { editing = false } = {}) {
     kindRadios.forEach(r => { r.checked = r.value === kind; });
     const isPost = kind === 'post';
@@ -739,15 +776,14 @@ document.addEventListener('DOMContentLoaded', () => {
     durationHint.textContent = isPost
       ? `Goes live on the Start Date and disappears from the parishioner feed ${POST_LIFETIME_DAYS} days later.`
       : ANNOUNCEMENT_HINT;
-    submitBtn.classList.toggle('hidden', isPost);
-    postNowBtn.classList.toggle('hidden', !isPost);
-    postNowBtn.textContent = editing ? 'Save Changes' : 'Post Now';
+    const live = editing && announcements.find(a => a.id === editTargetId)?.published;
+    submitBtn.classList.add('hidden');
+    postNowBtn.classList.remove('hidden');
+    postNowBtn.textContent = live ? 'Save Changes' : 'Send for Review';
+    document.getElementById('announcement-emergency')?.classList.toggle('hidden', !isHeadAdmin() || live);
     // The Secretary can't publish official announcements: say so here, and make
     // the draft button her main action, instead of refusing after she's written it.
-    const needsReview = !isPost && !isHeadAdmin();
-    draftBtn.textContent = needsReview ? 'Send to Head Admin for review' : 'Save as Draft';
-    draftBtn.classList.toggle('btn-lavender', needsReview);
-    draftBtn.classList.toggle('btn-secondary', !needsReview);
+    const needsReview = true;
     let note = document.getElementById('ann-review-note');
     if (!note) {
       note = document.createElement('p');
@@ -755,12 +791,20 @@ document.addEventListener('DOMContentLoaded', () => {
       note.className = 'ann-review-note';
       draftBtn.closest('.ann-editor-footer').before(note);
     }
-    note.textContent = 'Saved as a draft. The Head Admin reviews official announcements and publishes them.';
+    note.textContent = isMediaAuthor() ? 'The Head Admin reviews your post before it goes out.' : 'The Media team reviews this before it goes out.';
     note.classList.toggle('hidden', !needsReview);
     modalTitle.textContent = `${editing ? 'Edit' : 'New'} ${isPost ? 'Post / Update' : kind === CALL_FOR_HELP ? 'Call for Help' : 'Announcement'}`;
   }
   kindRadios.forEach(r => r.addEventListener('change', () => applyKindUI(currentKind(), { editing: editTargetId !== null })));
   postNowBtn.addEventListener('click', () => saveAnnouncement(true));
+  document.getElementById('announcement-emergency')?.addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: 'Publish without a second reviewer?',
+      message: 'Use this only for a real emergency. It will be recorded in the Activity Log.',
+      confirmLabel: 'Publish Now', tone: 'danger',
+    });
+    if (ok) saveAnnouncement(true, { emergency: true });
+  });
 
   const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toLocaleDateString('en-CA'); };
 
@@ -960,17 +1004,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return uploaded;
   }
 
-  /* Publish Now / Save Changes always save with published: true.
-     Save as Draft always forces published: false — that's what puts
-     (or keeps) a post in the Draft tab. Scheduling a post is just
-     Publish Now with a future Start Date: the post is published, but
-     getPostStatus() reports it as "scheduled" (shown in Draft) until
-     that date arrives, then it moves to Active on its own. */
-  async function saveAnnouncement(publishedFlag) {
+  /* Send for Review saves a post unpublished, waiting for a second person
+     (announcement-review.js). Save as Draft keeps it unpublished with no
+     review. Editing a live post keeps it live. A Head Admin emergency
+     publishes straight away and is logged. A post approved with a future
+     Start Date shows as Scheduled until that date, then goes Active. */
+  async function saveAnnouncement(publishedFlag, { emergency = false } = {}) {
     const kind = currentKind();
-    // Official announcements: a Secretary/Media saves drafts, the Head Admin
-    // publishes. Posts / Updates: anyone on staff can post them.
-    if (kind === 'announcement' && publishedFlag && !isHeadAdmin()) { showToast('Only the Head Admin can publish. Save it as a draft instead.', true); return; }
     const title    = titleInput.value.trim();
     const body      = bodyInput.value.trim();
     const audience   = audienceSelect.value;
@@ -1009,25 +1049,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const items = await uploadPendingMedia(currentMedia);
-      const media = JSON.stringify({ items, kind, eventDate, eventTime, location, startDate, endDate });
+      const existing = announcements.find(a => a.id === editTargetId);
+      const live = !!existing?.published;
+      // Sending for review, a Head Admin emergency, or leaving the old review as it was.
+      const stamp = authorStamp(currentUser());
+      const review = emergency ? { ...stamp, status: 'approved', fastTrack: true, reviewedBy: currentUserName(), reviewedAt: new Date().toISOString() }
+        : publishedFlag && !live ? stamp
+        : reviewOf(existing) || undefined;
+      const media = JSON.stringify({ items, kind, eventDate, eventTime, location, startDate, endDate, ...(review ? { review } : {}) });
+      const willPublish = emergency || live;
 
       if (editTargetId !== null) {
         // "Save Changes" leaves whatever publish state the post
         // already had untouched (that's what the separate Unpublish/
         // Republish action on the card is for) — only "Save as Draft"
         // forces it back to a draft.
-        const payload = { id: editTargetId, title, body, audience, media };
-        if (!publishedFlag) payload.published = false;
+        const payload = { id: editTargetId, title, body, audience, media, published: publishedFlag && willPublish };
         const result = await client.models.Announcement.update(payload);
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(publishedFlag ? `"${title}" updated.` : `"${title}" saved as draft${kind === 'announcement' && !isHeadAdmin() ? ' — the Head Admin will review it' : ''}.`);
+        showToast(emergency ? `"${title}" published.` : !publishedFlag ? `"${title}" saved as draft.` : live ? `"${title}" updated.` : `"${title}" sent for review.`);
       } else {
-        const result = await client.models.Announcement.create({ title, body, audience, media, published: publishedFlag });
+        const result = await client.models.Announcement.create({ title, body, audience, media, published: emergency });
         if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-        showToast(publishedFlag
-          ? (startDate > todayIso() ? `"${title}" scheduled for ${formatPlainDate(startDate)}.` : `"${title}" published.`)
-          : `"${title}" saved as draft${kind === 'announcement' && !isHeadAdmin() ? ' — the Head Admin will review it' : ''}.`);
+        showToast(emergency ? `"${title}" published.` : publishedFlag ? `"${title}" sent for review.` : `"${title}" saved as draft.`);
       }
+      if (emergency) logActivity('Approve', `Emergency publish, no second reviewer: ${title}`, { targetType: 'Announcement' });
       leaveEditor({ force: true });
     } catch (err) {
       console.error('Failed to save announcement:', err);

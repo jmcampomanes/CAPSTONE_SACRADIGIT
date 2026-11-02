@@ -271,7 +271,7 @@
                 <div class="ann-kind-switch" role="radiogroup" aria-label="Type">
                   <label class="ann-kind-option">
                     <input type="radio" name="ann-kind" value="announcement" checked />
-                    <span><b>Announcement</b><small>Official parish notice. The Head Admin publishes it.</small></span>
+                    <span><b>Announcement</b><small>Official parish notice. A second person reviews it first.</small></span>
                   </label>
                   <label class="ann-kind-option">
                     <input type="radio" name="ann-kind" value="call-for-help" />
@@ -279,7 +279,7 @@
                   </label>
                   <label class="ann-kind-option">
                     <input type="radio" name="ann-kind" value="post" />
-                    <span><b>Post / Update</b><small>Quick, casual update. Goes live right away and disappears after 14 days.</small></span>
+                    <span><b>Post / Update</b><small>Quick, casual update. A second person reviews it, and it disappears after 14 days.</small></span>
                   </label>
                 </div>
               </div>
@@ -354,6 +354,7 @@
           <div class="ann-editor-footer">
             <button type="button" id="ann-editor-cancel" class="btn-secondary">Cancel</button>
             <button type="button" id="announcement-save-draft" class="btn-secondary">Save as Draft</button>
+            <button type="button" id="announcement-emergency" class="btn-danger-outline hidden">Emergency Publish</button>
             <button type="button" id="announcement-post-now" class="btn-lavender hidden">Post Now</button>
             <button type="button" id="announcement-submit" class="btn-lavender head-admin-only">Publish Now</button>
           </div>

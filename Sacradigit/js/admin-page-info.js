@@ -9,6 +9,10 @@
 import { mountPageInfo as mount } from '../../shared/js/page-info.js';
 
 const PAGE_INFO = {
+  'statistics.html': {
+    title: 'What’s on this page?',
+    text: 'How many events the parish held each month, with their dates and priests. Press a month to see its events.',
+  },
   'payment-reports.html': {
     title: 'What’s on this page?',
     text: 'Every payment recorded, by request, method, status and date. Only verified payments count as received.',

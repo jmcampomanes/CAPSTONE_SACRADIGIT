@@ -199,3 +199,34 @@ Change these queries to count only rows with no status or `status = 'verified'`:
 - `faithfulGivers`
 
 `communityIntentions` must skip `status = 'pending'`, so unpaid intentions aren't prayed for by name yet.
+
+## 12. verifyRecord
+
+Lets a parishioner find their own record without being able to read `ParishRecord`.
+
+```ts
+verifyRecord: a.query()
+  .arguments({
+    certificateType: a.string().required(),
+    fullName: a.string(), birthdate: a.date(),
+    groomName: a.string(), brideName: a.string(),
+    eventDate: a.date().required(),
+  })
+  .returns(a.json())
+  .authorization((allow) => [allow.authenticated()])
+  .handler(a.handler.function(verifyRecordFn)),
+```
+
+The Lambda must:
+
+1. Compare every field, ignoring case and extra spaces. Partial matches return `{ match: false }`, with no hint about which field was wrong.
+2. Check the birthdate against the record. **`ParishRecord` has no birthdate field today**, so add `birthdate: a.date()` and backfill it, or read it from the record's scanned details.
+3. On a match, return only `{ match: true, recordId, fullName, dateOfEvent, officiant }`.
+4. Limit each account to 10 checks an hour, to stop guessing.
+5. Log every check, matched or not, to `AccessLog`.
+
+Until this is deployed, the request pages show the normal form.
+
+## 13. Announcement review
+
+Section 5's `publishAnnouncement` mutation must read `media.review` and refuse when the caller wrote the post, or isn't the right reviewer (Media for posts by staff, Head Admin for posts by Media). Only the Head Admin may set `fastTrack`. Until then, the rule runs only in the browser.

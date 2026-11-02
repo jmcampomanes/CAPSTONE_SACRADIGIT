@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 47 stylesheets.
+   Built by tools/build-dark-theme.mjs from 55 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -66,7 +66,7 @@
 :root[data-theme="dark"] ::-webkit-scrollbar-track { background: #121827; }
 :root[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #3a4459; border-radius: 999px; }
 
-/*  from service-schedule.css  */
+/*  from shared/css/service-schedule.css  */
 :root[data-theme="dark"] .slot-picker {
     border: 1px solid #2c3548;
     background: #1a2131
@@ -245,6 +245,15 @@
     background-color: #1a2131;
     border-top: 1px solid #2c3548
 }
+:root[data-theme="dark"] .svc-screen .pin-map-field {
+    border-top: 1px solid #434956
+}
+:root[data-theme="dark"] .pin-map-why {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .pin-map-why {
+    color: #8b93a3
+}
 :root[data-theme="dark"] .reschedule-reason {
     border-top: 1px solid #454954
 }
@@ -293,7 +302,113 @@
 :root[data-theme="dark"] .prep-item.missing .prep-mark {
     color: #ee8c8c
 }
-/*  from marriage-request-form.css  */
+:root[data-theme="dark"] .svc-field-note {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .svc-category-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .svc-category-desc {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .svc-type-card {
+    background: linear-gradient(180deg, #1a2131 0%, #121827 100%);
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .svc-type-card:hover .svc-type-cta {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .svc-type-name {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .svc-type-desc {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .svc-type-foot {
+    border-top: 1px solid #434956
+}
+:root[data-theme="dark"] .svc-type-sched .svc-sched-times {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .svc-need-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .svc-need-btn {
+    border: 2px solid #434756;
+    background-color: #1a2131
+}
+:root[data-theme="dark"] .svc-need-btn.active {
+    background-color: #121827
+}
+:root[data-theme="dark"] .svc-need-icon {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .svc-need-label {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .svc-need-hint {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .svc-need-hint {
+    color: #8b93a3
+}
+:root[data-theme="dark"][data-theme="dark"] .svc-need-btn.active {
+    border-color: #3b3d5e
+}
+:root[data-theme="dark"] .svc-type-cta {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .bt-type,
+:root[data-theme="dark"] .bt-date {
+    border: 1px solid #2c3548;
+    background: #1a2131
+}
+:root[data-theme="dark"] .bt-type-body,
+:root[data-theme="dark"] .bt-date-body {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bt-type-head {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .bt-type-fee {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .bt-date-body strong {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .bt-date-close {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bt-date-tag {
+    background: #222635;
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .bt-empty {
+    background: #222635;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .bt-admin-date {
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .bt-admin-date.is-cancelled {
+    border-color: #6b2e2e
+}
+:root[data-theme="dark"] .bt-admin-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .bt-admin-sub {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bt-admin-warn {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .bt-admin-families {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .btn-link-sm {
+    color: #a8aad1
+}
+/*  from shared/css/marriage-request-form.css  */
 :root[data-theme="dark"] :where(.mwiz) :where(.field-na-label) {
     color: #a0a8b6
 }
@@ -352,7 +467,10 @@
     color: #a8aad1;
     border: 1px dashed #393c60
 }
-/*  from detail-table.css  */
+:root[data-theme="dark"] .mstep-count {
+    color: #a5a8d5
+}
+/*  from shared/css/detail-table.css  */
 :root[data-theme="dark"] .modal-detail-grid,
 :root[data-theme="dark"] .so-detail-grid {
     background-color: #1a2131;
@@ -394,7 +512,7 @@
     color: #a8aad1;
     background-color: #212336
 }
-/*  from mass-intention-form.css  */
+/*  from shared/css/mass-intention-form.css  */
 :root[data-theme="dark"] :where(.mi-page) :where(.offering-peso) {
     color: #a0a8b6
 }
@@ -809,6 +927,14 @@
     background-color: #242c3e;
     color: #a0a8b6
 }
+:root[data-theme="dark"] .badge-blue {
+    background-color: #18213f;
+    color: #9c96e3
+}
+:root[data-theme="dark"] .badge-red {
+    background-color: #121827;
+    color: #ee8c8c
+}
 :root[data-theme="dark"] .user-menu-dropdown {
     background: #1a2131;
     border: 1px solid #2c3548
@@ -835,13 +961,6 @@
 :root[data-theme="dark"] .user-menu-divider {
     background-color: #222735
 }
-:root[data-theme="dark"] .admin-hero-icon {
-    color: #e0cd99;
-    border: 1px solid rgba(44, 53, 72, 0.18)
-}
-:root[data-theme="dark"] .admin-hero .btn-secondary {
-    border: 1px solid rgba(44, 53, 72, 0.22)
-}
 :root[data-theme="dark"] .tp-colon {
     color: #a0a8b6
 }
@@ -855,11 +974,131 @@
 :root[data-theme="dark"] .tp-mer + .tp-mer {
     border-left: 1px solid #2c3548
 }
-/*  from Sacradigit/css/announcements.css  */
-:root[data-theme="dark"] .ann-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.18);
-    color: #e0cd99
+:root[data-theme="dark"] .toast.toast-error {
+    background-color: #121827 !important;
+    color: #eb8e8e;
+    border: 1.5px solid #6b2e2e
 }
+:root[data-theme="dark"] .toast.toast-error .toast-dismiss {
+    color: #eb8e8e
+}
+:root[data-theme="dark"] .toast.toast-error .toast-dismiss:hover {
+    background: #3f1818
+}
+:root[data-theme="dark"] .adm-dialog {
+    background: #1a2131
+}
+:root[data-theme="dark"] .adm-dialog-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .adm-dialog-msg {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .adm-dialog-detail {
+    border-left: 3px solid #454854;
+    background: #121827;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .adm-dialog-label {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .adm-dialog-err {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] :is(.records-table,
+:root[data-theme="dark"] .acct-table) :is(.row-approve,
+:root[data-theme="dark"] .row-reject,
+:root[data-theme="dark"] .row-view,
+:root[data-theme="dark"] .row-cert,
+:root[data-theme="dark"] .row-btn) {
+    background: #1a2131;
+    color: #a1b0d9;
+    border: 1.5px solid #454854
+}
+:root[data-theme="dark"] :is(.records-table,
+:root[data-theme="dark"] .acct-table) :is(.row-view,
+:root[data-theme="dark"] .row-cert):hover {
+    background: #242c3e;
+    color: #a1b0d9
+}
+:root[data-theme="dark"] :is(.records-table,
+:root[data-theme="dark"] .acct-table) .row-reject {
+    color: #ee8c8c;
+    border-color: #6b2e2e
+}
+:root[data-theme="dark"] :is(.records-table,
+:root[data-theme="dark"] .acct-table) .row-reject:hover {
+    background: #121827;
+    color: #eb8e8e
+}
+:root[data-theme="dark"] :is(body,
+:root[data-theme="dark"] #act-scope) .act-btn {
+    background: #1a2131;
+    color: #a1b0d9;
+    border: 1.5px solid #454854
+}
+:root[data-theme="dark"] :is(body,
+:root[data-theme="dark"] #act-scope) .act-btn:hover {
+    background: #242c3e;
+    color: #a1b0d9
+}
+:root[data-theme="dark"] :is(body,
+:root[data-theme="dark"] #act-scope) .act-btn.act-danger {
+    color: #ee8c8c;
+    border-color: #6b2e2e
+}
+:root[data-theme="dark"] :is(body,
+:root[data-theme="dark"] #act-scope) .act-btn.act-danger:hover {
+    background: #121827;
+    color: #eb8e8e
+}
+:root[data-theme="dark"] .req-bulk-bar .btn-secondary {
+    border: 1px solid rgba(44, 53, 72, 0.25)
+}
+:root[data-theme="dark"] .role-note {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .ann-review-note {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] body .calendar-cell-more {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .adm-dialog-choice {
+    border: 1.5px solid #2c3548;
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .adm-dialog-choice:has(input:checked) {
+    background: #121827
+}
+:root[data-theme="dark"] .adm-dialog-choice small {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .modal-overlay.adm-page {
+    background: #222635
+}
+:root[data-theme="dark"] .modal-overlay.adm-page > .modal-card {
+    background: #222635
+}
+:root[data-theme="dark"] .modal-overlay.adm-page .modal-header {
+    background: #1a2131;
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .modal-overlay.adm-page .modal-footer {
+    background: #1a2131;
+    border-top: 1px solid #2c3548
+}
+:root[data-theme="dark"] .modal-header .adm-page-back {
+    color: #a8aad1;
+    border-right: 1px solid #2c3548
+}
+:root[data-theme="dark"] .modal-header .adm-page-back:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .modal-overlay.adm-page .vd-head {
+    background: #1a2131
+}
+/*  from Sacradigit/css/announcements.css  */
 :root[data-theme="dark"] .post-card {
     border: 1px solid #434956;
     background: #1a2131
@@ -963,6 +1202,40 @@
 :root[data-theme="dark"] .ann-delete:hover {
     color: #ee8c8c
 }
+:root[data-theme="dark"] .ann-editor-back {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .ann-editor-back:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .ann-editor-header {
+    border-bottom: 1px solid #454954
+}
+:root[data-theme="dark"] .ann-editor-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .ann-editor-side {
+    border-top: 1px solid #454954;
+    background-color: #121827
+}
+:root[data-theme="dark"] .ann-editor-group-title {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .ann-editor-optional {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .ann-editor-group + .ann-editor-group {
+    border-top: 1px solid #424857
+}
+@media (min-width: 1024px) {
+    :root[data-theme="dark"] .ann-editor-side {
+        border-left: 1px solid #454954
+    }
+}
+:root[data-theme="dark"] .ann-editor-footer {
+    border-top: 1px solid #454954;
+    background-color: #1a2131
+}
 :root[data-theme="dark"] .ann-media-item {
     border: 1px solid #2c3548
 }
@@ -1032,6 +1305,166 @@
     background-color: #3f3718;
     border: 1px solid #6b5f2e
 }
+/*  from Sacradigit/css/badge-maker.css  */
+:root[data-theme="dark"] .bm-tabs {
+    background: #222735
+}
+:root[data-theme="dark"] .bm-tab {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bm-tab:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .bm-group-head {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-card {
+    background: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .bm-card.is-hidden {
+    background: #121827
+}
+:root[data-theme="dark"] .bm-card-name {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .bm-card-desc {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-chip {
+    background: #242c3e;
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bm-chip.is-auto {
+    color: #a6a9d3
+}
+:root[data-theme="dark"] .bm-chip.is-manual {
+    color: #ead18f
+}
+:root[data-theme="dark"] .bm-chip.is-off {
+    background: #121827;
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .bm-actions {
+    border-top: 1px solid #454954
+}
+:root[data-theme="dark"] .bm-note {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-empty {
+    border: 1px dashed #2c3548;
+    background: #1a2131
+}
+:root[data-theme="dark"] .bm-empty-medals .bm-medal {
+    border: 3px solid #2c3548
+}
+:root[data-theme="dark"] .bm-empty-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .bm-empty-text {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-optional {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .bm-hint {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-mode-opt {
+    border: 1.5px solid #2c3548;
+    background: #1a2131
+}
+:root[data-theme="dark"] .bm-mode-opt strong {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .bm-mode-opt small {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-rule {
+    background: #121827;
+    border: 1px solid #424857
+}
+:root[data-theme="dark"] .bm-unit {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bm-tier {
+    border: 1.5px solid #2c3548;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .bm-tier:has(input:checked) {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .bm-icon span {
+    border: 1.5px solid #2c3548;
+    color: #c4c9d3;
+    background: #1a2131
+}
+:root[data-theme="dark"] .bm-icon:hover span {
+    border-color: #3a3d5f
+}
+:root[data-theme="dark"] .bm-check {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .bm-preview {
+    background: #121827;
+    border: 1px solid #424857
+}
+:root[data-theme="dark"] .bm-preview-label {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-pv {
+    border: 1px solid #424857;
+    background: #1a2131
+}
+:root[data-theme="dark"] .bm-pv.is-earned {
+    background: linear-gradient(180deg, #121827, #1a2131)
+}
+:root[data-theme="dark"] .bm-pv.is-locked .bm-medal {
+    background: #222735;
+    color: #8b93a3
+}
+:root[data-theme="dark"] .bm-pv-name {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .bm-pv.is-locked .bm-pv-name {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bm-pv-desc {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-pv-earned {
+    color: #e7d093
+}
+:root[data-theme="dark"] .bm-pv-progress {
+    background: #222735
+}
+:root[data-theme="dark"] .bm-pv-progress-text {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .bm-mini {
+    background: #121827
+}
+:root[data-theme="dark"] .bm-people-list {
+    border: 1px solid #424857
+}
+:root[data-theme="dark"] .bm-person + .bm-person {
+    border-top: 1px solid #454954
+}
+:root[data-theme="dark"] .bm-person-name {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .bm-person-sub {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .bm-person-empty {
+    color: #8b93a3
+}
+:root[data-theme="dark"][data-theme="dark"] .bm-chip.is-manual {
+    color: #ead390
+}
+:root[data-theme="dark"][data-theme="dark"] .bm-pv-earned {
+    color: #e7d092
+}
 /*  from Sacradigit/css/blessings.css  */
 :root[data-theme="dark"] .pagination-bar {
     border-top: 1px solid #434956
@@ -1068,24 +1501,6 @@
 :root[data-theme="dark"] .request-meta {
     color: #8b93a3
 }
-:root[data-theme="dark"] .req-approve {
-    color: #8decb1
-}
-:root[data-theme="dark"] .req-approve:hover {
-    color: #8decb1
-}
-:root[data-theme="dark"] .req-decline {
-    color: #ee8c8c
-}
-:root[data-theme="dark"] .req-decline:hover {
-    color: #ee8b8b
-}
-:root[data-theme="dark"] .req-reschedule {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .req-reschedule:hover {
-    color: #a1b0d9
-}
 :root[data-theme="dark"] .completed-icon {
     background-color: #1a3d28;
     color: #8decb1
@@ -1102,12 +1517,6 @@
 }
 :root[data-theme="dark"] .completed-date {
     color: #c4c9d3
-}
-:root[data-theme="dark"] .blessing-details-btn {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .blessing-details-btn:hover {
-    color: #a1b0d9
 }
 :root[data-theme="dark"] .so-detail-grid {
     background-color: #121827
@@ -1272,6 +1681,160 @@
 :root[data-theme="dark"] .chat-unavailable strong {
     color: #eeaf8b
 }
+/*  from Sacradigit/css/columbary.css  */
+:root[data-theme="dark"] .col-stat {
+    background: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .col-stat-value {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .col-stat-value small {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .col-stat-label {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .col-stat.is-alert {
+    background: #3f3718
+}
+:root[data-theme="dark"] .col-stat.is-alert .col-stat-value {
+    color: #eeb68b
+}
+:root[data-theme="dark"] .col-tabs {
+    background: #222735
+}
+:root[data-theme="dark"] .col-tab {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .col-chip {
+    border: 1px solid #2c3548;
+    background: #1a2131;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .col-chip:hover {
+    border-color: #3a3d5f
+}
+:root[data-theme="dark"] .col-legend {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .col-note {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .col-colnum {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .col-rownum {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .col-rownum small {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .col-empty {
+    color: #a0a8b6;
+    border: 1px dashed #2c3548
+}
+:root[data-theme="dark"] .col-row {
+    border: 1px solid #2c3548;
+    background: #1a2131
+}
+:root[data-theme="dark"] .col-row:hover {
+    border-color: #3a3d5f
+}
+:root[data-theme="dark"] .col-row-code {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .col-row-main strong {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .col-row-main small {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .col-row-money {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .col-ok {
+    color: #8decb1
+}
+:root[data-theme="dark"] .col-due {
+    color: #eeb68b
+}
+:root[data-theme="dark"] .col-where {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .col-h {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .col-hint {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .col-warn {
+    background: #3f3718;
+    color: #eeb18b
+}
+:root[data-theme="dark"] .col-optional {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .col-facts dt {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .col-facts dd {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .col-account {
+    background: #121827;
+    border: 1px solid #424857;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .col-meter {
+    background: #2c3548
+}
+:root[data-theme="dark"] .col-inline-form {
+    border: 1.5px solid #3a3d5f;
+    background: #1a2131
+}
+:root[data-theme="dark"] .col-table th {
+    color: #8b93a3;
+    border-bottom: 1px solid #2c3548
+}
+:root[data-theme="dark"] .col-table td {
+    border-bottom: 1px solid #454954;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .col-x {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .col-x:hover {
+    background: #121827;
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .col-occupants strong {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .col-occupants small {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .col-setup-card {
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .col-setup-card h4 {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .col-setup-card p {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .col-price {
+    color: #c4c9d3
+}
+:root[data-theme="dark"][data-theme="dark"] .col-stat.is-alert .col-stat-value {
+    color: #eed78b
+}
+:root[data-theme="dark"][data-theme="dark"] .col-warn {
+    color: #eed78b
+}
+:root[data-theme="dark"][data-theme="dark"] .col-due {
+    color: #eed78b
+}
 /*  from Sacradigit/css/community.css  */
 :root[data-theme="dark"] .community-unavailable {
     color: #eeb18b;
@@ -1285,7 +1848,7 @@
     color: #c4c9d3
 }
 :root[data-theme="dark"] .pw-help {
-    color: #e3e6ec
+    color: #aabacf
 }
 :root[data-theme="dark"] .pw-mine-item {
     border: 1px solid #2c3548
@@ -1367,7 +1930,7 @@
     background-color: #3f3718
 }
 :root[data-theme="dark"] .min-chip {
-    color: #c4c9d3;
+    color: #b0bac9;
     background-color: #1a2131;
     border: 1px solid #2c3548
 }
@@ -1418,7 +1981,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .min-link {
-    color: #a9abd1
+    color: #a8aad1
 }
 :root[data-theme="dark"] .min-link.strong {
     color: #8decb1
@@ -1442,6 +2005,19 @@
 }
 :root[data-theme="dark"] .min-open {
     color: #eeb68b
+}
+:root[data-theme="dark"] .min-view-chip {
+    border: 1.5px solid #2c3548;
+    background: #1a2131;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .min-need {
+    background: #121827;
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .min-need.is-full {
+    background: #1a3d28;
+    color: #8decb1
 }
 /*  from Sacradigit/css/dashboard.css  */
 :root[data-theme="dark"] .list-time {
@@ -1479,6 +2055,25 @@
 :root[data-theme="dark"] .ci-shortcut-sub {
     color: #92e7b2
 }
+:root[data-theme="dark"] .needs-row {
+    border-top: 1px solid #2c3548
+}
+:root[data-theme="dark"] .needs-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .needs-sub {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .needs-empty {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .needs-more {
+    border-top: 1px solid #2c3548;
+    color: #9c96e3
+}
+:root[data-theme="dark"] .needs-more:hover {
+    background: #121827
+}
 /*  from Sacradigit/css/digital-archives.css  */
 :root[data-theme="dark"] .stat-icon-green {
     background-color: #1a3d28;
@@ -1487,6 +2082,11 @@
 :root[data-theme="dark"] .stat-icon-amber {
     background-color: #3f3718;
     color: #eeb68b
+}
+:root[data-theme="dark"] .btn-lavender:disabled,
+:root[data-theme="dark"] .btn-gold:disabled {
+    background-color: #2c3548;
+    color: #a0a8b6
 }
 :root[data-theme="dark"] .btn-secondary {
     background-color: #242c3e;
@@ -1896,6 +2496,9 @@
 :root[data-theme="dark"] .booking-fullscreen-heading {
     border-left: 1px solid #2c3548
 }
+:root[data-theme="dark"] .booking-policy-note {
+    color: #a8aad1
+}
 :root[data-theme="dark"] .booking-col {
     background-color: #1a2131;
     border: 1px solid #434956
@@ -1969,6 +2572,13 @@
 }
 :root[data-theme="dark"] .bktime-slot:hover:not(.booked):not(.selected) {
     background-color: #121827
+}
+:root[data-theme="dark"][data-theme="dark"] .bktime-slot.selected {
+    border-color: #3b3d5e
+}
+:root[data-theme="dark"][data-theme="dark"] .bktime-slot.selected .bktime-slot-label,
+:root[data-theme="dark"][data-theme="dark"] .bktime-slot.selected .bktime-slot-status {
+    color: #a5b3d5
 }
 :root[data-theme="dark"] .booking-step-num {
     background-color: #242c3e;
@@ -2353,12 +2963,6 @@
     color: #ee8c8c;
     background-color: #121827
 }
-:root[data-theme="dark"] .schedule-details-btn {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .schedule-details-btn:hover {
-    color: #a1b0d9
-}
 :root[data-theme="dark"] .so-detail-grid {
     background-color: #121827
 }
@@ -2367,6 +2971,149 @@
 }
 :root[data-theme="dark"] .so-detail-value {
     color: #a3b3d7
+}
+:root[data-theme="dark"] .name-chip {
+    color: #a9abd1
+}
+:root[data-theme="dark"] .name-chip-remove {
+    color: #a9abd1
+}
+:root[data-theme="dark"] .name-chip.is-conflict {
+    background-color: #121827;
+    color: #ee8c8c;
+    border-color: #6b2e2e
+}
+:root[data-theme="dark"] .name-chip.is-conflict .name-chip-remove {
+    background: #3f1818;
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .quick-times-label {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .quick-time {
+    border: 1.5px solid #393c60;
+    background: #1a2131;
+    color: #a9abd1
+}
+:root[data-theme="dark"] .quick-time:disabled {
+    background: #242c3e;
+    border-color: #2c3548;
+    color: #8b93a3
+}
+:root[data-theme="dark"] .pagination-bar {
+    border-top: 1px solid #434956
+}
+:root[data-theme="dark"] .pagination-info {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .pagination-btn {
+    color: #c4c9d3;
+    background-color: #1a2131;
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .pagination-btn:hover:not(:disabled) {
+    background-color: #121827
+}
+:root[data-theme="dark"] .pagination-gap {
+    color: #8b93a3
+}
+/*  from Sacradigit/css/ministry-bookings.css  */
+:root[data-theme="dark"] .mb-fee {
+    color: #e7d093
+}
+:root[data-theme="dark"] .mb-sub {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mb-intro {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mb-waiting-item {
+    border-top: 1px solid #454954
+}
+:root[data-theme="dark"] .mb-person {
+    color: #aabacf
+}
+:root[data-theme="dark"] .mb-meta {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mb-rule-num {
+    color: #a5a8d5
+}
+:root[data-theme="dark"] .mb-rule-title {
+    color: #aabacf
+}
+:root[data-theme="dark"] .mb-rule-text {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .mb-check.is-verified {
+    background: #1b3c25;
+    border-color: #2e6b43
+}
+:root[data-theme="dark"] .mb-check.is-unknown {
+    background: #3f3718;
+    border-color: #6b5f2e
+}
+:root[data-theme="dark"] .mb-check-title {
+    color: #aabacf
+}
+:root[data-theme="dark"] .mb-check-text {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .mb-attest {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .mb-attest.has-error {
+    border-color: #6b2e2e;
+    background: #121827
+}
+:root[data-theme="dark"] .mb-vouch-note {
+    color: #eeb18b
+}
+:root[data-theme="dark"] .mb-banner-name {
+    color: #aabacf
+}
+:root[data-theme="dark"] .mb-banner-meta {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .mb-intro,
+:root[data-theme="dark"][data-theme="dark"] .mb-sub,
+:root[data-theme="dark"][data-theme="dark"] .mb-meta,
+:root[data-theme="dark"][data-theme="dark"] .mb-rule-text,
+:root[data-theme="dark"][data-theme="dark"] .mb-banner-meta {
+    color: #b2b9c7
+}
+:root[data-theme="dark"][data-theme="dark"] .mb-check.is-verified {
+    border-color: rgba(46, 107, 68, 0.3)
+}
+:root[data-theme="dark"][data-theme="dark"] .mb-vouch-note {
+    color: #eed78b
+}
+/*  from Sacradigit/css/parish-servers.css  */
+:root[data-theme="dark"] .ps-note {
+    background: #3f3718;
+    border: 1px solid #6b5f2e;
+    color: #eeb18b
+}
+:root[data-theme="dark"] .ps-item {
+    border-top: 1px solid #454954
+}
+:root[data-theme="dark"] .ps-name {
+    color: #aabacf
+}
+:root[data-theme="dark"] .ps-meta {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .ps-meta strong {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .ps-msg {
+    color: #c4c9d3
+}
+:root[data-theme="dark"][data-theme="dark"] .ps-note {
+    color: #eed78b
+}
+:root[data-theme="dark"][data-theme="dark"] .ps-meta {
+    color: #b2b9c7
 }
 /*  from Sacradigit/css/profile.css  */
 :root[data-theme="dark"] .avatar-lg {
@@ -2455,6 +3202,10 @@
     border: 1px solid #2c3548;
     color: #b0bac9;
     background-color: #1a2131
+}
+:root[data-theme="dark"] .profile-panel .form-input:disabled {
+    background-color: #242c3e;
+    color: #c4c9d3
 }
 /*  from Sacradigit/css/record-requests.css  */
 :root[data-theme="dark"] .row-cert {
@@ -2656,6 +3407,52 @@
     background-color: #18213f;
     color: #9c96e3
 }
+:root[data-theme="dark"] .bn-panel {
+    border: 1px solid #2c3548;
+    background: #1a2131
+}
+:root[data-theme="dark"] .bn-title {
+    color: #aabacf
+}
+:root[data-theme="dark"] .bn-pill.is-live {
+    background: #193e26;
+    color: #8decb1
+}
+:root[data-theme="dark"] .bn-pill.is-done {
+    background: #18293f;
+    color: #8ba5ee
+}
+:root[data-theme="dark"] .bn-pill.is-off {
+    background: #242c3e;
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bn-sundays li {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .bn-sundays li span {
+    background: #242c3e;
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bn-sundays li.is-done {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .bn-sundays li.is-done span {
+    background: #193e26;
+    color: #8decb1
+}
+:root[data-theme="dark"] .bn-hint {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .bn-warn {
+    background: #3f3718;
+    color: #eeb18b
+}
+:root[data-theme="dark"][data-theme="dark"] .bn-sundays li.is-done {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .bn-warn {
+    color: #eed78b
+}
 /*  from Sacradigit/css/special-schedules.css  */
 :root[data-theme="dark"] .sched-tab {
     color: #a0a8b6
@@ -2843,6 +3640,9 @@
 :root[data-theme="dark"] .ann-clear-btn:hover {
     background-color: #121827
 }
+:root[data-theme="dark"] .ann-kind-hint {
+    color: #a0a8b6
+}
 :root[data-theme="dark"] .post-card {
     border: 1px solid #434956;
     background: #1a2131
@@ -2872,20 +3672,22 @@
 :root[data-theme="dark"] .announcement-date {
     color: #8b93a3
 }
-:root[data-theme="dark"] .ann-kind-hint {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .post-card--featured {
-    border-color: #3a4360
-}
-:root[data-theme="dark"] .post-card-newest,
-:root[data-theme="dark"] .post-card-readmore {
-    color: #a9abd1
-}
 :root[data-theme="dark"] .ann-audience-tag.all {
     color: #e1cc99
 }
 :root[data-theme="dark"] .ann-audience-tag.ministry {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .post-card--featured {
+    border-color: #3c405d
+}
+:root[data-theme="dark"] .post-card-newest {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .post-card--featured .post-card-excerpt {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .post-card-readmore {
     color: #a8aad1
 }
 :root[data-theme="dark"] .post-detail-close {
@@ -2942,6 +3744,12 @@
     background-color: #39321e
 }
 /*  from user/css/user-badges.css  */
+:root[data-theme="dark"] .fj-or {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .fj-or {
+    color: #8b93a3
+}
 :root[data-theme="dark"] .fj-note {
     color: #a0a8b6;
     background-color: #121827
@@ -3001,6 +3809,9 @@
 :root[data-theme="dark"] .fj-badge-earned {
     color: #e7d093
 }
+:root[data-theme="dark"] .fj-badge-note {
+    color: #c4c9d3
+}
 :root[data-theme="dark"] .fj-progress {
     background-color: #222735
 }
@@ -3029,6 +3840,56 @@
 :root[data-theme="dark"] .fj-celebrate-text {
     color: #a0a8b6
 }
+:root[data-theme="dark"] .fj-grid-head {
+    color: #c4c9d3
+}
+/*  from user/css/user-columbary.css  */
+:root[data-theme="dark"] .ucol-intro-text p {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .ucol-fact {
+    background: #121827;
+    border: 1px solid #424857
+}
+:root[data-theme="dark"] .ucol-fact h3 {
+    color: #e7d093
+}
+:root[data-theme="dark"] .ucol-fact p {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .ucol-req {
+    border: 1px solid #424857
+}
+:root[data-theme="dark"] .ucol-req-code {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .ucol-req-main small {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .ucol-status.is-wait {
+    color: #eeb68b
+}
+:root[data-theme="dark"] .ucol-status.is-ok {
+    color: #8decb1
+}
+:root[data-theme="dark"] .ucol-status.is-no {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .ucol-pick {
+    background: #121827
+}
+:root[data-theme="dark"] .ucol-pick-where {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .ucol-pick-price {
+    color: #a3b3d7
+}
+:root[data-theme="dark"][data-theme="dark"] .ucol-fact h3 {
+    color: #e7d092
+}
+:root[data-theme="dark"][data-theme="dark"] .ucol-status.is-wait {
+    color: #eed78b
+}
 /*  from user/css/user-dashboard.css  */
 :root[data-theme="dark"] .greeting-icon {
     color: #e0cd99
@@ -3050,7 +3911,13 @@
     color: #aabacf
 }
 :root[data-theme="dark"] .mass-note {
-    color: #8b93a3
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .next-mass-note {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .next-mass-when {
+    color: #a3b3d7
 }
 :root[data-theme="dark"] .special-mass-icon {
     color: #ddcb9c
@@ -3104,6 +3971,20 @@
 }
 :root[data-theme="dark"] .ci-card-msg.ok {
     color: #8decb1
+}
+:root[data-theme="dark"] .next-up-item {
+    background: #1a2131;
+    border: 1px solid #2c3548;
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .next-up-item:hover {
+    background: #121827
+}
+:root[data-theme="dark"] .next-up-kicker {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .next-up-sub {
+    color: #c4c9d3
 }
 /*  from user/css/user-donations.css  */
 :root[data-theme="dark"] .fund-card {
@@ -3205,6 +4086,55 @@
 }
 :root[data-theme="dark"] .btn-download-receipt:hover {
     color: #a1b0d9
+}
+:root[data-theme="dark"] .mi-page .donate-fund-btn,
+:root[data-theme="dark"] .mi-page .payment-method-btn {
+    color: #aabacf
+}
+:root[data-theme="dark"] .mi-page .donate-fund-btn.selected,
+:root[data-theme="dark"] .mi-page .payment-method-btn.selected {
+    background-color: #121827;
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .donate-no-charge {
+    background-color: #18293f;
+    border: 1px solid #2e496b;
+    color: #92a8e7
+}
+:root[data-theme="dark"] .donate-next-icon {
+    background-color: #193e26;
+    color: #8decb1
+}
+:root[data-theme="dark"] .donate-next-status {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .donate-next-steps li {
+    border: 1px solid #2c3548;
+    background-color: #1a2131;
+    color: #aabacf
+}
+:root[data-theme="dark"] .donate-next-steps a,
+:root[data-theme="dark"] .donate-next-after a {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .donate-next-after {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .donate-copy {
+    border: 1px solid #3c3e5d;
+    background: #1a2131;
+    color: #a8aad1
+}
+:root[data-theme="dark"] .donate-qr {
+    border: 1px solid #2c3548;
+    background-color: #1a2131
+}
+:root[data-theme="dark"][data-theme="dark"] .mi-page :is(.donate-fund-btn,
+:root[data-theme="dark"] .payment-method-btn).selected {
+    border-color: #3b3d5e
+}
+:root[data-theme="dark"][data-theme="dark"] .donate-next-after {
+    color: #8b93a3
 }
 /*  from user/css/user-facility-booking.css  */
 :root[data-theme="dark"] .facility-card {
@@ -3324,6 +4254,9 @@
 :root[data-theme="dark"] .bkcal-hint {
     color: #8b93a3
 }
+:root[data-theme="dark"] .bkcal-rule {
+    color: #aabacf
+}
 :root[data-theme="dark"] .bkcal {
     border: 1px solid #434956;
     background-color: #121827
@@ -3381,12 +4314,19 @@
 :root[data-theme="dark"] .bktime-slot:hover:not(.booked):not(.selected) {
     background-color: #121827
 }
+:root[data-theme="dark"][data-theme="dark"] .bktime-slot.selected {
+    border-color: #3b3d5e
+}
+:root[data-theme="dark"][data-theme="dark"] .bktime-slot.selected .bktime-slot-label,
+:root[data-theme="dark"][data-theme="dark"] .bktime-slot.selected .bktime-slot-status {
+    color: #a5b3d5
+}
 :root[data-theme="dark"] .booking-step-num {
     background-color: #242c3e;
     color: #8b93a3
 }
 :root[data-theme="dark"] .booking-step-label {
-    color: #8b93a3
+    color: #a0a8b6
 }
 :root[data-theme="dark"] .booking-step-item.active .booking-step-label {
     color: #a3b3d7
@@ -3575,25 +4515,18 @@
 :root[data-theme="dark"] .btn-today:hover {
     background-color: #242c3e
 }
-:root[data-theme="dark"] .day-nav-arrow,
-:root[data-theme="dark"] .day-nav-date {
+:root[data-theme="dark"] .day-nav-arrow {
     border: 1px solid #2c3548;
-    color: #c4c9d3;
-    background-color: #1a2131
+    background-color: #1a2131;
+    color: #c4c9d3
 }
 :root[data-theme="dark"] .day-nav-arrow:hover {
     background-color: #242c3e
 }
-:root[data-theme="dark"] .day-nav-date:hover,
-:root[data-theme="dark"] .day-nav-date:focus-within {
-    border-color: #8b8fc7
-}
-:root[data-theme="dark"] .weekly-table tr.is-today td {
-    background-color: rgba(139, 143, 199, 0.16)
-}
-:root[data-theme="dark"] .today-tag {
-    background-color: #8b8fc7;
-    color: #0f1420
+:root[data-theme="dark"] .day-nav-date {
+    border: 1px solid #2c3548;
+    background-color: #1a2131;
+    color: #aabacf
 }
 :root[data-theme="dark"] .mass-time-col {
     color: #a3b3d7
@@ -3695,13 +4628,21 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .req-status-line {
-    background-color: #242c3e;
-    color: #e5e7eb
+    background-color: #121827;
+    color: #aabacf
 }
-:root[data-theme="dark"] .req-status-line.status-pending  { background-color: #3a2f15 }
-:root[data-theme="dark"] .req-status-line.status-approved { background-color: #15301f }
-:root[data-theme="dark"] .req-status-line.status-released { background-color: #1f2533 }
-:root[data-theme="dark"] .req-status-line.status-rejected { background-color: #3a1a1a }
+:root[data-theme="dark"] .req-status-line.status-pending {
+    background-color: #3f3718
+}
+:root[data-theme="dark"] .req-status-line.status-approved {
+    background-color: #1b3c25
+}
+:root[data-theme="dark"] .req-status-line.status-released {
+    background-color: #121827
+}
+:root[data-theme="dark"] .req-status-line.status-rejected {
+    background-color: #121827
+}
 :root[data-theme="dark"] .btn-view-details {
     color: #a9abd1;
     border: 1px solid #2c3548
@@ -3740,6 +4681,79 @@
 }
 :root[data-theme="dark"] .req-timeline-sub {
     color: #8b93a3
+}
+/*  from user/css/user-parish-server.css  */
+:root[data-theme="dark"] .ps-note {
+    background: #3f3718;
+    border: 1px solid #6b5f2e;
+    color: #eeb18b
+}
+:root[data-theme="dark"] .ps-status.is-ok {
+    background: #1b3c25;
+    border-color: #2e6b43
+}
+:root[data-theme="dark"] .ps-status.is-wait {
+    background: #3f3718;
+    border-color: #6b5f2e
+}
+:root[data-theme="dark"] .ps-status.is-no,
+:root[data-theme="dark"] .ps-status.is-error {
+    background: #121827;
+    border-color: #6b2e2e
+}
+:root[data-theme="dark"] .ps-status-title {
+    color: #aabacf
+}
+:root[data-theme="dark"] .ps-status-text {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .ps-hint {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .ps-attest {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .ps-attest.has-error {
+    border-color: #6b2e2e;
+    background: #121827
+}
+:root[data-theme="dark"] .ps-perk-icon {
+    color: #e7d093
+}
+:root[data-theme="dark"] .ps-perk-title {
+    color: #aabacf
+}
+:root[data-theme="dark"] .ps-perk-text {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .ps-note {
+    color: #eed78b
+}
+:root[data-theme="dark"][data-theme="dark"] .ps-status.is-ok {
+    border-color: rgba(46, 107, 68, 0.3)
+}
+:root[data-theme="dark"][data-theme="dark"] .ps-status.is-no,
+:root[data-theme="dark"][data-theme="dark"] .ps-status.is-error {
+    border-color: rgba(107, 46, 46, 0.3)
+}
+:root[data-theme="dark"][data-theme="dark"] :is(.ps-hint,
+:root[data-theme="dark"] .ps-perk-text) {
+    color: #b2b9c7
+}
+:root[data-theme="dark"] .ps-tab {
+    border: 1px solid #2c3548;
+    background: #1a2131;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .ps-conditions {
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .ps-condition {
+    color: #b0bac9
+}
+:root[data-theme="dark"][data-theme="dark"] .ps-tab.active {
+    background: #212236;
+    color: #a1b0d9
 }
 /*  from user/css/user-profile.css  */
 :root[data-theme="dark"] .avatar-lg {
@@ -3832,6 +4846,23 @@
 :root[data-theme="dark"] .form-error-msg {
     color: #ed8d8d
 }
+@media (max-width: 640px) {
+    :root[data-theme="dark"] .profile-tab {
+        border: 1px solid #2c3548;
+        background-color: #1a2131;
+        color: #aabacf
+    }
+}
+@media (max-width: 640px) {
+    :root[data-theme="dark"] .profile-tab::after {
+        color: #8b93a3
+    }
+}
+@media (max-width: 640px) {
+    :root[data-theme="dark"][data-theme="dark"] .profile-tabs .profile-tab.active::after {
+        color: #a5b3d5
+    }
+}
 /*  from user/css/user-request-certificate.css  */
 :root[data-theme="dark"] .back-btn {
     color: #a8aad1
@@ -3922,7 +4953,10 @@
     border-top: 1px solid #2c3548
 }
 :root[data-theme="dark"] .form-error-msg {
-    color: #ed8d8d
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .req-screen .pin-map-field {
+    border-top: 1px solid #434956
 }
 :root[data-theme="dark"] .info-banner-icon {
     color: #a8aad1
@@ -3933,37 +4967,28 @@
 :root[data-theme="dark"] .info-banner-text {
     color: #a9abd1
 }
-:root[data-theme="dark"] .svc-category-title {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .svc-category-desc {
-    color: #8b93a3
-}
-:root[data-theme="dark"] .svc-type-card {
-    background: linear-gradient(180deg, #1a2131 0%, #121827 100%);
-    border: 1px solid #2c3548
-}
-:root[data-theme="dark"] .svc-type-card:hover .svc-type-cta {
-    color: #a8aad1
-}
-:root[data-theme="dark"] .svc-type-name {
-    color: #a3b3d7
-}
-:root[data-theme="dark"] .svc-type-desc {
-    color: #a0a8b6
-}
-:root[data-theme="dark"] .svc-type-foot {
-    border-top: 1px solid #434956
-}
-:root[data-theme="dark"] .svc-type-cta {
-    color: #8b93a3
-}
 :root[data-theme="dark"] .svc-success .success-icon {
     color: #8febb0
 }
 :root[data-theme="dark"] .svc-success-card {
     background: #1a2131;
     border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .svc-reminder {
+    border: 1px solid #2c3548
+}
+:root[data-theme="dark"] .svc-reminder-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .svc-reminder-option {
+    border: 1.5px solid #2c3548;
+    color: #aabacf
+}
+:root[data-theme="dark"] .svc-reminder-option:has(input:checked) {
+    background: #121827
+}
+:root[data-theme="dark"] .svc-reminder-note {
+    color: #b0bac9
 }
 /*  from user/css/user-requested-services.css  */
 :root[data-theme="dark"] .stat-card {
@@ -4001,6 +5026,24 @@
 :root[data-theme="dark"] .svc-row:hover {
     border-color: #454954
 }
+:root[data-theme="dark"] .svc-row-status {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .svc-row-status.tone-pending {
+    color: #eeb68b
+}
+:root[data-theme="dark"] .svc-row-status.tone-scheduled {
+    color: #8decb1
+}
+:root[data-theme="dark"] .svc-row-status.tone-completed {
+    color: #8ba5ee
+}
+:root[data-theme="dark"] .svc-row-status.tone-declined {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .svc-row-when {
+    color: #aabacf
+}
 :root[data-theme="dark"] .svc-row-title {
     color: #a3b3d7
 }
@@ -4010,15 +5053,9 @@
 :root[data-theme="dark"] .svc-row-schedule {
     color: #a8aad1
 }
-:root[data-theme="dark"] .svc-row-status { color: #c4c9d3 }
-:root[data-theme="dark"] .svc-row-status.tone-pending   { color: #fcd34d }
-:root[data-theme="dark"] .svc-row-status.tone-scheduled { color: #6ee7a0 }
-:root[data-theme="dark"] .svc-row-status.tone-completed { color: #93c5fd }
-:root[data-theme="dark"] .svc-row-status.tone-declined  { color: #fca5a5 }
-:root[data-theme="dark"] .svc-row-when { color: #e3e6ec }
 :root[data-theme="dark"] .btn-view-details {
-    color: #a9abd1;
-    border: 1px solid #2c3548
+    color: #a8aad1;
+    border: 1px solid #3c3e5d
 }
 :root[data-theme="dark"] .btn-view-details:hover {
     color: #a1b0d9
@@ -4052,6 +5089,10 @@
 }
 :root[data-theme="dark"] .svc-filter-chip:hover {
     color: #a1b0d9
+}
+/*  from user/css/user-requirements.css  */
+:root[data-theme="dark"] .hp-btn-ghost {
+    border-color: rgba(44, 53, 72, 0.45)
 }
 /*  from user/css/user-settings.css  */
 :root[data-theme="dark"] .settings-row {
@@ -4206,6 +5247,17 @@
 :root[data-theme="dark"] .sidebar-link[data-nav="facility-booking"].active svg {
     color: #a1b0d9
 }
+:root[data-theme="dark"] .sidebar-link-logout,
+:root[data-theme="dark"] .sidebar-link-logout svg {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .sidebar-link-logout:hover {
+    background-color: #121827;
+    color: #eb8e8e
+}
+:root[data-theme="dark"] .sidebar-link-logout:hover svg {
+    color: #eb8e8e
+}
 :root[data-theme="dark"] .sidebar-link[data-nav="donations"] svg,
 :root[data-theme="dark"] .sidebar-link[data-nav="donations"]:hover svg {
     color: #8decb1
@@ -4269,6 +5321,27 @@
 :root[data-theme="dark"] .user-table tbody tr:hover {
     background-color: #121827
 }
+:root[data-theme="dark"] .request-row {
+    border-bottom: 1px solid #444a55
+}
+:root[data-theme="dark"] .request-row:hover {
+    background-color: #121827
+}
+:root[data-theme="dark"] .request-name {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .request-date {
+    color: #8b93a3
+}
+:root[data-theme="dark"] :is(.btn-gold,
+:root[data-theme="dark"] .btn-lavender,
+:root[data-theme="dark"] .btn-secondary):disabled,
+:root[data-theme="dark"] :is(.btn-gold,
+:root[data-theme="dark"] .btn-lavender,
+:root[data-theme="dark"] .btn-secondary)[aria-disabled="true"] {
+    background-color: #2c3548;
+    color: #a0a8b6
+}
 :root[data-theme="dark"] .btn-secondary {
     background-color: #242c3e;
     color: #b0bac9
@@ -4326,6 +5399,25 @@
 :root[data-theme="dark"] .modal-footer {
     border-top: 1px solid #454954
 }
+:root[data-theme="dark"] .toast.toast-error {
+    background-color: #121827;
+    color: #eb8e8e;
+    border: 1.5px solid #6b2e2e
+}
+:root[data-theme="dark"] .toast-close {
+    color: #eb8e8e
+}
+:root[data-theme="dark"] .toast-close:hover {
+    background-color: #3f1818
+}
+:root[data-theme="dark"][data-theme="dark"] :is(a,
+:root[data-theme="dark"] button,
+:root[data-theme="dark"] [role="button"],
+:root[data-theme="dark"] summary,
+:root[data-theme="dark"] input[type="checkbox"],
+:root[data-theme="dark"] input[type="radio"]):focus-visible {
+    outline-color: #393e60
+}
 :root[data-theme="dark"] .user-menu-dropdown {
     background: #1a2131;
     border: 1px solid #2c3548
@@ -4372,6 +5464,91 @@
 }
 :root[data-theme="dark"] .fjw-giver-streak {
     color: #a0a8b6
+}
+:root[data-theme="dark"] .field-msg {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .date-dd-invalid .date-dd-select:invalid,
+:root[data-theme="dark"] .date-dd-invalid .date-dd-select:has(option[value=""]:checked) {
+    background-color: #121827
+}
+:root[data-theme="dark"]:not([data-theme="dark"]) body main :is(.text-gray-400,
+:root[data-theme="dark"] .text-gray-300):not(.greeting-banner *):not(svg) {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .request-date {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .form-input::placeholder {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .sidebar-label {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .form-label {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .textsize-ask-card {
+    background: #1a2131
+}
+:root[data-theme="dark"] .textsize-ask-card .textsize-ask-sample {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .textsize-ask-card h2 {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .textsize-ask-card p {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .ci-scan-frame {
+    outline: 3px solid #2c3548
+}
+:root[data-theme="dark"] .ci-scan-type {
+    border: 1px solid rgba(44, 53, 72, 0.5)
+}
+:root[data-theme="dark"] .info-banner-icon {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .info-banner-title {
+    color: #a7aad2
+}
+:root[data-theme="dark"] .info-banner-text {
+    color: #a9abd1
+}
+:root[data-theme="dark"] .page-info-note {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .sidebar-more {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #1a2131 65%);
+    color: #a8aad1
+}
+:root[data-theme="dark"] .sidebar-more:hover {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .info-banner-toggle {
+    color: #a5a8d5
+}
+:root[data-theme="dark"] .pager {
+    background: #1a2131;
+    border: 1px solid #424857
+}
+:root[data-theme="dark"] .pager.pager-in-panel {
+    border-top: 1px solid #454954
+}
+:root[data-theme="dark"] .pager-info {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .pager-btn {
+    border: 1px solid #2c3548;
+    background: #1a2131;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .pager-btn:hover:not(:disabled):not(.is-current) {
+    border-color: #3a3d5f;
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .pager-gap {
+    color: #8b93a3
 }
 /*  from Sacraitech/css/itech-shell.css  */
 :root[data-theme="dark"] nav[aria-label="ITech navigation"] .sidebar-link:hover {
@@ -4463,7 +5640,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .panel-intro {
-    color: #a0a8b6
+    color: #c4c9d3
 }
 :root[data-theme="dark"] .acct-note {
     background: #3f3718;
@@ -4489,6 +5666,31 @@
 :root[data-theme="dark"] .acct-off {
     background: #242c3e;
     color: #a0a8b6
+}
+:root[data-theme="dark"] .acct-role {
+    background: #242c3e;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .acct-role-elevated {
+    background: #3f3718;
+    color: #eeb18b
+}
+:root[data-theme="dark"] .acct-self-note {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .acct-self-note {
+    color: #b2b9c7
+}
+:root[data-theme="dark"] .role-access-item {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .role-notes-tag {
+    background: #242c3e;
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .role-notes-warning {
+    background: #3f3718;
+    color: #eeaf8b
 }
 /*  from Sacraitech/css/itech.css  */
 :root[data-theme="dark"] .health-card {
@@ -4628,16 +5830,6 @@
 :root[data-theme="dark"] .file-name {
     color: #a3b3d7
 }
-:root[data-theme="dark"] .backup-hero-icon {
-    border: 1px solid rgba(44, 53, 72, 0.22)
-}
-:root[data-theme="dark"] .backup-hero .btn-teal {
-    background-color: #1a2131;
-    color: #8bd9ee
-}
-:root[data-theme="dark"] .backup-hero .btn-teal:hover {
-    background-color: #183d3f
-}
 :root[data-theme="dark"] .backup-warning {
     background-color: #3f3718;
     border: 1px solid #6b5f2e;
@@ -4693,11 +5885,6 @@
     color: #8b93a3
 }
 /*  from Sacraitech/css/service-schedules.css  */
-:root[data-theme="dark"] .ss-intro {
-    background: #1a2131;
-    border: 1px solid #2c3548;
-    color: #c4c9d3
-}
 :root[data-theme="dark"] .ss-category {
     color: #a0a8b6
 }
@@ -4768,6 +5955,28 @@
 :root[data-theme="dark"] .row-action-delete:hover {
     color: #c4c9d3
 }
+/*  from Sacramedia/css/livestream.css  */
+:root[data-theme="dark"] .live-strip {
+    border: 1.5px solid #2c3548;
+    background: #121827;
+    color: #b0bac9
+}
+:root[data-theme="dark"] .live-strip.is-live {
+    background: #121827;
+    border-color: #6b2e2e;
+    color: #eb8e8e
+}
+:root[data-theme="dark"] .live-strip.is-live .live-btn {
+    background: #1a2131;
+    color: #eb8e8e;
+    border: 1.5px solid #6b2e2e
+}
+:root[data-theme="dark"] .live-strip.is-live .live-btn:hover {
+    background: #3f1818
+}
+:root[data-theme="dark"] .live-preview-link {
+    color: #a5a8d5
+}
 /*  from Sacramedia/css/media-dashboard.css  */
 :root[data-theme="dark"] .quick-action {
     border: 1px solid #2c3548;
@@ -4806,6 +6015,12 @@
     border: 1.5px dashed #393c60;
     color: #a9abd1
 }
+:root[data-theme="dark"] .upload-progress-bar {
+    background: #2c3548
+}
+:root[data-theme="dark"] .upload-progress-text {
+    color: #b0bac9
+}
 /*  from Sacramedia/css/media-shell.css  */
 :root[data-theme="dark"] .sidebar-link[data-nav^="media-"] svg,
 :root[data-theme="dark"] .sidebar-link[data-nav="content-calendar"] svg,
@@ -4839,6 +6054,10 @@
 }
 :root[data-theme="dark"] .empty-state {
     color: #8b93a3
+}
+:root[data-theme="dark"] .btn-lavender:disabled {
+    background-color: #2c3548;
+    color: #a0a8b6
 }
 :root[data-theme="dark"] .btn-secondary {
     background-color: #242c3e;

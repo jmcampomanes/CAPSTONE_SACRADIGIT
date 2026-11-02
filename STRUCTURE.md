@@ -46,5 +46,12 @@ amplify_outputs.json                Amplify backend config (keep at the root)
 | Fees, parish address, map pin, time limits | `shared/js/parish-rules.js` (defaults), or Parish Rules & Fees in the admin portal |
 | Baptism and wedding rules                 | `shared/js/sacrament-rules.js` (homepage, portal and checklist read it) |
 | Public / private baptism                  | `shared/js/public-baptism.js`             |
+| Who can do what                           | `shared/js/permissions.js` (and the backend, see BACKEND_CHANGES.md) |
+| Request statuses, void, distance fee      | `shared/js/request-status.js`             |
+| Payments and the QR box                   | `shared/js/payments.js`, `shared/js/payment-box.js` |
+| Wedding age and booking rules             | `shared/js/wedding-rules.js`              |
+| Announcement review                       | `shared/js/announcement-review.js`        |
+| Consent text                              | `shared/js/consent.js`                    |
+| Backend work still to deploy              | `BACKEND_CHANGES.md`                      |
 | Sign-in, roles, redirects                 | `shared/js/auth.js`                       |
 | Dark mode                                 | run `node tools/build-dark-theme.mjs` (writes `shared/css/theme-dark.css`) |
