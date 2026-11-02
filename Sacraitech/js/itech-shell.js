@@ -43,6 +43,7 @@ export const DATA_MODULES = [
   { model: 'SpecialSchedule',       label: 'Special Schedules',        area: 'Masses' },
   { model: 'MassIntention',         label: 'Mass Intentions',          area: 'Finance' },
   { model: 'Donation',              label: 'Donations',                area: 'Finance' },
+  { model: 'PaymentRecord',         label: 'Payments',                 area: 'Finance' },
   { model: 'Announcement',          label: 'Announcements',            area: 'Communications' },
   { model: 'ContentCalendarEntry',  label: 'Content Calendar',         area: 'Media' },
   { model: 'PostTemplate',          label: 'Post Templates',           area: 'Media' },
@@ -54,6 +55,7 @@ export const DATA_MODULES = [
   { model: 'AccessLog',             label: 'Activity Logs',            area: 'System' },
   { model: 'ServiceSlot',           label: 'Service Slots',            area: 'System' },
   { model: 'ParishInfo',            label: 'Parish Contact Info',      area: 'System' },
+  { model: 'ParishSettings',        label: 'Parish Rules & Fees',      area: 'System' },
 ].filter(m => client.models[m.model]);
 
 /* ---------- Cloud storage folders ----------

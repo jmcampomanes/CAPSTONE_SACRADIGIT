@@ -17,6 +17,7 @@ import QRCode from 'qrcode';
 import { downloadDonationReceipt } from '../../shared/js/donation-receipt.js';
 import { mountPaymentBox } from '../../shared/js/payment-box.js';
 import { paymentsReady, submitPayment, donationFieldsReady, isCounted } from '../../shared/js/payments.js';
+import { hasDonationMutation, submitDonation } from '../../shared/js/secure-actions.js';
 import { currentUserName } from '../../shared/js/auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -568,6 +569,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const date = new Date().toLocaleDateString('en-CA');
     const save = async (referenceNumber) => {
+      if (hasDonationMutation()) {
+        return submitDonation({ amount, method: selectedMethod, purpose: fund.name, date, anonymous: anonymousCheck.checked, referenceNumber });
+      }
       const result = await client.models.Donation.create({
         donor: DONOR_NAME,
         amount,
@@ -578,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ...(donationFieldsReady() ? { status: 'submitted', referenceNumber } : {}),
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
-      if (paymentsReady() && referenceNumber) {
+      if (paymentsReady()) { // bank and cash gifts have no number yet, but staff still confirm them
         await submitPayment({ requestType: 'Donation', requestId: result.data.id, payerName: DONOR_NAME, amount, method: selectedMethod, referenceNumber });
       }
       return result;

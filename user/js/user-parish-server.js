@@ -19,6 +19,7 @@ import {
 } from '../../shared/js/parish-servers.js';
 import { myDetails, prefill } from '../../shared/js/profile-details.js';
 import { consentBoxHtml, recordConsent } from '../../shared/js/consent.js';
+import { submitServerApplication } from '../../shared/js/secure-actions.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const $ = (id) => document.getElementById(id);
@@ -222,7 +223,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btn = $('ps-submit');
     btn.disabled = true;
     try {
-      const { data, errors } = await client.models.ServerApplication.create({
+      const { data } = await submitServerApplication({
         applicantKey: me.sub,
         applicantName: currentUserName(),
         email: me.email || undefined,
@@ -239,7 +240,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         status: 'pending',
       });
       await recordConsent(client, me.sub, 'parish-server');
-      if (errors?.length) throw new Error(errors.map(e => e.message).join('; '));
       mine = data;
       toast(`Sent! The parish office will verify it — approval lasts ${APPROVAL_MONTHS} months.`);
       render();

@@ -954,7 +954,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const result = await client.models.Blessing.update({
         id: r.id,
-        status: 'scheduled',
+        // A request moving through approval and payment stays at its step.
+        status: paymentsReady() && isInProgress(r) ? r.status : 'scheduled',
         date: slot.date,
         time: slot.time,
         location: r.location || locationFor(r.type),

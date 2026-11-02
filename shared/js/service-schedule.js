@@ -1,6 +1,7 @@
 import { currentUserName } from './auth.js';
 import { client } from './amplify-init.js';
 import { holdsSlot } from './request-status.js';
+import { actorFields } from './activity-log.js';
 /* ============================================
    SacraDigit — Fixed Service Schedules
    Shared by user/user-request-service.js (parishioner
@@ -329,7 +330,7 @@ export async function logBookingAction(client, { action, record, reason = '', us
   const when = [record.date || record.preferredDate, record.time].filter(Boolean).join(' ');
   const fileName = `Booking: ${record.type} — ${record.requesterName}${when ? ` (${when})` : ''}${reason ? ` · ${reason}` : ''}`;
   try {
-    await client.models.AccessLog.create({ userName, fileName, action });
+    await client.models.AccessLog.create({ userName, fileName, action, ...actorFields() });
   } catch (err) {
     console.warn('Could not write audit log entry:', err);
   }

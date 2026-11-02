@@ -26,6 +26,7 @@ import { createPinMap, formatLatLng, addressFromLatLng } from '../../shared/js/p
 import { SERVICE_TYPES, needsApproval } from '../../shared/js/service-catalog.js';
 import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-number.js';
 import { loadParishRules } from '../../shared/js/parish-rules.js';
+import { createServiceRequest, changeMyRequest } from '../../shared/js/secure-actions.js';
 import { feeFor, parishRules, peso } from '../../shared/js/parish-rules.js';
 import { paymentsReady } from '../../shared/js/payments.js';
 import { cancellationTerms, distanceCharge, OFFERED_KEY, DISTANCE_KEY, DISTANCE_FEE_KEY, DISTANCE_CHECK_KEY } from '../../shared/js/request-status.js';
@@ -370,8 +371,7 @@ export function initServiceRequestPage(serviceId) {
       const { data } = await client.models.Blessing.get({ id: fieldset.dataset.booking });
       const details = data?.details ? (typeof data.details === 'string' ? JSON.parse(data.details) : data.details) : {};
       details[REMINDER_FIELD] = value;
-      const res = await client.models.Blessing.update({ id: fieldset.dataset.booking, details: JSON.stringify(details) });
-      if (res.errors?.length) throw new Error(res.errors[0].message);
+      await changeMyRequest(fieldset.dataset.booking, 'set-reminder', { reminder: value }, { details: JSON.stringify(details) });
       if (value !== 'This phone' || note.textContent === '') {
         note.textContent = value === 'No reminder' ? 'Okay — no reminder.' : `Saved. We’ll remind you by ${value === 'Email' ? 'email' : 'a notification on this phone'} the day before.`;
       }
@@ -646,7 +646,7 @@ export function initServiceRequestPage(serviceId) {
         details[UPLOADS_KEY] = uploads;
       }
 
-      const result = await client.models.Blessing.create({
+      const result = await createServiceRequest({
         requesterName: REQUESTER_NAME,
         type: svc.name,
         email: currentUser()?.email || undefined, // where approval/decline emails go
@@ -659,7 +659,6 @@ export function initServiceRequestPage(serviceId) {
         time: slot.time,
         status,
       });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       // The couple both hear about the request, whoever sent it.
       if (isWedding) {

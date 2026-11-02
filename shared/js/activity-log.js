@@ -51,6 +51,12 @@ const HAS_AUDIT_FIELDS = !!outputs.data?.model_introspection?.models?.AccessLog?
 const SNAPSHOT_LIMIT = 2000;
 const snapshot = (obj) => (obj ? JSON.stringify(obj).slice(0, SNAPSHOT_LIMIT) : undefined);
 
+/** The fields that say who wrote a log entry, for any AccessLog.create. */
+export const actorFields = () => {
+  const user = signedInStaff();
+  return HAS_AUDIT_FIELDS && user ? { actorRole: STAFF_ROLES[user.role], actorKey: user.sub } : {};
+};
+
 /** The signed-in staff member (from auth.js's cache), or null for parishioners / signed-out. */
 function signedInStaff() {
   try {
@@ -72,7 +78,7 @@ export async function logActivity(action, detail, audit = {}) {
       fileName: detail,
       action,
       ...(HAS_AUDIT_FIELDS ? {
-        actorRole: STAFF_ROLES[user.role], targetType: audit.targetType, targetId: audit.targetId,
+        ...actorFields(), targetType: audit.targetType, targetId: audit.targetId,
         before: snapshot(audit.before), after: snapshot(audit.after),
       } : {}),
     });

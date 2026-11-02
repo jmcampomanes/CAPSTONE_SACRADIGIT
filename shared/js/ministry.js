@@ -27,6 +27,7 @@
 import { client } from './amplify-init.js';
 import { parishRules } from './parish-rules.js';
 import { sendMessage, chatReady } from './chat.js';
+import { volunteerForSlot, takeOverSlot } from './secure-actions.js';
 import { mergeWeeklySchedule, recurringMassesForDate } from './weekly-mass-schedule.js';
 
 /** Ministries and how many people each Mass needs. */
@@ -146,10 +147,10 @@ function check(result) {
 
 export async function volunteer(mass, ministryId, me) {
   if (!canChangeSignup(mass.date)) throw new Error(`Sign-ups close ${parishRules().serverSignupCloseDays} days before the Mass.`);
-  return check(await client.models.MinistrySignup.create({
+  return (await volunteerForSlot({
     ministry: ministryId, massDate: mass.date, massTime: mass.time, massTitle: mass.title,
     volunteerId: me.id, volunteerName: me.name, swapRequested: false,
-  }));
+  })).data;
 }
 
 const whenText = (s) => `${fmtMassDay(s.massDate)} · ${fmtTime(s.massTime)}`;
@@ -159,7 +160,7 @@ async function reportCancellation(signup, reason, emergency, me) {
   const label = ministryById(signup.ministry)?.one || signup.ministry;
   if (chatReady()) {
     await sendMessage({
-      threadId: me.id, fromOffice: false, senderName: me.name, parishionerName: me.name,
+      threadId: me.id, fromOffice: false, senderName: me.name, parishionerName: me.name, owner: me.id,
       body: `${emergency ? 'EMERGENCY: ' : ''}I can't serve as ${label} on ${whenText(signup)}. Reason: ${reason}`,
     });
   }
@@ -205,9 +206,7 @@ export async function setSwapRequested(signup, on) {
 export async function takeOver(signup, me) {
   if (!canSwap(signup.massDate)) throw new Error('This Mass has already passed.');
   if (!signup.swapRequested) throw new Error('That slot isn’t up for a swap any more.');
-  return check(await client.models.MinistrySignup.update({
-    id: signup.id, volunteerId: me.id, volunteerName: me.name, swapRequested: false,
-  }));
+  return (await takeOverSlot(signup.id, me)).data;
 }
 
 /** Office: remove someone from the roster. */

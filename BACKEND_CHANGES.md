@@ -1,163 +1,78 @@
-# SacraDigit — Backend changes to deploy
+# SacraDigit backend prompt
 
-The `amplify/` source is not in this repository, so these changes must be made where that code lives. Deploy in the order below. The frontend already checks for each item (`client.models.X`, `client.queries.x`) and keeps working until it exists.
+Paste this whole file into Claude Code in the repository that holds `amplify/`. It is also the reference for every backend change the frontend expects.
 
-Everything here goes in `amplify/data/resource.ts` unless stated otherwise.
+---
 
-## 1. ParishSettings (Parish Rules & Fees)
+You are updating the AWS Amplify Gen 2 backend of SacraDigit, the parish management system of Our Lady of Fatima Parish. The frontend lives in another repository (branch `feature/parish-requirements`) and is already written against this spec. Implement exactly what is below, and do not rename any model, field, mutation, query or status: the frontend checks for these exact names.
 
-One record holding every setting in `shared/js/parish-rules.js`. Public read, because the homepage shows the fees.
+Read `amplify/data/resource.ts`, `amplify/auth/resource.ts`, `amplify/storage/resource.ts` and `amplify/functions/` first, and match how the existing functions (`setServerRole`, `notifyParishioner`, `takenSlots`, `donationTotals`) are built.
+
+## Rules for this work
+
+- Work on a new branch. Do not deploy to production, and do not delete or rewrite any data, unless the user says so.
+- Keep every existing field. All new fields are optional, so existing rows stay valid.
+- Do this in the two stages below, and stop after Stage A. **Stage B must wait** until the frontend has the new `amplify_outputs.json` live, or parishioners will lose the ability to save anything.
+- Run the type check and `npx ampx sandbox` validation after each stage. Report anything you could not test.
+
+## Why two stages
+
+The frontend looks at `amplify_outputs.json` to see what exists. A mutation it can't see isn't used, so it keeps writing directly to the models. Stage A adds things and changes no one's access. Stage B removes direct writes.
+
+## How the mutations reply
+
+Every custom mutation below uses this shape, like `setServerRole`:
+
+- Authorization: `allow.authenticated()`.
+- Returns `a.json()`: `{ "success": true, "data": <the saved row> }` or `{ "success": false, "error": "<a sentence for the parishioner>" }`.
+- Never trust names, status or amounts from the browser when the server can work them out. Take the caller's identity from the event.
+- Rows a Lambda creates for a parishioner must set `owner` to `<sub>::<username>`, the format Amplify writes, or the person can't read their own row.
+- Grant each function access with `allow.resource(fn)` on the schema.
+- Read parish rules from the single `ParishSettings` row, merged over these defaults: `freeCancelDays` 3, `serverSignupCloseDays` 3, `fees.massIntentionMin` 50, `fees.blessingMin` 200.
+
+---
+
+# Stage A: add, without changing access
+
+## A1. New models
 
 ```ts
 ParishSettings: a.model({
-  settings: a.json().required(),   // { address, pin, fees, paymentDeadlineDays, freeCancelDays, ... }
+  settings: a.json().required(),   // address, pin, fees, time limits, distance bands, refund terms
   updatedByName: a.string(),
 }).authorization((allow) => [
-  allow.publicApiKey().to(['read']),
+  allow.publicApiKey().to(['read']),   // the homepage shows the fees
   allow.authenticated().to(['read']),
   allow.groups(['admin']).to(['create', 'read', 'update', 'delete']),
 ]),
-```
 
-Also add `ParishSettings` writes to the Head Admin only. Until this is deployed, the published defaults are used and the Parish Rules & Fees page says saving isn't switched on.
-
-## 2. PaymentRecord
-
-Owners can create and read, but never update: this is what makes payment status trustworthy.
-
-```ts
 PaymentRecord: a.model({
-  requestType: a.string().required(),   // 'Service' | 'Mass Intention' | 'Donation'
+  requestType: a.string().required(),  // 'Service' | 'Mass Intention' | 'Donation'
   requestId: a.string().required(),
   payerName: a.string().required(),
   amount: a.float().required(),
   method: a.string(),
-  referenceNumber: a.string(),
-  status: a.string().required(),        // 'submitted' | 'verified' | 'rejected'
+  referenceNumber: a.string(),         // empty for bank and cash gifts
+  status: a.string().required(),       // 'submitted' | 'verified' | 'rejected'
   verifiedBy: a.string(),
   verifiedAt: a.datetime(),
-  note: a.string(),
+  note: a.string(),                    // for Mass intentions: the record ids, comma separated
 }).authorization((allow) => [
   allow.owner().to(['create', 'read']),
   allow.groups(['admin', 'staff']).to(['create', 'read', 'update']),
   allow.groups(['admin']).to(['delete']),
   allow.groups(['itech']).to(['read']),
 ]),
-```
 
-## 3. ConsentRecord
-
-```ts
 ConsentRecord: a.model({
-  subjectKey: a.string().required(),    // the account's sub
-  purpose: a.string().required(),       // 'sign-up' | 'parish-server' | 'profile' | 'service-request'
+  subjectKey: a.string().required(),   // the account's sub
+  purpose: a.string().required(),      // 'sign-up' | 'parish-server' | 'profile' | 'service-request'
   version: a.string().required(),
   acceptedAt: a.datetime().required(),
 }).authorization((allow) => [
   allow.owner().to(['create', 'read']),
   allow.groups(['admin']).to(['read']),
 ]),
-```
-
-## 4. Storage: private requirement uploads
-
-In `amplify/storage/resource.ts`:
-
-```ts
-'requirementUploads/{entity_id}/*': [
-  allow.entity('identity').to(['read', 'write', 'delete']),
-  allow.groups(['admin', 'staff']).to(['read', 'list']),
-],
-```
-
-Do not reuse `certificateUploads/*`: any signed-in user can read it.
-
-## 5. Role rules
-
-`shared/js/permissions.js` hides what a role can't use, but only the rules below enforce it. Keep the two the same.
-
-Tighten these existing models:
-
-| Model | Change | Why |
-|---|---|---|
-| `Blessing`, `MassIntention`, `FacilityBooking`, `CertificateRequest` | Owner may update only their own contact and note fields. Status changes go through a staff-only mutation, or a custom resolver that rejects `status` from owners. | Owners can currently set their own request to approved. |
-| `Announcement` | Add a `publishAnnouncement` mutation that checks the reviewer differs from the author. | Review before publishing can't be enforced from the browser. |
-| `ParishionerPreference` | Remove `itech` read. | The model will hold PWD and accommodation details. |
-
-## 6. AccessLog: audit fields
-
-```ts
-// add to AccessLog
-actorRole: a.string(),
-targetType: a.string(),
-targetId: a.string(),
-before: a.string(),   // JSON of the changed fields
-after: a.string(),
-```
-
-`shared/js/activity-log.js` starts sending these as soon as they appear in `amplify_outputs.json`.
-
-Also change its rules:
-
-```ts
-allow.groups(['itech', 'admin']).to(['read']),
-allow.groups(['staff']).to(['read']),   // the page shows a Secretary only their own entries
-```
-
-The second line only filters in the browser. For a real limit, add an `actorKey` field holding the signed-in sub and use an owner rule.
-
-**Known weakness:** any signed-in user, including parishioners, can currently create AccessLog rows, and the `userName` is whatever the browser sends, so entries can be forged. The fix is to remove `allow.authenticated().to(['create'])` and add a `logActivity` custom mutation whose Lambda takes the name and role from the caller's token. Updates and deletes must stay disabled for every group, so the log stays append-only.
-
-## 7. ParishionerPreference: personal details
-
-```ts
-// add to ParishionerPreference
-birthdate: a.date(),
-sex: a.string(),
-isPwd: a.boolean(),
-pwdType: a.string(),
-accommodations: a.string(),
-```
-
-These are sensitive personal information under RA 10173. Remove `itech` read from this model first (section 5). My Profile shows these fields as soon as they appear in `amplify_outputs.json`.
-
-The Honor Roll calls `ParishionerPreference.list`. It must keep working for signed-in parishioners without exposing these fields; move that read to a query returning only `parishionerKey` and `showOnHonorRoll`.
-
-## 8. Request statuses and automatic void
-
-`Blessing.status` gains: `temporary-approval`, `payment-submitted`, `void`, `cancelled`. It is a free string, so no schema change is needed, but these two functions must change.
-
-**takenSlots:** must also return rows with `temporary-approval` and `payment-submitted` so those slots stay held, and must leave out `void` and `cancelled`. It returns no `details`, so parishioners only see an expired hold as free after the job below runs.
-
-**Scheduled function:** run hourly, and for each `Blessing` with `status = 'temporary-approval'` whose `details['Temporary Approval'].deadline` is before today, set `status: 'void'`, set `declineReason`, and send the `cancelled` email.
-
-```ts
-// amplify/functions/void-unpaid/resource.ts
-export const voidUnpaid = defineFunction({ name: 'void-unpaid', schedule: 'every 1h' });
-```
-
-Until it runs, staff use Mark Void, and staff pages already treat expired holds as void.
-
-**notifyParishioner:** the frontend sends `approved` for temporary approval and confirmation, `rescheduled` for a rejected payment, and `cancelled` for void. Add the amount and deadline `detailsLines` to the email template if they aren't already shown.
-
-The deadline sits in `details`, which owners can edit. For a stricter rule, store it on a staff-only `paymentDueOn` field and have the function read that.
-
-## 9. Wedding emails
-
-The wedding form emails both people when a request is sent, using `status: 'received'`. `notifyParishioner` must:
-
-1. Accept `received` from a parishioner and word it as "We received your request."
-2. Allow `to` to be any address for that one status, and limit it to two sends per request, so the form can't be used to send mail to strangers.
-
-Until this is deployed, that first email fails quietly and the request still saves. Staff status emails already go to both people.
-
-## 10. Parish Server applications and ministry
-
-```ts
-// ServerApplication
-confirmWith: a.string(),       // was required; the form no longer asks
-conditions: a.json(),          // [{ q, a: 'yes' | 'no' }]
-isFirstTime: a.boolean(),
 
 MinistryCancellation: a.model({
   ministry: a.string().required(),
@@ -174,59 +89,166 @@ MinistryCancellation: a.model({
 ]),
 ```
 
-Until then, the form sends `confirmWith: 'Not asked'`, keeps the answers in `message`, and cancellations reach the office only through Messages.
-
-**Enforce who can take a slot.** The check that only assessed servers can volunteer runs in the browser. Add a `volunteerForSlot` mutation that reads the caller's approved `ServerApplication` before creating the row, and remove owner `create` from `MinistrySignup`.
-
-**Known weakness:** `MinistrySignup` allows any signed-in user to `update`, so anyone can take over or edit another person's slot. That rule exists only so `takeOver` works. Replace it with a `takeOverSlot` mutation that checks `swapRequested` is true and the caller is approved for that ministry, then remove `allow.authenticated().to(['read', 'update'])`'s update.
-
-## 11. Donations and Mass intentions
+## A2. New fields on existing models
 
 ```ts
+// AccessLog
+actorRole: a.string(), actorKey: a.string(),  // actorKey = the staff member's sub
+targetType: a.string(), targetId: a.string(),
+before: a.string(), after: a.string(),         // JSON
+
+// ParishionerPreference: sensitive personal information under RA 10173
+birthdate: a.date(), sex: a.string(), isPwd: a.boolean(), pwdType: a.string(), accommodations: a.string(),
+
+// ServerApplication
+conditions: a.json(),   // [{ q, a: 'yes' | 'no' }]
+isFirstTime: a.boolean(),
+// and make confirmWith optional: the form no longer asks. Older rows keep their value.
+
 // Donation
-status: a.string(),            // 'submitted' | 'verified' | 'rejected'; empty = older, counts as verified
+status: a.string(),     // 'submitted' | 'verified' | 'rejected'; empty = older, counts as verified
 referenceNumber: a.string(),
 
 // DonationGoal
 closedReason: a.string(),
+
+// ParishRecord
+birthdate: a.date(),    // used by verifyRecord
 ```
 
-Give `staff` `update` on `Donation` so the Secretary can verify payments, and remove owner `update` and `delete`, or a donor can mark their own gift verified.
+`Blessing.status` and `MassIntention.status` are free strings, so they need no schema change. They gain these values. `Blessing`: `temporary-approval`, `payment-submitted`, `void`, `cancelled`. `MassIntention`: `pending`.
 
-Change these queries to count only rows with no status or `status = 'verified'`:
+## A3. Storage
 
-- `donationTotals`
-- `faithfulGivers`
-
-`communityIntentions` must skip `status = 'pending'`, so unpaid intentions aren't prayed for by name yet.
-
-## 12. verifyRecord
-
-Lets a parishioner find their own record without being able to read `ParishRecord`.
+In `amplify/storage/resource.ts`, follow the two-path pattern `avatars/` already uses:
 
 ```ts
-verifyRecord: a.query()
-  .arguments({
-    certificateType: a.string().required(),
-    fullName: a.string(), birthdate: a.date(),
-    groomName: a.string(), brideName: a.string(),
-    eventDate: a.date().required(),
-  })
-  .returns(a.json())
-  .authorization((allow) => [allow.authenticated()])
-  .handler(a.handler.function(verifyRecordFn)),
+'requirementUploads/{entity_id}/*': [allow.entity('identity').to(['read', 'write', 'delete'])],
+'requirementUploads/*': [allow.groups(['admin', 'staff']).to(['read', 'list'])],
 ```
 
-The Lambda must:
+Do not reuse `certificateUploads/*`: any signed-in user can read it.
 
-1. Compare every field, ignoring case and extra spaces. Partial matches return `{ match: false }`, with no hint about which field was wrong.
-2. Check the birthdate against the record. **`ParishRecord` has no birthdate field today**, so add `birthdate: a.date()` and backfill it, or read it from the record's scanned details.
-3. On a match, return only `{ match: true, recordId, fullName, dateOfEvent, officiant }`.
-4. Limit each account to 10 checks an hour, to stop guessing.
-5. Log every check, matched or not, to `AccessLog`.
+## A4. Mutations
 
-Until this is deployed, the request pages show the normal form.
+**`createServiceRequest({ input: AWSJSON })`** creates a `Blessing` for the caller.
+- `input` holds `requesterName, type, email, contact, notes, details, location, preferredDate, date, time`. Ignore any `status`.
+- Always save `status: 'pending'`. The office approves everything a parishioner sends.
+- Remove `details['Temporary Approval']` if present.
+- Check the slot still has room, using the same count as `takenSlots`. For a public baptism (`details['Public Baptism Date Id']`), read that `Announcement` and check `media.baptism.capacity`, `closesOn` and that it isn't `cancelled`.
 
-## 13. Announcement review
+**`changeMyRequest({ id, action, date, time, reason, reminder })`**. The caller must own the row.
+- `cancel`: allowed for `pending`, `temporary-approval`, `payment-submitted` and `scheduled`, and only when today is at least `freeCancelDays` before the date. Set `status: 'declined'` and `declineReason: 'Cancelled by the parishioner.'`, exactly, because the frontend reads that sentence.
+- `reschedule`: keep the current status. Refuse when `details['Baptism Type']` is `Public`. Check room, set `preferredDate`, `date` and `time`, and write `reason` under `details['Reschedule Reason']` in the format of `detailsWithRescheduleReason` in the frontend's `shared/js/service-schedule.js`.
+- `set-reminder`: set `details['Day-before reminder']` to `reminder`. Change nothing else.
 
-Section 5's `publishAnnouncement` mutation must read `media.review` and refuse when the caller wrote the post, or isn't the right reviewer (Media for posts by staff, Head Admin for posts by Media). Only the Head Admin may set `fastTrack`. Until then, the rule runs only in the browser.
+**`submitServicePayment({ requestId, method, referenceNumber })`**. The caller must own the row, its status must be `temporary-approval`, and today must not be after `details['Temporary Approval'].deadline`. Take the amount from `details['Temporary Approval'].amount`, never from the browser. Create the `PaymentRecord` with `requestType: 'Service'`, `status: 'submitted'`, and set the request to `payment-submitted`. Return the updated `Blessing`.
+
+**`submitDonation({ amount, method, purpose, date, anonymous, referenceNumber })`**. Refuse a `purpose` matching a `DonationGoal` with `active: false`. Take `donor` from the account. Create the `Donation` with `status: 'submitted'`, and a `PaymentRecord` with `requestType: 'Donation'`, `requestId` set to the donation's id. `referenceNumber` may be empty for bank and cash gifts. Return the `Donation`.
+
+**`submitMassIntentions({ records: AWSJSON, amount, method, referenceNumber })`**. Each record holds `donor, email, type, names, massDate, offering`. Refuse when `amount` is below `fees.massIntentionMin`; the minimum is per intention, however many names it has. Create each row with `status: 'pending'`, then one `PaymentRecord` with `requestType: 'Mass Intention'`, `requestId` set to the first row's id, and `note` set to all the ids joined by commas.
+
+**`submitServerApplication({ input: AWSJSON })`**. Save `status: 'pending'`, set `applicantKey` to the caller's sub, and drop any `reviewedBy`, `reviewedAt`, `validUntil` and `reason` sent.
+
+**`volunteerForSlot({ ministry, massDate, massTime, massTitle, volunteerId, volunteerName, swapRequested })`**. Set `volunteerId` from the caller. Check that:
+- the caller has a `ServerApplication` with `status: 'approved'`, `validUntil` not passed, and `ministry` matching the label: `lector` is `Lectors`, `choir` is `Choir`, `altar-server` is `Altar Servers`, `usher` is `Ushers`
+- today is at least `serverSignupCloseDays` before the Mass
+- the Mass has room: lector 2, choir 6, altar-server 3, usher 4
+- the caller isn't already on that Mass in that ministry
+
+**`takeOverSlot({ id })`**. The row's `swapRequested` must be true, the Mass must not have passed, and the caller must be approved for that ministry. Set `volunteerId` and `volunteerName` to the caller and `swapRequested` to false.
+
+## A5. Queries
+
+**`verifyRecord({ certificateType, fullName, birthdate, groomName, brideName, eventDate })`**, authenticated, returns `a.json()`.
+
+- Marriage: `ParishRecord.fullName` holds `Groom Name & Bride Name`. Compare both names and `dateOfEvent`.
+- Every other type: compare `fullName`, `dateOfEvent` and `birthdate`.
+- Ignore case and extra spaces. Treat `Ma.` as `Maria` and a missing `ñ` as a match, because older entries contain these flaws.
+- Any difference, or a record with no `birthdate`, returns `{ "match": false }`, with no hint about which field failed.
+- On a match return only `{ match: true, recordId, fullName, dateOfEvent, officiant }`.
+- Limit each account to 10 checks an hour, and write every check to `AccessLog`.
+
+**Change these existing queries:**
+
+- `takenSlots`: also return rows with `temporary-approval` and `payment-submitted`. Leave out `void` and `cancelled`.
+- `donationTotals`, `faithfulGivers`: count only rows with no status or `status: 'verified'`.
+- `communityIntentions`: skip `status: 'pending'`.
+
+## A6. Scheduled function
+
+```ts
+export const voidUnpaid = defineFunction({ name: 'void-unpaid', schedule: 'every 1h' });
+```
+
+For each `Blessing` with `status: 'temporary-approval'` whose `details['Temporary Approval'].deadline` is before today in Asia/Manila: set `status: 'void'` and `declineReason: 'Payment was not received by the deadline.'`, then send the `cancelled` email.
+
+## A7. `notifyParishioner`
+
+- Accept `status: 'received'` from a parishioner, worded "We received your request." For this status only, allow `to` to be any address, and limit it to two sends per request, so the form can't mail strangers.
+- Staff already use `approved` for temporary approval and for confirmation, `rescheduled` for a rejected payment, and `cancelled` for void. Show `detailsLines` and `declineReason` in those emails, because the amount and deadline are there.
+
+**Stop here.** Report what changed. The user will copy the new `amplify_outputs.json` into the frontend repository, publish it, and tell you when to start Stage B.
+
+---
+
+# Stage B: tighten access
+
+Start only when the user confirms that the frontend is live with the Stage A `amplify_outputs.json`.
+
+## B1. Parishioners read, and the Lambdas write
+
+| Model | Remove from the owner | Owner keeps | Why |
+|---|---|---|---|
+| `Blessing` | create, update, delete | read | Owners can set their own request to approved today |
+| `Donation` | create, update, delete | read | A donor could mark their own gift verified |
+| `MassIntention` | create, update, delete | read | Same |
+| `PaymentRecord` | create | read | A payer could create a row already verified |
+| `ServerApplication` | create | read, delete (withdrawing) | An applicant could create a row already approved |
+
+Staff and admin group rules stay as they are, so walk-ins and approvals keep working. Then add:
+
+- `Donation`: add `update` for `staff`, so the Secretary can verify payments.
+
+## B2. `MinistrySignup`
+
+```ts
+allow.authenticated().to(['read']),
+allow.ownerDefinedIn('volunteerId').identityClaim('sub').to(['read', 'update', 'delete']),
+allow.groups(['admin', 'staff']).to(['create', 'read', 'update', 'delete']),
+allow.groups(['itech']).to(['read']),
+```
+
+This replaces owner `create` and the authenticated `update`. Using `volunteerId` matters: a server who took over a slot, or was assigned by the office, must still be able to cancel it.
+
+## B3. Unused owner access
+
+Remove owner `update` from `CertificateRequest` and `FacilityBooking`; the frontend only creates and deletes these. Keep the rest.
+
+## B4. `AccessLog`
+
+```ts
+allow.groups(['admin', 'staff', 'media', 'itech']).to(['create']),
+allow.groups(['admin', 'itech']).to(['read']),
+allow.ownerDefinedIn('actorKey').identityClaim('sub').to(['read']),
+```
+
+Keep it append-only: no `update` or `delete` for anyone. The last line is what limits a Secretary to their own entries. Parishioners stop being able to write to the log; the frontend logs only staff actions.
+
+## B5. `ParishionerPreference`
+
+Remove `itech` read, because the model now holds PWD and accommodation details. IT's Data Backup page doesn't use this model.
+
+---
+
+# Report when finished
+
+For each stage list what changed, what you tested, and anything skipped.
+
+# Known limits, on purpose
+
+Do not try to fix these unless asked; each would need frontend changes.
+
+- **Announcement review** runs in the browser. Banns and public baptism dates publish directly through the same `Announcement.update`, so `published` can't be locked to a mutation yet.
+- **`CertificateRequest` and `FacilityBooking`:** an owner can still create a row with any status.
+- **`AccessLog.userName`** is what the browser sends. `actorKey` is also browser-sent, so a staff member could forge an entry. A later fix is a Lambda that reads the name from the token.

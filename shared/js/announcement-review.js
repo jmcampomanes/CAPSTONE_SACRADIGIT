@@ -12,8 +12,9 @@
 
    Saved in `media` as review: { status, authorName,
    authorRole, note, reviewedBy, reviewedAt, fastTrack }.
-   This check runs in the browser; BACKEND_CHANGES.md
-   has the rule that enforces it.
+   This check runs in the browser, and banns and
+   baptism dates publish the same way (see Known limits
+   in BACKEND_CHANGES.md).
    ============================================ */
 
 const reviewerRole = (authorRole) => (authorRole === 'media' ? 'admin' : 'media');

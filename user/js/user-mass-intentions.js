@@ -9,6 +9,7 @@
 import { client } from '../../shared/js/amplify-init.js';
 import { paymentsReady, submitPayment } from '../../shared/js/payments.js';
 import { mountPaymentBox } from '../../shared/js/payment-box.js';
+import { hasIntentionMutation, submitMassIntentions } from '../../shared/js/secure-actions.js';
 import { loadParishRules } from '../../shared/js/parish-rules.js';
 import { printReadersSheet } from '../../shared/js/print-report.js';
 import { loadCommunityIntentions } from '../../shared/js/public-data.js';
@@ -158,6 +159,15 @@ document.addEventListener('DOMContentLoaded', () => {
         mountPaymentBox(box, {
           amount: offering, title: 'Your Mass offering',
           onConfirm: async ({ method, referenceNumber }) => {
+            if (hasIntentionMutation()) {
+              await submitMassIntentions(records.map(r => ({
+                donor: DONOR_NAME, email: currentUser()?.email, type: typeConfig(r.typeId).label,
+                names: JSON.stringify([r.name]), massDate, offering: r.offering,
+              })), { method, referenceNumber, amount: offering });
+              hideModal(document.getElementById('intention-pay-modal'));
+              window.showToast('Thank you. The parish office will check your payment, then schedule your intention.');
+              return;
+            }
             const results = await saveAll('pending');
             const problem = failure(results);
             if (problem) throw new Error(problem);

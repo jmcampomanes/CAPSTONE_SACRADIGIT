@@ -25,6 +25,7 @@ import { isPrepKey, checklistHtml, progressChipHtml } from '../../shared/js/sacr
 import { baptismTypeOf, serviceLabel, fmtLong } from '../../shared/js/public-baptism.js';
 import { STATUS_LABELS, liveStatus, isInProgress, tempApprovalOf, canCancelOnline } from '../../shared/js/request-status.js';
 import { paymentsReady, submitPayment } from '../../shared/js/payments.js';
+import { changeMyRequest, submitServicePayment } from '../../shared/js/secure-actions.js';
 import { mountPaymentBox } from '../../shared/js/payment-box.js';
 import { peso, loadParishRules } from '../../shared/js/parish-rules.js';
 import { currentUserName } from '../../shared/js/auth.js';
@@ -299,9 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
       mountPaymentBox(document.getElementById('modal-pay-box'), {
         amount: temp.amount,
         onConfirm: async ({ method, referenceNumber }) => {
-          await submitPayment({ requestType: 'Service', requestId: r.id, payerName: currentUserName(), amount: temp.amount, method, referenceNumber });
-          const res = await client.models.Blessing.update({ id: r.id, status: 'payment-submitted' });
-          if (res.errors) throw new Error(res.errors.map(e => e.message).join('; '));
+          const res = await submitServicePayment({ request: r, amount: temp.amount, method, referenceNumber, payerName: currentUserName(), savePayment: submitPayment });
           Object.assign(r, res.data || { status: 'payment-submitted' });
           window.showToast('Thank you. The parish office will check your payment.');
           renderPayment(r, false);
@@ -433,16 +432,15 @@ document.addEventListener('DOMContentLoaded', () => {
         reschedulePicker.refresh(latest || allBookings);
         throw new Error('Sorry, that slot was just taken. Please pick another time.');
       }
-      const result = await client.models.Blessing.update({
-        id: r.id,
-        // A blessing still waiting for approval keeps waiting — moving it mustn't skip the office.
-        status: r.status === 'pending' && needsApproval(r.type) ? 'pending' : 'scheduled',
+      // A request that's waiting, or moving through approval and payment, stays where it is.
+      const nextStatus = isInProgress(r) && (paymentsReady() || needsApproval(r.type)) ? r.status : 'scheduled';
+      await changeMyRequest(r.id, 'reschedule', { date: slot.date, time: slot.time, reason }, {
+        status: nextStatus,
         preferredDate: slot.date,
         date: slot.date,
         time: slot.time,
         details: detailsWithRescheduleReason(r.details, reason, r.requesterName || 'Parishioner'),
       });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
       closeRescheduleScreen();
       reschedulePicker = null;
       rescheduleTargetId = null;
@@ -481,12 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentDetailId) return;
     const removed = myRequests.find(x => x.id === currentDetailId);
     try {
-      const result = await client.models.Blessing.update({
-        id: currentDetailId,
-        status: 'declined',
-        declineReason: 'Cancelled by the parishioner.',
-      });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+      await changeMyRequest(currentDetailId, 'cancel', {}, { status: 'declined', declineReason: 'Cancelled by the parishioner.' });
       currentDetailId = null;
       closeModal(detailModal);
       closeModal(cancelRequestModal);

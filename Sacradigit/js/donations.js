@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
     queueEl.innerHTML = queue.map(p => `
       <div class="bt-admin-date">
         <p class="bt-admin-title">${escapeHtml(p.payerName)}: ${formatPeso(p.amount)} (${escapeHtml(p.requestType)})</p>
-        <p class="bt-admin-sub">${escapeHtml(p.method)}, transaction no. <strong>${escapeHtml(p.referenceNumber)}</strong></p>
+        <p class="bt-admin-sub">${escapeHtml(p.method)}, ${p.referenceNumber ? `transaction no. <strong>${escapeHtml(p.referenceNumber)}</strong>` : 'no transaction number: confirm with the office record'}</p>
         ${dup.has(normalizeReference(p.referenceNumber)) ? '<p class="bt-admin-warn">This transaction number was used on another payment.</p>' : ''}
         <div class="flex gap-2 mt-2">
           <button type="button" class="btn-lavender" data-pay="verified" data-id="${p.id}">Verify</button>
