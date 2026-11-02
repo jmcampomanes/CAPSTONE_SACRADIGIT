@@ -16,6 +16,7 @@ import { currentUserName, currentUser } from '../../shared/js/auth.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, formatFullName, isNameEmpty } from '../../shared/js/name-utils.js';
 import { createMarriageForm, MARRIAGE_STEPS, TODAY_ISO, MIN_DATE_ISO, isReasonableDate, guardDateInputRange } from '../../shared/js/marriage-request-form.js';
 import { createCertStepForm, hasCertStepForm } from '../../shared/js/certificate-step-forms.js';
+import { mountRecordCheck } from './certificate-verify.js';
 
 // GUARDIAN_RELATIONSHIPS, TODAY_ISO / MIN_DATE_ISO, isReasonableDate()
 // and guardDateInputRange() — the "Add Guardian" options and the date
@@ -497,4 +498,12 @@ export function initCertificateRequestPage(typeId) {
 
   // A fresh, empty copy of this same form.
   document.getElementById('btn-new-request').addEventListener('click', () => window.location.reload());
+
+  // The parish already has the details of a past event: find the record first.
+  mountRecordCheck(requestFormWrap, selectedType, () => {
+    backToMenuBtn?.classList.add('hidden');
+    successBanner.classList.remove('hidden');
+    successDesc.textContent = `Your request for a ${selectedType.name} has been submitted. You'll be notified when it's ready.`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 }
