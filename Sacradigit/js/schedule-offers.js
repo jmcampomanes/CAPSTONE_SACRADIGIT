@@ -21,12 +21,16 @@
 import { client } from '../../shared/js/amplify-init.js';
 import { logBookingAction, createReasonField, detailsWithRescheduleReason, createSlotPicker, slotHasRoom, locationFor, watchClosures, RESCHEDULE_REASON_LABEL, MAP_PIN_LABEL, googleMapsUrl, canReschedule, isPastSchedule } from '../../shared/js/service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
-import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithChecklistItem } from '../../shared/js/sacrament-prep.js';
+import { isPrepKey, hasChecklist, checklistHtml, progressChipHtml, detailsWithChecklistItem, detailsWithUploadReview, uploadsOf } from '../../shared/js/sacrament-prep.js';
 import { currentUserName } from '../../shared/js/auth.js';
 import { logActivity } from '../../shared/js/activity-log.js';
 import { showToast, reportEmail } from './admin-ui.js';
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
 import { initBannsPanel } from './banns-panel.js';
+import { initRequestApproval } from './request-approval.js';
+import { paymentsReady } from '../../shared/js/payments.js';
+import { liveStatus, isInProgress } from '../../shared/js/request-status.js';
+import { uploadedFileUrl } from '../../shared/js/requirement-uploads.js';
 import { initPublicBaptismPanel } from './public-baptism-panel.js';
 import { BAPTISM_TYPE_KEY, NOT_SPECIFIED, baptismTypeOf, serviceLabel, detailsWithBaptismType } from '../../shared/js/public-baptism.js';
 
@@ -53,18 +57,22 @@ document.addEventListener('DOMContentLoaded', () => {
     walkIn.refresh();
   });
 
-  const statusLabel = { pending: 'Scheduled', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+  // Once payments are on, 'pending' really waits for the office (request-status.js).
+  const statusLabel = {
+    pending: paymentsReady() ? 'Waiting for Approval' : 'Scheduled', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed',
+    'temporary-approval': 'Temporarily Approved', 'payment-submitted': 'Payment Submitted', cancelled: 'Cancelled', void: 'Void',
+  };
   const badgeClass = { Scheduled: 'badge-green', Cancelled: 'badge-red', Completed: 'badge-blue' };
 
   // A scheduled booking whose date has passed already happened — nothing ever
   // flips it to 'completed' in the database, so it's shown as Completed here
   // instead of sitting as "Scheduled" forever.
-  const effectiveStatus = (o) => isPastSchedule(o, todayISO) ? 'completed' : o.status;
+  const effectiveStatus = (o) => isPastSchedule(o, todayISO) ? 'completed' : liveStatus(o);
 
   // A booking the office can still cancel: scheduled and not yet past.
-  const isOpenBooking = (o) => o.status === 'pending' || (o.status === 'scheduled' && (o.date || '') >= todayISO);
+  const isOpenBooking = (o) => isInProgress(o) || (o.status === 'scheduled' && (o.date || '') >= todayISO);
   // Rescheduling closes a day earlier — only up to the day before the booking.
-  const isReschedulable = (o) => o.status === 'pending' || canReschedule(o);
+  const isReschedulable = (o) => isInProgress(o) || canReschedule(o);
 
   const tbody       = document.getElementById('offers-tbody');
   const offersEmpty  = document.getElementById('offers-empty');
@@ -622,6 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderViewChecklist(o);
     bannsPanel.render(o);
+    approval.mount(document.getElementById('view-approval'), o);
     viewRescheduleBtn.classList.toggle('hidden', !isReschedulable(o));
     viewCancelBookingBtn.classList.toggle('hidden', !isOpenBooking(o));
 
@@ -656,6 +665,35 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   initPublicBaptismPanel({ showToast, getRecords: () => offers });
+
+  const approval = initRequestApproval({ showToast, onChange: (o) => openViewModal(o.id) });
+
+  // Uploaded requirements: open a file, accept or reject it.
+  viewChecklist.addEventListener('click', async (e) => {
+    const o = offers.find(x => x.id === viewTargetId);
+    if (!o) return;
+    const openBtn = e.target.closest('[data-prep-open]');
+    const reviewBtn = e.target.closest('[data-prep-review]');
+    try {
+      if (openBtn) {
+        const name = uploadsOf(o)[openBtn.dataset.prepOpen]?.name;
+        window.open(await uploadedFileUrl(uploadsOf(o)[openBtn.dataset.prepOpen].path), '_blank', 'noopener');
+        logActivity('View', `Requirement file — ${name} for ${o.requesterName}`, { targetType: 'Blessing', targetId: o.id });
+      }
+      if (reviewBtn) {
+        const by = currentUserName() || 'Parish Office';
+        const result = await client.models.Blessing.update({
+          id: o.id, details: detailsWithUploadReview(o.details, reviewBtn.dataset.item, reviewBtn.dataset.prepReview, by),
+        });
+        if (result.errors) throw new Error(result.errors.map(er => er.message).join('; '));
+        Object.assign(o, result.data || {});
+        renderViewChecklist(o);
+      }
+    } catch (err) {
+      console.error('Requirement file action failed:', err);
+      showToast(err.message || "Couldn't do that.", true);
+    }
+  });
 
   function renderViewChecklist(o) {
     viewChecklist.innerHTML = hasChecklist(o.type) ? checklistHtml(o, { editable: true }) : '';

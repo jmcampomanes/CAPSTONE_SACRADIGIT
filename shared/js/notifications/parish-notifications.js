@@ -195,6 +195,8 @@ export async function collectNotifications(lang = currentLang()) {
           ? (fil ? [`Hindi naaprubahan ang ${name}`, reason] : [`Your ${name} request wasn’t approved`, reason])
           : (fil ? [`Kinansela ang ${name}`, reason] : [`${name} was cancelled`, reason]),
         completed: fil ? [`Tapos na ang ${name}`, 'Salamat! Pagpalain ka ng Diyos.'] : [`${name} is complete`, 'Thank you — God bless!'],
+        'temporary-approval': fil ? [`Pansamantalang aprubado ang ${name}`, 'Magbayad bago ang deadline.'] : [`${name} is temporarily approved`, 'Please pay before the deadline.'],
+        void: fil ? [`Void na ang ${name}`, 'Hindi nabayaran bago ang deadline.'] : [`${name} is void`, 'It wasn’t paid by the deadline.'],
       }[r.status];
       if (msg) add({ id: `svc-${r.id}-${r.status}-${r.date || ''}`, kind: 'service', at: r.updatedAt, title: msg[0], body: msg[1], href: 'user-requested-services.html' });
     }

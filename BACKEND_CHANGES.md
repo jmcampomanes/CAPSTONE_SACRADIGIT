@@ -122,3 +122,22 @@ accommodations: a.string(),
 These are sensitive personal information under RA 10173. Remove `itech` read from this model first (section 5). My Profile shows these fields as soon as they appear in `amplify_outputs.json`.
 
 The Honor Roll calls `ParishionerPreference.list`. It must keep working for signed-in parishioners without exposing these fields; move that read to a query returning only `parishionerKey` and `showOnHonorRoll`.
+
+## 8. Request statuses and automatic void
+
+`Blessing.status` gains: `temporary-approval`, `payment-submitted`, `void`, `cancelled`. It is a free string, so no schema change is needed, but these two functions must change.
+
+**takenSlots:** must also return rows with `temporary-approval` and `payment-submitted` so those slots stay held, and must leave out `void` and `cancelled`. It returns no `details`, so parishioners only see an expired hold as free after the job below runs.
+
+**Scheduled function:** run hourly, and for each `Blessing` with `status = 'temporary-approval'` whose `details['Temporary Approval'].deadline` is before today, set `status: 'void'`, set `declineReason`, and send the `cancelled` email.
+
+```ts
+// amplify/functions/void-unpaid/resource.ts
+export const voidUnpaid = defineFunction({ name: 'void-unpaid', schedule: 'every 1h' });
+```
+
+Until it runs, staff use Mark Void, and staff pages already treat expired holds as void.
+
+**notifyParishioner:** the frontend sends `approved` for temporary approval and confirmation, `rescheduled` for a rejected payment, and `cancelled` for void. Add the amount and deadline `detailsLines` to the email template if they aren't already shown.
+
+The deadline sits in `details`, which owners can edit. For a stricter rule, store it on a staff-only `paymentDueOn` field and have the function read that.

@@ -22,6 +22,9 @@ import { client } from '../../shared/js/amplify-init.js';
 import { printReport, tableHtml, esc } from '../../shared/js/print-report.js';
 import { createSlotPicker, slotHasRoom, locationFor, watchClosures, timeToMinutes, logBookingAction, MAP_PIN_LABEL, googleMapsUrl, RESCHEDULE_REASON_LABEL, APPROVED_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../../shared/js/service-schedule.js';
 import { initWalkInService } from './walk-in-service.js';
+import { initRequestApproval } from './request-approval.js';
+import { paymentsReady } from '../../shared/js/payments.js';
+import { liveStatus, isInProgress, STATUS_LABELS } from '../../shared/js/request-status.js';
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
 import { showToast, reportEmail } from './admin-ui.js';
 
@@ -41,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let allRecords = []; // every Blessing record — used to show which fixed slots are taken
   let walkIn = null;         // "+ Service" walk-in booking screen (see walk-in-service.js)
   let closures = [];         // 'No Services (Parish Closed)' date ranges from Special Schedules
+  const approval = initRequestApproval({ showToast });
 
   watchClosures(client, (next) => {
     closures = next;
@@ -121,9 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // ever flips it to 'completed' in the database, so it's treated as
         // completed here instead of sitting in Upcoming forever.
         if (b.status === 'scheduled') (isPastSchedule(b, todayISO) ? completed : upcoming).push(b);
-        else if (b.status === 'pending') requests.push(b);
+        else if (isInProgress(b) && liveStatus(b) !== 'void') requests.push(b);
         else if (b.status === 'completed') completed.push(b);
-        else if (b.status === 'declined') cancelled.push(b); // cancelled by the parish or the parishioner
+        else if (b.status === 'declined' || b.status === 'cancelled' || liveStatus(b) === 'void') cancelled.push(b); // cancelled by the parish or the parishioner, or void
       });
 
       renderStats();
@@ -263,12 +267,12 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="request-info">
             <p class="request-name">${escapeHtml(r.requesterName)}</p>
-            <p class="request-meta">${escapeHtml(r.type)} · ${r.status === 'pending'
+            <p class="request-meta">${r.status !== 'pending' ? `<span class="badge badge-amber">${escapeHtml(STATUS_LABELS[r.status])}</span> ` : ''}${escapeHtml(r.type)} · ${r.status === 'pending'
               ? `requested for ${formatLongDate(r.preferredDate)}${r.time ? ` at ${escapeHtml(r.time)}` : ''}`
               : `${formatLongDate(r.date)} at ${escapeHtml(r.time)}`}</p>
           </div>
           <div class="request-actions act-row">
-            ${r.status === 'pending' ? `<button type="button" class="act-btn act-approve req-approve" data-id="${r.id}">Approve</button>` : ''}
+            ${isInProgress(r) ? `<button type="button" class="act-btn act-approve req-approve" data-id="${r.id}">${r.status === 'pending' ? 'Approve' : 'Review Payment'}</button>` : ''}
             <button type="button" class="act-btn req-reschedule" data-id="${r.id}">Reschedule</button>
             <button type="button" class="act-btn blessing-details-btn" data-section="${r.status === 'pending' ? 'requests' : 'upcoming'}" data-id="${r.id}" aria-label="View ${escapeHtml(r.requesterName)}'s request">View</button>
             ${r.status === 'pending' ? `<button type="button" class="act-btn act-danger req-decline" data-id="${r.id}">Decline…</button>` : ''}
@@ -304,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function approveRequest(id, btn) {
     const r = requests.find(x => x.id === id);
     if (!r) return;
+    if (paymentsReady()) { approval.open(r); return; } // approve with an amount, then check the payment
     const date = r.preferredDate || r.date;
     // No time picked, or the day has already passed: pick a slot instead.
     if (!date || !r.time || date < todayISO) {

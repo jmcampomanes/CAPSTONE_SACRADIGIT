@@ -9,6 +9,10 @@
 import { mountPageInfo as mount } from '../../shared/js/page-info.js';
 
 const PAGE_INFO = {
+  'payment-reports.html': {
+    title: 'What’s on this page?',
+    text: 'Every payment recorded, by request, method, status and date. Only verified payments count as received.',
+  },
   'parish-rules.html': {
     title: 'What’s on this page?',
     text: 'The fees, address, map pin and time limits every page uses. Change them here and the homepage, forms and checklists all update.',

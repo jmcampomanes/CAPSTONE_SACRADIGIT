@@ -21,9 +21,13 @@
 
 import { client } from '../../shared/js/amplify-init.js';
 import { watchTakenSlots, fetchTakenSlots } from '../../shared/js/public-data.js';
-import { currentUserName } from '../../shared/js/auth.js';
 import { isPrepKey, checklistHtml, progressChipHtml } from '../../shared/js/sacrament-prep.js';
-import { baptismTypeOf, serviceLabel } from '../../shared/js/public-baptism.js';
+import { baptismTypeOf, serviceLabel, fmtLong } from '../../shared/js/public-baptism.js';
+import { STATUS_LABELS, liveStatus, isInProgress, tempApprovalOf, canCancelOnline } from '../../shared/js/request-status.js';
+import { paymentsReady, submitPayment } from '../../shared/js/payments.js';
+import { mountPaymentBox } from '../../shared/js/payment-box.js';
+import { peso, loadParishRules } from '../../shared/js/parish-rules.js';
+import { currentUserName } from '../../shared/js/auth.js';
 import { formatFullName, isNameEmpty } from '../../shared/js/name-utils.js';
 import { createPager } from './pager.js';
 import { SERVICE_TYPES, needsApproval } from '../../shared/js/service-catalog.js';
@@ -54,8 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
     || (name === 'Vehicle Blessing' ? SERVICE_TYPES.find(s => s.id === 'vehicle-blessing') : null);
   const categoryOf = (r) => serviceByName(r.type)?.category || (needsApproval(r.type) ? 'blessing' : 'other');
 
-  const badgeClass  = { pending: 'badge-amber', scheduled: 'badge-green', declined: 'badge-red', completed: 'badge-blue' };
-  const statusLabel = { pending: 'Waiting for approval', scheduled: 'Scheduled', declined: 'Cancelled', completed: 'Completed' };
+  const badgeClass  = { pending: 'badge-amber', 'temporary-approval': 'badge-amber', 'payment-submitted': 'badge-amber', scheduled: 'badge-green', declined: 'badge-red', cancelled: 'badge-red', void: 'badge-red', completed: 'badge-blue' };
+  const statusLabel = { ...STATUS_LABELS, scheduled: paymentsReady() ? 'Confirmed' : 'Scheduled' };
+  loadParishRules(client);
 
   // A declined request that the parish never approved reads "Not Approved", not "Cancelled".
   // (The admin Blessings page notes APPROVED_LABEL in `details` when it approves one.)
@@ -71,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // A scheduled request whose date has passed already happened — nothing ever
   // flips it to 'completed' in the database, so it's shown as Completed here
   // instead of sitting as "Scheduled" forever.
-  const effectiveStatus = (r) => isPastSchedule(r) ? 'completed' : r.status;
+  const effectiveStatus = (r) => isPastSchedule(r) ? 'completed' : liveStatus(r);
 
   let myRequests = [];
 
@@ -218,8 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // be cancelled — status 'declined' frees the slot for someone else and
     // keeps the record, so the parish office still sees it was cancelled.
     const todayISO = new Date().toLocaleDateString('en-CA');
-    const cancellable = r.status === 'pending' || (r.status === 'scheduled' && (r.date || '') >= todayISO);
+    const open = liveStatus(r) !== 'void' && (isInProgress(r) || (r.status === 'scheduled' && (r.date || '') >= todayISO));
+    const cancellable = open && canCancelOnline(r);
     modalCancelBtn.classList.toggle('hidden', !cancellable);
+    renderPayment(r, open && !cancellable);
     modalCalendarBtn.classList.toggle('hidden', !(r.status === 'scheduled' && r.date && r.time && r.date >= todayISO));
     // Rescheduling closes a day earlier than cancelling: only up to the day before the booking.
     // A public baptism is on a date the parish announced, so only the office moves it.
@@ -279,6 +286,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dialogs.length) dialogs.forEach(closeModal);
     else closeRescheduleScreen();
   });
+
+  /* --- Paying for a temporarily approved request --- */
+  function renderPayment(r, tooLateToCancel) {
+    const box = document.getElementById('modal-payment');
+    const temp = tempApprovalOf(r);
+    const late = tooLateToCancel ? '<p class="pay-note">It’s too late to cancel here. Please call or visit the parish office.</p>' : '';
+    if (liveStatus(r) === 'void') {
+      box.innerHTML = '<p class="pay-note">This request is void because it wasn’t paid by the deadline. Its slot was given up.</p>';
+    } else if (r.status === 'temporary-approval' && temp) {
+      box.innerHTML = `${late}<p class="pay-note">Temporarily approved. Pay ${escapeHtml(peso(temp.amount))} by ${escapeHtml(fmtLong(temp.deadline))}, or this request becomes void.${temp.note ? ` ${escapeHtml(temp.note)}` : ''}</p><div id="modal-pay-box"></div>`;
+      mountPaymentBox(document.getElementById('modal-pay-box'), {
+        amount: temp.amount,
+        onConfirm: async ({ method, referenceNumber }) => {
+          await submitPayment({ requestType: 'Service', requestId: r.id, payerName: currentUserName(), amount: temp.amount, method, referenceNumber });
+          const res = await client.models.Blessing.update({ id: r.id, status: 'payment-submitted' });
+          if (res.errors) throw new Error(res.errors.map(e => e.message).join('; '));
+          Object.assign(r, res.data || { status: 'payment-submitted' });
+          window.showToast('Thank you. The parish office will check your payment.');
+          renderPayment(r, false);
+        },
+      });
+    } else if (r.status === 'payment-submitted') {
+      box.innerHTML = `${late}<p class="pay-note">We got your transaction number. The parish office is checking it, and you’ll be told once it’s confirmed.</p>`;
+    } else box.innerHTML = late;
+  }
 
   /* --- Reschedule screen ---
      Moves a pending or upcoming booking to another open fixed slot, on a

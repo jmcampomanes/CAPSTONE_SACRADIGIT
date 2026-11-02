@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return `
     <div class="svc-category-block hidden" data-cat="${cat.key}">
       <div class="svc-category-header">
-        <p class="svc-category-desc">${escapeHtml(cat.desc)}</p>
+        <p class="svc-category-desc">${escapeHtml(cat.desc)} ${cat.key === 'sacrament' ? '<a class="btn-link-sm" href="user-requirements.html">See requirements for Baptism and Marriage</a>' : ''}</p>
       </div>
       <div class="svc-type-row">${items.map(s => serviceCardHtml(s, { href: SERVICE_PAGES[s.id] })).join('')}</div>
     </div>`;

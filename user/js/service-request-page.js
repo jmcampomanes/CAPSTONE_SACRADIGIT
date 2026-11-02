@@ -26,6 +26,11 @@ import { createPinMap, formatLatLng, addressFromLatLng } from '../../shared/js/p
 import { SERVICE_TYPES, needsApproval } from '../../shared/js/service-catalog.js';
 import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-number.js';
 import { loadParishRules } from '../../shared/js/parish-rules.js';
+import { feeFor, parishRules, peso } from '../../shared/js/parish-rules.js';
+import { paymentsReady } from '../../shared/js/payments.js';
+import { cancellationTerms, distanceCharge, OFFERED_KEY, DISTANCE_KEY, DISTANCE_FEE_KEY, DISTANCE_CHECK_KEY } from '../../shared/js/request-status.js';
+import { requirementsBeforeFormHtml, hasChecklist, UPLOADS_KEY } from '../../shared/js/sacrament-prep.js';
+import { uploadsReady, uploadProblem, uploadRequirement } from '../../shared/js/requirement-uploads.js';
 import { myDetails, prefill, rememberHtml, rememberDetails } from '../../shared/js/profile-details.js';
 import {
   BAPTISM_TYPE_KEY, BAPTISM_TYPE_LABELS, PUBLIC_DATE_KEY, typeChooserHtml, dateListHtml, watchDates, holdRows,
@@ -192,6 +197,8 @@ export function initServiceRequestPage(serviceId) {
     document.getElementById('svc-public-dates').classList.toggle('hidden', type !== 'public');
     document.getElementById('svc-baptism-hint').classList.add('hidden');
     renderPublicDates();
+    renderFee();
+    if (usesPayments) return;
     document.getElementById('svc-booking-note').textContent = type === 'public'
       ? 'Pick one of the dates the parish announced. Your family is registered as soon as you submit, and you can cancel anytime under "My service bookings."'
       : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "My service bookings."';
@@ -403,6 +410,59 @@ export function initServiceRequestPage(serviceId) {
 
   svcContactInput.addEventListener('input', () => clearFieldError(svcContactInput));
 
+  /* --- What it costs, what's needed, and the cancellation terms --- */
+  const usesPayments = paymentsReady();
+  const needsOffice = usesPayments || needsApproval(svc.name);
+  const feeBox = document.createElement('div');
+  feeBox.id = 'svc-fee';
+  svcNotesInput.parentElement.before(feeBox);
+
+  function renderFee() {
+    const fee = feeFor(svc.name, { baptismType: baptismType || (isBaptism ? 'private' : '') });
+    const chosen = document.getElementById('svc-offered')?.value;
+    feeBox.innerHTML = `
+      <p class="form-label">Fee</p>
+      <p class="svc-fee-amount">${isBaptism && !baptismType ? 'Shown when you choose the type above' : fee.label}</p>
+      ${fee.kind === 'minimum' ? `
+        <label class="form-label mt-2" for="svc-offered">Your offering (₱) <span class="text-red-500">*</span></label>
+        <input type="number" id="svc-offered" class="form-input" min="${fee.amount}" step="50" value="${chosen || fee.amount}" />` : ''}`;
+    renderDistance();
+  }
+
+  function renderDistance() {
+    const box = document.getElementById('svc-distance');
+    if (!box) return;
+    const charge = distanceCharge(pinMap?.getValue() ? formatLatLng(pinMap.getValue()) : '');
+    box.classList.toggle('hidden', !charge || (!charge.surcharge && !charge.outOfRange));
+    if (!charge) return;
+    box.textContent = charge.outOfRange
+      ? `This address is about ${charge.km} km from the parish, which is beyond our usual reach. The parish office will confirm whether a priest can go.`
+      : `This address is about ${charge.km} km from the parish, so ${peso(charge.surcharge)} is added for the distance.`;
+  }
+
+  const notesLabel = document.querySelector('label[for="svc-notes"]');
+  if (feeFor(svc.name).kind === 'quoted' && !isBaptism) {
+    notesLabel.textContent = 'Additional Requests (the parish office sets the amount from these)';
+  }
+  document.getElementById('svc-dynamic-fields').insertAdjacentHTML('beforebegin',
+    hasChecklist(svc.name) ? requirementsBeforeFormHtml(svc.name, { canUpload: uploadsReady() }) : '');
+  svcNotesInput.parentElement.insertAdjacentHTML('afterend', `
+    <div id="svc-distance" class="pr-note hidden"></div>
+    <label class="consent-check" id="svc-terms-wrap">
+      <input type="checkbox" id="svc-terms" />
+      <span id="svc-terms-text"></span>
+    </label>`);
+  document.getElementById('svc-terms-text').textContent = `${cancellationTerms()} I agree to these terms.`;
+  renderFee();
+  loadParishRules(client).then(() => {
+    document.getElementById('svc-terms-text').textContent = `${cancellationTerms()} I agree to these terms.`;
+    renderFee();
+  });
+  if (usesPayments) {
+    document.getElementById('svc-booking-note').textContent = 'Your slot is held while the parish office reviews this. They will tell you the amount to pay, and the slot is confirmed once your payment is checked.';
+  }
+  document.querySelector('.req-screen-body')?.addEventListener('click', () => renderDistance());
+
   /* Details typed once: prefill from My Profile, and offer to save changes back. */
   const addressField = svc.fields.find(f => /address/i.test(f.label) && !f.kind);
   svcNotesInput.parentElement.insertAdjacentHTML('afterend', `<div>${rememberHtml('svc-remember')}</div>`);
@@ -450,6 +510,18 @@ export function initServiceRequestPage(serviceId) {
       missing.push(['public baptism date', box]);
     } else if (!slot) { slotPickerEl.classList.add('has-error'); missing.push(['date and time', slotPickerEl]); }
 
+    const terms = document.getElementById('svc-terms');
+    document.getElementById('svc-terms-wrap').classList.remove('has-error');
+    if (!terms.checked) { document.getElementById('svc-terms-wrap').classList.add('has-error'); missing.push(['agreement to the terms', terms]); }
+    const offeredEl = document.getElementById('svc-offered');
+    if (offeredEl) {
+      clearFieldError(offeredEl);
+      if (!(Number(offeredEl.value) >= Number(offeredEl.min))) { setFieldError(offeredEl, `The minimum is ${peso(Number(offeredEl.min))}.`); missing.push(['offering', offeredEl]); }
+    }
+    const files = [...document.querySelectorAll('[data-upload-item]')].filter(i => i.files[0]);
+    const badFile = files.map(i => uploadProblem(i.files[0])).find(Boolean);
+    if (badFile) { window.showToast(badFile, true); return; }
+
     if (missing.length) {
       // Say exactly what's missing, then bring the first one into view.
       const names = missing.map(([label]) => label === 'date and time' ? 'a date and time' : label.replace(/\s*\(.*?\)/g, ''));
@@ -478,12 +550,19 @@ export function initServiceRequestPage(serviceId) {
       if (val) details[f.label] = val;
     });
 
+    if (offeredEl) details[OFFERED_KEY] = Number(offeredEl.value);
+    const charge = distanceCharge(pinMap?.getValue() ? formatLatLng(pinMap.getValue()) : '', parishRules());
+    if (charge) {
+      details[DISTANCE_KEY] = `${charge.km} km`;
+      if (charge.surcharge) details[DISTANCE_FEE_KEY] = charge.surcharge;
+      if (charge.outOfRange) details[DISTANCE_CHECK_KEY] = 'Yes';
+    }
     if (isBaptism) details[BAPTISM_TYPE_KEY] = BAPTISM_TYPE_LABELS[baptismType];
     if (publicDate) details[PUBLIC_DATE_KEY] = publicDate.id;
     const location = publicDate ? publicDate.location : locationFor(svc.name, details);
 
     svcSubmitBtn.disabled = true;
-    const approval = needsApproval(svc.name);
+    const approval = needsOffice;
     const status = approval ? 'pending' : 'scheduled';
 
     try {
@@ -511,6 +590,12 @@ export function initServiceRequestPage(serviceId) {
       } else if (!slotHasRoom(svc.name, pickerRows(), slot.date, slot.time, { closures })) {
         slotPicker.refresh(pickerRows());
         throw new Error('Sorry, that slot was just taken. Please pick another time.');
+      }
+
+      if (files.length) {
+        const uploads = {};
+        for (const input of files) uploads[input.dataset.uploadItem] = await uploadRequirement(input.files[0], input.dataset.uploadItem);
+        details[UPLOADS_KEY] = uploads;
       }
 
       const result = await client.models.Blessing.create({

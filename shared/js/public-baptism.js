@@ -36,6 +36,7 @@
    ============================================ */
 
 import { parishRules, peso } from './parish-rules.js';
+import { holdsSlot } from './request-status.js';
 
 export const PUBLIC_BAPTISM_AUDIENCE = 'Public Baptism';
 export const BAPTISM_TYPE_KEY = 'Baptism Type';
@@ -46,10 +47,6 @@ export const NOT_SPECIFIED = 'Not specified';
 /** Registration closes this many days before, matching the Baptism leadDays. */
 export const DEFAULT_CLOSE_DAYS = 14;
 export const DEFAULT_CAPACITY = 10;
-
-// Same as ACTIVE_STATUSES in service-schedule.js, which needs the signed-in
-// client and so can't be imported on the public homepage.
-const HOLDS_A_SEAT = new Set(['scheduled', 'pending']);
 
 const pad = (n) => String(n).padStart(2, '0');
 export const isoOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -141,7 +138,7 @@ const sameSlot = (row, d) => row.type === 'Baptism'
 
 /** Seats taken on a date, from takenSlots rows or full Blessing records. */
 export const seatsTaken = (rows, d, excludeId = null) => (rows || [])
-  .filter(r => sameSlot(r, d) && HOLDS_A_SEAT.has(r.status) && r.id !== excludeId).length;
+  .filter(r => sameSlot(r, d) && holdsSlot(r) && !(excludeId && r.id === excludeId)).length;
 
 /** Seats left, or null when the bookings couldn't be loaded. */
 export const seatsLeft = (rows, d, excludeId = null) => (rows ? Math.max(0, d.capacity - seatsTaken(rows, d, excludeId)) : null);

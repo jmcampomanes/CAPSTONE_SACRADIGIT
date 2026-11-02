@@ -193,7 +193,7 @@
 :root[data-palette="ocean"] { --pal-main: #0f4c5c; --pal-accent: #0e7c86; --pal-soft: #e0f2f4; }
 :root[data-palette="forest"] { --pal-main: #1f4d3a; --pal-accent: #2f7d5b; --pal-soft: #e3f3ea; }
 :root:is([data-palette="ocean"], [data-palette="forest"]) .sidebar,
-:root:is([data-palette="ocean"], [data-palette="forest"]) .bg-navy { background-color: var(--pal-main) !important; }
+:root:is([data-palette="ocean"], [data-palette="forest"]) .bg-navy { background: var(--pal-main) !important; }
 :root:is([data-palette="ocean"], [data-palette="forest"]) :is(.btn-lavender, .btn-teal, .lg-btn) { background-color: var(--pal-accent) !important; border-color: var(--pal-accent) !important; }
 :root:is([data-palette="ocean"], [data-palette="forest"]) :is(.text-lavender, .btn-link-sm, .consent-terms summary) { color: var(--pal-accent) !important; }
 :root:is([data-palette="ocean"], [data-palette="forest"]):not([data-theme="dark"]) .sidebar-link.active { background-color: var(--pal-accent) !important; color: #fff !important; }
@@ -201,7 +201,7 @@
 /* High contrast: black on white (or the reverse in dark mode), visible edges everywhere. */
 :root[data-palette="contrast"] body,
 :root[data-palette="contrast"] :is(.panel, .stat-card, .modal-card, .sidebar, header, .form-input, .bt-type, .bt-date, .svc-type-card, .hp-panel) {
-  background-color: #ffffff !important; color: #000000 !important; border-color: #000000 !important;
+  background: #ffffff !important; color: #000000 !important; border-color: #000000 !important;
 }
 :root[data-palette="contrast"] :is(.panel, .stat-card, .modal-card, .form-input, .bt-type, .bt-date, .svc-type-card, .hp-panel) { border-width: 2px !important; border-style: solid !important; }
 :root[data-palette="contrast"] :is(p, span, label, li, td, th, h1, h2, h3, h4, small, .sidebar-link, .sidebar-label) { color: #000000 !important; opacity: 1 !important; }
@@ -212,12 +212,15 @@
 :root[data-palette="contrast"] :focus-visible { outline: 3px solid #000000 !important; outline-offset: 2px; }
 :root[data-palette="contrast"][data-theme="dark"] body,
 :root[data-palette="contrast"][data-theme="dark"] :is(.panel, .stat-card, .modal-card, .sidebar, header, .form-input, .bt-type, .bt-date, .svc-type-card, .hp-panel) {
-  background-color: #000000 !important; color: #ffffff !important; border-color: #ffffff !important;
+  background: #000000 !important; color: #ffffff !important; border-color: #ffffff !important;
 }
 :root[data-palette="contrast"][data-theme="dark"] :is(p, span, label, li, td, th, h1, h2, h3, h4, small, .sidebar-link, .sidebar-label) { color: #ffffff !important; }
 :root[data-palette="contrast"][data-theme="dark"] :is(.btn-lavender, .btn-teal, .btn-danger, .lg-btn, .sidebar-link.active) { background: #ffffff !important; border-color: #ffffff !important; color: #000000 !important; }
 :root[data-palette="contrast"][data-theme="dark"] :is(.btn-lavender, .btn-teal, .btn-danger, .lg-btn, .sidebar-link.active) * { color: #000000 !important; }
 :root[data-palette="contrast"][data-theme="dark"] :is(.btn-secondary, .btn-danger-outline) { background: #000000 !important; border-color: #ffffff !important; color: #ffffff !important; }
+
+:root[data-palette="contrast"] .sidebar * { background-image: none !important; }
+:root[data-palette="contrast"] .sidebar::after, :root[data-palette="contrast"] .sidebar::before { display: none !important; }
 
 /* Compact spacing */
 :root[data-density="compact"] main { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }

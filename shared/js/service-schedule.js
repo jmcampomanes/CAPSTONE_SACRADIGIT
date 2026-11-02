@@ -1,5 +1,6 @@
 import { currentUserName } from './auth.js';
 import { client } from './amplify-init.js';
+import { holdsSlot } from './request-status.js';
 /* ============================================
    SacraDigit — Fixed Service Schedules
    Shared by user/user-request-service.js (parishioner
@@ -117,8 +118,7 @@ const DEFAULT_SCHEDULE = { days: WEEKDAYS, times: ['09:00 AM', '02:00 PM'], capa
 // ahead, and a booking can be rescheduled only until the day before it.
 export const MIN_LEAD_DAYS = 1;
 
-// Statuses that hold a slot. 'declined' (cancelled) frees it again.
-const ACTIVE_STATUSES = new Set(['scheduled', 'pending']);
+// Ended bookings and unpaid expired holds free their slot (request-status.js).
 
 export const CLOSURE_TYPE = 'No Services (Parish Closed)';
 
@@ -197,7 +197,7 @@ export function bookedCounts(records, type, { excludeId } = {}) {
     // this guard `r.id === excludeId` was `undefined === undefined` (true)
     // for every one of them, silently excluding every real booking from the
     // count and always showing full availability on the parishioner side.
-    if (r.type !== type || !ACTIVE_STATUSES.has(r.status) || (excludeId && r.id === excludeId)) return;
+    if (r.type !== type || !holdsSlot(r) || (excludeId && r.id === excludeId)) return;
     const date = slotDateOf(r);
     if (!date || !r.time) return;
     const key = `${date}|${r.time}`;

@@ -18,17 +18,17 @@ import {
   DEFAULT_CAPACITY, PUBLIC_DATE_KEY,
 } from '../../shared/js/public-baptism.js';
 import { displayTime } from '../../shared/js/time-picker.js';
+import { holdsSlot } from '../../shared/js/request-status.js';
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
 import { reportEmail } from './admin-ui.js';
 
 const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
-const ACTIVE = new Set(['scheduled', 'pending']);
 
 const dateIdOf = (record) => {
   try { return (typeof record.details === 'string' ? JSON.parse(record.details) : record.details)?.[PUBLIC_DATE_KEY] || ''; } catch { return ''; }
 };
 // Someone moved with Reschedule no longer has this date, so they drop off the list.
-const familiesOn = (records, d) => records.filter(r => r.type === 'Baptism' && ACTIVE.has(r.status) && dateIdOf(r) === d.id && r.date === d.date);
+const familiesOn = (records, d) => records.filter(r => r.type === 'Baptism' && holdsSlot(r) && dateIdOf(r) === d.id && r.date === d.date);
 
 // <input type="time"> ↔ the "11:00 AM" stored on bookings
 function to12(value) {
