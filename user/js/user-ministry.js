@@ -13,6 +13,10 @@ import {
   volunteer, withdraw, setSwapRequested, takeOver, canChangeSignup, canSwap,
   fmtMassDay, fmtTime, monthLabel, escapeHtml, todayIso,
 } from '../../shared/js/ministry.js';
+import { listApplications, ministriesAllowed, latestPerPerson } from '../../shared/js/parish-servers.js';
+import { reasonDialog } from '../../shared/js/staff-ui.js';
+import { loadParishRules, parishRules } from '../../shared/js/parish-rules.js';
+import { client } from '../../shared/js/amplify-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
@@ -25,6 +29,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const user = currentUser() || {};
   const me = { id: user.sub, name: user.name || 'Parishioner' };
+
+  // Only people the admin assessed can take a slot, in the ministry they were assessed for.
+  let allowed = [];
+  async function loadAllowed() {
+    try {
+      allowed = ministriesAllowed(latestPerPerson((await listApplications()).filter(a => a.applicantKey === me.id)));
+    } catch (err) {
+      console.warn('Could not check your Parish Server application:', err);
+    }
+    $('min-apply-note').classList.toggle('hidden', allowed.length > 0);
+    render();
+  }
+  loadParishRules(client).then(() => render());
   const now = new Date();
   let year = now.getFullYear();
   let month = now.getMonth();
@@ -128,8 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
           let actions = '';
           if (isMe && !past) {
             actions = canChangeSignup(s.massDate)
-              ? `<button type="button" class="min-link" data-act="withdraw" data-id="${s.id}">Withdraw</button>`
-              : '';
+              ? `<button type="button" class="min-link" data-act="withdraw" data-id="${s.id}">Cancel</button>`
+              : s.swapRequested ? '' : `<button type="button" class="min-link" data-act="withdraw" data-id="${s.id}">Emergency Cancel</button>`;
             if (canSwap(s.massDate)) actions += `<button type="button" class="min-link" data-act="${s.swapRequested ? 'unswap' : 'swap'}" data-id="${s.id}">${s.swapRequested ? 'Cancel swap' : 'Ask for swap'}</button>`;
           } else if (s.swapRequested && !minePending && canSwap(s.massDate)) {
             actions = `<button type="button" class="min-link strong" data-act="take" data-id="${s.id}">Take this slot</button>`;
@@ -139,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${actions}
             </li>`;
         }).join('');
-        const canJoin = !past && !minePending && open > 0 && canChangeSignup(mass.date);
+        const canJoin = !past && !minePending && open > 0 && canChangeSignup(mass.date) && allowed.includes(m.id);
         return `
           <div class="min-row">
             <div class="min-row-head">
@@ -175,9 +192,18 @@ document.addEventListener('DOMContentLoaded', () => {
         await volunteer(mass, m.id, me);
         window.showToast(`Thank you! You're down as ${m.one.toLowerCase()} for ${fmtMassDay(mass.date)} · ${fmtTime(mass.time)}.`);
       } else if (act === 'withdraw') {
-        if (!confirm('Withdraw from this slot?')) { btn.disabled = false; return; }
-        await withdraw(s);
-        window.showToast('You’ve withdrawn from that slot.');
+        const emergency = !canChangeSignup(s.massDate);
+        const reason = await reasonDialog({
+          title: emergency ? 'Emergency cancellation' : 'Cancel this slot?',
+          message: emergency
+            ? `This is less than ${parishRules().serverSignupCloseDays} days before the Mass. The parish office will be told right away.`
+            : 'The parish office will see your reason.',
+          input: { label: 'Reason', placeholder: 'e.g. Sick, family emergency' },
+          confirmLabel: 'Cancel Slot',
+        });
+        if (!reason) { btn.disabled = false; return; }
+        await withdraw(s, reason, me);
+        window.showToast(emergency ? 'The parish office has been told. Thank you for letting us know.' : 'You’ve cancelled that slot.');
       } else if (act === 'swap' || act === 'unswap') {
         await setSwapRequested(s, act === 'swap');
         window.showToast(act === 'swap' ? 'Swap requested — others can now take your slot.' : 'Swap request cancelled.');
@@ -193,4 +219,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   load();
+  loadAllowed();
 });

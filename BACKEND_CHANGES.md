@@ -141,3 +141,41 @@ Until it runs, staff use Mark Void, and staff pages already treat expired holds 
 **notifyParishioner:** the frontend sends `approved` for temporary approval and confirmation, `rescheduled` for a rejected payment, and `cancelled` for void. Add the amount and deadline `detailsLines` to the email template if they aren't already shown.
 
 The deadline sits in `details`, which owners can edit. For a stricter rule, store it on a staff-only `paymentDueOn` field and have the function read that.
+
+## 9. Wedding emails
+
+The wedding form emails both people when a request is sent, using `status: 'received'`. `notifyParishioner` must:
+
+1. Accept `received` from a parishioner and word it as "We received your request."
+2. Allow `to` to be any address for that one status, and limit it to two sends per request, so the form can't be used to send mail to strangers.
+
+Until this is deployed, that first email fails quietly and the request still saves. Staff status emails already go to both people.
+
+## 10. Parish Server applications and ministry
+
+```ts
+// ServerApplication
+confirmWith: a.string(),       // was required; the form no longer asks
+conditions: a.json(),          // [{ q, a: 'yes' | 'no' }]
+isFirstTime: a.boolean(),
+
+MinistryCancellation: a.model({
+  ministry: a.string().required(),
+  massDate: a.date().required(),
+  massTime: a.string().required(),
+  volunteerId: a.string().required(),
+  volunteerName: a.string(),
+  reason: a.string().required(),
+  emergency: a.boolean(),
+}).authorization((allow) => [
+  allow.owner().to(['create', 'read']),
+  allow.groups(['admin', 'staff']).to(['read', 'delete']),
+  allow.groups(['itech']).to(['read']),
+]),
+```
+
+Until then, the form sends `confirmWith: 'Not asked'`, keeps the answers in `message`, and cancellations reach the office only through Messages.
+
+**Enforce who can take a slot.** The check that only assessed servers can volunteer runs in the browser. Add a `volunteerForSlot` mutation that reads the caller's approved `ServerApplication` before creating the row, and remove owner `create` from `MinistrySignup`.
+
+**Known weakness:** `MinistrySignup` allows any signed-in user to `update`, so anyone can take over or edit another person's slot. That rule exists only so `takeOver` works. Replace it with a `takeOverSlot` mutation that checks `swapRequested` is true and the caller is approved for that ministry, then remove `allow.authenticated().to(['read', 'update'])`'s update.

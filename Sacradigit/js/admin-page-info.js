@@ -55,7 +55,7 @@ const PAGE_INFO = {
   },
   'parish-servers.html': {
     title: 'What’s on this page?',
-    text: 'Parishioners who serve the parish ask here to be verified as Parish Servers. Check with the person they named, then approve or decline. Approval lasts a year.',
+    text: 'Parishioners who serve the parish ask here to be verified as Parish Servers. Read their answers, then approve or decline. Approval lasts a year.',
   },
   'ministry-bookings.html': {
     title: 'Who can book here?',

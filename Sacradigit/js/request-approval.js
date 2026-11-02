@@ -22,6 +22,7 @@ import {
 } from '../../shared/js/payments.js';
 import { baptismTypeOf, serviceLabel, fmtLong } from '../../shared/js/public-baptism.js';
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
+import { coupleEmails } from '../../shared/js/wedding-rules.js';
 import { reportEmail } from './admin-ui.js';
 
 const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
@@ -51,6 +52,7 @@ export function initRequestApproval({ showToast, onChange = () => {} }) {
   }
 
   const email = (status, message, declineReason, extraLines = []) => reportEmail(notifyServiceUpdate({
+        copyTo: coupleEmails(record),
     to: record.email, name: record.requesterName, serviceType: serviceLabel(record), status,
     date: record.date ? fmtLong(record.date) : '', time: record.time, location: record.location, contact: record.contact,
     declineReason, detailsLines: extraLines,

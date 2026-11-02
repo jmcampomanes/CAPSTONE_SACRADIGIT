@@ -50,3 +50,17 @@
 :root[data-theme="dark"] :is(.ps-hint, .ps-perk-text) { color: #9aa3b5; }
 :root[data-theme="dark"] .ps-attest.has-error { background: rgba(185, 28, 28, 0.16); border-color: #7f1d1d; }
 :root[data-theme="dark"] .ps-perk-icon { background: rgba(201, 168, 76, 0.2); color: #f3dca0; }
+
+/* First time / already serving, and the yes-or-no conditions */
+.ps-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ps-tab { padding: 0.5rem 1rem; border: 1px solid #e5e7eb; border-radius: 999px; background: #fff; font-size: 0.875rem; font-weight: 600; color: #374151; }
+.ps-tab.active { background: #1e2a4a; border-color: #1e2a4a; color: #fff; }
+.ps-tab:focus-visible { outline: 3px solid #8b8fc7; outline-offset: 2px; }
+.ps-conditions { display: grid; gap: 0.5rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 0.75rem; }
+.ps-conditions.has-error { border-color: #dc2626; }
+.ps-condition { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; font-size: 0.8125rem; color: #374151; }
+.ps-condition-yn { display: flex; gap: 0.75rem; }
+:root[data-theme="dark"] .ps-tab { background: #1a2131; border-color: #2c3548; color: #e5e7eb; }
+:root[data-theme="dark"] .ps-tab.active { background: #b4b7e6; color: #1e2a4a; }
+:root[data-theme="dark"] .ps-conditions { border-color: #2c3548; }
+:root[data-theme="dark"] .ps-condition { color: #cfd4de; }

@@ -9,10 +9,15 @@
      ministry, massDate, massTime, massTitle,
      volunteerId (the volunteer's account id),
      volunteerName, swapRequested
-   Rules (same as bookings): volunteering and
-   withdrawing close the day before the Mass; asking
-   for a swap or taking one over is allowed up to the
-   day of the Mass.
+   Rules: only servers the admin assessed can take a
+   slot (parish-servers.js). Sign-ups and normal
+   cancelling close serverSignupCloseDays before the
+   Mass (parish-rules.js); after that a cancellation is
+   an emergency, which needs a reason and alerts the
+   office at once. Admins see unfilled slots from
+   serverScoutDays before, to invite and assign people.
+   Asking for a swap or taking one over is allowed up
+   to the day of the Mass.
 
    Used by user/user-ministry.js (sign-ups) and
    Sacradigit/ministry-roster.js (office roster).
@@ -20,6 +25,8 @@
    ============================================ */
 
 import { client } from './amplify-init.js';
+import { parishRules } from './parish-rules.js';
+import { sendMessage, chatReady } from './chat.js';
 import { mergeWeeklySchedule, recurringMassesForDate } from './weekly-mass-schedule.js';
 
 /** Ministries and how many people each Mass needs. */
@@ -49,8 +56,12 @@ export function toMinutes(time12) {
 export const normTime = (t) => { const mins = toMinutes(t); return mins >= 24 * 60 ? (t || '') : `${pad(Math.floor(mins / 60))}:${pad(mins % 60)}`; };
 export const massKey = (date, time) => `${date}|${normTime(time)}`;
 
-/** Volunteering / withdrawing close the day before the Mass. */
-export const canChangeSignup = (date) => date > todayIso();
+const daysAway = (date) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${todayIso()}T00:00:00`)) / 86400000);
+
+/** Volunteering and normal cancelling close some days before the Mass. */
+export const canChangeSignup = (date) => daysAway(date) >= parishRules().serverSignupCloseDays;
+/** True when admins should be filling this Mass. */
+export const inScoutWindow = (date) => daysAway(date) >= 0 && daysAway(date) <= parishRules().serverScoutDays;
 /** A swap can be asked for or taken over up to the day of the Mass. */
 export const canSwap = (date) => date >= todayIso();
 
@@ -134,16 +145,55 @@ function check(result) {
 }
 
 export async function volunteer(mass, ministryId, me) {
-  if (!canChangeSignup(mass.date)) throw new Error('Sign-ups close the day before the Mass.');
+  if (!canChangeSignup(mass.date)) throw new Error(`Sign-ups close ${parishRules().serverSignupCloseDays} days before the Mass.`);
   return check(await client.models.MinistrySignup.create({
     ministry: ministryId, massDate: mass.date, massTime: mass.time, massTitle: mass.title,
     volunteerId: me.id, volunteerName: me.name, swapRequested: false,
   }));
 }
 
-export async function withdraw(signup) {
-  if (!canChangeSignup(signup.massDate)) throw new Error('It’s too late to withdraw — ask for a swap instead.');
+const whenText = (s) => `${fmtMassDay(s.massDate)} · ${fmtTime(s.massTime)}`;
+
+/** Tells the office now (Messages), and keeps the record when the model is deployed. */
+async function reportCancellation(signup, reason, emergency, me) {
+  const label = ministryById(signup.ministry)?.one || signup.ministry;
+  if (chatReady()) {
+    await sendMessage({
+      threadId: me.id, fromOffice: false, senderName: me.name, parishionerName: me.name,
+      body: `${emergency ? 'EMERGENCY: ' : ''}I can't serve as ${label} on ${whenText(signup)}. Reason: ${reason}`,
+    });
+  }
+  if (client.models.MinistryCancellation) {
+    check(await client.models.MinistryCancellation.create({
+      ministry: signup.ministry, massDate: signup.massDate, massTime: signup.massTime,
+      volunteerId: me.id, volunteerName: me.name, reason, emergency,
+    }));
+  }
+}
+
+/** Gives up a slot. In time, it just opens again. Too late, it stays listed and asks for a swap. */
+export async function withdraw(signup, reason, me) {
+  if (!reason) throw new Error('Please say why you can’t serve.');
+  const emergency = !canChangeSignup(signup.massDate);
+  await reportCancellation(signup, reason, emergency, me);
+  if (emergency) return check(await client.models.MinistrySignup.update({ id: signup.id, swapRequested: true }));
   return check(await client.models.MinistrySignup.delete({ id: signup.id }));
+}
+
+/** Office: puts an approved server on the roster. */
+export async function assignServer(mass, ministryId, app) {
+  return check(await client.models.MinistrySignup.create({
+    ministry: ministryId, massDate: mass.date, massTime: mass.time, massTitle: mass.title,
+    volunteerId: app.applicantKey, volunteerName: app.applicantName, swapRequested: false,
+  }));
+}
+
+/** Office: asks an approved server, through Messages, to take a slot. */
+export async function inviteServer(mass, ministryId, app, officeName) {
+  return sendMessage({
+    threadId: app.applicantKey, fromOffice: true, senderName: officeName, parishionerName: app.applicantName, owner: app.applicantKey,
+    body: `Can you serve as ${ministryById(ministryId)?.one} on ${fmtMassDay(mass.date)} · ${fmtTime(mass.time)}? Please sign up under Ministry Sign-ups, or reply here.`,
+  });
 }
 
 export async function setSwapRequested(signup, on) {

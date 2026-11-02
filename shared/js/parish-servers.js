@@ -58,6 +58,7 @@
    ============================================ */
 
 import { client } from './amplify-init.js';
+import outputs from '../../amplify_outputs.json';
 import { MINISTRIES } from './ministry.js';
 
 export const APPROVAL_MONTHS = 12;
@@ -73,6 +74,54 @@ export const SERVER_GROUPS = [
   'Another parish ministry or organization',
 ];
 export const OTHER_GROUP = SERVER_GROUPS[SERVER_GROUPS.length - 1];
+
+/** The role dropdown, by group. "Other" reveals a text box. */
+export const OTHER_ROLE = 'Other';
+const COMMON_ROLES = ['Member', 'Coordinator'];
+export const ROLES_BY_GROUP = {
+  Lectors: ['Lector', 'Commentator', ...COMMON_ROLES],
+  Choir: ['Singer', 'Instrumentalist', 'Choir Director', ...COMMON_ROLES],
+  'Altar Servers': ['Altar Server', 'Head Server', ...COMMON_ROLES],
+  Ushers: ['Usher', 'Greeter', 'Collector', ...COMMON_ROLES],
+  'Parish office staff': ['Office Staff', 'Volunteer'],
+  Catechists: ['Catechist', 'Assistant Catechist', ...COMMON_ROLES],
+  'Youth Ministry': ['Youth Leader', ...COMMON_ROLES],
+};
+export const rolesFor = (group) => [...(ROLES_BY_GROUP[group] || COMMON_ROLES), OTHER_ROLE];
+
+/** Answered yes or no when applying, and read by the admin. DRAFT: the parish should
+    confirm these. Ministry-specific ones come first. */
+const COMMON_CONDITIONS = [
+  'I am a practicing Catholic.',
+  'I can attend the formation or practice this ministry requires.',
+  'I can serve on the dates I sign up for.',
+  'If I can’t serve, I will tell the parish office at least 3 days before.',
+];
+const MINISTRY_CONDITIONS = {
+  Lectors: ['I am comfortable reading aloud at Mass.'],
+  Choir: ['I can attend choir practice.'],
+  'Altar Servers': ['I have received First Communion.'],
+};
+export const conditionsFor = (group) => [...(MINISTRY_CONDITIONS[group] || []), ...COMMON_CONDITIONS];
+
+/** How the admin assessed someone. All three let the person take slots; only the word differs. */
+export const ASSESSMENTS = ['Approved', 'Recommended', 'Referred'];
+
+/** Sent while confirmWith is still required by the schema (BACKEND_CHANGES.md). */
+export const NO_CONFIRM = 'Not asked';
+
+/* conditions and isFirstTime need the fields in BACKEND_CHANGES.md: sending a
+   field the model lacks fails the whole save, so until then they go in message. */
+export const applicationFieldsReady = () => !!outputs.data?.model_introspection?.models?.ServerApplication?.fields?.conditions;
+
+export function parseConditions(app) {
+  try { return (typeof app?.conditions === 'string' ? JSON.parse(app.conditions) : app?.conditions) || []; } catch { return []; }
+}
+
+/** Ministries (from ministry.js) this person's approved application lets them serve in. */
+export function ministriesAllowed(apps, today) {
+  return MINISTRIES.filter(m => apps.some(a => a.ministry === m.label && isVerified(a, today))).map(m => m.id);
+}
 
 export const serversReady = () => !!client.models.ServerApplication;
 export const serverRoleReady = () => !!client.mutations?.setServerRole;

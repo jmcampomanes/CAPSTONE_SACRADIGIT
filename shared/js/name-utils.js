@@ -107,10 +107,10 @@ const EXT_STYLE = `
   .name-ext-toggle.is-disabled { opacity: 0.5; cursor: default; }
   :root[data-theme="dark"] .name-ext-toggle { color: #c4c9d3; }
   /* Phones: one box per line, and the Ext. box only once its checkbox is ticked. */
+  .name-ext-toggle { display: flex; }
+  .name-ext-toggle:not(:has(input:checked)) + .name-ext-input { display: none; }
   @media (max-width: 640px) {
     .name-field-row, .marriage-cell-name-row { grid-template-columns: 1fr !important; }
-    .name-ext-toggle { display: flex; }
-    .name-ext-toggle:not(:has(input:checked)) + .name-ext-input { display: none; }
   }
 `;
 

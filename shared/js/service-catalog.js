@@ -139,9 +139,13 @@ export const SERVICE_TYPES = [
     icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`,
     fields: [
       { id: 'groom-name', label: "Groom's Full Name", kind: 'name', required: true, span2: true },
-      { id: 'groom-parish', label: "Groom's Parish", placeholder: 'e.g. Our Lady of Fatima Parish, Cubao', required: false },
+      { id: 'groom-birth', label: "Groom's Birthdate", type: 'date', required: true },
+      { id: 'groom-email', label: "Groom's Email", type: 'email', required: true },
+      { id: 'groom-parish', label: "Groom's Parish", placeholder: 'e.g. Our Lady of Fatima Parish, Cubao', required: false, span2: true },
       { id: 'bride-name', label: "Bride's Full Name", kind: 'name', required: true, span2: true },
-      { id: 'bride-parish', label: "Bride's Parish", placeholder: 'e.g. Santo Niño Parish, Tondo', required: false },
+      { id: 'bride-birth', label: "Bride's Birthdate", type: 'date', required: true },
+      { id: 'bride-email', label: "Bride's Email", type: 'email', required: true },
+      { id: 'bride-parish', label: "Bride's Parish", placeholder: 'e.g. Santo Niño Parish, Tondo', required: false, span2: true },
       // Shown as text, not saved — see banns.js
       { id: 'banns-note', kind: 'note', text: 'As the Church requires, the couple’s names and parishes are published as marriage banns for three Sundays — announced at Mass, posted on the parish bulletin board, and on the parish website. Nothing else about you is published, and the notice comes down after the third Sunday.' },
     ] },

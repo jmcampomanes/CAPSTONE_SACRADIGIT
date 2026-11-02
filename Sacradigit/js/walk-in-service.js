@@ -38,6 +38,7 @@ import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-numb
 import {
   BAPTISM_TYPE_KEY, BAPTISM_TYPE_LABELS, PUBLIC_DATE_KEY, typeChooserHtml, dateListHtml, watchDates, holdRows, dateState, serviceLabel,
 } from '../../shared/js/public-baptism.js';
+import { checkCouple, AGE_DOCS_KEY } from '../../shared/js/wedding-rules.js';
 
 // Added to every walk-in's details so staff can tell how it was booked.
 export const BOOKED_BY_LABEL = 'Booked By';
@@ -263,7 +264,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       return `
         <div class="${f.span2 ? 'sm:col-span-2' : ''}">
           <label class="form-label" for="walkin-f-${f.id}">${escapeHtml(f.label)}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
-          <input type="text" id="walkin-f-${f.id}" class="form-input" placeholder="${escapeHtml(f.placeholder || '')}" />
+          <input type="${f.type || 'text'}" id="walkin-f-${f.id}" class="form-input" placeholder="${escapeHtml(f.placeholder || '')}" />
         </div>`;
     }).join('');
     if (isBaptism()) fieldsEl.insertAdjacentHTML('afterbegin', typeChooserHtml('walkin'));
@@ -418,6 +419,11 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       if (v) details[f.label] = v;
     });
     details[BOOKED_BY_LABEL] = 'Parish Office (walk-in)';
+    if (svc.id === 'wedding') {
+      const { blocked, docs } = checkCouple({ groomBirth: $('walkin-f-groom-birth').value, brideBirth: $('walkin-f-bride-birth').value, weddingDate: slot.date });
+      if (blocked.length) { showToast(blocked.join(' '), true); return; }
+      if (docs.length) details[AGE_DOCS_KEY] = docs;
+    }
     if (isBaptism()) details[BAPTISM_TYPE_KEY] = BAPTISM_TYPE_LABELS[baptismType];
     if (publicDate) details[PUBLIC_DATE_KEY] = publicDate.id;
     const location = publicDate ? publicDate.location : locationFor(svc.name, details);

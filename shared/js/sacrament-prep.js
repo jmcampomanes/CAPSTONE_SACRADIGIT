@@ -17,6 +17,7 @@
 import { baptismChecklist, weddingChecklist } from './sacrament-rules.js';
 import { isHiddenBaptismKey } from './public-baptism.js';
 import { TEMP_KEY } from './request-status.js';
+import { AGE_DOCS_KEY } from './wedding-rules.js';
 
 export const CHECKLIST_KEY = 'Preparation Checklist';
 export const UPLOADS_KEY = 'Uploaded Requirements';
@@ -55,7 +56,7 @@ export const REQUIREMENTS = {
 };
 
 export const hasChecklist = (type) => !!REQUIREMENTS[type];
-export const isPrepKey = (key) => key === CHECKLIST_KEY || key === UPLOADS_KEY || key === TEMP_KEY || isHiddenBaptismKey(key);
+export const isPrepKey = (key) => key === CHECKLIST_KEY || key === UPLOADS_KEY || key === TEMP_KEY || key === AGE_DOCS_KEY || isHiddenBaptismKey(key);
 
 function parseDetails(detailsJson) {
   if (!detailsJson) return {};
@@ -74,8 +75,11 @@ function stateOf(details) {
 export function checklistFor(record) {
   const list = REQUIREMENTS[record?.type];
   if (!list) return [];
-  const state = stateOf(parseDetails(record.details));
-  return list.map(([id, label]) => ({ id, label, done: !!state[id]?.done, by: state[id]?.by || '', at: state[id]?.at || '' }));
+  const details = parseDetails(record.details);
+  const state = stateOf(details);
+  // Documents this couple's ages add (wedding-rules.js), with the reason for staff.
+  const ageDocs = Array.isArray(details[AGE_DOCS_KEY]) ? details[AGE_DOCS_KEY].map(d => [d.id, d.why ? `${d.label}. ${d.why}` : d.label]) : [];
+  return [...list, ...ageDocs].map(([id, label]) => ({ id, label, done: !!state[id]?.done, by: state[id]?.by || '', at: state[id]?.at || '' }));
 }
 
 /** { [itemId]: { path, name, review, reason } } */

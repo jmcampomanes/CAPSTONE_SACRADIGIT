@@ -23,6 +23,7 @@ import {
   APPROVAL_MONTHS, serversReady, serverRoleReady, listApplications, latestPerPerson, standing, STANDING_LABEL,
   setServerRole, todayIso, addMonthsIso, longDate,
 } from '../../shared/js/parish-servers.js';
+import { ASSESSMENTS, parseConditions } from '../../shared/js/parish-servers.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
@@ -63,7 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="min-w-0">
           <p class="ps-name">${esc(a.applicantName)}</p>
           <p class="ps-meta">${esc(a.role)} · ${esc(a.ministry)}${a.servingSince ? ` · since ${esc(a.servingSince)}` : ''}</p>
-          <p class="ps-meta">Confirm with: <strong>${esc(a.confirmWith)}</strong>${a.contact ? ` · ${esc(a.contact)}` : ''} · applied ${longDate(a.createdAt)}</p>
+          ${a.isFirstTime ? '<p class="ps-meta"><span class="badge badge-amber">New to serving</span></p>' : ''}
+          ${parseConditions(a).map(c => `<p class="ps-meta">${esc(c.q)} <strong>${c.a === 'yes' ? 'Yes' : 'No'}</strong></p>`).join('')}
+          <p class="ps-meta">${a.contact ? `${esc(a.contact)} · ` : ''}applied ${longDate(a.createdAt)}</p>
           ${a.message ? `<p class="ps-msg">“${esc(a.message)}”</p>` : ''}
         </div>
         <div class="row-actions act-row">
@@ -131,15 +134,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function approve(a) {
     const until = addMonthsIso(todayIso(), APPROVAL_MONTHS);
+    const outcome = document.getElementById('ps-outcome')?.value || ASSESSMENTS[0];
+    const note = document.getElementById('ps-outcome-note')?.value.trim() || '';
     const ok = await confirmDialog({
-      title: 'Approve as a Parish Server?',
-      message: `Approve only after checking with ${a.confirmWith}. They’ll be a verified Parish Server until ${longDate(until)}, and parish rooms booked for their ministry have no fee.`,
+      title: `${outcome}: Parish Server?`,
+      message: `Check their answers first. They’ll be a verified Parish Server until ${longDate(until)}, and parish rooms booked for their ministry have no fee.`,
       detail: summary(a),
-      confirmLabel: 'Approve',
+      confirmLabel: outcome,
       tone: 'approve',
     });
     if (!ok) return;
-    const saved = await save(a, { status: 'approved', reviewedBy: currentUserName(), reviewedAt: new Date().toISOString(), validUntil: until, reason: null },
+    const saved = await save(a, { status: 'approved', reviewedBy: currentUserName(), reviewedAt: new Date().toISOString(), reason: note ? `${outcome}: ${note}` : outcome, validUntil: until, reason: null },
       `${a.applicantName} is now a verified Parish Server.`);
     if (!saved) return;
     logActivity('Approve', `Parish Server — ${a.applicantName} (${a.ministry})`);
@@ -187,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
       row('Ministry / Group', esc(a.ministry)),
       row('Role', esc(a.role)),
       row('Serving Since', esc(a.servingSince)),
-      row('Confirm With', esc(a.confirmWith)),
       row('Contact Number', esc(a.contact)),
       row('Email', esc(a.email)),
       row('Their Message', esc(a.message), true),

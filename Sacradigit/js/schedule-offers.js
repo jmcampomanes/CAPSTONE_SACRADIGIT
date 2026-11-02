@@ -26,6 +26,7 @@ import { currentUserName } from '../../shared/js/auth.js';
 import { logActivity } from '../../shared/js/activity-log.js';
 import { showToast, reportEmail } from './admin-ui.js';
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
+import { coupleEmails } from '../../shared/js/wedding-rules.js';
 import { initBannsPanel } from './banns-panel.js';
 import { initRequestApproval } from './request-approval.js';
 import { paymentsReady } from '../../shared/js/payments.js';
@@ -442,6 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logBookingAction(client, { action: 'Reschedule', record: { ...o, date: slot.date, time: slot.time }, reason });
       closeRescheduleScreen();
       reportEmail(notifyServiceUpdate({
+        copyTo: coupleEmails(o),
         to: o.email || '', name: o.requesterName, serviceType: o.type, status: 'rescheduled', declineReason: reason,
         date: fmtDate(slot.date), time: slot.time, location: o.location || locationFor(o.type, parseDetails(o)), contact: o.contact,
       }), o.requesterName, `${o.type} for ${o.requesterName} rescheduled to ${fmtDate(slot.date)} at ${slot.time}.`);
@@ -515,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : `Request from ${o ? o.requesterName : 'requester'} declined.`;
       if (o) {
         reportEmail(notifyServiceUpdate({
+          copyTo: coupleEmails(o),
           to: o.email || '', name: o.requesterName, serviceType: o.type,
           status: rejectIsCancel ? 'cancelled' : 'declined', declineReason: reason,
           date: o.date ? fmtDate(o.date) : '', time: o.time,

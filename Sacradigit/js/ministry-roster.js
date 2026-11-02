@@ -10,8 +10,12 @@
 import { printReport, tableHtml, esc } from '../../shared/js/print-report.js';
 import {
   MINISTRIES, ministryReady, watchRosterMasses, watchSignups, groupSignups, removeSignup,
-  fmtMassDay, fmtTime, monthLabel, escapeHtml, todayIso,
+  fmtMassDay, fmtTime, monthLabel, escapeHtml, todayIso, inScoutWindow, assignServer, inviteServer,
 } from '../../shared/js/ministry.js';
+import { listApplications, latestPerPerson, isVerified, serversReady } from '../../shared/js/parish-servers.js';
+import { loadParishRules } from '../../shared/js/parish-rules.js';
+import { client } from '../../shared/js/amplify-init.js';
+import { currentUserName } from '../../shared/js/auth.js';
 import { showToast, confirmDialog } from './admin-ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -29,6 +33,60 @@ document.addEventListener('DOMContentLoaded', () => {
   let masses = [];
   let signups = [];
   let stops = [];
+  let servers = []; // approved applications: who can be invited or assigned
+
+  /* Slots to Fill: open places at Masses inside the scouting window, with the
+     approved servers who could take them. */
+  function renderScout() {
+    const grouped = groupSignups(signups);
+    const rows = masses.filter(m => inScoutWindow(m.date)).flatMap(mass => MINISTRIES.map(m => {
+      const list = grouped.get(mass.key)?.get(m.id) || [];
+      const swaps = list.filter(s => s.swapRequested).length;
+      const open = m.perMass - list.length + swaps;
+      if (open <= 0) return '';
+      const taken = new Set(list.map(s => s.volunteerId));
+      const free = servers.filter(a => a.ministry === m.label && !taken.has(a.applicantKey));
+      return `
+        <div class="bt-admin-date">
+          <p class="bt-admin-title">${escapeHtml(fmtMassDay(mass.date))} · ${escapeHtml(fmtTime(mass.time))}: ${escapeHtml(m.label)}, ${open} needed${swaps ? ` <span class="badge badge-red">${swaps} cancelled late</span>` : ''}</p>
+          ${free.length ? free.map(a => `
+            <div class="flex flex-wrap items-center gap-2 mt-1">
+              <span class="bt-admin-sub">${escapeHtml(a.applicantName)}</span>
+              <button type="button" class="btn-link-sm" data-scout="assign" data-mass="${escapeHtml(mass.key)}" data-min="${m.id}" data-app="${a.id}">Assign</button>
+              <button type="button" class="btn-link-sm" data-scout="invite" data-mass="${escapeHtml(mass.key)}" data-min="${m.id}" data-app="${a.id}">Invite</button>
+            </div>`).join('') : '<p class="bt-admin-sub">No approved servers available.</p>'}
+        </div>`;
+    })).filter(Boolean);
+    $('min-scout-panel').classList.toggle('hidden', !rows.length);
+    $('min-scout').innerHTML = rows.join('');
+  }
+
+  $('min-scout').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-scout]');
+    if (!btn) return;
+    const mass = masses.find(m => m.key === btn.dataset.mass);
+    const app = servers.find(a => a.id === btn.dataset.app);
+    btn.disabled = true;
+    try {
+      if (btn.dataset.scout === 'assign') {
+        await assignServer(mass, btn.dataset.min, app);
+        showToast(`${app.applicantName} was assigned.`);
+      } else {
+        await inviteServer(mass, btn.dataset.min, app, currentUserName() || 'Parish Office');
+        showToast(`${app.applicantName} was invited in Messages.`);
+      }
+    } catch (err) {
+      console.error('Scouting action failed:', err);
+      showToast(err.message || "Couldn't do that.", true);
+      btn.disabled = false;
+    }
+  });
+
+  if (serversReady()) {
+    listApplications().then(list => { servers = latestPerPerson(list).filter(a => isVerified(a)); render(); })
+      .catch(err => console.warn('Could not load approved servers:', err));
+  }
+  loadParishRules(client).then(() => render());
   // Upcoming Masses first: the coordinator's question is "who's short this weekend?".
   // Past Masses stay one tap away. A month with nothing upcoming opens on Past.
   let view = 'upcoming';
@@ -49,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('min-next').addEventListener('click', () => { month += 1; if (month > 11) { month = 0; year += 1; } load(); });
 
   function render() {
+    renderScout();
     const grouped = groupSignups(signups);
     const needed = masses.length * MINISTRIES.reduce((n, m) => n + m.perMass, 0);
     const filled = masses.reduce((n, mass) => n + MINISTRIES.reduce((k, m) => k + Math.min(m.perMass, (grouped.get(mass.key)?.get(m.id) || []).length), 0), 0);

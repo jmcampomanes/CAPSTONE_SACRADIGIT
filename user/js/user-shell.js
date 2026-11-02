@@ -62,7 +62,9 @@ const HELP_CONTENT = {
     intro: 'Serve as a lector, choir member, altar server or usher at Mass.',
     steps: [
       'Use ‹ › to pick a month and the chips to show one ministry.',
-      'Press Volunteer under an open slot. You can withdraw until the day before the Mass.',
+      'Apply under Become a Parish Server first. Once the admin assesses you, press Volunteer under an open slot.',
+      'Sign-ups close 3 days before the Mass. Before that you can cancel with a reason.',
+      'After that, cancelling is an emergency: give a reason, and the office is told right away.',
       'Can’t make it? Press Ask for swap — anyone can then take your slot.',
       'See “Swap needed” on someone’s slot? Press Take this slot to serve in their place.',
       'Serving 4 times earns the Faithful Servant badge.',
@@ -79,11 +81,12 @@ const HELP_CONTENT = {
     ],
   },
   'user-parish-server.html': {
-    title: 'Parish Server',
-    intro: 'If you serve the parish — in a ministry, a parish group or the office — ask to be verified as a Parish Server.',
+    title: 'Become a Parish Server',
+    intro: 'Serve the parish in a ministry, a parish group or the office. First-timers are welcome.',
     steps: [
-      'Choose your ministry or group, your role, and who can confirm that you serve (your coordinator or the parish priest).',
-      'Press Send for Verification. The Head Admin checks with them, then approves it — you’ll get a notice (🔔).',
+      'Choose First time serving or Already serving.',
+      'Choose your ministry or group and your role, then answer each question.',
+      'Press Send for Verification. The Head Admin assesses it, and you’ll get a notice (🔔).',
       'Once verified, your account shows “Parish Server”, and parish rooms booked for your ministry through the office have no fee.',
       'It lasts a year. Near the end, this page asks you to renew.',
     ],
@@ -349,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
     minLink.closest('li').insertAdjacentHTML('afterend', `
           <li><a href="user-parish-server.html" data-nav="parish-server" class="sidebar-link">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            Parish Server</a></li>`);
+            Become a Parish Server</a></li>`);
   }
 
   /* "Requirements & Rules" (user-requirements.html), after Request a Service. */

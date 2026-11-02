@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="SacraDigit" />
-  <title>Parish Server – SacraDigit</title>
+  <title>Become a Parish Server – SacraDigit</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -45,6 +45,7 @@
   <link rel="stylesheet" href="../shared/css/theme-dark.css" />
   <link rel="stylesheet" href="../shared/css/accessibility.css" />
   <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';var sdp=localStorage.getItem('sacradigit_palette');if(sdp)document.documentElement.dataset.palette=sdp;var sdn=localStorage.getItem('sacradigit_density');if(sdn)document.documentElement.dataset.density=sdn;if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../shared/css/parish-common.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -129,7 +130,7 @@
           </li>
           <li><a href="user-parish-server.html" data-nav="parish-server" class="sidebar-link active">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            Parish Server</a></li>
+            Become a Parish Server</a></li>
           <li>
             <a href="user-badges.html" data-nav="badges" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg>
@@ -184,7 +185,7 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
           <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background-color:#6c6fb01f;color:#6c6fb0;"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
-            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Parish Server</h1>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Become a Parish Server</h1>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block" id="current-date"></div>
       </header>
@@ -202,9 +203,14 @@
         <!-- Apply / renew -->
         <div class="panel hidden" id="ps-form-panel">
           <div class="panel-header">
-            <h2 class="panel-title" id="ps-form-title">Apply as a Parish Server</h2>
+            <h2 class="panel-title" id="ps-form-title">Become a Parish Server</h2>
           </div>
           <div class="p-5 space-y-4">
+            <div class="ps-tabs" role="tablist" aria-label="Your experience">
+              <button type="button" class="ps-tab active" role="tab" aria-selected="true" data-ps-tab="new" id="ps-tab-new">First time serving</button>
+              <button type="button" class="ps-tab" role="tab" aria-selected="false" data-ps-tab="serving" id="ps-tab-serving">Already serving</button>
+            </div>
+            <p class="ps-hint" id="ps-tab-hint"></p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="form-label" for="ps-group">Ministry or Group <span class="text-red-500">*</span></label>
@@ -216,16 +222,15 @@
               </div>
               <div>
                 <label class="form-label" for="ps-role">Your Role <span class="text-red-500">*</span></label>
-                <input type="text" id="ps-role" class="form-input" placeholder="e.g. Lector, Member, Coordinator" />
+                <select id="ps-role" class="form-input"></select>
               </div>
-              <div>
+              <div id="ps-role-other-wrap" class="hidden">
+                <label class="form-label" for="ps-role-other">Type your role <span class="text-red-500">*</span></label>
+                <input type="text" id="ps-role-other" class="form-input" />
+              </div>
+              <div id="ps-since-wrap">
                 <label class="form-label" for="ps-since">Serving Since</label>
                 <input type="text" id="ps-since" class="form-input" inputmode="numeric" maxlength="4" placeholder="Year, e.g. 2019" />
-              </div>
-              <div>
-                <label class="form-label" for="ps-confirm">Who Can Confirm? <span class="text-red-500">*</span></label>
-                <input type="text" id="ps-confirm" class="form-input" placeholder="Your coordinator or the parish priest" />
-                <p class="ps-hint">The parish office may ask them.</p>
               </div>
               <div>
                 <label class="form-label" for="ps-contact">Contact Number <span class="text-red-500">*</span></label>
@@ -236,6 +241,8 @@
                 <textarea id="ps-message" class="form-input" rows="3" placeholder="e.g. I also help with the Holy Week processions."></textarea>
               </div>
             </div>
+            <div id="ps-conditions"></div>
+            <div id="ps-consent-mount"></div>
             <label class="ps-attest" id="ps-attest-wrap">
               <input type="checkbox" id="ps-attest" />
               <span>I serve at Our Lady of Fatima Parish, and these details are true.</span>

@@ -26,6 +26,7 @@ import { initRequestApproval } from './request-approval.js';
 import { paymentsReady } from '../../shared/js/payments.js';
 import { liveStatus, isInProgress, STATUS_LABELS } from '../../shared/js/request-status.js';
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
+import { coupleEmails } from '../../shared/js/wedding-rules.js';
 import { showToast, reportEmail } from './admin-ui.js';
 
 // Where this request's emails go: saved on the record when the parishioner
@@ -336,6 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logBookingAction(client, { action: 'Approve', record: { ...r, date } });
       closeModal(detailsModal);
       reportEmail(notifyServiceUpdate({
+        copyTo: coupleEmails(r),
         to: recipientEmail(r), name: r.requesterName, serviceType: r.type, status: 'approved',
         date: formatLongDate(date), time: r.time, location: r.location || locationFor(r.type),
         contact: r.contact, detailsLines: emailDetailLines(r),
@@ -805,6 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : `Request from ${r ? r.requesterName : 'requester'} declined.`;
       if (r) {
         reportEmail(notifyServiceUpdate({
+        copyTo: coupleEmails(r),
           to: recipientEmail(r), name: r.requesterName, serviceType: r.type,
           status: declineIsCancel ? 'cancelled' : 'declined', declineReason: reason,
           date: r.date ? formatLongDate(r.date) : '', time: r.time,
@@ -965,6 +968,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logBookingAction(client, { action: 'Reschedule', record: { ...r, date: slot.date, time: slot.time }, reason: `${reason} (from ${from})` });
       closeRescheduleScreen();
       reportEmail(notifyServiceUpdate({
+        copyTo: coupleEmails(r),
         // Booking a pending request is the office approving it.
         to: recipientEmail(r), name: r.requesterName, serviceType: r.type,
         status: r.status === 'pending' ? 'approved' : 'rescheduled', declineReason: reason,

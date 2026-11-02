@@ -14,8 +14,11 @@ import { currentUser, currentUserName } from '../../shared/js/auth.js';
 import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-number.js';
 import { confirmDialog } from '../../shared/js/staff-ui.js'; // brings its own styles
 import {
-  SERVER_GROUPS, OTHER_GROUP, APPROVAL_MONTHS, serversReady, listApplications, latestPerPerson, standing, longDate,
+  SERVER_GROUPS, OTHER_GROUP, OTHER_ROLE, NO_CONFIRM, APPROVAL_MONTHS, serversReady, listApplications, latestPerPerson, standing, longDate,
+  rolesFor, conditionsFor, applicationFieldsReady,
 } from '../../shared/js/parish-servers.js';
+import { myDetails, prefill } from '../../shared/js/profile-details.js';
+import { consentBoxHtml, recordConsent } from '../../shared/js/consent.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const $ = (id) => document.getElementById(id);
@@ -35,7 +38,57 @@ document.addEventListener('DOMContentLoaded', async () => {
   groupSelect.addEventListener('change', () => {
     clearError(groupSelect);
     $('ps-group-other-wrap').classList.toggle('hidden', groupSelect.value !== OTHER_GROUP);
+    renderRoles();
+    renderConditions();
   });
+
+  function renderRoles() {
+    const kept = $('ps-role').value;
+    const roles = groupSelect.value ? rolesFor(groupSelect.value) : [];
+    $('ps-role').innerHTML = `<option value="">Choose one…</option>${roles.map(r => `<option>${esc(r)}</option>`).join('')}`;
+    if (roles.includes(kept)) $('ps-role').value = kept;
+    $('ps-role-other-wrap').classList.toggle('hidden', $('ps-role').value !== OTHER_ROLE);
+  }
+  $('ps-role').addEventListener('change', () => {
+    clearError($('ps-role'));
+    $('ps-role-other-wrap').classList.toggle('hidden', $('ps-role').value !== OTHER_ROLE);
+  });
+
+  function renderConditions() {
+    const list = groupSelect.value ? conditionsFor(groupSelect.value) : [];
+    $('ps-conditions').innerHTML = list.length ? `
+      <fieldset class="ps-conditions" id="ps-conditions-set">
+        <legend class="form-label">Please answer each one <span class="text-red-500">*</span></legend>
+        ${list.map((q, i) => `
+          <div class="ps-condition">
+            <span>${esc(q)}</span>
+            <span class="ps-condition-yn">
+              <label><input type="radio" name="ps-cond-${i}" value="yes" /> Yes</label>
+              <label><input type="radio" name="ps-cond-${i}" value="no" /> No</label>
+            </span>
+          </div>`).join('')}
+      </fieldset>` : '';
+  }
+
+  /* First time serving / Already serving */
+  let firstTime = true;
+  function showTab(tab) {
+    firstTime = tab === 'new';
+    document.querySelectorAll('[data-ps-tab]').forEach(b => {
+      const on = b.dataset.psTab === tab;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    $('ps-since-wrap').classList.toggle('hidden', firstTime);
+    $('ps-tab-hint').textContent = firstTime
+      ? 'New to serving? Tell us where you’d like to help. The admin will assess your application.'
+      : 'Already part of a ministry or group? Tell us where you serve so we can verify you.';
+  }
+  document.querySelectorAll('[data-ps-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.psTab)));
+  showTab('new');
+
+  $('ps-consent-mount').innerHTML = consentBoxHtml('ps-consent');
+  myDetails(currentUserName()).then(saved => prefill($('ps-contact'), saved.phone));
 
   let mine = null; // my latest application
 
@@ -71,13 +124,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const s = standing(mine);
     const what = mine ? `${esc(mine.role)}, ${esc(mine.ministry)}` : '';
     let showForm = true;
-    let formTitle = 'Apply as a Parish Server';
+    let formTitle = 'Become a Parish Server';
     statusEl.classList.add('hidden');
 
     if (s === 'pending') {
       showForm = false;
       card('wait', ICON.wait, 'Waiting for the parish office',
-        [`You applied on ${longDate(mine.createdAt)} as ${what}.`, 'The Head Admin checks with the person you named, then approves it. You’ll get a notice (🔔) when it’s done.'],
+        [`You applied on ${longDate(mine.createdAt)} as ${what}.`, 'The Head Admin assesses it. You’ll get a notice (🔔) when it’s done.'],
         '<button type="button" class="btn-secondary ps-status-action" id="ps-withdraw">Withdraw</button>');
     } else if (s === 'verified') {
       showForm = false;
@@ -103,9 +156,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (SERVER_GROUPS.includes(mine.ministry)) groupSelect.value = mine.ministry;
       else { groupSelect.value = OTHER_GROUP; $('ps-group-other').value = mine.ministry || ''; }
       groupSelect.dispatchEvent(new Event('change'));
-      $('ps-role').value = mine.role || '';
+      if (rolesFor(groupSelect.value).includes(mine.role)) $('ps-role').value = mine.role;
+      else { $('ps-role').value = OTHER_ROLE; $('ps-role-other').value = mine.role || ''; }
+      $('ps-role').dispatchEvent(new Event('change'));
       $('ps-since').value = mine.servingSince || '';
-      $('ps-confirm').value = mine.confirmWith || '';
+      showTab('serving');
       $('ps-contact').value = mine.contact || '';
     }
     $('ps-withdraw')?.addEventListener('click', withdraw);
@@ -143,19 +198,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   $('ps-submit').addEventListener('click', async () => {
     const group = groupSelect.value === OTHER_GROUP ? $('ps-group-other').value.trim() : groupSelect.value;
-    const role = $('ps-role').value.trim();
+    const role = $('ps-role').value === OTHER_ROLE ? $('ps-role-other').value.trim() : $('ps-role').value;
     const since = $('ps-since').value.trim();
-    const confirmWith = $('ps-confirm').value.trim();
     const contact = $('ps-contact').value.trim();
     let ok = true;
     if (!groupSelect.value) { setError(groupSelect, 'Choose your ministry or group.'); ok = false; }
     else if (!group) { setError($('ps-group-other'), 'Type the name of the ministry or organization.'); ok = false; }
-    if (!role) { setError($('ps-role'), 'Type your role.'); ok = false; }
+    if (!$('ps-role').value) { setError($('ps-role'), 'Choose your role.'); ok = false; }
+    else if (!role) { setError($('ps-role-other'), 'Type your role.'); ok = false; }
     if (since && !/^(19|20)\d{2}$/.test(since)) { setError($('ps-since'), 'Type the year, e.g. 2019.'); ok = false; }
-    if (!confirmWith) { setError($('ps-confirm'), 'Who can confirm that you serve here?'); ok = false; }
     if (!contact) { setError($('ps-contact'), 'Contact number is required.'); ok = false; }
     else if (!isMobile(contact)) { setError($('ps-contact'), MOBILE_HINT); ok = false; }
     if (!$('ps-attest').checked) { $('ps-attest-wrap').classList.add('has-error'); ok = false; }
+    const questions = groupSelect.value ? conditionsFor(groupSelect.value) : [];
+    const answers = questions.map((q, i) => ({ q, a: document.querySelector(`input[name="ps-cond-${i}"]:checked`)?.value || '' }));
+    const conditionsSet = $('ps-conditions-set');
+    conditionsSet?.classList.toggle('has-error', answers.some(x => !x.a));
+    if (answers.some(x => !x.a)) ok = false;
+    $('ps-consent-box').classList.toggle('has-error', !$('ps-consent').checked);
+    if (!$('ps-consent').checked) ok = false;
     if (!ok) { toast('Please fix the highlighted fields.', true); return; }
 
     const btn = $('ps-submit');
@@ -168,11 +229,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         contact: mobileDigits(contact),
         ministry: group,
         role,
-        servingSince: since || undefined,
-        confirmWith,
-        message: $('ps-message').value.trim() || undefined,
+        servingSince: firstTime ? undefined : since || undefined,
+        confirmWith: NO_CONFIRM,
+        message: [
+          $('ps-message').value.trim(),
+          ...(applicationFieldsReady() ? [] : [firstTime ? 'First time serving.' : '', answers.map(x => `${x.q} ${x.a === 'yes' ? 'Yes' : 'No'}`).join(' ')]),
+        ].filter(Boolean).join('\n') || undefined,
+        ...(applicationFieldsReady() ? { conditions: JSON.stringify(answers), isFirstTime: firstTime } : {}),
         status: 'pending',
       });
+      await recordConsent(client, me.sub, 'parish-server');
       if (errors?.length) throw new Error(errors.map(e => e.message).join('; '));
       mine = data;
       toast(`Sent! The parish office will verify it — approval lasts ${APPROVAL_MONTHS} months.`);

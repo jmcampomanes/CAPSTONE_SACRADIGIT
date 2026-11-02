@@ -55,10 +55,13 @@ export const notifyPasswordReset = (to, name) => send('password-reset', { to, na
  * 'scheduled' | 'rescheduled' | 'declined' | 'cancelled' (reason for the last
  * three in declineReason). Only 'scheduled' may come from the parishioner
  * (confirming their own self-booked slot); the rest are staff-only — the
- * backend checks (see amplify/functions/notify-parishioner).
+ * backend checks (see amplify/functions/notify-parishioner). copyTo: other
+ * addresses that get the same email, such as both people on a wedding.
  */
-export function notifyServiceUpdate({ to, name, serviceType, status, date, time, declineReason, location, contact, detailsLines }) {
-  return send('service-update', { to, name, serviceType, status, date, time, declineReason, location, contact, detailsLines });
+export function notifyServiceUpdate({ to, name, serviceType, status, date, time, declineReason, location, contact, detailsLines, copyTo = [] }) {
+  const payload = { name, serviceType, status, date, time, declineReason, location, contact, detailsLines };
+  [...new Set(copyTo)].filter(c => c !== to).forEach(c => send('service-update', { ...payload, to: c }));
+  return send('service-update', { ...payload, to });
 }
 
 /** A certificate request was approved, released (ready for pickup) or rejected. Staff-only. */

@@ -31,6 +31,9 @@ import { paymentsReady } from '../../shared/js/payments.js';
 import { cancellationTerms, distanceCharge, OFFERED_KEY, DISTANCE_KEY, DISTANCE_FEE_KEY, DISTANCE_CHECK_KEY } from '../../shared/js/request-status.js';
 import { requirementsBeforeFormHtml, hasChecklist, UPLOADS_KEY } from '../../shared/js/sacrament-prep.js';
 import { uploadsReady, uploadProblem, uploadRequirement } from '../../shared/js/requirement-uploads.js';
+import {
+  checkCouple, accountIsInCouple, AGE_DOCS_KEY, GROOM_EMAIL, BRIDE_EMAIL,
+} from '../../shared/js/wedding-rules.js';
 import { myDetails, prefill, rememberHtml, rememberDetails } from '../../shared/js/profile-details.js';
 import {
   BAPTISM_TYPE_KEY, BAPTISM_TYPE_LABELS, PUBLIC_DATE_KEY, typeChooserHtml, dateListHtml, watchDates, holdRows,
@@ -213,7 +216,7 @@ export function initServiceRequestPage(serviceId) {
     return `
     <div class="${f.span2 ? 'sm:col-span-2' : ''}">
       <label class="form-label" for="${f.id}">${escapeHtml(f.label)}${f.required ? ' <span class="text-red-500">*</span>' : ''}</label>
-      <input type="text" id="${f.id}" class="form-input" placeholder="${f.placeholder || ''}" />
+      <input type="${f.type || 'text'}" id="${f.id}" class="form-input" placeholder="${f.placeholder || ''}" />
     </div>`;
   }).join('');
 
@@ -463,6 +466,31 @@ export function initServiceRequestPage(serviceId) {
   }
   document.querySelector('.req-screen-body')?.addEventListener('click', () => renderDistance());
 
+  /* --- Weddings: who may book, and what their ages add (wedding-rules.js) --- */
+  const isWedding = svc.id === 'wedding';
+  const weddingCheck = () => checkCouple({
+    groomBirth: document.getElementById('groom-birth').value,
+    brideBirth: document.getElementById('bride-birth').value,
+    weddingDate: slotPicker.getValue()?.date,
+  });
+  function renderWeddingNotice() {
+    const box = document.getElementById('svc-wedding-age');
+    const { blocked, docs } = weddingCheck();
+    const lines = [...blocked, ...docs.map(d => `${d.why} Please bring this document to the parish office.`)];
+    box.classList.toggle('hidden', !lines.length);
+    box.innerHTML = lines.map(l => `<p>${escapeHtml(l)}</p>`).join('');
+  }
+  if (isWedding) {
+    svcDynamicFields.insertAdjacentHTML('beforeend', `
+      <div id="svc-wedding-age" class="pr-note sm:col-span-2 hidden"></div>
+      <label class="consent-check sm:col-span-2" id="svc-couple-wrap">
+        <input type="checkbox" id="svc-couple" />
+        <span>I am the bride or groom named above. Requests can’t be made for someone else online. I will show a valid ID at the parish office. <span class="text-red-500">*</span></span>
+      </label>`);
+    ['groom-birth', 'bride-birth'].forEach(id => document.getElementById(id).addEventListener('change', renderWeddingNotice));
+    slotPickerEl.addEventListener('click', () => setTimeout(renderWeddingNotice, 0));
+  }
+
   /* Details typed once: prefill from My Profile, and offer to save changes back. */
   const addressField = svc.fields.find(f => /address/i.test(f.label) && !f.kind);
   svcNotesInput.parentElement.insertAdjacentHTML('afterend', `<div>${rememberHtml('svc-remember')}</div>`);
@@ -510,6 +538,22 @@ export function initServiceRequestPage(serviceId) {
       missing.push(['public baptism date', box]);
     } else if (!slot) { slotPickerEl.classList.add('has-error'); missing.push(['date and time', slotPickerEl]); }
 
+    if (isWedding) {
+      const wrap = document.getElementById('svc-couple-wrap');
+      wrap.classList.remove('has-error');
+      if (!document.getElementById('svc-couple').checked) { wrap.classList.add('has-error'); missing.push(['declaration that you are the bride or groom', wrap]); }
+      ['groom-email', 'bride-email'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim())) { setFieldError(el, 'Please enter a valid email address.'); missing.push(['valid email', el]); }
+      });
+      if (!missing.length && !accountIsInCouple(REQUESTER_NAME, readNameFields('groom-name'), readNameFields('bride-name'))) {
+        window.showToast(`This account is under ${REQUESTER_NAME}, who isn’t named as the bride or groom. Please use your own account, or book at the parish office.`, true);
+        return;
+      }
+      const { blocked } = weddingCheck();
+      if (blocked.length) { window.showToast(blocked.join(' '), true); return; }
+    }
+
     const terms = document.getElementById('svc-terms');
     document.getElementById('svc-terms-wrap').classList.remove('has-error');
     if (!terms.checked) { document.getElementById('svc-terms-wrap').classList.add('has-error'); missing.push(['agreement to the terms', terms]); }
@@ -551,6 +595,10 @@ export function initServiceRequestPage(serviceId) {
     });
 
     if (offeredEl) details[OFFERED_KEY] = Number(offeredEl.value);
+    if (isWedding) {
+      const { docs } = weddingCheck();
+      if (docs.length) details[AGE_DOCS_KEY] = docs;
+    }
     const charge = distanceCharge(pinMap?.getValue() ? formatLatLng(pinMap.getValue()) : '', parishRules());
     if (charge) {
       details[DISTANCE_KEY] = `${charge.km} km`;
@@ -612,6 +660,13 @@ export function initServiceRequestPage(serviceId) {
         status,
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
+
+      // The couple both hear about the request, whoever sent it.
+      if (isWedding) {
+        [details[GROOM_EMAIL], details[BRIDE_EMAIL]].forEach(to => notifyServiceUpdate({
+          to, name: REQUESTER_NAME, serviceType: svc.name, status: 'received', date: slot.date, time: slot.time, location,
+        }));
+      }
 
       // Blessings get their email once the office approves (or declines) them.
       if (!approval) {
