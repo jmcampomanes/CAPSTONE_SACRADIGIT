@@ -89,7 +89,9 @@ MinistryCancellation: a.model({
 ]),
 ```
 
-## A2. New fields on existing models
+## A2. New fields and access on existing models
+
+Give `staff` `update` on `Donation` now, so the Secretary can verify payments as soon as the frontend turns them on.
 
 ```ts
 // AccessLog
@@ -136,6 +138,9 @@ Do not reuse `certificateUploads/*`: any signed-in user can read it.
 - Always save `status: 'pending'`. The office approves everything a parishioner sends.
 - Remove `details['Temporary Approval']` if present.
 - Check the slot still has room, using the same count as `takenSlots`. For a public baptism (`details['Public Baptism Date Id']`), read that `Announcement` and check `media.baptism.capacity`, `closesOn` and that it isn't `cancelled`.
+- Refuse a private Baptism on the date and time of an announced public date. The browser hides those slots.
+- Blessings (`House Blessing`, `Vehicle / Item Blessing`, `Business Dedication`, `Pet Blessing`): refuse when `details['Offered Amount']` is below `fees.blessingMin`.
+- `Wedding`: repeat the form's checks. Refuse unless the account's first and last name match `details["Groom's Full Name"]` or `details["Bride's Full Name"]`, both `{ firstName, middleName, lastName, extension }`. Refuse if `details["Groom's Birthdate"]` or `details["Bride's Birthdate"]` makes that person under 18 on the wedding date. Staff walk-ins don't use this mutation.
 
 **`changeMyRequest({ id, action, date, time, reason, reminder })`**. The caller must own the row.
 - `cancel`: allowed for `pending`, `temporary-approval`, `payment-submitted` and `scheduled`, and only when today is at least `freeCancelDays` before the date. Set `status: 'declined'` and `declineReason: 'Cancelled by the parishioner.'`, exactly, because the frontend reads that sentence.
@@ -206,9 +211,7 @@ Start only when the user confirms that the frontend is live with the Stage A `am
 | `PaymentRecord` | create | read | A payer could create a row already verified |
 | `ServerApplication` | create | read, delete (withdrawing) | An applicant could create a row already approved |
 
-Staff and admin group rules stay as they are, so walk-ins and approvals keep working. Then add:
-
-- `Donation`: add `update` for `staff`, so the Secretary can verify payments.
+Staff and admin group rules stay as they are, so walk-ins and approvals keep working.
 
 ## B2. `MinistrySignup`
 
@@ -240,6 +243,15 @@ Keep it append-only: no `update` or `delete` for anyone. The last line is what l
 Remove `itech` read, because the model now holds PWD and accommodation details. IT's Data Backup page doesn't use this model.
 
 ---
+
+# No backend work needed
+
+These frontend features are stored in existing fields, so don't add anything for them:
+
+- Public baptism dates: `Announcement` with `audience: 'Public Baptism'` and `media.kind: 'public-baptism'`
+- Call for Help and announcement review: `Announcement.media` (`kind`, `review`)
+- Assigned priest, baptism type, uploads list, distance fee, age-based documents, temporary approval: `Blessing.details`
+- Requirements & Rules, Statistics, Payment Reports, Roles & Access, color palettes and date formats
 
 # Report when finished
 

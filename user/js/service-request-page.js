@@ -35,6 +35,7 @@ import { uploadsReady, uploadProblem, uploadRequirement } from '../../shared/js/
 import {
   checkCouple, accountIsInCouple, AGE_DOCS_KEY, GROOM_EMAIL, BRIDE_EMAIL,
 } from '../../shared/js/wedding-rules.js';
+import { recordConsent } from '../../shared/js/consent.js';
 import { myDetails, prefill, rememberHtml, rememberDetails } from '../../shared/js/profile-details.js';
 import {
   BAPTISM_TYPE_KEY, BAPTISM_TYPE_LABELS, PUBLIC_DATE_KEY, typeChooserHtml, dateListHtml, watchDates, holdRows,
@@ -659,6 +660,8 @@ export function initServiceRequestPage(serviceId) {
         time: slot.time,
         status,
       });
+
+      await recordConsent(client, currentUser()?.sub, 'service-request');
 
       // The couple both hear about the request, whoever sent it.
       if (isWedding) {

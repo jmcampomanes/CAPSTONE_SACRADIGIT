@@ -4,9 +4,11 @@
    ============================================ */
 
 import { guardPage, currentUser } from '../../shared/js/auth.js';
+import { client } from '../../shared/js/amplify-init.js';
+import { flushPendingConsent } from '../../shared/js/consent.js';
 
 // Only signed-in people with the right role get past this (see auth.js).
-guardPage('parishioner');
+guardPage('parishioner').then(user => flushPendingConsent(client, user?.sub)); // sign-up consent waits for a session
 import { initPageHelp } from '../../shared/js/help-tutorial.js';
 import { initUiPrefs, currentLang, setAccessibility } from '../../shared/js/ui-prefs.js';
 import { labelTopBarIcons } from '../../shared/js/top-bar-labels.js';
