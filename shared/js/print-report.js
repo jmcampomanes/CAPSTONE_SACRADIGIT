@@ -15,6 +15,7 @@
 
 import { currentUserName } from './auth.js';
 import { translateElement } from './ui-prefs.js';
+import { logActivity } from './activity-log.js';
 
 const EMBLEM = new URL('../../sacradigit-images/fatima-emblem.png', import.meta.url).href;
 
@@ -109,7 +110,12 @@ function waitForImages(doc) {
  *   signatures  ['Prepared by', 'Noted by']  (optional signature lines)
  *   className   extra class on the content (e.g. 'reader')
  */
-export async function printReport({ title, subtitle = '', chips = [], body = '', orientation = 'portrait', signatures = [], className = '' }) {
+export async function printReport(report) {
+  logActivity('Download', `Printed: ${report.title}${report.subtitle ? ` (${report.subtitle})` : ''}`);
+  return showReport(report);
+}
+
+async function showReport({ title, subtitle = '', chips = [], body = '', orientation = 'portrait', signatures = [], className = '' }) {
   const printedBy = currentUserName();
   const printedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
   const footerLeft = `SacraDigit · Printed ${printedAt}${printedBy ? ` by ${printedBy}` : ''}`;

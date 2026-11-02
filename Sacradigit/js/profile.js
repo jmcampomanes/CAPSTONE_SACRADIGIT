@@ -15,6 +15,7 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
+import { currentUser, isHeadAdmin } from '../../shared/js/auth.js';
 import { initPasswordChange } from '../../shared/js/password-change.js';
 import { showToast } from './admin-ui.js';
 import { initStaffProfile } from '../../shared/js/staff-profile.js';
@@ -134,7 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   client.models.AccessLog.observeQuery().subscribe({
     next: ({ items }) => {
-      accessLog = items.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const me = currentUser();
+      const mine = isHeadAdmin(me) ? items : items.filter(a => (a.userName || '').startsWith(`${me?.name || me?.email} · `));
+      accessLog = mine.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       renderActivity();
     },
     error: (err) => {

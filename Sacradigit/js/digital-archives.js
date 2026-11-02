@@ -5,6 +5,7 @@
 
 import { client } from '../../shared/js/amplify-init.js';
 import { currentUserName, isHeadAdmin } from '../../shared/js/auth.js';
+import { logActivity } from '../../shared/js/activity-log.js';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../../shared/js/name-utils.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { initScanScreen, SCAN_SUFFIX } from './scanner/scan-screen.js';
@@ -367,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const r = records.find(x => x.id === id);
     if (!r) return;
     viewingId = id;
+    logActivity('View', `Parish Record — ${r.type || 'Record'}: ${r.fullName || ''}`, { targetType: 'ParishRecord', targetId: r.id });
 
     const detailGridHtml = `
       <div class="so-detail-grid">

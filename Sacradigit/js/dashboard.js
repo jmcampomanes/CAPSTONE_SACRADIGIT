@@ -2,10 +2,33 @@
    SacraDigit Admin — Dashboard Scripts
    ============================================ */
 
-import { guardPage } from '../../shared/js/auth.js';
+import { guardPage, homeFor } from '../../shared/js/auth.js';
+import { can, PAGE_MODULES } from '../../shared/js/permissions.js';
 
 // Only signed-in people with the right role get past this (see auth.js).
-guardPage('admin');
+const thisPage = window.location.pathname.split('/').pop();
+guardPage('admin').then((user) => {
+  addToolLinks(user);
+  // The role matrix decides the pages added after the portal was built.
+  const module = PAGE_MODULES[thisPage];
+  if (module && !can(user, module, 'view')) window.location.replace(homeFor(user.role));
+});
+
+/* Sidebar group for the report and settings pages, shown by role (permissions.js). */
+const ADMIN_TOOLS = [
+  ['payment-reports.html', 'Payment Reports', 'payments', 'reports'],
+  ['statistics.html', 'Statistics', 'statistics', 'reports'],
+  ['parish-rules.html', 'Parish Rules & Fees', 'parish-rules', 'parishRules'],
+  ['roles-access.html', 'Roles & Access', 'roles-access', 'roles'],
+];
+export function addToolLinks(user) {
+  const nav = document.querySelector('nav[aria-label="Admin navigation"]');
+  const links = ADMIN_TOOLS.filter(([, , , module]) => can(user, module, 'view'));
+  if (!nav || !links.length || nav.querySelector('[data-nav="parish-rules"]')) return;
+  const icon = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>';
+  nav.insertAdjacentHTML('beforeend', `<p class="sidebar-label">Reports &amp; Settings</p><ul class="space-y-0.5 mb-4">${links.map(([href, label, key]) => `
+    <li><a href="${href}" data-nav="${key}" class="sidebar-link${href === thisPage ? ' active' : ''}"${href === thisPage ? ' aria-current="page"' : ''}>${icon} ${label.replace('&', '&amp;')}</a></li>`).join('')}</ul>`);
+}
 import { initPageHelp } from '../../shared/js/help-tutorial.js';
 import { initUiPrefs } from '../../shared/js/ui-prefs.js';
 import { initExtToggles } from '../../shared/js/name-utils.js';

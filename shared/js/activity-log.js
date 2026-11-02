@@ -19,6 +19,8 @@
    undo or block the change itself.
    ============================================ */
 
+import outputs from '../../amplify_outputs.json';
+
 const STAFF_ROLES = { admin: 'Head Admin', staff: 'Secretary', media: 'Media Team', itech: 'IT Team' };
 
 // Models that aren't logged automatically: the log itself, parishioner-only
@@ -36,11 +38,18 @@ const MODEL_LABELS = {
   PostTemplate: 'Post Template', EventCoverageRequest: 'Event Coverage', LivestreamStatus: 'Livestream',
   ServiceSlot: 'Service Slot', MassCheckInSession: 'Mass Check-in',
   PrayerRequest: 'Prayer Request', MinistrySignup: 'Ministry Sign-up',
+  ParishSettings: 'Parish Rules', PaymentRecord: 'Payment', ServerApplication: 'Parish Server Application',
   CustomBadge: 'Badge', BadgeAward: 'Badge Award',
   ColumbarySection: 'Columbary Wall', NicheReservation: 'Niche Reservation', NichePayment: 'Niche Payment',
 };
 
 let logClient = null;
+
+// actorRole, targetType, targetId, before and after exist once the backend has
+// them (BACKEND_CHANGES.md). Sending a field the model lacks fails the whole write.
+const HAS_AUDIT_FIELDS = !!outputs.data?.model_introspection?.models?.AccessLog?.fields?.actorRole;
+const SNAPSHOT_LIMIT = 2000;
+const snapshot = (obj) => (obj ? JSON.stringify(obj).slice(0, SNAPSHOT_LIMIT) : undefined);
 
 /** The signed-in staff member (from auth.js's cache), or null for parishioners / signed-out. */
 function signedInStaff() {
@@ -54,7 +63,7 @@ function signedInStaff() {
 }
 
 /** Writes one log entry as the signed-in staff member, e.g. "Maria Cruz · Media Team". */
-export async function logActivity(action, detail) {
+export async function logActivity(action, detail, audit = {}) {
   const user = signedInStaff();
   if (!user || !logClient?.models.AccessLog) return;
   try {
@@ -62,6 +71,10 @@ export async function logActivity(action, detail) {
       userName: `${user.name || user.email || 'Staff'} · ${STAFF_ROLES[user.role]}`,
       fileName: detail,
       action,
+      ...(HAS_AUDIT_FIELDS ? {
+        actorRole: STAFF_ROLES[user.role], targetType: audit.targetType, targetId: audit.targetId,
+        before: snapshot(audit.before), after: snapshot(audit.after),
+      } : {}),
     });
   } catch (err) {
     console.warn('Could not write activity log entry:', err);
@@ -92,11 +105,19 @@ export function installActivityLog(client) {
       if (typeof api[op] !== 'function' || SKIP_OPS.has(`${model}.${op}`)) continue;
       const original = api[op].bind(api);
       api[op] = async (input, options) => {
+        // What the changed fields held before, for the audit trail.
+        let before;
+        if (HAS_AUDIT_FIELDS && op === 'update' && input?.id && signedInStaff()) {
+          const { data } = await api.get({ id: input.id }).catch(() => ({}));
+          if (data) before = Object.fromEntries(Object.keys(input).map(k => [k, data[k]]));
+        }
         const result = await original(input, options);
         if (result && !result.errors && signedInStaff()) {
           // update/delete return the full record, so the name is known even
           // when only { id, status } was sent.
-          logActivity(VERB[op], describe(model, { ...(input || {}), ...(result.data || {}) }));
+          logActivity(VERB[op], describe(model, { ...(input || {}), ...(result.data || {}) }), {
+            targetType: model, targetId: result.data?.id || input?.id, before, after: op === 'delete' ? undefined : input,
+          });
         }
         return result;
       };

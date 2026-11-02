@@ -41,6 +41,7 @@
   <link rel="stylesheet" href="../Sacradigit/css/admin-shell.css" />
   <link rel="stylesheet" href="css/itech-shell.css" />
   <link rel="stylesheet" href="css/itech.css" />
+  <link rel="stylesheet" href="../shared/css/parish-common.css" />
   <!-- Sign-in check (see ../shared/js/auth.js): the page stays hidden until the portal confirms who you are -->
   <style>.auth-pending body{visibility:hidden}</style>
   <script>(function(){var h=document.documentElement,c='auth-pending';try{if(sessionStorage.getItem('sdAuthOk')==='1')c='auth-soft'}catch(e){}h.classList.add(c);setTimeout(function(){h.classList.remove(c)},8000)})()</script>
@@ -211,6 +212,11 @@
           <div class="p-5">
             <div id="roles-grid" class="roles-grid"><p class="empty-state">Loading roles…</p></div>
           </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">What Each Role Can Do</h2></div>
+          <div class="p-5" id="roles-matrix"></div>
         </div>
       </main>
     </div>

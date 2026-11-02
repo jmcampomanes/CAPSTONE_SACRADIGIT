@@ -9,6 +9,14 @@
 import { mountPageInfo as mount } from '../../shared/js/page-info.js';
 
 const PAGE_INFO = {
+  'parish-rules.html': {
+    title: 'What’s on this page?',
+    text: 'The fees, address, map pin and time limits every page uses. Change them here and the homepage, forms and checklists all update.',
+  },
+  'roles-access.html': {
+    title: 'What’s on this page?',
+    text: 'What each role can see and do, side by side. To change someone’s role, ask the IT team.',
+  },
   'record-requests.html': {
     title: 'What’s on this page?',
     text: 'Certificate requests from parishioners and walk-ins. Open one to check it, approve it, and generate the certificate; mark it released once it’s picked up.',

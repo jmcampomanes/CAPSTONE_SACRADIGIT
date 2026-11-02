@@ -9,11 +9,15 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
+import { matrixHtml } from '../../shared/js/permissions.js';
 import { escapeHtml, showToast, logItAction, openModal, closeModal, wireModals, ROLE_ACCESS, ELEVATED } from './itech-shell.js';
 import { ROLES } from '../../shared/js/auth.js';
 import { confirmDialog } from '../../Sacradigit/js/admin-ui.js';
 
 const $ = (id) => document.getElementById(id);
+
+// The access each role really has (shared/js/permissions.js). The saved roles below are labels only.
+$('roles-matrix').innerHTML = matrixHtml();
 
 /* The permission catalog shown as checkboxes. Labels are what gets saved. */
 const PERMISSIONS = [
