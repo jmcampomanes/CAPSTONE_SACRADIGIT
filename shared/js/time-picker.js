@@ -62,5 +62,11 @@ export function createTimePicker(container, { onChange = () => {}, minuteStep = 
 
 /** "07:00 AM" → "7:00 AM" for display. */
 export function displayTime(time12) {
-  return (time12 || '').replace(/^0(\d)/, '$1');
+  const text = (time12 || '').replace(/^0(\d)/, '$1');
+  let use24 = false;
+  try { use24 = localStorage.getItem('sacradigit_time_format') === '24'; } catch { /* private mode */ }
+  const m = use24 && /^(\d{1,2}):(\d{2}) (AM|PM)$/i.exec(text);
+  if (!m) return text;
+  const h = parseInt(m[1], 10) % 12 + (m[3].toUpperCase() === 'PM' ? 12 : 0);
+  return `${String(h).padStart(2, '0')}:${m[2]}`;
 }

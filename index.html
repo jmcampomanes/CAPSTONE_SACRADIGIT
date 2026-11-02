@@ -16,9 +16,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="Sacradigit/css/admin-shell.css" />
   <link rel="stylesheet" href="landing/home.css" />
+  <link rel="stylesheet" href="shared/css/parish-common.css" />
   <!-- Light/Dark + English/Filipino (see ui-prefs.js) -->
   <link rel="stylesheet" href="shared/css/accessibility.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';var sdp=localStorage.getItem('sacradigit_palette');if(sdp)document.documentElement.dataset.palette=sdp;var sdn=localStorage.getItem('sacradigit_density');if(sdn)document.documentElement.dataset.density=sdn;if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
   <!-- First page of the visit: stay hidden until motion.js puts up the splash -->
   <style>.sd-splash-pending{background:#0f1730}.sd-splash-pending body{visibility:hidden}</style>
   <script>try{if(sessionStorage.getItem('sdSplashSeen')!=='1'&&localStorage.getItem('sacradigit_motion')!=='reduce'&&localStorage.getItem('sacradigit_a11y')!=='on'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('sd-splash-pending');setTimeout(function(){document.documentElement.classList.remove('sd-splash-pending')},5000)}}catch(e){}</script>
@@ -60,6 +61,7 @@
   </header>
 
   <main id="top">
+    <div id="hp-call-for-help" class="hp-wrap" hidden></div>
 
     <!-- ============ Hero ============ -->
     <section class="hp-hero">
@@ -394,6 +396,15 @@
     <div class="hp-wrap hp-footer-bottom">
       <span>© <span id="hp-year" data-no-translate>2026</span> Our Lady of Fatima Parish, Diocese of Cubao. All rights reserved.</span>
       <span>Powered by SacraDigit</span>
+    </div>
+    <div class="hp-wrap hp-credits">
+      <p class="hp-credits-title">Developed by</p>
+      <ul>
+        <li><strong>Campomanes, Juan Miguel D.</strong> Backend</li>
+        <li><strong>Laurente, Althea Marie R.</strong> Quality Analyst</li>
+        <li><strong>Ramilo, Kirby D.</strong> Project Manager</li>
+        <li><strong>Sorio, Ia Mary R.</strong> Frontend</li>
+      </ul>
     </div>
   </footer>
 

@@ -31,6 +31,7 @@ import { listSections, availableCount } from '../shared/js/columbary.js';
 import { baptismRulesHtml, weddingRulesHtml } from '../shared/js/sacrament-rules.js';
 import { loadParishRules } from '../shared/js/parish-rules.js';
 import { listDates, upcomingDates, fmtLong, fmtShort } from '../shared/js/public-baptism.js';
+import { activeCalls, callBannerHtml } from '../shared/js/call-for-help.js';
 
 Amplify.configure(outputs);
 const client = generateClient({ authMode: 'apiKey' });
@@ -45,6 +46,17 @@ function renderSacramentRules() {
 }
 renderSacramentRules();
 loadParishRules(client).then(renderSacramentRules);
+
+/* Call for Help banners at the top of the page; hidden when there are none. */
+async function loadCallsForHelp() {
+  const res = await client.models.Announcement.list({ limit: 200 });
+  const err = errorsOf(res); if (err) throw err;
+  const calls = activeCalls(res.data || []);
+  if (!calls.length) return;
+  $('hp-call-for-help').innerHTML = callBannerHtml(calls);
+  $('hp-call-for-help').hidden = false;
+}
+loadCallsForHelp().catch(err => console.warn('Calls for help unavailable:', err));
 
 /* Announced public baptism dates, under the baptism rules; hidden when there are none. */
 async function loadPublicBaptismDates() {

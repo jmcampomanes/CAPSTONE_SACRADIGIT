@@ -13,6 +13,10 @@
      sacradigit_a11y  = 'on' | 'off'   (styles: accessibility.css)
      sacradigit_text_size = 1.1 … 1.45 (the "Aa" gauge; see TEXT_SIZES)
      sacradigit_motion = 'reduce' | 'full'  (motion.js / motion.css)
+     sacradigit_palette = 'ocean' | 'forest' | 'contrast' (accessibility.css)
+     sacradigit_density = 'compact'
+     sacradigit_date_format = 'dmy'     ("12 October 2026")
+     sacradigit_time_format = '24'      ("14:30")
    A tiny inline script in each page's <head>
    applies the saved theme before the page is
    drawn (no white flash); see THEME_BOOT below.
@@ -40,10 +44,59 @@ const TEXT_SIZE_WORDS = {
 };
 
 /** The inline <head> snippet every page carries (kept here for reference). */
-export const THEME_BOOT = `try{var t=localStorage.getItem('${THEME_KEY}');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('${A11Y_KEY}')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('${TEXT_SIZE_KEY}'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('${LANG_KEY}')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}`;
+export const THEME_BOOT = `try{var t=localStorage.getItem('${THEME_KEY}');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('${A11Y_KEY}')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('${TEXT_SIZE_KEY}'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';var sdp=localStorage.getItem('sacradigit_palette');if(sdp)document.documentElement.dataset.palette=sdp;var sdn=localStorage.getItem('sacradigit_density');if(sdn)document.documentElement.dataset.density=sdn;if(localStorage.getItem('${LANG_KEY}')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}`;
 
 const read = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const write = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
+
+/* Display format: colors, spacing, and how dates and times are written.
+   DISPLAY_PREFS drives the controls in the "Aa" panel and on My Settings. */
+export const DISPLAY_PREFS = [
+  { key: 'palette', storage: 'sacradigit_palette', label: 'Color palette', options: [['', 'Parish (default)'], ['ocean', 'Ocean'], ['forest', 'Forest'], ['contrast', 'High contrast']] },
+  { key: 'density', storage: 'sacradigit_density', label: 'Spacing', options: [['', 'Comfortable'], ['compact', 'Compact']] },
+  { key: 'dateFormat', storage: 'sacradigit_date_format', label: 'Date format', options: [['', 'October 12, 2026'], ['dmy', '12 October 2026']] },
+  { key: 'timeFormat', storage: 'sacradigit_time_format', label: 'Time format', options: [['', '12-hour (2:30 PM)'], ['24', '24-hour (14:30)']] },
+];
+
+export function setDisplayPref(key, value) {
+  const pref = DISPLAY_PREFS.find(p => p.key === key);
+  if (!pref) return;
+  try {
+    if (value) localStorage.setItem(pref.storage, value);
+    else localStorage.removeItem(pref.storage);
+  } catch { /* private mode */ }
+  if (key === 'palette' || key === 'density') {
+    if (value) document.documentElement.dataset[key] = value;
+    else delete document.documentElement.dataset[key];
+  }
+}
+
+/** Labeled dropdowns; any page may show them, and they save themselves. */
+export const displayPrefsHtml = () => DISPLAY_PREFS.map(p => `
+  <label class="ui-prefs-display">
+    <span>${p.label}</span>
+    <select data-display-pref="${p.key}">${p.options.map(([v, l]) => `<option value="${v}" ${(read(p.storage) || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+  </label>`).join('');
+
+document.addEventListener('change', (e) => {
+  if (e.target.matches?.('[data-display-pref]')) {
+    setDisplayPref(e.target.dataset.displayPref, e.target.value);
+    document.querySelectorAll(`[data-display-pref="${e.target.dataset.displayPref}"]`).forEach(el => { el.value = e.target.value; });
+  }
+});
+
+/* Every portal writes dates through these three Date methods, so the format
+   preference applies here rather than at each of the hundreds of call sites.
+   'en-CA' (used to build YYYY-MM-DD keys) is left alone. */
+{
+  const P = Date.prototype;
+  const original = { d: P.toLocaleDateString, s: P.toLocaleString, t: P.toLocaleTimeString };
+  const loc = (l) => ((l === undefined || l === 'en-US') && read('sacradigit_date_format') === 'dmy' ? 'en-GB' : l);
+  const opts = (o) => (read('sacradigit_time_format') === '24' ? { ...o, hour12: false } : o);
+  P.toLocaleDateString = function (l, o) { return original.d.call(this, loc(l), o); };
+  P.toLocaleString = function (l, o) { return original.s.call(this, loc(l), opts(o)); };
+  P.toLocaleTimeString = function (l, o) { return original.t.call(this, loc(l), opts(o)); };
+}
 
 export const currentTheme = () => (document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
 export const currentLang = () => (read(LANG_KEY) === 'fil' ? 'fil' : 'en');
@@ -300,6 +353,12 @@ const STYLE = `
     transform-origin: top right; animation: ui-prefs-menu-in 0.12s ease;
   }
   .ui-prefs-size-panel[hidden] { display: none; }
+  .ui-prefs-display-group { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; }
+  .ui-prefs-display { display: grid; gap: 2px; font-size: 12px; font-weight: 600; color: #374151; }
+  .ui-prefs-display select { width: 100%; padding: 5px 6px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; color: #111827; font: inherit; font-weight: 500; }
+  :root[data-theme="dark"] .ui-prefs-display { color: #e3e6ec; }
+  :root[data-theme="dark"] .ui-prefs-display select { background: #242c3e; border-color: #3a4459; color: #f1f3f7; }
+  :root[data-theme="dark"] .ui-prefs-display-group { border-color: #2c3547; }
   .ui-prefs-size-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; font-weight: 600; }
   .ui-prefs-size-head output { color: #5b5fa8; }
   .ui-prefs-size-gauge { display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: 10px; }
@@ -453,6 +512,7 @@ export function initUiPrefs() {
           <span aria-hidden="true">A</span>
           <div class="ui-prefs-size-stops" aria-hidden="true">${TEXT_SIZES.map(() => '<i></i>').join('')}</div>
         </div>
+        <div class="ui-prefs-display-group">${displayPrefsHtml()}</div>
       </div>
     </div>
     <button type="button" class="ui-prefs-btn" id="ui-theme-btn"></button>

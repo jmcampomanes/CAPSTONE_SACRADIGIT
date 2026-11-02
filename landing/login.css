@@ -252,6 +252,7 @@ body {
 :root[data-theme="dark"] .lg-alert.is-error { background: #3a1a1f; border-color: #7f1d1d; color: #fecaca; }
 :root[data-theme="dark"] .lg-alert.is-ok { background: #133024; border-color: #166534; color: #bbf7d0; }
 
+.lg-consent { margin-top: 0.75rem; }
 .lg-legal { margin: 1.25rem 0 0; font-size: calc(0.6875rem * var(--lg-t)); color: var(--lg-muted); line-height: 1.5; text-align: center; }
 
 @media (max-width: 860px) {
@@ -267,7 +268,8 @@ body {
 .lg-card:has(.lg-view[data-view="signup"]:not(.hidden)) .lg-tabs { margin-bottom: 0.875rem; }
 .lg-card:has(.lg-view[data-view="signup"]:not(.hidden)) .lg-mobile-brand { margin-bottom: 0.625rem; }
 .lg-card:has(.lg-view[data-view="signup"]:not(.hidden)) > .lg-foot { margin-top: 0.625rem; }
-.lg-card:has(.lg-view[data-view="signup"]:not(.hidden)) .lg-legal { display: none; } /* it's about signing in */
+.lg-card:has(.lg-view[data-view="signup"]:not(.hidden)) .lg-consent { margin-top: 0.75rem; }
+.lg-legal { display: none; } /* it's about signing in */
 .lg-view[data-view="signup"] .lg-title { font-size: calc(1.25rem * var(--lg-t)); }
 .lg-view[data-view="signup"] .lg-sub { margin: 0.25rem 0 0.25rem; line-height: 1.45; }
 .lg-view[data-view="signup"] .lg-label { margin: 0.625rem 0 0.25rem; }

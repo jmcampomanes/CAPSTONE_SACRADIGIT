@@ -57,7 +57,7 @@
   <!-- Light/Dark + English/Filipino (see ../shared/js/ui-prefs.js) -->
   <link rel="stylesheet" href="../shared/css/theme-dark.css" />
   <link rel="stylesheet" href="../shared/css/accessibility.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';var sdp=localStorage.getItem('sacradigit_palette');if(sdp)document.documentElement.dataset.palette=sdp;var sdn=localStorage.getItem('sacradigit_density');if(sdn)document.documentElement.dataset.density=sdn;if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -234,6 +234,7 @@
               <option value="">All types</option>
               <option value="announcement">Announcements</option>
               <option value="post">Posts / Updates</option>
+              <option value="call-for-help">Call for Help</option>
             </select>
             <p id="announcements-count" class="text-xs text-gray-400 font-medium"></p>
           </div>
@@ -271,6 +272,10 @@
                   <label class="ann-kind-option">
                     <input type="radio" name="ann-kind" value="announcement" checked />
                     <span><b>Announcement</b><small>Official parish notice. The Head Admin publishes it.</small></span>
+                  </label>
+                  <label class="ann-kind-option">
+                    <input type="radio" name="ann-kind" value="call-for-help" />
+                    <span><b>Call for Help</b><small>Urgent need, like volunteers or calamity aid. Shows on the homepage and the parishioner dashboard.</small></span>
                   </label>
                   <label class="ann-kind-option">
                     <input type="radio" name="ann-kind" value="post" />

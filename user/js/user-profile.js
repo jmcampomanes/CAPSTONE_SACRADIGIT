@@ -34,6 +34,8 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
+import { consentBoxHtml, recordConsent } from '../../shared/js/consent.js';
+import { profileDetailsReady } from '../../shared/js/profile-details.js';
 import { currentUserName, currentUser } from '../../shared/js/auth.js';
 import { initPasswordChange } from '../../shared/js/password-change.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
@@ -220,6 +222,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const defaults = { phone: pfPhone.value, address: pfAddress.value, bio: pfBio.value };
 
+  /* Personal details: optional, sensitive, and only shown once the backend can
+     store them (profileDetailsReady, in profile-details.js). Saving any of them
+     needs the privacy consent. */
+  const personal = { birthdate: 'pf-birthdate', sex: 'pf-sex', accommodations: 'pf-accommodations', pwdType: 'pf-pwd-type' };
+  const pwdSelect = document.getElementById('pf-pwd');
+  const personalOn = profileDetailsReady();
+  document.getElementById('pf-personal').classList.toggle('hidden', !personalOn);
+  if (personalOn) document.getElementById('pf-consent-mount').innerHTML = consentBoxHtml('pf-consent', 'I agree that the parish may keep these personal details.');
+  const showPwdType = () => document.getElementById('pf-pwd-type-wrap').classList.toggle('hidden', pwdSelect.value !== 'yes');
+  pwdSelect.addEventListener('change', showPwdType);
+  function fillPersonal(pref) {
+    Object.entries(personal).forEach(([k, id]) => { document.getElementById(id).value = pref[k] || ''; });
+    pwdSelect.value = pref.isPwd === true ? 'yes' : pref.isPwd === false ? 'no' : '';
+    showPwdType();
+  }
+  function readPersonal() {
+    return {
+      ...Object.fromEntries(Object.entries(personal).map(([k, id]) => [k, document.getElementById(id).value.trim() || null])),
+      isPwd: pwdSelect.value === 'yes' ? true : pwdSelect.value === 'no' ? false : null,
+    };
+  }
+
   // Fill in the saved details (phone/address/about/photo) once they load.
   if (preferencesReady()) {
     getPreference(DONOR_NAME).then((pref) => {
@@ -232,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
       defaults.bio = pfBio.value;
       if (pref.createdAt) pfJoined.value = new Date(pref.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       if (pref.avatarKey) resolveAvatarUrl(pref.avatarKey);
+      if (personalOn) fillPersonal(pref);
     }).catch((err) => console.error('Failed to load profile details:', err));
   }
 
@@ -247,13 +272,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const phone = pfPhone.value.trim();
     if (phone && !isMobile(phone)) { setFieldError(pfPhone, MOBILE_HINT); pfPhone.focus(); showToast(MOBILE_HINT, true); return; }
+    const details = personalOn ? readPersonal() : {};
+    const sharing = Object.values(details).some(v => v !== null && v !== undefined);
+    if (sharing && !document.getElementById('pf-consent').checked) {
+      document.getElementById('pf-consent-box').classList.add('has-error');
+      showToast('Please agree to the Data Privacy Statement to save your personal details.', true);
+      return;
+    }
     pfSave.disabled = true;
     try {
       await saveProfileDetails(DONOR_NAME, {
         phone: phone && mobileDigits(phone),
         address: pfAddress.value.trim(),
         about: pfBio.value.trim(),
+        ...details,
       });
+      if (sharing) await recordConsent(client, me.sub, 'profile');
 
       defaults.phone = pfPhone.value;
       defaults.address = pfAddress.value;

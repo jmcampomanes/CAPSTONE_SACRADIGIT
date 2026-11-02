@@ -50,7 +50,8 @@
   <!-- Light/Dark + English/Filipino (see ../shared/js/ui-prefs.js) -->
   <link rel="stylesheet" href="../shared/css/theme-dark.css" />
   <link rel="stylesheet" href="../shared/css/accessibility.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';var sdp=localStorage.getItem('sacradigit_palette');if(sdp)document.documentElement.dataset.palette=sdp;var sdn=localStorage.getItem('sacradigit_density');if(sdn)document.documentElement.dataset.density=sdn;if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <link rel="stylesheet" href="../shared/css/parish-common.css" />
 </head>
 <body class="font-sans bg-gray-50 text-gray-900 antialiased">
 
@@ -233,6 +234,7 @@
 
       <!-- Page content -->
       <main class="flex-1 px-6 md:px-8 py-6 space-y-6">
+        <div id="user-call-for-help"></div>
 
         <!-- Watch Live banner — shown only while the media team has the stream marked live -->
         <a id="watch-live-banner" class="watch-live-banner hidden" href="#" target="_blank" rel="noopener">

@@ -7,6 +7,7 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
+import { activeCalls, callBannerHtml } from '../../shared/js/call-for-help.js';
 import { getUrl } from 'aws-amplify/storage';
 import { currentUser } from '../../shared/js/auth.js';
 import { mergeWeeklySchedule, recurringMassesForDate, timeToMinutes } from '../../shared/js/weekly-mass-schedule.js';
@@ -233,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
       next: async ({ items }) => {
         const myToken = ++renderToken;
         const today = new Date().toLocaleDateString('en-CA');
+        document.getElementById('user-call-for-help').innerHTML = callBannerHtml(activeCalls(items));
         // Only what's live today (not scheduled for later, not past its End Date)
         const sorted = items
           .filter(a => { const m = meta(a); return (!m.startDate || m.startDate <= today) && (!m.endDate || m.endDate >= today); })

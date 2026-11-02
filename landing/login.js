@@ -14,6 +14,7 @@ import { initUiPrefs } from '../shared/js/ui-prefs.js';
 import { portalHandoff } from '../shared/js/motion.js';
 import { notifySignupCode, notifyPasswordReset } from '../shared/js/email-notify.js';
 import '../shared/js/sacred-art.js';
+import { consentBoxHtml, queueConsent } from '../shared/js/consent.js';
 
 const $ = (id) => document.getElementById(id);
 const views = [...document.querySelectorAll('.lg-view')];
@@ -40,6 +41,11 @@ function destinationFor(user) {
 async function finishSignIn() {
   const user = await loadUser();
   if (!user) throw new Error('Signed in, but your account could not be loaded. Please try again.');
+  if (user.role !== 'parishioner') {
+    // Loaded here so the sign-in page doesn't carry the data client until it's needed.
+    const [{ logActivity }] = await Promise.all([import('../shared/js/activity-log.js'), import('../shared/js/amplify-init.js')]);
+    await logActivity('Sign In', `Signed in to the ${user.role} portal`, { targetType: 'Account', targetId: user.sub });
+  }
   const destination = destinationFor(user);
   portalHandoff(destination); // "Opening Admin portal…" while it loads
   window.location.replace(destination);
@@ -171,6 +177,9 @@ form('signin').addEventListener('submit', (e) => {
   });
 });
 
+$('su-consent-mount').innerHTML = consentBoxHtml('su-consent');
+$('su-consent').addEventListener('change', () => $('su-consent-box').classList.remove('has-error'));
+
 form('signup').addEventListener('submit', (e) => {
   e.preventDefault();
   const firstName = $('su-first').value.trim();
@@ -181,8 +190,14 @@ form('signup').addEventListener('submit', (e) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setAlert('Please enter a valid email address.'); return; }
   if (!passwordOk(password)) { setAlert('Your password doesn’t meet all the rules below it yet.'); return; }
   if (password !== $('su-password2').value) { setAlert('The two passwords don’t match.'); return; }
+  if (!$('su-consent').checked) {
+    $('su-consent-box').classList.add('has-error');
+    setAlert('Please read and agree to the Terms and Data Privacy Statement.');
+    return;
+  }
   busy(e.target, async () => {
     const step = await signUp({ email, password, firstName, lastName });
+    queueConsent('sign-up'); // saved at first sign-in, when there's a session
     pendingEmail = email; pendingPassword = password;
     if (step === 'CONFIRM_SIGN_UP') {
       $('cf-email-label').textContent = email;

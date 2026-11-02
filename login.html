@@ -20,10 +20,11 @@
   <link rel="stylesheet" href="landing/login.css" />
   <!-- Light/Dark + English/Filipino (see ui-prefs.js) -->
   <link rel="stylesheet" href="shared/css/accessibility.css" />
-  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('sacradigit_theme');if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('sacradigit_a11y')==='on'){document.documentElement.dataset.a11y='on';document.documentElement.style.setProperty('--sd-text-scale',localStorage.getItem('sacradigit_text_size'))}if(localStorage.getItem('sacradigit_motion')==='reduce')document.documentElement.dataset.motion='reduce';var sdp=localStorage.getItem('sacradigit_palette');if(sdp)document.documentElement.dataset.palette=sdp;var sdn=localStorage.getItem('sacradigit_density');if(sdn)document.documentElement.dataset.density=sdn;if(localStorage.getItem('sacradigit_lang')==='fil'){document.documentElement.lang='fil';document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},1500)}}catch(e){}</script>
   <!-- First page of the visit: stay hidden until motion.js puts up the splash -->
   <style>.sd-splash-pending{background:#0f1730}.sd-splash-pending body{visibility:hidden}</style>
   <script>try{if(sessionStorage.getItem('sdSplashSeen')!=='1'&&localStorage.getItem('sacradigit_motion')!=='reduce'&&localStorage.getItem('sacradigit_a11y')!=='on'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('sd-splash-pending');setTimeout(function(){document.documentElement.classList.remove('sd-splash-pending')},5000)}}catch(e){}</script>
+  <link rel="stylesheet" href="shared/css/parish-common.css" />
 </head>
 <body>
   <main class="lg-page">
@@ -101,6 +102,7 @@
           </ul>
           <label class="lg-label" for="su-password2">Confirm Password</label>
           <input class="lg-input" id="su-password2" type="password" autocomplete="new-password" required />
+          <div id="su-consent-mount" class="lg-consent"></div>
           <button type="submit" class="lg-btn">Create Account</button>
           <p class="lg-foot">Already have an account? <button type="button" class="lg-link" data-go="signin">Sign in</button></p>
         </form>
@@ -176,7 +178,7 @@
 
         <p class="lg-foot"><a class="lg-link" href="index.html">← Visit the parish homepage</a></p>
 
-        <p class="lg-legal">By signing in you agree to use parish records only for parish business. Personal information is handled by the parish office.</p>
+        <p class="lg-legal">By signing in you agree to the Terms and Data Privacy Statement and to use parish records only for parish business. Personal information is handled by the parish office under the Data Privacy Act of 2012.</p>
       </div>
     </section>
   </main>

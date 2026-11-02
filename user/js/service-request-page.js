@@ -26,6 +26,7 @@ import { createPinMap, formatLatLng, addressFromLatLng } from '../../shared/js/p
 import { SERVICE_TYPES, needsApproval } from '../../shared/js/service-catalog.js';
 import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-number.js';
 import { loadParishRules } from '../../shared/js/parish-rules.js';
+import { myDetails, prefill, rememberHtml, rememberDetails } from '../../shared/js/profile-details.js';
 import {
   BAPTISM_TYPE_KEY, BAPTISM_TYPE_LABELS, PUBLIC_DATE_KEY, typeChooserHtml, dateListHtml, watchDates, holdRows,
   dateState, serviceLabel,
@@ -402,6 +403,14 @@ export function initServiceRequestPage(serviceId) {
 
   svcContactInput.addEventListener('input', () => clearFieldError(svcContactInput));
 
+  /* Details typed once: prefill from My Profile, and offer to save changes back. */
+  const addressField = svc.fields.find(f => /address/i.test(f.label) && !f.kind);
+  svcNotesInput.parentElement.insertAdjacentHTML('afterend', `<div>${rememberHtml('svc-remember')}</div>`);
+  myDetails(REQUESTER_NAME).then((saved) => {
+    prefill(svcContactInput, saved.phone);
+    if (addressField) prefill(document.getElementById(addressField.id), saved.address);
+  });
+
   svcSubmitBtn.addEventListener('click', async () => {
     const missing = []; // [label, element] in page order, for the summary and scrolling
     const ask = (label) => `Please enter the ${label.replace(/\s*\(.*?\)/g, '').toLowerCase()}.`;
@@ -525,6 +534,13 @@ export function initServiceRequestPage(serviceId) {
           to: currentUser()?.email, name: REQUESTER_NAME, serviceType: svc.name, status: 'scheduled',
           date: slot.date, time: slot.time, location,
         });
+      }
+
+      if (document.getElementById('svc-remember').checked) {
+        rememberDetails(REQUESTER_NAME, {
+          phone: mobileDigits(svcContactInput.value),
+          ...(addressField ? { address: document.getElementById(addressField.id).value.trim() } : {}),
+        }).catch(err => console.warn('Could not save details to the profile:', err));
       }
 
       showServiceSuccess({ slot, approval, location, bookingId: result.data?.id, name: isBaptism ? serviceLabel(result.data) : svc.name });

@@ -107,3 +107,18 @@ allow.groups(['staff']).to(['read']),   // the page shows a Secretary only their
 The second line only filters in the browser. For a real limit, add an `actorKey` field holding the signed-in sub and use an owner rule.
 
 **Known weakness:** any signed-in user, including parishioners, can currently create AccessLog rows, and the `userName` is whatever the browser sends, so entries can be forged. The fix is to remove `allow.authenticated().to(['create'])` and add a `logActivity` custom mutation whose Lambda takes the name and role from the caller's token. Updates and deletes must stay disabled for every group, so the log stays append-only.
+
+## 7. ParishionerPreference: personal details
+
+```ts
+// add to ParishionerPreference
+birthdate: a.date(),
+sex: a.string(),
+isPwd: a.boolean(),
+pwdType: a.string(),
+accommodations: a.string(),
+```
+
+These are sensitive personal information under RA 10173. Remove `itech` read from this model first (section 5). My Profile shows these fields as soon as they appear in `amplify_outputs.json`.
+
+The Honor Roll calls `ParishionerPreference.list`. It must keep working for signed-in parishioners without exposing these fields; move that read to a query returning only `parishionerKey` and `showOnHonorRoll`.

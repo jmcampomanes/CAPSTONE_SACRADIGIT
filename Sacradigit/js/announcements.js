@@ -31,6 +31,7 @@ import { uploadData, getUrl } from 'aws-amplify/storage';
 import { showToast, confirmDialog } from './admin-ui.js';
 import { isBanns } from '../../shared/js/banns.js';
 import { isPublicBaptism } from '../../shared/js/public-baptism.js';
+import { CALL_FOR_HELP } from '../../shared/js/call-for-help.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -96,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Array.isArray(parsed)) return { items: parsed, kind: 'announcement', eventDate: '', eventTime: '', location: '', startDate: '', endDate: '', duration: '' };
     return {
       items: Array.isArray(parsed.items) ? parsed.items : [],
-      kind: parsed.kind === 'post' ? 'post' : 'announcement',
+      kind: parsed.kind === 'post' || parsed.kind === CALL_FOR_HELP ? parsed.kind : 'announcement',
       eventDate: parsed.eventDate || '',
       eventTime: parsed.eventTime || '',
       location: parsed.location || '',
@@ -727,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const kindRadios                = [...document.querySelectorAll('input[name="ann-kind"]')];
   const ANNOUNCEMENT_HINT = durationHint.textContent;
 
-  const currentKind = () => (kindRadios.find(r => r.checked)?.value === 'post' ? 'post' : 'announcement');
+  const currentKind = () => kindRadios.find(r => r.checked)?.value || 'announcement';
 
   /* Posts: no End Date (they archive themselves), and "Post Now" instead
      of the Head Admin's "Publish Now". */
@@ -756,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     note.textContent = 'Saved as a draft. The Head Admin reviews official announcements and publishes them.';
     note.classList.toggle('hidden', !needsReview);
-    modalTitle.textContent = `${editing ? 'Edit' : 'New'} ${isPost ? 'Post / Update' : 'Announcement'}`;
+    modalTitle.textContent = `${editing ? 'Edit' : 'New'} ${isPost ? 'Post / Update' : kind === CALL_FOR_HELP ? 'Call for Help' : 'Announcement'}`;
   }
   kindRadios.forEach(r => r.addEventListener('change', () => applyKindUI(currentKind(), { editing: editTargetId !== null })));
   postNowBtn.addEventListener('click', () => saveAnnouncement(true));

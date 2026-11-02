@@ -9,9 +9,10 @@
    labeled home instead of three small icons.
    ============================================ */
 
-import { currentTheme, setTheme, currentLang, setLanguage, accessibilityOn, setAccessibility, reduceMotionOn, setReduceMotion } from '../../shared/js/ui-prefs.js';
+import { displayPrefsHtml, currentTheme, setTheme, currentLang, setLanguage, accessibilityOn, setAccessibility, reduceMotionOn, setReduceMotion } from '../../shared/js/ui-prefs.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settings-display').innerHTML = displayPrefsHtml();
 
   const themeToggle = document.getElementById('settings-theme-toggle');
   const a11yToggle = document.getElementById('settings-a11y-toggle');
