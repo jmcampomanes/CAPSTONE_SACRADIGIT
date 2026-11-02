@@ -1,7 +1,9 @@
 /* ============================================
    SacraDigit — Parish Assistant (chat window)
    A floating "Ask" button on every parishioner
-   page that opens a small chat. Answers come from
+   page that opens a small chat. Predictable
+   questions are answered instantly in the browser
+   (see quick-answers.js); the rest come from
    OpenRouter (see server/ai-chat), grounded with
    the same live data the portal pages show (Mass
    schedule, special Masses, closures, livestream,
@@ -19,6 +21,7 @@ import { currentLang } from '../ui-prefs.js';
 import { mergeWeeklySchedule } from '../weekly-mass-schedule.js';
 import { closuresFrom } from '../service-schedule.js';
 import { askAssistant } from './ai-chat-client.js';
+import { quickAnswer } from './quick-answers.js';
 import { FACILITIES, FUNDS, REQUIREMENTS, CERTIFICATES, OFFERING_PER_INTENTION, PORTAL_DIRECTORY } from './assistant-knowledge.js';
 import { loadParishContact } from '../parish-info.js';
 
@@ -384,6 +387,19 @@ export function initParishAssistant() {
       return;
     }
     try {
+      const quick = await quickAnswer(q, uiLang, { ...data, signedIn: !!currentUser() }).catch(err => {
+        console.warn('Parish Assistant: quick answer failed, asking the AI instead:', err);
+        return null;
+      });
+      if (quick) {
+        await new Promise(r => setTimeout(r, Math.max(0, 300 - (Date.now() - started))));
+        typing.innerHTML = formatReply(quick);
+        history.push({ role: 'user', content: q }, { role: 'assistant', content: quick });
+        scrollDown();
+        addChips(STARTER_CHIPS[uiLang]);
+        finish();
+        return;
+      }
       const context = await buildContext();
       const reply = await askAssistant(q, history, context, uiLang);
       await new Promise(r => setTimeout(r, Math.max(0, 450 - (Date.now() - started)))); // brief "typing…" so replies don't flash
@@ -397,6 +413,10 @@ export function initParishAssistant() {
     }
     scrollDown();
     addChips(STARTER_CHIPS[uiLang]);
+    finish();
+  }
+
+  function finish() {
     busy = false;
     send.disabled = !input.value.trim();
   }
@@ -405,6 +425,8 @@ export function initParishAssistant() {
     root.classList.add('pa-open');
     launcher.setAttribute('aria-expanded', 'true');
     launcher.querySelector('.pa-launcher-dot')?.remove();
+    // Have the Mass data ready, so the most-asked question answers straight away.
+    [data.weekly, data.masses, data.closures].forEach(load => load().catch(() => {}));
     if (!greeted) {
       greeted = true;
       addMessage('bot', `<p>${ui.hello}</p>`, { html: true });
