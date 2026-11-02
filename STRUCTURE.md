@@ -43,5 +43,8 @@ amplify_outputs.json                Amplify backend config (keep at the root)
 | A parishioner page `user/user-donations.html` | `user/js/user-donations.js`, `user/css/user-donations.css` |
 | Any Request a Service form                | `user/js/service-request-page.js` (the page only passes its service key) |
 | Any Request a Certificate form            | `user/js/certificate-request-page.js`     |
+| Fees, parish address, map pin, time limits | `shared/js/parish-rules.js` (defaults), or Parish Rules & Fees in the admin portal |
+| Baptism and wedding rules                 | `shared/js/sacrament-rules.js` (homepage, portal and checklist read it) |
+| Public / private baptism                  | `shared/js/public-baptism.js`             |
 | Sign-in, roles, redirects                 | `shared/js/auth.js`                       |
 | Dark mode                                 | run `node tools/build-dark-theme.mjs` (writes `shared/css/theme-dark.css`) |

@@ -35,6 +35,9 @@ import { createPinMap, formatLatLng } from '../../shared/js/pin-map.js';
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
 import { reportEmail } from './admin-ui.js';
 import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-number.js';
+import {
+  BAPTISM_TYPE_KEY, BAPTISM_TYPE_LABELS, PUBLIC_DATE_KEY, typeChooserHtml, dateListHtml, watchDates, holdRows, dateState, serviceLabel,
+} from '../../shared/js/public-baptism.js';
 
 // Added to every walk-in's details so staff can tell how it was booked.
 export const BOOKED_BY_LABEL = 'Booked By';
@@ -110,10 +113,11 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
 
         <div class="svc-screen-col">
           <h3 class="svc-screen-col-title">Choose a Schedule <span class="text-red-500">*</span></h3>
-          <div>
+          <div id="walkin-slot-wrap">
             <div id="walkin-slot-picker" class="slot-picker"></div>
             <p id="walkin-slot-summary" class="slot-summary hidden"></p>
           </div>
+          <div id="walkin-public-dates" class="hidden"></div>
           <div id="walkin-map-slot"></div>
         </div>
       </div>
@@ -139,6 +143,40 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
   let picker = null;
   let pinMap = null;
   const currentService = () => chosen;
+
+  /* Baptism: the office chooses Public (an announced date) or Private (the slot picker). */
+  let baptismType = '';
+  let publicDates = [];
+  let publicDateId = '';
+  const isBaptism = () => chosen?.id === 'baptism';
+  const pickerRows = () => [...getRecords(), ...holdRows(publicDates)];
+  watchDates(client, (dates) => {
+    publicDates = dates;
+    picker?.refresh(pickerRows());
+    renderPublicDates();
+  });
+
+  function renderPublicDates() {
+    if (baptismType !== 'public') return;
+    $('walkin-public-dates').innerHTML = dateListHtml('walkin', publicDates, getRecords(), {
+      selectedId: publicDateId, ignoreClosing: true,
+      officeNote: 'Announce one with Public Baptism Dates, or book this as Private.',
+    });
+  }
+
+  function setBaptismType(type) {
+    baptismType = type;
+    publicDateId = '';
+    $('walkin-baptism-chooser')?.classList.remove('has-error');
+    $('walkin-slot-wrap').classList.toggle('hidden', isBaptism() && type !== 'private');
+    $('walkin-public-dates').classList.toggle('hidden', type !== 'public');
+    renderPublicDates();
+  }
+
+  $('walkin-fields').addEventListener('change', (e) => { if (e.target.name === 'walkin-baptism-type') setBaptismType(e.target.value); });
+  $('walkin-public-dates').addEventListener('change', (e) => {
+    if (e.target.name === 'walkin-public-date') { publicDateId = e.target.value; e.currentTarget.classList.remove('has-error'); }
+  });
 
   /* ---------- field errors ---------- */
   function setFieldError(input, message) {
@@ -228,7 +266,9 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
           <input type="text" id="walkin-f-${f.id}" class="form-input" placeholder="${escapeHtml(f.placeholder || '')}" />
         </div>`;
     }).join('');
+    if (isBaptism()) fieldsEl.insertAdjacentHTML('afterbegin', typeChooserHtml('walkin'));
     fieldsEl.classList.toggle('hidden', !fieldsEl.innerHTML.trim());
+    setBaptismType('');
 
     const mapField = svc.fields.find(f => f.kind === 'map');
     $('walkin-map-slot').innerHTML = mapField ? pinFieldHtml(mapField) : '';
@@ -236,7 +276,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
 
     picker = createSlotPicker(pickerEl, {
       type: svc.name,
-      records: getRecords(),
+      records: pickerRows(),
       closures: getClosures(),
       ignoreLead: true, // walk-ins skip the service's lead time (earliest is still tomorrow)
       layout: 'calendar',
@@ -354,8 +394,13 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       if (!el.value.trim()) { setFieldError(el, `${f.label} is required.`); hasError = true; }
     });
 
-    const slot = picker && picker.getValue();
-    if (!slot) { pickerEl.classList.add('has-error'); hasError = true; }
+    const publicDate = publicDates.find(d => d.id === publicDateId);
+    const slot = baptismType === 'public'
+      ? (publicDate ? { date: publicDate.date, time: publicDate.time } : null)
+      : picker && picker.getValue();
+    if (isBaptism() && !baptismType) { $('walkin-baptism-chooser').classList.add('has-error'); hasError = true; }
+    else if (baptismType === 'public' && !slot) { $('walkin-public-dates').classList.add('has-error'); hasError = true; }
+    else if (!slot) { pickerEl.classList.add('has-error'); hasError = true; }
 
     if (hasError) {
       showToast(slot ? 'Please fill in the highlighted fields.' : 'Please fill in the highlighted fields and pick a schedule.', true);
@@ -373,14 +418,22 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       if (v) details[f.label] = v;
     });
     details[BOOKED_BY_LABEL] = 'Parish Office (walk-in)';
+    if (isBaptism()) details[BAPTISM_TYPE_KEY] = BAPTISM_TYPE_LABELS[baptismType];
+    if (publicDate) details[PUBLIC_DATE_KEY] = publicDate.id;
+    const location = publicDate ? publicDate.location : locationFor(svc.name, details);
 
     const requesterName = formatFullName(readNameFields('walkin-requester'));
     submitBtn.disabled = true;
     try {
       // Re-check against the freshest data so a slot can't be double-booked.
       const { data: latest } = await client.models.Blessing.list({ limit: 1000 });
-      if (!slotHasRoom(svc.name, latest || getRecords(), slot.date, slot.time, { closures: getClosures() })) {
-        picker.refresh(latest || getRecords());
+      if (publicDate) {
+        if (dateState(publicDate, latest || getRecords(), { ignoreClosing: true }) !== 'open') {
+          renderPublicDates();
+          throw new Error('That date just filled up. Please pick another date.');
+        }
+      } else if (!slotHasRoom(svc.name, [...(latest || getRecords()), ...holdRows(publicDates)], slot.date, slot.time, { closures: getClosures() })) {
+        picker.refresh(pickerRows());
         throw new Error('That slot was just taken. Please pick another time.');
       }
 
@@ -392,7 +445,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
         ...(email ? { email } : {}),
         notes: $('walkin-notes').value.trim() || undefined,
         details: JSON.stringify(details),
-        location: locationFor(svc.name, details),
+        location,
         preferredDate: slot.date,
         date: slot.date,
         time: slot.time,
@@ -401,7 +454,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       logBookingAction(client, { action: 'Walk-in', record: result.data });
-      const bookedMsg = `${svc.name} booked for ${requesterName} — ${fmtLongDate(slot.date)} at ${slot.time}.`;
+      const bookedMsg = `${serviceLabel(result.data)} booked for ${requesterName} — ${fmtLongDate(slot.date)} at ${slot.time}.`;
       if (email) {
         const detailsLines = Object.entries(details)
           .filter(([k]) => k !== BOOKED_BY_LABEL && k !== MAP_PIN_LABEL)
@@ -410,7 +463,7 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
           .concat(details[MAP_PIN_LABEL] ? [`Pinned Location: ${googleMapsUrl(details[MAP_PIN_LABEL])}`] : []);
         reportEmail(notifyServiceUpdate({
           to: email, name: requesterName, serviceType: svc.name, status: 'scheduled',
-          date: fmtLongDate(slot.date), time: slot.time, location: locationFor(svc.name, details),
+          date: fmtLongDate(slot.date), time: slot.time, location,
           contact: mobileDigits($('walkin-contact').value), detailsLines,
         }), requesterName, bookedMsg);
       } else showToast(bookedMsg); // no email typed in — nothing to report
@@ -428,8 +481,9 @@ export function initWalkInService({ showToast, getRecords, getClosures, backLabe
     /** Call when the records or closures change, so taken slots update live. */
     refresh() {
       if (!picker) return;
-      picker.refresh(getRecords());
+      picker.refresh(pickerRows());
       picker.setClosures(getClosures());
+      renderPublicDates();
     },
   };
 }

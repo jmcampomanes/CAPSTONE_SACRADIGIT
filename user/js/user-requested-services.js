@@ -23,6 +23,7 @@ import { client } from '../../shared/js/amplify-init.js';
 import { watchTakenSlots, fetchTakenSlots } from '../../shared/js/public-data.js';
 import { currentUserName } from '../../shared/js/auth.js';
 import { isPrepKey, checklistHtml, progressChipHtml } from '../../shared/js/sacrament-prep.js';
+import { baptismTypeOf, serviceLabel } from '../../shared/js/public-baptism.js';
 import { formatFullName, isNameEmpty } from '../../shared/js/name-utils.js';
 import { createPager } from './pager.js';
 import { SERVICE_TYPES, needsApproval } from '../../shared/js/service-catalog.js';
@@ -186,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return `<div class="svc-row" data-id="${r.id}">
         <div class="svc-row-icon" style="background-color:${svc.iconBg};color:${svc.iconColor};">${svc.icon}</div>
         <div class="svc-row-body">
-          <p class="svc-row-title">${escapeHtml(svc.name)}</p>
+          <p class="svc-row-title">${escapeHtml(serviceLabel(r) || svc.name)}</p>
           <p class="svc-row-status tone-${tone}" data-sd-status="${r.id}:${tone}">${labelFor(r)}</p>
           ${when ? `<p class="svc-row-when">${fmtWhen(when, r.time)}</p>` : ''}
           ${prep ? `<div>${prep}</div>` : ''}
@@ -221,9 +222,10 @@ document.addEventListener('DOMContentLoaded', () => {
     modalCancelBtn.classList.toggle('hidden', !cancellable);
     modalCalendarBtn.classList.toggle('hidden', !(r.status === 'scheduled' && r.date && r.time && r.date >= todayISO));
     // Rescheduling closes a day earlier than cancelling: only up to the day before the booking.
-    modalRescheduleBtn.classList.toggle('hidden', !(r.status === 'pending' || canReschedule(r)));
+    // A public baptism is on a date the parish announced, so only the office moves it.
+    modalRescheduleBtn.classList.toggle('hidden', baptismTypeOf(r) === 'public' || !(r.status === 'pending' || canReschedule(r)));
 
-    document.getElementById('detail-modal-title').textContent = `${svc.name} Request`;
+    document.getElementById('detail-modal-title').textContent = `${serviceLabel(r) || svc.name} Request`;
     modalStatusBadge.textContent = labelFor(r);
     modalStatusBadge.className = `badge ${notApproved(r) ? 'badge-red' : (badgeClass[effectiveStatus(r)] || 'badge-gray')}`;
     modalSubmittedDate.textContent = `Submitted ${fmtDate(r.createdAt)}`;

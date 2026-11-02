@@ -27,6 +27,8 @@ import { logActivity } from '../../shared/js/activity-log.js';
 import { showToast, reportEmail } from './admin-ui.js';
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
 import { initBannsPanel } from './banns-panel.js';
+import { initPublicBaptismPanel } from './public-baptism-panel.js';
+import { BAPTISM_TYPE_KEY, NOT_SPECIFIED, baptismTypeOf, serviceLabel, detailsWithBaptismType } from '../../shared/js/public-baptism.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -280,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
           <td class="font-medium text-gray-900">${escapeHtml(o.requesterName)}</td>
           <td>
-            <span class="service-type-tag">${escapeHtml(o.type)}</span>${progressChipHtml(o)}
+            <span class="service-type-tag">${escapeHtml(serviceLabel(o))}</span>${progressChipHtml(o)}
           </td>
           <td>
             ${o.date
@@ -563,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const label = statusLabel[effectiveStatus(o)] || effectiveStatus(o);
     const details = parseDetails(o);
 
-    viewType.textContent = o.type || 'Service Request';
+    viewType.textContent = serviceLabel(o) || 'Service Request';
     viewName.textContent = o.requesterName || '—';
     viewStatusBadge.textContent = label;
     viewStatusBadge.className = `badge ${badgeClass[label] || 'badge-gray'}`;
@@ -594,6 +596,12 @@ document.addEventListener('DOMContentLoaded', () => {
       .map(([k, v]) => [k, formatDetailValue(v)])
       .filter(([, v]) => hasValue(v))
       .map(([k, v]) => [k, escapeHtml(v)]);
+    // Older Baptism requests never recorded the type: staff set it here, nothing guesses.
+    if (o.type === 'Baptism' && !baptismTypeOf(o)) {
+      infoRows.unshift([BAPTISM_TYPE_KEY, `${NOT_SPECIFIED}
+        <button type="button" class="btn-link-sm" data-set-baptism="private">Set Private</button>
+        <button type="button" class="btn-link-sm" data-set-baptism="public">Set Public</button>`]);
+    }
     const pin = details[MAP_PIN_LABEL];
     if (pin) {
       infoRows.push(['Pinned Location',
@@ -628,6 +636,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Wedding bookings: publish / print / withdraw the marriage banns (./banns-panel.js)
   const bannsPanel = initBannsPanel(document.getElementById('view-banns'), { showToast });
+
+  viewTable.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-set-baptism]');
+    const o = offers.find(x => x.id === viewTargetId);
+    if (!btn || !o) return;
+    btn.disabled = true;
+    try {
+      const result = await client.models.Blessing.update({ id: o.id, details: detailsWithBaptismType(o, btn.dataset.setBaptism) });
+      if (result.errors) throw new Error(result.errors.map(er => er.message).join('; '));
+      Object.assign(o, result.data || {});
+      logActivity('Edit', `Baptism type set for ${o.requesterName}: ${serviceLabel(o)}`);
+      openViewModal(o.id);
+    } catch (err) {
+      console.error('Failed to set the baptism type:', err);
+      showToast(err.message || "Couldn't save the baptism type.", true);
+      btn.disabled = false;
+    }
+  });
+
+  initPublicBaptismPanel({ showToast, getRecords: () => offers });
 
   function renderViewChecklist(o) {
     viewChecklist.innerHTML = hasChecklist(o.type) ? checklistHtml(o, { editable: true }) : '';

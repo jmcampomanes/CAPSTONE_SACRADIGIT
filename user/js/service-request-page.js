@@ -25,6 +25,11 @@ import { nameFieldsHtml, readNameFields, nameFieldsFilled, isNameEmpty } from '.
 import { createPinMap, formatLatLng, addressFromLatLng } from '../../shared/js/pin-map.js';
 import { SERVICE_TYPES, needsApproval } from '../../shared/js/service-catalog.js';
 import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-number.js';
+import { loadParishRules } from '../../shared/js/parish-rules.js';
+import {
+  BAPTISM_TYPE_KEY, BAPTISM_TYPE_LABELS, PUBLIC_DATE_KEY, typeChooserHtml, dateListHtml, watchDates, holdRows,
+  dateState, serviceLabel,
+} from '../../shared/js/public-baptism.js';
 
 // A pending blessing holds its slot until the office decides, so one person
 // can only have this many waiting at once (keeps spam from filling the calendar).
@@ -117,6 +122,14 @@ export function initServiceRequestPage(serviceId) {
   let pinMap = null; // the location map (House Blessing, Business Dedication)
   let allBookings = []; // every booked slot parish-wide (no names — see public-data.js)
   let closures = [];    // "No Services (Parish Closed)" special schedules block those dates
+  let takenLoaded = false;
+
+  /* Baptism only: Private uses the slot picker, Public the announced dates (public-baptism.js). */
+  const isBaptism = svc.id === 'baptism';
+  let baptismType = '';   // 'private' | 'public'
+  let publicDates = [];
+  let publicDateId = '';
+  const pickerRows = () => [...allBookings, ...holdRows(publicDates)];
 
   function renderSlotSummary(value) {
     slotPickerEl.classList.remove('has-error');
@@ -146,7 +159,9 @@ export function initServiceRequestPage(serviceId) {
 
   watchTakenSlots('blessing', (rows) => {
     allBookings = rows;
-    slotPicker.refresh(allBookings);
+    takenLoaded = true;
+    slotPicker.refresh(pickerRows());
+    renderPublicDates();
   });
   watchClosures(client, (next) => {
     closures = next;
@@ -158,6 +173,28 @@ export function initServiceRequestPage(serviceId) {
     const link = document.getElementById(id);
     if (link && svc.category) link.href = `user-request-service.html?need=${encodeURIComponent(svc.category)}`;
   });
+
+  function renderPublicDates() {
+    const box = document.getElementById('svc-public-dates');
+    if (!box) return;
+    box.innerHTML = dateListHtml('svc', publicDates, takenLoaded ? allBookings : null, {
+      selectedId: publicDateId,
+      officeNote: 'You can choose Private Baptism instead, or ask the parish office.',
+    });
+  }
+
+  function setBaptismType(type) {
+    baptismType = type;
+    publicDateId = '';
+    document.getElementById('svc-baptism-chooser').classList.remove('has-error');
+    slotPickerEl.parentElement.classList.toggle('hidden', type !== 'private');
+    document.getElementById('svc-public-dates').classList.toggle('hidden', type !== 'public');
+    document.getElementById('svc-baptism-hint').classList.add('hidden');
+    renderPublicDates();
+    document.getElementById('svc-booking-note').textContent = type === 'public'
+      ? 'Pick one of the dates the parish announced. Your family is registered as soon as you submit, and you can cancel anytime under "My service bookings."'
+      : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "My service bookings."';
+  }
 
   // Order on the page: the address and other details first, then the date and
   // time, then the optional map — it goes under the schedule, not above the address.
@@ -171,6 +208,27 @@ export function initServiceRequestPage(serviceId) {
       <input type="text" id="${f.id}" class="form-input" placeholder="${f.placeholder || ''}" />
     </div>`;
   }).join('');
+
+  if (isBaptism) {
+    svcDynamicFields.insertAdjacentHTML('afterbegin', typeChooserHtml('svc'));
+    slotPickerEl.parentElement.classList.add('hidden');
+    slotPickerEl.parentElement.insertAdjacentHTML('afterend', '<div id="svc-public-dates" class="hidden"></div><p id="svc-baptism-hint" class="bt-empty">Choose Private Baptism or Public Baptism first.</p>');
+    svcDynamicFields.addEventListener('change', (e) => { if (e.target.name === 'svc-baptism-type') setBaptismType(e.target.value); });
+    document.getElementById('svc-public-dates').addEventListener('change', (e) => {
+      if (e.target.name === 'svc-public-date') { publicDateId = e.target.value; e.currentTarget.classList.remove('has-error'); }
+    });
+    loadParishRules(client).then(() => {
+      // Saved fees can differ from the published ones: redraw the amounts.
+      const chosen = baptismType;
+      document.getElementById('svc-baptism-chooser').outerHTML = typeChooserHtml('svc');
+      if (chosen) document.querySelector(`input[name="svc-baptism-type"][value="${chosen}"]`).checked = true;
+    });
+    watchDates(client, (dates) => {
+      publicDates = dates;
+      slotPicker.refresh(pickerRows());
+      renderPublicDates();
+    });
+  }
 
   // The form is a full-screen view beside the sidebar that fits in one screen.
   document.body.classList.add('req-screen-open');
@@ -312,18 +370,18 @@ export function initServiceRequestPage(serviceId) {
     }
   }
 
-  function showServiceSuccess({ slot, approval, location, bookingId }) {
+  function showServiceSuccess({ slot, approval, location, bookingId, name = svc.name }) {
     document.body.classList.remove('req-screen-open');
     formView.classList.add('hidden');
     if (pinMap) { pinMap.destroy(); pinMap = null; }
 
     document.getElementById('svc-success-title').textContent = approval ? 'Request Sent!' : 'Request Submitted!';
     document.getElementById('svc-success-desc').textContent = approval
-      ? `Your ${svc.name} request is waiting for the parish office to approve it — your slot is held for you, and you'll be notified once it's approved.`
-      : `Your ${svc.name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under My service bookings.`;
+      ? `Your ${name} request is waiting for the parish office to approve it — your slot is held for you, and you'll be notified once it's approved.`
+      : `Your ${name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under My service bookings.`;
     const row = (label, value) => value ? `<div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>` : '';
     document.getElementById('svc-success-details').innerHTML = [
-      row('Service', svc.name),
+      row('Service', name),
       row(approval ? 'Requested Slot' : 'Schedule', `${fmtLongDate(slot.date)} at ${slot.time}`),
       row('Location', location),
       row('Status', approval ? 'Awaiting Approval' : 'Scheduled'),
@@ -369,8 +427,19 @@ export function initServiceRequestPage(serviceId) {
 
     // The schedule's own message ("Please pick a date and time.") is written
     // under the calendar by field-messages.js when it turns red.
-    const slot = slotPicker.getValue();
-    if (!slot) { slotPickerEl.classList.add('has-error'); missing.push(['date and time', slotPickerEl]); }
+    const publicDate = publicDates.find(d => d.id === publicDateId);
+    const slot = baptismType === 'public'
+      ? (publicDate ? { date: publicDate.date, time: publicDate.time } : null)
+      : slotPicker.getValue();
+    if (isBaptism && !baptismType) {
+      const chooser = document.getElementById('svc-baptism-chooser');
+      chooser.classList.add('has-error');
+      missing.push(['type of baptism', chooser]);
+    } else if (baptismType === 'public' && !slot) {
+      const box = document.getElementById('svc-public-dates');
+      box.classList.add('has-error');
+      missing.push(['public baptism date', box]);
+    } else if (!slot) { slotPickerEl.classList.add('has-error'); missing.push(['date and time', slotPickerEl]); }
 
     if (missing.length) {
       // Say exactly what's missing, then bring the first one into view.
@@ -400,6 +469,10 @@ export function initServiceRequestPage(serviceId) {
       if (val) details[f.label] = val;
     });
 
+    if (isBaptism) details[BAPTISM_TYPE_KEY] = BAPTISM_TYPE_LABELS[baptismType];
+    if (publicDate) details[PUBLIC_DATE_KEY] = publicDate.id;
+    const location = publicDate ? publicDate.location : locationFor(svc.name, details);
+
     svcSubmitBtn.disabled = true;
     const approval = needsApproval(svc.name);
     const status = approval ? 'pending' : 'scheduled';
@@ -418,8 +491,16 @@ export function initServiceRequestPage(serviceId) {
       // Last check against the freshest data so two people can't grab
       // the final place in a slot at the same moment.
       const latest = await fetchTakenSlots('blessing');
-      if (!slotHasRoom(svc.name, latest || allBookings, slot.date, slot.time, { closures })) {
-        slotPicker.refresh(latest || allBookings);
+      allBookings = latest || allBookings;
+      if (publicDate) {
+        takenLoaded = true;
+        if (dateState(publicDate, allBookings) !== 'open') {
+          publicDateId = '';
+          renderPublicDates();
+          throw new Error('Sorry, that date just filled up or closed. Please pick another date.');
+        }
+      } else if (!slotHasRoom(svc.name, pickerRows(), slot.date, slot.time, { closures })) {
+        slotPicker.refresh(pickerRows());
         throw new Error('Sorry, that slot was just taken. Please pick another time.');
       }
 
@@ -430,7 +511,7 @@ export function initServiceRequestPage(serviceId) {
         contact: mobileDigits(svcContactInput.value),
         notes: svcNotesInput.value.trim() || undefined,
         details: JSON.stringify({ ...details, [REMINDER_FIELD]: 'Email' }),
-        location: locationFor(svc.name, details),
+        location,
         preferredDate: slot.date,
         date: slot.date,
         time: slot.time,
@@ -442,11 +523,11 @@ export function initServiceRequestPage(serviceId) {
       if (!approval) {
         notifyServiceUpdate({
           to: currentUser()?.email, name: REQUESTER_NAME, serviceType: svc.name, status: 'scheduled',
-          date: slot.date, time: slot.time, location: locationFor(svc.name, details),
+          date: slot.date, time: slot.time, location,
         });
       }
 
-      showServiceSuccess({ slot, approval, location: locationFor(svc.name, details), bookingId: result.data?.id });
+      showServiceSuccess({ slot, approval, location, bookingId: result.data?.id, name: isBaptism ? serviceLabel(result.data) : svc.name });
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);

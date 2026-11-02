@@ -35,7 +35,7 @@ const PAGE_INFO = {
   },
   'schedule-offers.html': {
     title: 'What’s on this page?',
-    text: 'Parishioners book the parish’s fixed schedule slots directly, so bookings arrive here already scheduled. Reschedule or cancel one if the parish can’t honour it.',
+    text: 'Parishioners book the parish’s fixed schedule slots directly, so bookings arrive here already scheduled. Reschedule or cancel one if the parish can’t honour it. Use Public Baptism Dates to announce the dates families can join.',
   },
   'facility-booking.html': {
     title: 'What’s on this page?',

@@ -15,8 +15,8 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Default view: Cubao, Quezon City (the parish area used in the form examples)
-const DEFAULT_CENTER = [14.6197, 121.0535];
+// Default view: the parish, Our Lady of Fatima Parish, Quezon City
+const DEFAULT_CENTER = [14.6161576, 121.0078355];
 const DEFAULT_ZOOM = 14;
 const PINNED_ZOOM = 17;
 

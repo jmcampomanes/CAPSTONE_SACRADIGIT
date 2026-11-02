@@ -996,3 +996,38 @@ body.svc-screen-open { overflow: hidden; }
 .svc-screen .svc-type-card:hover .svc-type-cta { background-color: #2a3963; color: #ffffff; }
 :root[data-theme="dark"] .svc-screen .svc-type-cta,
 :root[data-theme="dark"] .svc-screen .svc-type-card:hover .svc-type-cta { background-color: #8b8fc7; color: #0f1420; }
+
+/* ---------- Baptism: Private / Public choice and announced dates (public-baptism.js) ---------- */
+.bt-chooser { display: grid; gap: 0.5rem; border: 0; margin: 0; padding: 0; }
+.bt-chooser.has-error .bt-type { border-color: #dc2626; }
+.bt-type, .bt-date {
+  display: flex; align-items: flex-start; gap: 0.625rem; padding: 0.75rem;
+  border: 1px solid #e5e7eb; border-radius: 0.75rem; background: #fff; cursor: pointer;
+}
+.bt-type:has(input:checked), .bt-date:has(input:checked) { border-color: #5b5fa8; box-shadow: 0 0 0 2px rgba(91, 95, 168, 0.2); }
+.bt-type input, .bt-date input { margin-top: 0.2rem; accent-color: #5b5fa8; }
+.bt-type:focus-within, .bt-date:focus-within { outline: 3px solid #8b8fc7; outline-offset: 2px; }
+.bt-type-body, .bt-date-body { display: grid; gap: 0.125rem; flex: 1; min-width: 0; font-size: 0.8125rem; color: #4b5563; }
+.bt-type-head { display: flex; justify-content: space-between; gap: 0.5rem; color: #111827; font-size: 0.875rem; }
+.bt-type-fee { font-weight: 700; color: #5b5fa8; }
+.bt-date-body strong { color: #111827; font-size: 0.875rem; }
+.bt-date-close { color: #6b7280; }
+.bt-date-tag { flex: none; padding: 0.125rem 0.5rem; border-radius: 999px; font-size: 0.6875rem; font-weight: 700; background: #eef0f7; color: #1e2a4a; }
+.bt-date.is-off { opacity: 0.6; cursor: not-allowed; }
+.bt-dates { display: grid; gap: 0.5rem; }
+#svc-public-dates.has-error .bt-date, #walkin-public-dates.has-error .bt-date { border-color: #dc2626; }
+.bt-empty { padding: 0.75rem; border-radius: 0.75rem; background: #eef0f7; font-size: 0.8125rem; color: #374151; }
+.bt-admin-list { display: grid; gap: 0.75rem; }
+.bt-admin-date { padding: 0.875rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; }
+.bt-admin-date.is-cancelled { border-color: #fecaca; }
+.bt-admin-title { font-weight: 700; font-size: 0.875rem; color: #111827; }
+.bt-admin-sub { font-size: 0.8125rem; color: #4b5563; }
+.bt-admin-warn { margin-top: 0.5rem; font-size: 0.8125rem; font-weight: 600; color: #b91c1c; }
+.bt-admin-families { margin: 0.25rem 0 0; padding-left: 1.125rem; list-style: disc; font-size: 0.8125rem; color: #374151; }
+.btn-link-sm { margin-left: 0.5rem; font-size: 0.75rem; font-weight: 600; color: #5b5fa8; text-decoration: underline; }
+:root[data-theme="dark"] .bt-type, :root[data-theme="dark"] .bt-date { background: #1a2131; border-color: #2c3548; }
+:root[data-theme="dark"] .bt-type-head, :root[data-theme="dark"] .bt-date-body strong, :root[data-theme="dark"] .bt-admin-title { color: #f3f4f6; }
+:root[data-theme="dark"] .bt-type-body, :root[data-theme="dark"] .bt-date-body, :root[data-theme="dark"] .bt-admin-sub, :root[data-theme="dark"] .bt-admin-families { color: #cfd4de; }
+:root[data-theme="dark"] .bt-type-fee, :root[data-theme="dark"] .btn-link-sm { color: #b4b7e6; }
+:root[data-theme="dark"] .bt-empty, :root[data-theme="dark"] .bt-date-tag { background: #232c40; color: #e5e7eb; }
+:root[data-theme="dark"] .bt-admin-date { border-color: #2c3548; }

@@ -21,7 +21,7 @@ const EMBLEM = new URL('../../sacradigit-images/fatima-emblem.png', import.meta.
 export const PARISH = {
   name: 'Our Lady of Fatima Parish',
   diocese: 'Diocese of Cubao',
-  address: '57 L. Castillo St., Don Manuel, Quezon City, Metro Manila',
+  address: '37 Cordillera Street, 1100 Quezon City, Philippines',
 };
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

@@ -30,6 +30,7 @@ import { createTimePicker, displayTime } from '../../shared/js/time-picker.js';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { showToast, confirmDialog } from './admin-ui.js';
 import { isBanns } from '../../shared/js/banns.js';
+import { isPublicBaptism } from '../../shared/js/public-baptism.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -897,6 +898,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Banns carry their Sundays in `media`, which this editor would drop on save.
     if (isBanns(a)) {
       showToast('Marriage banns are edited from the wedding booking on Schedule Offers.', true);
+      return;
+    }
+    // Public baptism dates keep their seats and closing date in `media` too.
+    if (isPublicBaptism(a)) {
+      showToast('Public baptism dates are edited on Schedule Offers, under Public Baptism Dates.', true);
       return;
     }
     editTargetId = id;

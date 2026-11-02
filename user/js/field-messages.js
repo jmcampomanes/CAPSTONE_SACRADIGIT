@@ -16,6 +16,8 @@ const AREA_MESSAGES = [
   ['.bkcal', 'Please pick a date on the calendar.'],
   ['.bktime-slots', 'Please pick a start time.'],
   ['.slot-picker', 'Please pick a date and time.'],
+  ['.bt-chooser', 'Please choose Private Baptism or Public Baptism.'],
+  ['#svc-public-dates', 'Please pick one of the dates above.'],
 ];
 
 const hasFieldError = (el) => FIELD_ERROR_CLASSES.some(c => el.classList.contains(c));

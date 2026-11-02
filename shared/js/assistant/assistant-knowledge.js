@@ -30,10 +30,11 @@ export const PARISH_CONTACT = {
   phone: '(02) 8711-7200',
   email: 'ourladyofatimaparish74@gmail.com',
   facebook: 'https://facebook.com/OLFPQC',
-  location: '57 L. Castillo St., Don Manuel, Quezon City, Metro Manila, 1113 Philippines',
+  location: '37 Cordillera Street, 1100 Quezon City, Philippines',
 };
 
 /** Typical documents per service, keyed by the service name in service-catalog.js. */
+// Fuller versions, with fees, are on Requirements & Rules (shared/js/sacrament-rules.js).
 export const REQUIREMENTS = {
   'Baptism': {
     en: [
@@ -45,7 +46,7 @@ export const REQUIREMENTS = {
       'Certificate of No Baptismal Record from 3 parishes near your residence (for 2 years old and above)',
       'Seminar/Catechism every Saturday, 4:00 PM, before the baptism date — parents and at least 1 pair of sponsors (No Seminar, No Baptism)',
       'Sponsors must be baptized and confirmed Catholics, 18 years old and above',
-      'Book at least 2 weeks ahead. Common Baptism: Saturdays 11:00 AM, ₱700 (incl. 1 pair of sponsors; +₱50 per extra sponsor). Solo Baptism: by appointment, ₱3,000 (+₱100 per extra sponsor). Prices may change.',
+      'Book at least 2 weeks ahead. Public (Common) Baptism: on the dates the parish announces, ₱700 (incl. 1 pair of sponsors; +₱50 per extra sponsor). Private (Solo) Baptism: by appointment, ₱3,000 (+₱100 per extra sponsor). Prices may change.',
       'Strictly white dress and cap for the child; proper attire for everyone (no sleeveless, tube, mini skirts or shorts)',
     ],
     fil: [
@@ -57,7 +58,7 @@ export const REQUIREMENTS = {
       'Certificate of No Baptismal Record mula sa 3 parokyang malapit sa inyong tirahan (para sa 2 taong gulang pataas)',
       'Seminar/Katekesis tuwing Sabado, 4:00 PM, bago ang araw ng binyag — mga magulang at kahit 1 pares ng ninong/ninang (Walang Seminar, Walang Binyag)',
       'Ang ninong at ninang ay dapat binyagan at kumpil na Katoliko, 18 taong gulang pataas',
-      'Mag-book nang hindi bababa sa 2 linggo bago. Common Baptism: Sabado 11:00 AM, ₱700 (kasama ang 1 pares ng ninong/ninang; +₱50 bawat dagdag). Solo Baptism: sa appointment, ₱3,000 (+₱100 bawat dagdag). Maaaring magbago ang presyo.',
+      'Mag-book nang hindi bababa sa 2 linggo bago. Public (Common) Baptism: sa mga petsang iaanunsyo ng parokya, ₱700 (kasama ang 1 pares ng ninong/ninang; +₱50 bawat dagdag). Private (Solo) Baptism: sa appointment, ₱3,000 (+₱100 bawat dagdag). Maaaring magbago ang presyo.',
       'Puting damit at bonete lamang para sa bata; maayos na kasuotan para sa lahat (bawal ang sleeveless, tube, mini skirt o shorts)',
     ],
   },

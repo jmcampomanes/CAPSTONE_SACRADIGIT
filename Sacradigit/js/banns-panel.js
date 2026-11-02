@@ -209,7 +209,7 @@ function printBanns(b) {
       <p>Our parish is publishing them on ${b.sundays.map(s => esc(fmtShort(s))).join(', ')}.</p>
       <div class="bn-sign"><div>Parish Priest, Our Lady of Fatima Parish</div><div>Date</div></div>
 
-      <p class="bn-cut"><span>✂ cut here and return to Our Lady of Fatima Parish, 57 L. Castillo St., Don Manuel, Quezon City</span></p>
+      <p class="bn-cut"><span>✂ cut here and return to Our Lady of Fatima Parish, 37 Cordillera Street, Quezon City</span></p>
 
       <h2>Certificate of Publication of Banns</h2>
       <p>This is to certify that the banns of marriage between <strong>${esc(b.groomName)}</strong> and <strong>${esc(b.brideName)}</strong> were published in <strong>${esc(parish)}</strong> on

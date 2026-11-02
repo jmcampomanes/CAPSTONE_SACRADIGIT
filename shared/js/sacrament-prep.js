@@ -14,24 +14,17 @@
    Styles: service-schedule.css (.prep-*).
    ============================================ */
 
+import { baptismChecklist, weddingChecklist } from './sacrament-rules.js';
+import { isHiddenBaptismKey } from './public-baptism.js';
+
 export const CHECKLIST_KEY = 'Preparation Checklist';
 
 /** Requirements per service (keys = Blessing.type, i.e. the service name).
-    Baptism and Wedding follow the parish's published rules (same as the
-    homepage, index.html). Item ids are what's saved on each request, so
+    Baptism and Wedding follow the parish's published rules, kept in
+    sacrament-rules.js. Item ids are what's saved on each request, so
     keep an id when only its wording changes. */
 export const REQUIREMENTS = {
-  'Baptism': [
-    ['birth-cert', 'Child’s birth certificate (CTC or PSA)'],
-    ['parents-marriage', 'Parents’ marriage contract, if married (CTC or PSA)'],
-    ['permission', 'Letter of Permission from the Parish Priest (if not from this parish)'],
-    ['application', 'Application form filled up by a parent'],
-    ['parents-id', 'Parents’ proof of identity / ID'],
-    ['no-record', 'Certificate of No Baptismal Record from 3 nearby parishes (2 years old and above)'],
-    ['seminar', 'Saturday 4:00 PM Catechism/Seminar attended (parents and at least 1 pair of sponsors)'],
-    ['sponsor-docs', 'Sponsors are baptized and confirmed Catholics, 18 years old and above'],
-    ['fee', 'Fee settled (Common ₱700 / Solo ₱3,000)'],
-  ],
+  get Baptism() { return baptismChecklist(); },
   'Confirmation': [
     ['baptismal-cert', 'Baptismal certificate (for confirmation purposes)'],
     ['seminar', 'Confirmation seminar / recollection attended'],
@@ -48,25 +41,11 @@ export const REQUIREMENTS = {
     ['cremation-cert', 'Cremation Certificate received'],
     ['niche-paid', 'Niche fully paid (see Columbary)'],
   ],
-  'Wedding': [
-    ['baptismal-certs', 'Baptismal certificates, for marriage purposes, issued within 6 months (both)'],
-    ['confirmation-certs', 'Confirmation certificates, for marriage purposes (both)'],
-    ['birth-certs', 'PSA birth certificates (both)'],
-    ['cenomar', 'CENOMAR from PSA (both)'],
-    ['license', 'Marriage license (or PSA marriage contract / affidavit of cohabitation)'],
-    ['photos', '2×2 ID photos, 4 copies each (taken within 6 months)'],
-    ['interview', 'Canonical interview (at least 1 month before the wedding)'],
-    ['banns', 'Ecclesiastical banns published in both parishes'],
-    ['bride-permit', 'Permit from the bride’s parish (if not from this parish)'],
-    ['pre-cana', 'Pre-Cana seminar attended'],
-    ['sponsors', 'Typewritten list of sponsors with addresses (6 pairs only)'],
-    ['down-payment', '₱5,000 down payment paid and contract signed'],
-    ['fee', '₱18,000 balance settled (1 month before the wedding)'],
-  ],
+  get Wedding() { return weddingChecklist(); },
 };
 
 export const hasChecklist = (type) => !!REQUIREMENTS[type];
-export const isPrepKey = (key) => key === CHECKLIST_KEY;
+export const isPrepKey = (key) => key === CHECKLIST_KEY || isHiddenBaptismKey(key);
 
 function parseDetails(detailsJson) {
   if (!detailsJson) return {};

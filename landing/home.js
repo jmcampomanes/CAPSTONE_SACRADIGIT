@@ -28,12 +28,35 @@ import { massTypeInfo } from '../shared/js/mass-types.js';
 import { initUiPrefs, currentLang } from '../shared/js/ui-prefs.js';
 import { listBanns, isCurrent, timeOfAsking, fmtMonthDay, ORDINAL, THIS_PARISH } from '../shared/js/banns.js';
 import { listSections, availableCount } from '../shared/js/columbary.js';
+import { baptismRulesHtml, weddingRulesHtml } from '../shared/js/sacrament-rules.js';
+import { loadParishRules } from '../shared/js/parish-rules.js';
+import { listDates, upcomingDates, fmtLong, fmtShort } from '../shared/js/public-baptism.js';
 
 Amplify.configure(outputs);
 const client = generateClient({ authMode: 'apiKey' });
 
 const $ = (id) => document.getElementById(id);
 const WELCOME_KEY = 'sacradigit_home_welcomed';
+
+/* Baptism and wedding rules: one shared copy, with the parish's saved amounts. */
+function renderSacramentRules() {
+  document.querySelector('[data-sacrament-rules="baptism"]').innerHTML = baptismRulesHtml();
+  document.querySelector('[data-sacrament-rules="wedding"]').innerHTML = weddingRulesHtml();
+}
+renderSacramentRules();
+loadParishRules(client).then(renderSacramentRules);
+
+/* Announced public baptism dates, under the baptism rules; hidden when there are none. */
+async function loadPublicBaptismDates() {
+  const dates = upcomingDates(await listDates(client));
+  if (!dates.length) return;
+  const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+  $('hp-public-baptism-list').innerHTML = dates.map(d => `
+    <li><strong>${esc(fmtLong(d.date))}</strong> ${esc(d.time)}, ${esc(d.location)}.
+      Register by ${esc(fmtShort(d.closesOn))}.${d.note ? ` ${esc(d.note)}` : ''}</li>`).join('');
+  $('hp-public-baptism').hidden = false;
+}
+loadPublicBaptismDates().catch(err => console.warn('Public baptism dates unavailable:', err));
 
 initUiPrefs();
 $('hp-year').textContent = new Date().getFullYear();
