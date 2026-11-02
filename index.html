@@ -5,6 +5,9 @@
   <!-- The site has its own Light/Dark switch: keep the browser's dark mode off the page (theme-dark.css sets dark when chosen) -->
   <meta name="color-scheme" content="only light" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Already signed in: skip the homepage and open their dashboard, whose splash is the loading screen (homes match ROLES in auth.js; a staff login needs its browser-session cookie, like loadUser) -->
+  <style>.sd-to-portal{background:#0f1730}.sd-to-portal body{visibility:hidden}</style>
+  <script>(function(){try{var u=JSON.parse(localStorage.getItem('sacradigit_user')||'null'),r=u&&u.role,h={admin:'Sacradigit/dashboard.html',staff:'Sacradigit/dashboard.html',itech:'Sacraitech/itech-dashboard.html',media:'Sacramedia/media-dashboard.html',parishioner:'user/user-dashboard.html'}[r];if(!h||(r!=='parishioner'&&!/(^|; )sacradigit_staff_session=/.test(document.cookie)))return;document.documentElement.classList.add('sd-to-portal');if(sessionStorage.getItem('sdSplashSeen')!=='1')sessionStorage.setItem('sdPortalSplash','1');location.replace(h)}catch(e){}})()</script>
   <!-- Installable app (PWA): see pwa.js and public/manifest.webmanifest -->
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#1e2a4a" />

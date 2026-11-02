@@ -88,6 +88,7 @@ function whenLoaded(fn) {
 }
 
 function splash() {
+  if (root.classList.contains('sd-to-portal')) return; // homepage on its way to a dashboard: the splash plays there
   const gated = root.classList.contains('auth-pending');
   const held = root.classList.contains('sd-splash-pending');
   const release = () => root.classList.remove('sd-splash-pending');
