@@ -1,8 +1,8 @@
 /* ============================================
    SacraDigit — Sanctuary look (every portal)
    Restyles the shell only: slate-indigo sidebar
-   with gold accents, soft gray page, white
-   rounded cards with a slate icon tile.
+   with gold accents, soft gray page, white cards
+   with a hairline border and one corner size.
    Nothing moves: layout, banners and
    images stay where each page puts them.
    Loaded through accessibility.css, after each
@@ -20,7 +20,10 @@
   --sx-gold-soft: rgba(212, 163, 94, 0.18);
   --sx-tile: #4a4c6b;
   --sx-page: #f1f1f4;
-  --sx-card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
+  --sx-line: #e6e7ee;          /* card edges */
+  /* One small radius scale, by role: cards, controls. */
+  --sx-r-card: 12px;
+  --sx-r-control: 8px;
 }
 
 /* ---------- Sidebar: slate-indigo, white text, gold active item ---------- */
@@ -33,7 +36,7 @@
 #sidebar :is(.text-gray-900, .text-gray-800, .text-gray-700, .text-navy) { color: #fff !important; }
 #sidebar :is(.text-gray-400, .text-gray-500, .text-gray-600) { color: var(--sx-side-muted) !important; }
 #sidebar .sidebar-label { color: var(--sx-side-muted) !important; opacity: 0.8; } /* !important: accessibility.css darkens every "-label" */
-#sidebar .sidebar-link { color: var(--sx-side-text); border-radius: 0.625rem; }
+#sidebar .sidebar-link { color: var(--sx-side-text); border-radius: var(--sx-r-control); }
 #sidebar .sidebar-link svg { color: var(--sx-side-muted); }
 #sidebar .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.07); color: #fff; }
 #sidebar .sidebar-link:hover svg { color: #fff; }
@@ -50,30 +53,75 @@
 /* ---------- Top bar: clean white, hairline bottom edge ---------- */
 :where(#sidebar ~ * > header) {
   border-bottom: 1px solid #e9e9ef !important; /* replaces each portal's coloured 3px line (inline style) */
-  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
+  box-shadow: none;
+}
+/* The page's icon beside its title: one tile in the system's colours on every page and
+   role, replacing each page's own colour (inline style, page-accents.css). */
+:where(#sidebar ~ * > header) .w-9.h-9.rounded-lg.shrink-0 {
+  background-color: rgba(139, 143, 199, 0.16) !important;
+  border: 1px solid rgba(139, 143, 199, 0.3);
+  color: #1e2a4a !important;
+}
+:root[data-theme="dark"] :where(#sidebar ~ * > header) .w-9.h-9.rounded-lg.shrink-0 {
+  background-color: #2a3350 !important;
+  border-color: #3d4860;
+  color: #d9dcf5 !important;
 }
 
 /* ---------- Page background (light mode; theme-dark.css has its own) ---------- */
 :root:not([data-theme="dark"]) body:has(#sidebar) { background-color: var(--sx-page) !important; }
 :root:not([data-theme="dark"]):has(#sidebar) { background-color: var(--sx-page); }
 
-/* ---------- Cards: white, rounder, no border, soft shadow ---------- */
-:where(:root:has(#sidebar)) :is(.stat-card, .panel) {
-  border-color: transparent;
-  border-radius: 1rem;
-  box-shadow: var(--sx-card-shadow);
+/* ---------- Cards: white, hairline edge, one 12px corner everywhere ----------
+   Only the shape changes here. Each card keeps its own hover (lift, shadow)
+   and scroll animations from its page's CSS. */
+:where(:root:has(#sidebar)) :is(.stat-card, .panel, .quick-action-card) {
+  border-color: var(--sx-line);
+  border-radius: var(--sx-r-card);
 }
-:where(:root:has(#sidebar)) .stat-card:hover { border-color: transparent; box-shadow: 0 2px 4px rgba(16, 24, 40, 0.05), 0 10px 28px rgba(16, 24, 40, 0.08); }
-:where(:root:has(#sidebar)) main :is(.rounded-xl, .rounded-2xl).border.bg-white { border-color: transparent; box-shadow: var(--sx-card-shadow); }
+:where(:root:has(#sidebar)) main :is(.rounded-xl, .rounded-2xl).border.bg-white { border-color: var(--sx-line); }
 :where(:root:has(#sidebar)) .panel-header { border-bottom-color: #f0f0f4; }
-:where(:root:has(#sidebar)) .panel-title { text-transform: none; letter-spacing: 0; font-size: 0.9375rem; font-weight: 600; }
+:where(:root:has(#sidebar)) .panel-title { text-transform: none; letter-spacing: 0; font-size: 1.0625rem; color: #1e2a4a; }
 
-/* stat tile: slate square, white glyph (like the reference's right-hand icons) */
+/* Tailwind's big roundings inside the page all become the one card corner. */
+:where(:root:has(#sidebar)) main :is(.rounded-xl, .rounded-2xl, .rounded-3xl) { border-radius: var(--sx-r-card); }
+
+/* Stat cards: compact, the number leads, a small outlined icon tile. */
+:where(:root:has(#sidebar)) .stat-card { padding: 1rem 1.125rem; }
 :where(:root:has(#sidebar)) .stat-card .stat-icon {
-  width: 2.5rem; height: 2.5rem; border-radius: 0.625rem;
-  background: var(--sx-tile); color: #fff;
+  width: 2.25rem; height: 2.25rem; border-radius: var(--sx-r-control);
+  background: #ffffff; color: #1e2a4a;
+  border: 1px solid var(--sx-line);
 }
-:where(:root:has(#sidebar)) .stat-label { color: #7b7d92; }
+:where(:root:has(#sidebar)) .stat-label { color: #6b6e82; font-size: 0.8125rem; }
+:where(:root:has(#sidebar)) .stat-value { font-weight: 600; }
 
-/* ---------- Dark mode keeps the same sidebar; top bar edge goes dark ---------- */
+/* Icons: one lighter stroke weight across the portals (Heroicons default to 2). */
+:where(:root:has(#sidebar)) :is(main, header) svg [stroke-width="2"] { stroke-width: 1.75; }
+
+/* ---------- Buttons: one control radius ---------- */
+:where(:root:has(#sidebar)) :is(.btn-gold, .btn-lavender, .btn-secondary, .btn-primary, .btn-danger) { border-radius: var(--sx-r-control); }
+
+/* ---------- Welcome banners: the same card corner ---------- */
+:where(:root:has(#sidebar)) main :has(> [data-sacred-art]) { border-radius: var(--sx-r-card); }
+
+/* ---------- Quieter labels: sentence case instead of spaced capitals ---------- */
+:where(:root:has(#sidebar)) main :is(.uppercase.tracking-wide, .uppercase.tracking-wider, .uppercase.tracking-widest, .section-heading) {
+  text-transform: none;
+  letter-spacing: 0;
+}
+:where(:root:has(#sidebar)) .records-table thead th {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b6e82;
+}
+:where(:root:has(#sidebar)) main .section-heading { font-size: 0.9375rem; font-weight: 600; color: #4b4e63; }
+
+/* ---------- Dark mode keeps the same sidebar; edges go dark ---------- */
 :root[data-theme="dark"] :where(#sidebar ~ * > header) { border-bottom-color: #2c3548 !important; }
+:root[data-theme="dark"]:has(#sidebar) :is(.stat-card, .panel, .quick-action-card) { border-color: #2c3548; }
+:root[data-theme="dark"]:has(#sidebar) .stat-card .stat-icon { background: transparent; color: #e5e8ef; border-color: #3d4860; }
+:root[data-theme="dark"]:has(#sidebar) .panel-title { color: #f1f3f7; }
+:root[data-theme="dark"]:has(#sidebar) main .section-heading { color: #cbd3e6; }

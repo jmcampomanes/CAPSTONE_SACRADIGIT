@@ -178,7 +178,6 @@
 
 .goal-card {
   border: 1px solid #eef0f4;
-  border-left: 4px solid #c9a84c;
   border-radius: 0.875rem;
   background-color: #fafbfc;
   overflow: hidden;
@@ -189,11 +188,11 @@
 
 .goal-card:hover {
   border-color: #d8dbe3;
-  border-left-color: #c9a84c;
+  border-color: #c9a84c;
   box-shadow: 0 4px 14px rgba(30, 42, 74, 0.06);
 }
 
-.goal-card.reached { border-left-color: #15803d; }
+.goal-card.reached { border-color: #15803d; }
 
 .goal-card-body {
   padding: 1.125rem 1.125rem 0.75rem;

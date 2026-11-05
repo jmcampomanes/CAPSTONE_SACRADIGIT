@@ -43,7 +43,7 @@ const STYLE = `
 .adm-dialog-title { font-size: 1.0625rem; font-weight: 700; color: #111827; margin: 0 0 0.4rem; line-height: 1.35; }
 .adm-dialog-msg { font-size: 0.875rem; color: #374151; margin: 0 0 0.75rem; line-height: 1.5; }
 .adm-dialog-detail {
-  margin: 0 0 0.85rem; padding: 0.6rem 0.8rem; border-left: 3px solid #c7cad6; border-radius: 0.4rem;
+  margin: 0 0 0.85rem; padding: 0.6rem 0.8rem; border: 1px solid #c7cad6; border-radius: 0.4rem;
   background: #f7f8fa; font-size: 0.8125rem; color: #374151; line-height: 1.5;
 }
 .adm-dialog-label { display: block; font-size: 0.8125rem; font-weight: 600; color: #374151; margin-bottom: 0.3rem; }

@@ -242,6 +242,17 @@
               <button type="button" id="pf-save" class="btn-lavender">Save Changes</button>
             </div>
           </div>
+          <div class="panel mt-4">
+            <div class="panel-header">
+              <h2 class="panel-title">Display Format</h2>
+            </div>
+            <div class="p-5 space-y-3 settings-display" id="settings-display"></div>
+          </div>
+          <script type="module">
+            // Colours, spacing and date/time formats (ui-prefs.js saves each change).
+            import { displayPrefsHtml } from '../shared/js/ui-prefs.js';
+            document.getElementById('settings-display').innerHTML = displayPrefsHtml();
+          </script>
         </div>
 
         <!-- ===== TAB: Security ===== -->

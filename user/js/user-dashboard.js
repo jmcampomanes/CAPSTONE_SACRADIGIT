@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <p class="quick-action-sub">${a.sub}</p>`;
       return a.action
-        ? `<button type="button" class="quick-action-card quick-action-btn col-span-2 sm:col-span-1" data-action="${a.action}">${inner}</button>`
+        ? `<button type="button" class="quick-action-card quick-action-btn" data-action="${a.action}">${inner}</button>`
         : `<a href="${a.href}" class="quick-action-card">${inner}</a>`;
     }).join('');
     qGrid.addEventListener('click', (e) => {

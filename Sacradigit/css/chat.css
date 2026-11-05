@@ -76,7 +76,7 @@
 
 .chat-thread.active {
   background-color: #f5f5fc;
-  box-shadow: inset 3px 0 0 #8b8fc7;
+  box-shadow: none; background-color: #8b8fc71f;
 }
 
 .chat-avatar {

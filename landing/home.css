@@ -206,7 +206,7 @@ a { color: inherit; }
 .hp-muted { color: var(--hp-muted); }
 
 /* ---------- Mass schedule ---------- */
-.hp-mass-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.875rem; }
+.hp-mass-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); grid-auto-rows: 1fr; gap: 0.875rem; } /* equal day cards */
 @media (min-width: 1000px) { .hp-mass-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.75rem; } }
 .hp-mass-day {
   position: relative; padding: 1.125rem 1rem 1rem; border-radius: 1rem;
@@ -247,7 +247,7 @@ a { color: inherit; }
 .hp-photo-wide { margin-top: 1.25rem; }
 .hp-photo-wide img { aspect-ratio: 16 / 9; }
 
-.hp-facts { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.hp-facts { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 0.75rem; }
 .hp-facts li { padding: 0.75rem 0.875rem; border-radius: 0.75rem; background: var(--hp-card); border: 1px solid var(--hp-line); }
 .hp-facts span { display: block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--hp-muted); }
 .hp-facts strong { display: block; margin-top: 0.125rem; font-size: 0.875rem; }
@@ -290,7 +290,7 @@ a { color: inherit; }
 }
 
 /* ---------- Cards (Columbary) ---------- */
-.hp-cards { display: grid; gap: 0.875rem; margin-top: 1.5rem; }
+.hp-cards { display: grid; grid-auto-rows: 1fr; gap: 0.875rem; margin-top: 1.5rem; } /* equal cards */
 .hp-cards-2 { grid-template-columns: 1fr 1fr; }
 .hp-card { padding: 1.125rem; border-radius: 0.875rem; background: var(--hp-card); border: 1px solid var(--hp-line); }
 .hp-card h3 { margin: 0; font-size: 0.9375rem; font-weight: 700; }
@@ -385,7 +385,7 @@ a { color: inherit; }
 .hp-modal-x:hover { background: rgba(255, 255, 255, 0.28); }
 .hp-modal-body { padding: 1.25rem 1.5rem 1.5rem; }
 .hp-modal-body > p { margin: 0; font-size: 0.9375rem; color: var(--hp-muted); }
-.hp-modal-ann { margin-top: 1rem; padding: 0.875rem 1rem; border-radius: 0.75rem; background: var(--hp-alt); border-left: 3px solid var(--hp-gold); }
+.hp-modal-ann { margin-top: 1rem; padding: 0.875rem 1rem; border-radius: 0.75rem; background: var(--hp-alt); border: 1px solid var(--hp-gold); }
 .hp-modal-ann-label { display: block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--hp-gold-text); }
 .hp-modal-ann strong { display: block; margin-top: 0.2rem; font-size: 0.9375rem; }
 .hp-modal-ann p { margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--hp-muted); }
@@ -396,7 +396,7 @@ a { color: inherit; }
 .hp-byline { margin: 0.375rem 0 0; font-size: 0.8125rem; font-weight: 600; color: var(--hp-muted); font-style: italic; }
 .hp-pull {
   margin: 1.25rem 0 0; padding: 0.875rem 1.125rem; border-radius: 0.75rem;
-  border-left: 3px solid var(--hp-gold); background: var(--hp-card);
+  border: 1px solid var(--hp-gold); background: var(--hp-card);
   font-size: 1.0625rem; font-weight: 600; font-style: italic; color: var(--hp-text);
 }
 .hp-shepherd-sub { margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--hp-muted); }
@@ -445,8 +445,7 @@ a { color: inherit; }
 .hp-fees .hp-panel-title { margin-bottom: 0.25rem; }
 .hp-fee {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
-  padding: 1.125rem 1.25rem; border-radius: 1rem; background: var(--hp-card); border: 1px solid var(--hp-line);
-  border-left: 4px solid var(--hp-gold); box-shadow: var(--hp-shadow);
+  padding: 1.125rem 1.25rem; border-radius: 1rem; background: var(--hp-card); border: 1px solid var(--hp-line); box-shadow: var(--hp-shadow);
 }
 .hp-fee h4 { margin: 0; font-size: 1rem; font-weight: 800; }
 .hp-fee p { margin: 0.2rem 0 0; font-size: 0.8375rem; }
@@ -524,7 +523,7 @@ a { color: inherit; }
   .hp-hero-inner { padding-top: 3.5rem; padding-bottom: 2.5rem; }
   .hp-hero-cta .hp-btn { flex: 1 1 100%; }
   .hp-facts, .hp-cards-2, .hp-footer-grid { grid-template-columns: 1fr; }
-  .hp-mass-grid { grid-template-columns: 1fr 1fr; }
+  .hp-mass-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } /* equal halves, whatever the text */
   .hp-shepherd-photo { width: min(100%, 15rem); }
   .hp-timeline::before { left: 0.45rem; }
   .hp-timeline li { grid-template-columns: 1fr; gap: 0.375rem; padding-left: 1.75rem; }

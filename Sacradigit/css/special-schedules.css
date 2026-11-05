@@ -299,7 +299,6 @@
   gap: 0.875rem;
   padding: 0.75rem 0.875rem;
   border: 1px solid #eef0f4;
-  border-left: 3px solid #8b8fc7;
   border-radius: 0.6rem;
   background-color: #fafbfc;
 }
@@ -377,10 +376,10 @@
 }
 
 /* Left accent stripe based on type */
-.schedule-card.liturgical  { border-left: 4px solid #8b8fc7; }
-.schedule-card.novena      { border-left: 4px solid #c9a84c; }
-.schedule-card.feast       { border-left: 4px solid #6c91c2; }
-.schedule-card.special     { border-left: 4px solid #9ca3af; }
+.schedule-card.liturgical  { border: 1px solid #8b8fc7; }
+.schedule-card.novena      { border: 1px solid #c9a84c; }
+.schedule-card.feast       { border: 1px solid #6c91c2; }
+.schedule-card.special     { border: 1px solid #9ca3af; }
 
 .schedule-card-body {
   padding: 1.125rem 1.125rem 0.75rem;
@@ -602,5 +601,5 @@
 /* ---------- "No Services (Parish Closed)" — blocks service slots ---------- */
 .calendar-cell-booking.closure { background-color: rgba(220, 38, 38, 0.1); color: #b91c1c; }
 .calendar-legend-dot.closure   { background-color: #dc2626; }
-.schedule-card.closure         { border-left: 4px solid #dc2626; }
+.schedule-card.closure         { border: 1px solid #dc2626; }
 .type-tag.closure              { background-color: rgba(220, 38, 38, 0.1); color: #b91c1c; }

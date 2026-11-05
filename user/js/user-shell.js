@@ -162,7 +162,7 @@ const HELP_CONTENT = {
     ],
   },
   'user-my-requests.html': {
-    title: 'My certificate requests',
+    title: 'My Certificate Requests',
     intro: 'Track the status of your certificate requests.',
     steps: [
       'Browse your submitted certificate requests and their current status.',
@@ -214,7 +214,7 @@ const HELP_CONTENT = {
     ],
   },
   'user-requested-services.html': {
-    title: 'My service bookings',
+    title: 'My Service Bookings',
     intro: 'Track the status of every sacrament, blessing, or special Mass you’ve requested.',
     steps: [
       'Use the chips above the list — All, Blessings, Sacraments, Special Masses — to narrow it down.',
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* "My Requests" and "Requested Services" sounded like the same thing. */
-  const NAV_NAMES = { 'my-requests': 'My certificate requests', 'requested-services': 'My service bookings' };
+  const NAV_NAMES = { 'my-requests': 'My Certificate Requests', 'requested-services': 'My Service Bookings' };
   document.querySelectorAll('#sidebar .sidebar-link[data-nav]').forEach(link => {
     const name = NAV_NAMES[link.dataset.nav];
     const textNode = name && [...link.childNodes].reverse().find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());

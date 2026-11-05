@@ -623,7 +623,7 @@
 
 /* ---------- Reader's Sheet: mass picker toolbar ---------- */
 .sheet-day-bar {
-  border-left: 3px solid #8b8fc7;
+  border: 1px solid #8b8fc7;
 }
 
 .sheet-toolbar {

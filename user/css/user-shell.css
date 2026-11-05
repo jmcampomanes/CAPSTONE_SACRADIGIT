@@ -814,7 +814,7 @@ a, button, input, select, textarea, label, summary, [role="button"] { touch-acti
   padding: 0.5rem 0.75rem;
   border-radius: 0.625rem;
   background-color: #f7f8fa;
-  border-left: 3px solid #c9a84c;
+  border: 1px solid #c9a84c;
 }
 
 .fjw-giver.is-me { background-color: rgba(201, 168, 76, 0.12); }
@@ -1127,7 +1127,6 @@ body .min-volunteer:hover { background-color: #2a3963; }
   gap: 0.875rem;
   background: linear-gradient(90deg, rgba(139, 143, 199, 0.1), rgba(139, 143, 199, 0.03));
   border: 1px solid rgba(139, 143, 199, 0.28);
-  border-left: 3px solid #8b8fc7;
   border-radius: 0.875rem;
   padding: 1rem 1.25rem;
 }

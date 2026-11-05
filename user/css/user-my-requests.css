@@ -142,7 +142,7 @@
 .req-status-line {
   margin-top: 0.75rem;
   padding: 0.6rem 0.85rem;
-  border-left: 4px solid #8b8fc7;
+  border: 1px solid #8b8fc7;
   border-radius: 0.5rem;
   background-color: #f5f5fc;
   font-size: 0.9375rem; /* same as .req-card-title (certificate type) */
@@ -151,10 +151,10 @@
   color: #1f2937;
 }
 
-.req-status-line.status-pending  { border-left-color: #d97706; background-color: #fffbeb; }
-.req-status-line.status-approved { border-left-color: #16a34a; background-color: #f0fdf4; }
-.req-status-line.status-released { border-left-color: #9ca3af; background-color: #f9fafb; }
-.req-status-line.status-rejected { border-left-color: #b91c1c; background-color: #fef2f2; }
+.req-status-line.status-pending  { border-color: #d97706; background-color: #fffbeb; }
+.req-status-line.status-approved { border-color: #16a34a; background-color: #f0fdf4; }
+.req-status-line.status-released { border-color: #9ca3af; background-color: #f9fafb; }
+.req-status-line.status-rejected { border-color: #b91c1c; background-color: #fef2f2; }
 
 .req-card-actions {
   display: flex;

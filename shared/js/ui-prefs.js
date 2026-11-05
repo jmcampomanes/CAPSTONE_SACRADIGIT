@@ -50,7 +50,7 @@ const read = (k) => { try { return localStorage.getItem(k); } catch { return nul
 const write = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
 
 /* Display format: colors, spacing, and how dates and times are written.
-   DISPLAY_PREFS drives the controls in the "Aa" panel and on My Settings. */
+   DISPLAY_PREFS drives the Display Format controls on My Settings and the staff Profile pages. */
 export const DISPLAY_PREFS = [
   { key: 'palette', storage: 'sacradigit_palette', label: 'Color palette', options: [['', 'Parish (default)'], ['ocean', 'Ocean'], ['forest', 'Forest'], ['contrast', 'High contrast']] },
   { key: 'density', storage: 'sacradigit_density', label: 'Spacing', options: [['', 'Comfortable'], ['compact', 'Compact']] },
@@ -511,8 +511,7 @@ export function initUiPrefs() {
           <input type="range" id="ui-size-range" min="0" max="${TEXT_SIZES.length - 1}" step="1" />
           <span aria-hidden="true">A</span>
           <div class="ui-prefs-size-stops" aria-hidden="true">${TEXT_SIZES.map(() => '<i></i>').join('')}</div>
-        </div>
-        <div class="ui-prefs-display-group">${displayPrefsHtml()}</div>
+        </div>
       </div>
     </div>
     <button type="button" class="ui-prefs-btn" id="ui-theme-btn"></button>

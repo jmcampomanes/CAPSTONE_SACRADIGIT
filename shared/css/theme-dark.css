@@ -995,7 +995,7 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .adm-dialog-detail {
-    border-left: 3px solid #454854;
+    border: 1px solid #454854;
     background: #121827;
     color: #b0bac9
 }
@@ -3896,7 +3896,7 @@
 }
 :root[data-theme="dark"] .quick-action-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #444655
 }
 :root[data-theme="dark"] .quick-action-label {
     color: #a3b3d7

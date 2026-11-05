@@ -189,7 +189,7 @@
 
 /* ---------- Weekly table: today's row ---------- */
 .weekly-table tr.is-today td { background-color: rgba(139, 143, 199, 0.12); }
-.weekly-table tr.is-today td:first-child { box-shadow: inset 3px 0 0 #8b8fc7; }
+.weekly-table tr.is-today td:first-child { box-shadow: none; background-color: #8b8fc71f; }
 
 .today-tag {
   display: inline-block;

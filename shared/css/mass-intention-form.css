@@ -442,7 +442,7 @@
 .mi-td-act .mi-person-btn { min-height: 2rem; padding: 0 0.625rem; font-size: 0.8125rem; border-radius: 0.5rem; }
 .mi-td-act .mi-person-btn + .mi-person-btn { margin-left: 0.35rem; }
 .mi-person-row.is-editing td { background: #f3f3ff; }
-.mi-person-row.is-editing td:first-child { box-shadow: inset 3px 0 0 #8b8fc7; }
+.mi-person-row.is-editing td:first-child { box-shadow: none; background-color: #8b8fc71f; }
 .mi-table .mi-person-num { width: 1.625rem; height: 1.625rem; font-size: 0.8125rem; }
 .mi-list-empty { padding: 1.25rem 1rem; font-size: 0.8125rem; color: #9ca3af; text-align: center; }
 .mi-list-empty.hidden { display: none; }

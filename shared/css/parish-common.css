@@ -40,7 +40,7 @@
 @media (max-width: 480px) { .pr-band { grid-template-columns: 1fr; } }
 
 /* Call for Help banner (call-for-help.js) */
-.cfh-banner { margin: 1rem 0; padding: 1rem 1.25rem; border-radius: 1rem; border-left: 6px solid #b91c1c; background: #fef2f2; color: #1f2937; }
+.cfh-banner { margin: 1rem 0; padding: 1rem 1.25rem; border-radius: 1rem; border: 1px solid #b91c1c; background: #fef2f2; color: #1f2937; }
 .cfh-kicker { margin: 0; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #b91c1c; }
 .cfh-title { margin: 0.125rem 0 0.25rem; font-size: 1.0625rem; font-weight: 700; color: #111827; }
 .cfh-body { margin: 0; font-size: 0.875rem; white-space: pre-line; }

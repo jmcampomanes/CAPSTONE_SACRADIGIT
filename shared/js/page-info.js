@@ -27,7 +27,7 @@ const STYLE = `
 .info-banner {
   display: flex; gap: 0.875rem;
   background: linear-gradient(90deg, rgba(139, 143, 199, 0.1), rgba(139, 143, 199, 0.03));
-  border: 1px solid rgba(139, 143, 199, 0.28); border-left: 3px solid #8b8fc7;
+  border: 1px solid rgba(139, 143, 199, 0.28);
   border-radius: 0.875rem; padding: 1rem 1.25rem;
 }
 .info-banner-icon {

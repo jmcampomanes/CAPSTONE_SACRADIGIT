@@ -80,7 +80,6 @@
 .donation-goal-card {
   background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
   border: 1px solid #eef0f4;
-  border-left: 4px solid #c9a84c;
   border-radius: 0.875rem;
   padding: 1.125rem;
   display: flex;
@@ -95,7 +94,7 @@
   transform: translateY(-3px);
 }
 
-.donation-goal-card.reached { border-left-color: #15803d; }
+.donation-goal-card.reached { border-color: #15803d; }
 
 .goal-card-top {
   display: flex;

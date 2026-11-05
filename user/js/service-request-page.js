@@ -157,8 +157,8 @@ export function initServiceRequestPage(serviceId) {
   formViewIcon.style.color = svc.iconColor;
   formViewIcon.innerHTML = svc.icon;
   document.getElementById('svc-booking-note').textContent = needsApproval(svc.name)
-    ? 'These are the parish\'s fixed schedules. Blessing requests are reviewed by the parish office first — your slot is held for you, and you\'ll be notified once it\'s approved. Track it under "My service bookings."'
-    : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "My service bookings."';
+    ? 'These are the parish\'s fixed schedules. Blessing requests are reviewed by the parish office first — your slot is held for you, and you\'ll be notified once it\'s approved. Track it under "My Service Bookings."'
+    : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "My Service Bookings."';
 
   const slotPicker = createSlotPicker(slotPickerEl, {
     type: svc.name,
@@ -205,8 +205,8 @@ export function initServiceRequestPage(serviceId) {
     renderFee();
     if (usesPayments) return;
     document.getElementById('svc-booking-note').textContent = type === 'public'
-      ? 'Pick one of the dates the parish announced. Your family is registered as soon as you submit, and you can cancel anytime under "My service bookings."'
-      : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "My service bookings."';
+      ? 'Pick one of the dates the parish announced. Your family is registered as soon as you submit, and you can cancel anytime under "My Service Bookings."'
+      : 'These are the parish\'s fixed schedules. The slot you pick is booked for you as soon as you submit — no waiting for approval. You can cancel it anytime under "My Service Bookings."';
   }
 
   // Order on the page: the address and other details first, then the date and
@@ -390,7 +390,7 @@ export function initServiceRequestPage(serviceId) {
     document.getElementById('svc-success-title').textContent = approval ? 'Request Sent!' : 'Request Submitted!';
     document.getElementById('svc-success-desc').textContent = approval
       ? `Your ${name} request is waiting for the parish office to approve it — your slot is held for you, and you'll be notified once it's approved.`
-      : `Your ${name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under My service bookings.`;
+      : `Your ${name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under My Service Bookings.`;
     const row = (label, value) => value ? `<div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>` : '';
     document.getElementById('svc-success-details').innerHTML = [
       row('Service', name),
