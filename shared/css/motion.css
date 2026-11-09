@@ -191,7 +191,7 @@ main > *:nth-child(n + 6) { animation-delay: 300ms; }
 .sd-track i.ok::after { transform: scaleX(1); animation: sd-grow-x var(--dur-slow) var(--ease-out) both; }
 .sd-track i.ok:nth-child(2)::after { animation-delay: 120ms; }
 .sd-track i.ok:nth-child(3)::after { animation-delay: 240ms; }
-:root[data-theme="dark"] .sd-track i { background: #2c3548; }
+:root[data-theme="dark"] .sd-track i { background: #343f57; }
 
 /* ---------- Skeletons (loading placeholders; motion.js swaps in for "Loading…") ---------- */
 .sk {
@@ -201,7 +201,7 @@ main > *:nth-child(n + 6) { animation-delay: 300ms; }
 }
 :root[data-theme="dark"] .sk { background-image: linear-gradient(90deg, #1f2738 25%, #2a3346 50%, #1f2738 75%); }
 .sk-row { display: flex; gap: 0.875rem; align-items: center; padding: 1rem; border-radius: 0.875rem; border: 1px solid #eceef3; background: #fff; }
-:root[data-theme="dark"] .sk-row { background: #1a2131; border-color: #2c3548; }
+:root[data-theme="dark"] .sk-row { background: #1a2131; border-color: #343f57; }
 .sk-row + .sk-row { margin-top: 0.75rem; }
 .sk-row.is-flat { grid-column: 1 / -1; border: 0; border-radius: 0; padding: 0.75rem 0.25rem; background: transparent; }
 .sk-row.is-flat + .sk-row.is-flat { margin-top: 0; }

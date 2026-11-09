@@ -232,7 +232,7 @@ body.req-screen-open { overflow: hidden; }
 
 /* Optional map, under the date and time */
 .req-screen .pin-map-field { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eef0f4; }
-:root[data-theme="dark"] .req-screen .pin-map-field { border-top-color: #2c3548; }
+:root[data-theme="dark"] .req-screen .pin-map-field { border-top-color: #343f57; }
 
 /* ---------- Info banner ---------- */
 .info-banner {

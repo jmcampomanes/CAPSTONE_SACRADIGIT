@@ -78,7 +78,7 @@
 :root[data-theme="dark"] .mb-rule-title,
 :root[data-theme="dark"] .mb-check-title,
 :root[data-theme="dark"] .mb-banner-name { color: #f1f3f7; }
-:root[data-theme="dark"] .mb-waiting-item { border-color: #2c3548; }
+:root[data-theme="dark"] .mb-waiting-item { border-color: #343f57; }
 :root[data-theme="dark"] .mb-rule-num { background: rgba(139, 143, 199, 0.22); color: #c7cbe8; }
 :root[data-theme="dark"] .mb-check.is-verified { background: rgba(21, 128, 61, 0.16); border-color: rgba(134, 239, 172, 0.3); }
 :root[data-theme="dark"] .mb-check.is-unknown { background: rgba(180, 83, 9, 0.16); border-color: rgba(252, 211, 77, 0.3); }

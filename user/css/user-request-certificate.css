@@ -52,11 +52,16 @@
 }
 
 /* ---------- Certificate type selector grid ---------- */
+/* Four certificates: one column on phones, 2 × 2 on tablets and small laptops,
+   one row of four on wide screens. Never 3 + 1 with a lone card on its own row,
+   and no empty columns on the right. */
 .cert-type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1.125rem;
 }
+@media (min-width: 640px) { .cert-type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .cert-type-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 .cert-type-card {
   background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
@@ -127,6 +132,23 @@
 }
 
 .cert-type-cta svg { transition: transform 0.15s ease; }
+
+/* Line the cards up: the button always sits at the bottom of the card. */
+.cert-type-card .cert-type-cta { margin-top: auto; }
+/* Where supported, each card shares the grid's rows (icon / name / description /
+   button), so a two-line name in one card pushes every card's description and
+   button down together — icons, names, text and buttons all line up across the row. */
+@supports (grid-template-rows: subgrid) {
+  .cert-type-card {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    row-gap: 0.625rem;
+    align-content: start;
+    justify-items: start;
+  }
+  .cert-type-card .cert-type-cta { margin-top: 0.375rem; align-self: end; }
+}
 
 /* ---------- Info note inside form ---------- */
 .req-info-note {

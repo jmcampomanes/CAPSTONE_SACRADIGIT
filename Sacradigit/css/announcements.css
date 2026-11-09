@@ -554,11 +554,11 @@
 :root[data-theme="dark"] .ann-editor-back { color: #a9abd1; }
 :root[data-theme="dark"] .ann-editor-back:hover { background-color: #242c3e; color: #f1f3f7; }
 :root[data-theme="dark"] .ann-editor-header,
-:root[data-theme="dark"] .ann-editor-footer { border-color: #2c3548; }
+:root[data-theme="dark"] .ann-editor-footer { border-color: #343f57; }
 :root[data-theme="dark"] .ann-editor-title { color: #a3b3d7; }
 :root[data-theme="dark"] .ann-editor-footer { background-color: #1a2131; }
-:root[data-theme="dark"] .ann-editor-side { background-color: #161c2a; border-color: #2c3548; }
-:root[data-theme="dark"] .ann-editor-group + .ann-editor-group { border-color: #2c3548; }
+:root[data-theme="dark"] .ann-editor-side { background-color: #161c2a; border-color: #343f57; }
+:root[data-theme="dark"] .ann-editor-group + .ann-editor-group { border-color: #343f57; }
 :root[data-theme="dark"] .ann-editor-group-title { color: #c4c9d3; }
 
 @media (max-width: 640px) {

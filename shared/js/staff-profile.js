@@ -62,8 +62,8 @@ export function initStaffProfile({ showToast }) {
   if (roleBadge) roleBadge.textContent = info.role;
   if (!avatarLg.style.backgroundImage) avatarLg.textContent = initialsFrom(name);
   const note = document.createElement('p');
-  note.className = 'pf-account-note';
-  note.style.cssText = 'margin-top:0.375rem;font-size:0.8125rem;line-height:1.4;color:#6b7280;';
+  note.className = 'pf-account-note text-gray-500'; // grey via the class so dark mode lightens it
+  note.style.cssText = 'margin-top:0.375rem;font-size:0.8125rem;line-height:1.4;';
   note.textContent = 'Your name and email come from your sign-in account. Ask the IT team to change them.';
   $('pf-email').closest('div')?.appendChild(note);
 

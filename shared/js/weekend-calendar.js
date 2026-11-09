@@ -70,7 +70,7 @@ const STYLE = `
   .wkcal-clear { border: 0; background: none; font: inherit; font-weight: 600; color: #b91c1c; cursor: pointer; padding: 0.5rem; }
   .wkcal-clear[hidden] { display: none; }
 
-  :root[data-theme="dark"] .wkcal { background: #1a2131; border-color: #2c3548; }
+  :root[data-theme="dark"] .wkcal { background: #1a2131; border-color: #343f57; }
   :root[data-theme="dark"] .wkcal-month, :root[data-theme="dark"] .wkcal-foot strong { color: #e3e6ec; }
   :root[data-theme="dark"] .wkcal-nav { background: #1a2131; border-color: #3a4459; color: #b6bdca; }
   :root[data-theme="dark"] .wkcal-dow.wk { color: #b3b6e6; }
@@ -78,7 +78,7 @@ const STYLE = `
   :root[data-theme="dark"] .wkcal-day.open { color: #8decb1; }
   :root[data-theme="dark"] .wkcal-day.open:hover { background: #121827; border-color: #393c60; }
   :root[data-theme="dark"] .wkcal-day.selected { background: #3d4a7a; border-color: #8b8fc7; color: #ffffff; }
-  :root[data-theme="dark"] .wkcal-foot { border-color: #2c3548; color: #9ea6b5; }
+  :root[data-theme="dark"] .wkcal-foot { border-color: #343f57; color: #9ea6b5; }
   :root[data-theme="dark"] .wkcal-clear { color: #fca5a5; }
 
   /* weekends-only: pairs side by side; month dates show just the number */
@@ -92,7 +92,7 @@ const STYLE = `
   .wkcal-wk .wkcal-day { height: 2rem; font-size: 0.875rem; }
   .wkcal-wk.picked { background: #eef0fa; border-color: #8b8fc7; box-shadow: 0 0 0 2px rgba(139, 143, 199, 0.25); }
   .wkcal-wk.picked .wkcal-dow { color: #1e2a4a; }
-  :root[data-theme="dark"] .wkcal-wk { border-color: #2c3548; }
+  :root[data-theme="dark"] .wkcal-wk { border-color: #343f57; }
   :root[data-theme="dark"] .wkcal-wk.picked { background: #242c3e; border-color: #8b8fc7; }
   :root[data-theme="dark"] .wkcal-wk.picked .wkcal-dow { color: #e3e6ec; }
   .wkcal-day.other { font-weight: 500; font-size: 0.8125rem; }

@@ -35,6 +35,8 @@ const SOURCES = [
   'shared/css/marriage-request-form.css',
   'shared/css/detail-table.css',
   'shared/css/mass-intention-form.css',
+  'shared/css/parish-common.css',
+  'shared/css/parish-info.css',
   ...['Sacradigit/css', 'user/css', 'Sacraitech/css', 'Sacramedia/css']
     .flatMap(dir => fs.readdirSync(path.join(ROOT, dir)).filter(f => f.endsWith('.css')).map(f => `${dir}/${f}`)),
 ].filter(f => !/print|\/style\.css$/.test(f)); // certificate print pages + the public landing page stay light
@@ -95,7 +97,7 @@ const fmt = ([r, g, b, a = 1]) => {
 const SURFACE = [26, 33, 49];      // cards, panels, inputs     (#1a2131)
 const SUNKEN = [18, 24, 39];       // page background, wells    (#121827)
 const RAISED = [36, 44, 62];       // hover, subtle fills       (#242c3e)
-const LINE = [44, 53, 72];         // borders                   (#2c3548)
+const LINE = [52, 63, 87];         // borders                   (#343f57)
 
 function darkBackground(c) {
   const [h, s, l] = rgbToHsl(c);
@@ -228,34 +230,49 @@ ${PREFIX} .bg-white { background-color: #1a2131 !important; }
 ${PREFIX} .bg-gray-50 { background-color: #121827 !important; }
 ${PREFIX} .bg-gray-100 { background-color: #242c3e !important; }
 ${PREFIX} .hover\\:bg-gray-50:hover { background-color: #242c3e !important; }
-${PREFIX} .hover\\:bg-gray-100:hover { background-color: #2c3548 !important; }
+${PREFIX} .hover\\:bg-gray-100:hover { background-color: #343f57 !important; }
 ${PREFIX} .text-gray-900 { color: #f1f3f7 !important; }
 ${PREFIX} .text-gray-800 { color: #e6e9ef !important; }
 ${PREFIX} .text-gray-700 { color: #d3d8e1 !important; }
 ${PREFIX} .text-gray-600 { color: #b6bdca !important; }
 ${PREFIX} .text-gray-500 { color: #9ea6b5 !important; }
 ${PREFIX} .text-gray-400 { color: #8a93a4 !important; }
-${PREFIX} .text-gray-300 { color: #5f6879 !important; }
+${PREFIX} .text-gray-300 { color: #818a9c !important; }
 ${PREFIX} .text-navy, ${PREFIX} .hover\\:text-navy:hover { color: #c7cbe8 !important; }
 ${PREFIX} .text-lavender { color: #b3b6e6 !important; }
 ${PREFIX} .text-green-600, ${PREFIX} .text-green-700 { color: #6ee7a0 !important; }
 ${PREFIX} .text-red-600, ${PREFIX} .text-red-700 { color: #fca5a5 !important; }
+${PREFIX} .text-red-500 { color: #f87171 !important; }
 ${PREFIX} .text-amber-600 { color: #fcd34d !important; }
 ${PREFIX} .bg-green-50 { background-color: #133024 !important; }
 ${PREFIX} .bg-amber-50 { background-color: #33280f !important; }
-${PREFIX} .border-gray-100, ${PREFIX} .border-gray-200 { border-color: #2c3548 !important; }
-${PREFIX} .divide-gray-100 > * + * { border-color: #2c3548 !important; }
+${PREFIX} .border-gray-100, ${PREFIX} .border-gray-200 { border-color: #343f57 !important; }
+${PREFIX} .divide-gray-100 > * + * { border-color: #343f57 !important; }
 ${PREFIX} .border-red-400 { border-color: #f87171 !important; }
 
 /* ---- Form controls ---- */
 ${PREFIX} input, ${PREFIX} select, ${PREFIX} textarea { color: #e6e9ef; }
-${PREFIX} input::placeholder, ${PREFIX} textarea::placeholder { color: #6b7486; }
+/* Field edges: 3:1 against the card so every box is visible. :where() keeps this
+   weaker than error borders (.border-red-400) and focus styles that come later. */
+${PREFIX} :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="hidden"]), select, textarea) { border-color: #64708f !important; }
+${PREFIX} :where(input, select, textarea):focus { border-color: #8b8fc7 !important; }
+${PREFIX} input::placeholder, ${PREFIX} textarea::placeholder { color: #7d8699; }
 ${PREFIX} select option, ${PREFIX} select optgroup { background-color: #1a2131; color: #e6e9ef; }
 
 /* ---- Help (?) button + tutorial (styles injected by help-tutorial.js) ---- */
 ${PREFIX} .help-icon-btn { background-color: #1a2131; border-color: #3a4459; color: #9ea6b5; }
 ${PREFIX} .help-icon-btn:hover { background-color: #242c3e; color: #e6e9ef; }
 ${PREFIX} .help-modal-card { background-color: #1a2131; color: #e3e6ec; }
+
+/* ---- Inline grey notes (style="color:#6b7280", e.g. staff-profile.js) ---- */
+${PREFIX} [style*="color:#6b7280"], ${PREFIX} [style*="color: #6b7280"] { color: #a0a8b6 !important; }
+
+/* ---- Mass type pills (mass-types.js sets their colours inline) ---- */
+${PREFIX} .mass-type-badge[style*="color:#5b5fa8"] { color: #b9bcef !important; }
+${PREFIX} .mass-type-badge[style*="color:#b5943e"] { color: #e6c77f !important; }
+${PREFIX} .mass-type-badge[style*="color:#dc2626"] { color: #fca5a5 !important; }
+${PREFIX} .mass-type-badge[style*="color:#15803d"] { color: #6ee7a0 !important; }
+${PREFIX} .mass-type-badge[style*="color:#6b7280"] { color: #b6bdca !important; }
 
 /* ---- Inline navy text/icons (style="color:#1e2a4a") set directly in markup ---- */
 ${PREFIX} [style*="color:#1e2a4a"], ${PREFIX} [style*="color: #1e2a4a"] { color: #c7cbe8 !important; }

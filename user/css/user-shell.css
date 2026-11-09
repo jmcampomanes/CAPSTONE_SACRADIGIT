@@ -998,6 +998,11 @@ body .min-volunteer {
 }
 body .min-volunteer:hover { background-color: #2a3963; }
 :root[data-theme="dark"] body :is(.cert-type-cta, .svc-type-cta, .min-volunteer) { background-color: #8b8fc7; color: #0f1420; }
+/* Hovered card: a lighter button with the same dark text. Strong enough to beat
+   theme-dark.css's generated ".cert-type-card:hover .cert-type-cta" text colour,
+   which turned the label lavender-on-lavender. */
+:root[data-theme="dark"] body :is(.cert-type-card, .svc-type-card):hover :is(.cert-type-cta, .svc-type-cta),
+:root[data-theme="dark"] body .min-volunteer:hover { background-color: #a3a6d6; color: #0f1420; }
 
 /* ============================================
    First sign-in: "Would you like bigger letters?"
@@ -1227,8 +1232,8 @@ body .btn-view-cert { text-transform: none; letter-spacing: 0; font-size: 0.875r
   .pager { justify-content: center; text-align: center; }
   .pager-info { width: 100%; }
 }
-:root[data-theme="dark"] .pager { background: #1a2131; border-color: #2c3548; }
-:root[data-theme="dark"] .pager.pager-in-panel { border-top-color: #2c3548; }
+:root[data-theme="dark"] .pager { background: #1a2131; border-color: #343f57; }
+:root[data-theme="dark"] .pager.pager-in-panel { border-top-color: #343f57; }
 :root[data-theme="dark"] .pager-info { color: #b6bdca; }
-:root[data-theme="dark"] .pager-btn { background: #1a2131; border-color: #2c3548; color: #e5e7eb; }
+:root[data-theme="dark"] .pager-btn { background: #1a2131; border-color: #343f57; color: #e5e7eb; }
 :root[data-theme="dark"] .pager-btn.is-current { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }

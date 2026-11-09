@@ -1,6 +1,6 @@
 /* ============================================
    SacraDigit — dark theme (GENERATED — do not edit by hand)
-   Built by tools/build-dark-theme.mjs from 55 stylesheets.
+   Built by tools/build-dark-theme.mjs from 57 stylesheets.
    Applies when <html data-theme="dark">; see ui-prefs.js.
    Fix colours in the generator (or the MANUAL block in it) and re-run:
      node tools/build-dark-theme.mjs
@@ -15,34 +15,49 @@
 :root[data-theme="dark"] .bg-gray-50 { background-color: #121827 !important; }
 :root[data-theme="dark"] .bg-gray-100 { background-color: #242c3e !important; }
 :root[data-theme="dark"] .hover\:bg-gray-50:hover { background-color: #242c3e !important; }
-:root[data-theme="dark"] .hover\:bg-gray-100:hover { background-color: #2c3548 !important; }
+:root[data-theme="dark"] .hover\:bg-gray-100:hover { background-color: #343f57 !important; }
 :root[data-theme="dark"] .text-gray-900 { color: #f1f3f7 !important; }
 :root[data-theme="dark"] .text-gray-800 { color: #e6e9ef !important; }
 :root[data-theme="dark"] .text-gray-700 { color: #d3d8e1 !important; }
 :root[data-theme="dark"] .text-gray-600 { color: #b6bdca !important; }
 :root[data-theme="dark"] .text-gray-500 { color: #9ea6b5 !important; }
 :root[data-theme="dark"] .text-gray-400 { color: #8a93a4 !important; }
-:root[data-theme="dark"] .text-gray-300 { color: #5f6879 !important; }
+:root[data-theme="dark"] .text-gray-300 { color: #818a9c !important; }
 :root[data-theme="dark"] .text-navy, :root[data-theme="dark"] .hover\:text-navy:hover { color: #c7cbe8 !important; }
 :root[data-theme="dark"] .text-lavender { color: #b3b6e6 !important; }
 :root[data-theme="dark"] .text-green-600, :root[data-theme="dark"] .text-green-700 { color: #6ee7a0 !important; }
 :root[data-theme="dark"] .text-red-600, :root[data-theme="dark"] .text-red-700 { color: #fca5a5 !important; }
+:root[data-theme="dark"] .text-red-500 { color: #f87171 !important; }
 :root[data-theme="dark"] .text-amber-600 { color: #fcd34d !important; }
 :root[data-theme="dark"] .bg-green-50 { background-color: #133024 !important; }
 :root[data-theme="dark"] .bg-amber-50 { background-color: #33280f !important; }
-:root[data-theme="dark"] .border-gray-100, :root[data-theme="dark"] .border-gray-200 { border-color: #2c3548 !important; }
-:root[data-theme="dark"] .divide-gray-100 > * + * { border-color: #2c3548 !important; }
+:root[data-theme="dark"] .border-gray-100, :root[data-theme="dark"] .border-gray-200 { border-color: #343f57 !important; }
+:root[data-theme="dark"] .divide-gray-100 > * + * { border-color: #343f57 !important; }
 :root[data-theme="dark"] .border-red-400 { border-color: #f87171 !important; }
 
 /* ---- Form controls ---- */
 :root[data-theme="dark"] input, :root[data-theme="dark"] select, :root[data-theme="dark"] textarea { color: #e6e9ef; }
-:root[data-theme="dark"] input::placeholder, :root[data-theme="dark"] textarea::placeholder { color: #6b7486; }
+/* Field edges: 3:1 against the card so every box is visible. :where() keeps this
+   weaker than error borders (.border-red-400) and focus styles that come later. */
+:root[data-theme="dark"] :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="hidden"]), select, textarea) { border-color: #64708f !important; }
+:root[data-theme="dark"] :where(input, select, textarea):focus { border-color: #8b8fc7 !important; }
+:root[data-theme="dark"] input::placeholder, :root[data-theme="dark"] textarea::placeholder { color: #7d8699; }
 :root[data-theme="dark"] select option, :root[data-theme="dark"] select optgroup { background-color: #1a2131; color: #e6e9ef; }
 
 /* ---- Help (?) button + tutorial (styles injected by help-tutorial.js) ---- */
 :root[data-theme="dark"] .help-icon-btn { background-color: #1a2131; border-color: #3a4459; color: #9ea6b5; }
 :root[data-theme="dark"] .help-icon-btn:hover { background-color: #242c3e; color: #e6e9ef; }
 :root[data-theme="dark"] .help-modal-card { background-color: #1a2131; color: #e3e6ec; }
+
+/* ---- Inline grey notes (style="color:#6b7280", e.g. staff-profile.js) ---- */
+:root[data-theme="dark"] [style*="color:#6b7280"], :root[data-theme="dark"] [style*="color: #6b7280"] { color: #a0a8b6 !important; }
+
+/* ---- Mass type pills (mass-types.js sets their colours inline) ---- */
+:root[data-theme="dark"] .mass-type-badge[style*="color:#5b5fa8"] { color: #b9bcef !important; }
+:root[data-theme="dark"] .mass-type-badge[style*="color:#b5943e"] { color: #e6c77f !important; }
+:root[data-theme="dark"] .mass-type-badge[style*="color:#dc2626"] { color: #fca5a5 !important; }
+:root[data-theme="dark"] .mass-type-badge[style*="color:#15803d"] { color: #6ee7a0 !important; }
+:root[data-theme="dark"] .mass-type-badge[style*="color:#6b7280"] { color: #b6bdca !important; }
 
 /* ---- Inline navy text/icons (style="color:#1e2a4a") set directly in markup ---- */
 :root[data-theme="dark"] [style*="color:#1e2a4a"], :root[data-theme="dark"] [style*="color: #1e2a4a"] { color: #c7cbe8 !important; }
@@ -68,7 +83,7 @@
 
 /*  from shared/css/service-schedule.css  */
 :root[data-theme="dark"] .slot-picker {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .slot-hint {
@@ -78,7 +93,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .slot-day {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .slot-day-dow {
@@ -135,7 +150,7 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .slot-time {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .slot-time-label {
@@ -174,7 +189,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .pin-map-wrap {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .pin-map {
@@ -217,7 +232,7 @@
     color: #a1b0d9
 }
 :root[data-theme="dark"] .svc-screen-heading {
-    border-left: 1px solid #2c3548
+    border-left: 1px solid #343f57
 }
 :root[data-theme="dark"] .svc-screen-title {
     color: #a3b3d7
@@ -243,7 +258,7 @@
 }
 :root[data-theme="dark"] .svc-screen-footer {
     background-color: #1a2131;
-    border-top: 1px solid #2c3548
+    border-top: 1px solid #343f57
 }
 :root[data-theme="dark"] .svc-screen .pin-map-field {
     border-top: 1px solid #434956
@@ -271,7 +286,7 @@
     background-color: #193e26
 }
 :root[data-theme="dark"] .prep-box {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .prep-title {
@@ -313,7 +328,7 @@
 }
 :root[data-theme="dark"] .svc-type-card {
     background: linear-gradient(180deg, #1a2131 0%, #121827 100%);
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .svc-type-card:hover .svc-type-cta {
     color: #a8aad1
@@ -360,7 +375,7 @@
 }
 :root[data-theme="dark"] .bt-type,
 :root[data-theme="dark"] .bt-date {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .bt-type-body,
@@ -388,7 +403,7 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .bt-admin-date {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .bt-admin-date.is-cancelled {
     border-color: #6b2e2e
@@ -413,12 +428,12 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .mstep-bar li + li::before {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .mstep-num {
     color: #8b93a3;
     background-color: #1a2131;
-    border: 2px solid #2c3548
+    border: 2px solid #343f57
 }
 :root[data-theme="dark"] .mstep-label {
     color: #8b93a3
@@ -474,7 +489,7 @@
 :root[data-theme="dark"] .modal-detail-grid,
 :root[data-theme="dark"] .so-detail-grid {
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .modal-detail-grid > *,
 :root[data-theme="dark"] .so-detail-grid > * {
@@ -493,7 +508,7 @@
     color: #a3b3d7
 }
 :root[data-theme="dark"] .confirm-table-wrap {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .confirm-table th,
 :root[data-theme="dark"] .confirm-table td {
@@ -524,11 +539,11 @@
 }
 :root[data-theme="dark"] .mi-page-header {
     background: #1a2131;
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .mi-page-back {
     color: #a8aad1;
-    border-right: 1px solid #2c3548
+    border-right: 1px solid #343f57
 }
 :root[data-theme="dark"] .mi-page-back:hover {
     color: #a1b0d9
@@ -543,11 +558,11 @@
     color: #a1b0d9
 }
 :root[data-theme="dark"] .mi-progress-dots li {
-    background: #2c3548
+    background: #343f57
 }
 :root[data-theme="dark"] .mi-step {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .mi-step-title {
     color: #a3b3d7
@@ -563,7 +578,7 @@
 }
 :root[data-theme="dark"] .mi-cat {
     background: #1a2131;
-    border: 2px solid #2c3548
+    border: 2px solid #343f57
 }
 :root[data-theme="dark"] .mi-cat:hover {
     border-color: #3b3d5e
@@ -578,7 +593,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .mi-cat-check {
-    border: 2px solid #2c3548;
+    border: 2px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .mi-cat-grid.mi-invalid .mi-cat {
@@ -597,7 +612,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .mi-person {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .mi-person-name {
@@ -606,7 +621,7 @@
 :root[data-theme="dark"] .mi-person-btn {
     color: #a1b0d9;
     background: #1a2131;
-    border: 1.5px solid #2c3548
+    border: 1.5px solid #343f57
 }
 :root[data-theme="dark"] .mi-person-btn:hover {
     color: #a8aad1
@@ -629,7 +644,7 @@
 :root[data-theme="dark"] .mi-offer {
     color: #a1b0d9;
     background: #1a2131;
-    border: 2px solid #2c3548
+    border: 2px solid #343f57
 }
 :root[data-theme="dark"] .mi-offer:hover {
     border-color: #3b3d5e
@@ -643,7 +658,7 @@
     background: #1a2131
 }
 :root[data-theme="dark"] .mi-review-card {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .mi-review-head {
     background: #121827;
@@ -685,7 +700,7 @@
     }
 }
 :root[data-theme="dark"] .mi-table-wrap {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .mi-table thead th {
@@ -729,6 +744,149 @@
     color: #eeb18b;
     background: #3f3718;
     border: 1px solid #6b5f2e
+}
+/*  from shared/css/parish-common.css  */
+:root[data-theme="dark"] .consent-terms {
+    border: 1px solid #343f57;
+    background: #121827
+}
+:root[data-theme="dark"] .consent-terms summary {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .consent-text {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .consent-check {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .consent-box.has-error .consent-check {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .rm-table th,
+:root[data-theme="dark"] .rm-table td {
+    border-bottom: 1px solid #343f57
+}
+:root[data-theme="dark"] .rm-table thead th {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .rm-table tbody th {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .rm-action,
+:root[data-theme="dark"] .rm-all {
+    background: #222635;
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .rm-none {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .rm-note {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .rm-all {
+    background: #212236;
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .pr-note {
+    background: #3f3618;
+    color: #edba8d
+}
+:root[data-theme="dark"] .cfh-banner {
+    background: #121827;
+    color: #aabacf
+}
+:root[data-theme="dark"] .cfh-kicker {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .cfh-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .pay-box {
+    border: 1px solid #343f57;
+    background: #1a2131
+}
+:root[data-theme="dark"] .pay-title {
+    color: #a3b3d7
+}
+:root[data-theme="dark"] .pay-amount {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .pay-qr {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .pay-hint {
+    color: #c4c9d3
+}
+:root[data-theme="dark"] .pay-note {
+    background: #3f3618;
+    color: #edba8d
+}
+:root[data-theme="dark"] .svc-fee-amount {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] #svc-terms-wrap.has-error {
+    color: #ee8c8c
+}
+:root[data-theme="dark"] .prep-before {
+    border: 1px solid #343f57;
+    background: #121827
+}
+:root[data-theme="dark"] .prep-before summary {
+    color: #a1b0d9
+}
+:root[data-theme="dark"] .prep-before li {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .prep-before small {
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .prep-file {
+    color: #a8aad1
+}
+:root[data-theme="dark"] .st-chart {
+    border-bottom: 1px solid #343f57
+}
+:root[data-theme="dark"] .st-col:hover,
+:root[data-theme="dark"] .st-col:focus-visible {
+    background: #222635
+}
+:root[data-theme="dark"] .st-value {
+    color: #b0bac9
+}
+:root[data-theme="dark"] .st-label {
+    color: #a0a8b6
+}
+:root[data-theme="dark"][data-theme="dark"] .st-col.is-current .st-bar {
+    background: #212236
+}
+/*  from shared/css/parish-info.css  */
+:root[data-theme="dark"] .pi-form .form-input:disabled {
+    background-color: #242c3e;
+    color: #a0a8b6
+}
+:root[data-theme="dark"] .pi-error {
+    color: #ed8d8d
+}
+:root[data-theme="dark"] .pi-hint {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .pi-actions {
+    border-top: 1px solid #454954
+}
+:root[data-theme="dark"] .pi-updated {
+    color: #8b93a3
+}
+:root[data-theme="dark"] .pi-readonly {
+    background: #3f3418;
+    border: 1px solid #6b5b2e;
+    color: #eed18b
+}
+:root[data-theme="dark"] .pi-preview {
+    background: #222635;
+    color: #aabacf
+}
+:root[data-theme="dark"] .pi-preview-note {
+    color: #8b93a3
 }
 /*  from Sacradigit/css/admin-shell.css  */
 :root[data-theme="dark"] body {
@@ -871,7 +1029,7 @@
 }
 :root[data-theme="dark"] .stat-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .stat-card:hover {
     border-color: #454954
@@ -890,7 +1048,7 @@
 }
 :root[data-theme="dark"] .panel {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .panel-header {
     border-bottom: 1px solid #454954
@@ -937,7 +1095,7 @@
 }
 :root[data-theme="dark"] .user-menu-dropdown {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .user-menu-item {
     color: #b0bac9
@@ -965,14 +1123,14 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .tp-meridiem {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .tp-mer {
     color: #a0a8b6;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .tp-mer + .tp-mer {
-    border-left: 1px solid #2c3548
+    border-left: 1px solid #343f57
 }
 :root[data-theme="dark"] .toast.toast-error {
     background-color: #121827 !important;
@@ -1053,7 +1211,7 @@
     color: #eb8e8e
 }
 :root[data-theme="dark"] .req-bulk-bar .btn-secondary {
-    border: 1px solid rgba(44, 53, 72, 0.25)
+    border: 1px solid rgba(52, 63, 87, 0.25)
 }
 :root[data-theme="dark"] .role-note {
     color: #c4c9d3
@@ -1065,7 +1223,7 @@
     color: #a1b0d9
 }
 :root[data-theme="dark"] .adm-dialog-choice {
-    border: 1.5px solid #2c3548;
+    border: 1.5px solid #343f57;
     color: #a3b3d7
 }
 :root[data-theme="dark"] .adm-dialog-choice:has(input:checked) {
@@ -1082,15 +1240,15 @@
 }
 :root[data-theme="dark"] .modal-overlay.adm-page .modal-header {
     background: #1a2131;
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .modal-overlay.adm-page .modal-footer {
     background: #1a2131;
-    border-top: 1px solid #2c3548
+    border-top: 1px solid #343f57
 }
 :root[data-theme="dark"] .modal-header .adm-page-back {
     color: #a8aad1;
-    border-right: 1px solid #2c3548
+    border-right: 1px solid #343f57
 }
 :root[data-theme="dark"] .modal-header .adm-page-back:hover {
     color: #a1b0d9
@@ -1138,10 +1296,10 @@
 :root[data-theme="dark"] .ann-kind-filter {
     color: #c4c9d3;
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .ann-kind-option {
-    border: 1.5px solid #2c3548
+    border: 1.5px solid #343f57
 }
 :root[data-theme="dark"] .ann-kind-option:has(input:checked) {
     background-color: #121827
@@ -1237,7 +1395,7 @@
     background-color: #1a2131
 }
 :root[data-theme="dark"] .ann-media-item {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .announcement-date {
     color: #8b93a3
@@ -1298,7 +1456,7 @@
 }
 :root[data-theme="dark"] .att-table-toggle th,
 :root[data-theme="dark"] .att-table-toggle td {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .att-restricted {
     color: #eeb18b;
@@ -1320,7 +1478,7 @@
 }
 :root[data-theme="dark"] .bm-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .bm-card.is-hidden {
     background: #121827
@@ -1352,11 +1510,11 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .bm-empty {
-    border: 1px dashed #2c3548;
+    border: 1px dashed #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .bm-empty-medals .bm-medal {
-    border: 3px solid #2c3548
+    border: 3px solid #343f57
 }
 :root[data-theme="dark"] .bm-empty-title {
     color: #a3b3d7
@@ -1371,7 +1529,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .bm-mode-opt {
-    border: 1.5px solid #2c3548;
+    border: 1.5px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .bm-mode-opt strong {
@@ -1388,14 +1546,14 @@
     color: #c4c9d3
 }
 :root[data-theme="dark"] .bm-tier {
-    border: 1.5px solid #2c3548;
+    border: 1.5px solid #343f57;
     color: #b0bac9
 }
 :root[data-theme="dark"] .bm-tier:has(input:checked) {
     color: #a1b0d9
 }
 :root[data-theme="dark"] .bm-icon span {
-    border: 1.5px solid #2c3548;
+    border: 1.5px solid #343f57;
     color: #c4c9d3;
     background: #1a2131
 }
@@ -1475,7 +1633,7 @@
 :root[data-theme="dark"] .pagination-btn {
     color: #c4c9d3;
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .pagination-btn:hover:not(:disabled) {
     background-color: #121827
@@ -1588,21 +1746,21 @@
 /*  from Sacradigit/css/chat.css  */
 :root[data-theme="dark"] .chat-layout {
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .chat-threads {
-    border-right: 1px solid #2c3548
+    border-right: 1px solid #343f57
 }
 :root[data-theme="dark"] .chat-threads-head {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .chat-search {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #aabacf
 }
 :root[data-theme="dark"] .chat-thread {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .chat-thread:hover {
     background-color: #121827
@@ -1624,7 +1782,7 @@
     color: #a1b0d9
 }
 :root[data-theme="dark"] .chat-pane-head {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .chat-pane-title {
     color: #aabacf
@@ -1648,7 +1806,7 @@
 :root[data-theme="dark"] .chat-msg.is-theirs .chat-bubble {
     background-color: #1a2131;
     color: #aabacf;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .chat-time {
     color: #8b93a3
@@ -1661,11 +1819,11 @@
     color: #aabacf
 }
 :root[data-theme="dark"] .chat-composer {
-    border-top: 1px solid #2c3548;
+    border-top: 1px solid #343f57;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .chat-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #aabacf
 }
@@ -1684,7 +1842,7 @@
 /*  from Sacradigit/css/columbary.css  */
 :root[data-theme="dark"] .col-stat {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .col-stat-value {
     color: #a3b3d7
@@ -1708,7 +1866,7 @@
     color: #c4c9d3
 }
 :root[data-theme="dark"] .col-chip {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131;
     color: #b0bac9
 }
@@ -1732,10 +1890,10 @@
 }
 :root[data-theme="dark"] .col-empty {
     color: #a0a8b6;
-    border: 1px dashed #2c3548
+    border: 1px dashed #343f57
 }
 :root[data-theme="dark"] .col-row {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .col-row:hover {
@@ -1787,7 +1945,7 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .col-meter {
-    background: #2c3548
+    background: #343f57
 }
 :root[data-theme="dark"] .col-inline-form {
     border: 1.5px solid #3a3d5f;
@@ -1795,7 +1953,7 @@
 }
 :root[data-theme="dark"] .col-table th {
     color: #8b93a3;
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .col-table td {
     border-bottom: 1px solid #454954;
@@ -1815,7 +1973,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .col-setup-card {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .col-setup-card h4 {
     color: #a3b3d7
@@ -1851,7 +2009,7 @@
     color: #aabacf
 }
 :root[data-theme="dark"] .pw-mine-item {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .pw-mine-body {
     color: #aabacf
@@ -1874,7 +2032,7 @@
 :root[data-theme="dark"] .pw-card,
 :root[data-theme="dark"] .pw-mod-card {
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .pw-card-body {
     color: #aabacf
@@ -1899,7 +2057,7 @@
     color: #a1b0d9
 }
 :root[data-theme="dark"] .pw-tabs {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .pw-tab {
     color: #a0a8b6
@@ -1918,7 +2076,7 @@
     color: #ee8c8c
 }
 :root[data-theme="dark"] .min-month-nav button {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #c4c9d3
 }
@@ -1932,18 +2090,18 @@
 :root[data-theme="dark"] .min-chip {
     color: #b0bac9;
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .min-mine {
     color: #aabacf
 }
 :root[data-theme="dark"] .min-mass {
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .min-mass-head {
     background-color: #121827;
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .min-mass-day {
     color: #aabacf
@@ -1953,7 +2111,7 @@
 }
 :root[data-theme="dark"] .min-past-tag {
     color: #a0a8b6;
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .min-today-tag {
     color: #a1b0d9;
@@ -1988,10 +2146,10 @@
 }
 :root[data-theme="dark"] .min-table th {
     color: #a0a8b6;
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .min-table td {
-    border-bottom: 1px solid #2c3548;
+    border-bottom: 1px solid #343f57;
     color: #aabacf
 }
 :root[data-theme="dark"] .min-mass-cell small {
@@ -2007,7 +2165,7 @@
     color: #eeb68b
 }
 :root[data-theme="dark"] .min-view-chip {
-    border: 1.5px solid #2c3548;
+    border: 1.5px solid #343f57;
     background: #1a2131;
     color: #b0bac9
 }
@@ -2056,7 +2214,7 @@
     color: #92e7b2
 }
 :root[data-theme="dark"] .needs-row {
-    border-top: 1px solid #2c3548
+    border-top: 1px solid #343f57
 }
 :root[data-theme="dark"] .needs-title {
     color: #a3b3d7
@@ -2068,7 +2226,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .needs-more {
-    border-top: 1px solid #2c3548;
+    border-top: 1px solid #343f57;
     color: #9c96e3
 }
 :root[data-theme="dark"] .needs-more:hover {
@@ -2085,7 +2243,7 @@
 }
 :root[data-theme="dark"] .btn-lavender:disabled,
 :root[data-theme="dark"] .btn-gold:disabled {
-    background-color: #2c3548;
+    background-color: #343f57;
     color: #a0a8b6
 }
 :root[data-theme="dark"] .btn-secondary {
@@ -2093,12 +2251,12 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .btn-secondary:hover {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .btn-filter {
     background-color: #1a2131;
     color: #c4c9d3;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .btn-filter:hover {
     background-color: #121827
@@ -2107,7 +2265,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .search-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #a3b3d7
 }
@@ -2115,7 +2273,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .filter-select {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #c4c9d3;
     background-color: #1a2131
 }
@@ -2140,7 +2298,7 @@
 }
 :root[data-theme="dark"] .bulk-bar {
     background-color: #121827;
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .bulk-count {
     color: #a1b0d9
@@ -2176,7 +2334,7 @@
     color: #c4c9d3
 }
 :root[data-theme="dark"] .form-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #a3b3d7;
     background-color: #1a2131
 }
@@ -2229,11 +2387,11 @@
 :root[data-theme="dark"] .scan-tool {
     color: #b0bac9;
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .scan-tool:hover:not(:disabled) {
     background-color: #242c3e;
-    border-color: #2c3548
+    border-color: #343f57
 }
 :root[data-theme="dark"] .scan-dropzone {
     border: 2px dashed #3b3e5e;
@@ -2357,7 +2515,7 @@
 :root[data-theme="dark"] .pagination-btn {
     color: #c4c9d3;
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .pagination-btn:hover:not(:disabled) {
     background-color: #121827
@@ -2417,7 +2575,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .goal-progress-track {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .goal-progress-percent {
     color: #8b93a3
@@ -2494,7 +2652,7 @@
     background-color: #1a2131
 }
 :root[data-theme="dark"] .booking-fullscreen-heading {
-    border-left: 1px solid #2c3548
+    border-left: 1px solid #343f57
 }
 :root[data-theme="dark"] .booking-policy-note {
     color: #a8aad1
@@ -2521,7 +2679,7 @@
 }
 :root[data-theme="dark"] .booking-fullscreen-footer {
     background-color: #1a2131;
-    border-top: 1px solid #2c3548
+    border-top: 1px solid #343f57
 }
 :root[data-theme="dark"] .bkcal-hint {
     color: #8b93a3
@@ -2551,7 +2709,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .bktime-slot {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .bktime-slot-label {
@@ -2594,17 +2752,17 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .booking-step-connector {
-    background-color: #2c3548
+    background-color: #343f57
 }
 /*  from Sacradigit/css/mass-checkin.css  */
 :root[data-theme="dark"] .ci-btn-ghost {
-    border-color: rgba(44, 53, 72, 0.18)
+    border-color: rgba(52, 63, 87, 0.18)
 }
 :root[data-theme="dark"] .ci-eyebrow {
     color: #e0cd99
 }
 :root[data-theme="dark"] .ci-code {
-    border: 1px solid rgba(44, 53, 72, 0.2)
+    border: 1px solid rgba(52, 63, 87, 0.2)
 }
 :root[data-theme="dark"] .ci-count span {
     color: #e0cd99
@@ -2640,13 +2798,13 @@
 :root[data-theme="dark"] .pagination-btn {
     color: #c4c9d3;
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .pagination-btn:hover:not(:disabled) {
     background-color: #121827
 }
 :root[data-theme="dark"] .intention-type-btn {
-    border: 2px solid #2c3548;
+    border: 2px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .intention-type-btn-label {
@@ -2662,7 +2820,7 @@
     color: #a6a9d4
 }
 :root[data-theme="dark"] .mi-added-item {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #121827
 }
 :root[data-theme="dark"] .mi-added-item-name {
@@ -2709,19 +2867,19 @@
 }
 :root[data-theme="dark"] .mi-date-panel {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .mi-date-month-label {
     color: #a1b0d9
 }
 :root[data-theme="dark"] .mi-date-nav-btn {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131;
     color: #c4c9d3
 }
 :root[data-theme="dark"] .mi-date-nav-btn:hover:not(:disabled) {
     background-color: #242c3e;
-    border-color: #2c3548
+    border-color: #343f57
 }
 :root[data-theme="dark"] .mi-date-weekday-row {
     color: #8b93a3
@@ -2777,7 +2935,7 @@
     color: #a3b3d7
 }
 :root[data-theme="dark"] .mi-tabs {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .mi-tab {
     color: #a0a8b6
@@ -2817,7 +2975,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .sheet-find-clear {
-    background: #2c3548;
+    background: #343f57;
     color: #a0a8b6
 }
 :root[data-theme="dark"] .sheet-find-clear:hover {
@@ -2827,13 +2985,13 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .sheet-find-nav-btn {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131;
     color: #c4c9d3
 }
 :root[data-theme="dark"] .sheet-find-nav-btn:hover:not(:disabled) {
     background-color: #242c3e;
-    border-color: #2c3548
+    border-color: #343f57
 }
 :root[data-theme="dark"] .sheet-cat-btn {
     color: #c4c9d3;
@@ -2913,7 +3071,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .date-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #b0bac9;
     background-color: #1a2131
 }
@@ -2997,7 +3155,7 @@
 }
 :root[data-theme="dark"] .quick-time:disabled {
     background: #242c3e;
-    border-color: #2c3548;
+    border-color: #343f57;
     color: #8b93a3
 }
 :root[data-theme="dark"] .pagination-bar {
@@ -3009,7 +3167,7 @@
 :root[data-theme="dark"] .pagination-btn {
     color: #c4c9d3;
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .pagination-btn:hover:not(:disabled) {
     background-color: #121827
@@ -3117,7 +3275,7 @@
 }
 /*  from Sacradigit/css/profile.css  */
 :root[data-theme="dark"] .avatar-lg {
-    border: 3px solid rgba(44, 53, 72, 0.25)
+    border: 3px solid rgba(52, 63, 87, 0.25)
 }
 :root[data-theme="dark"] .avatar-edit-btn {
     background-color: #1a2131;
@@ -3127,7 +3285,7 @@
     background-color: #242c3e
 }
 :root[data-theme="dark"] .profile-tabs {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .profile-tab {
     color: #a0a8b6
@@ -3139,10 +3297,10 @@
     color: #a1b0d9
 }
 :root[data-theme="dark"] .pw-strength-track {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .pw-strength-fill {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .pw-strength-label {
     color: #8b93a3
@@ -3164,7 +3322,7 @@
 }
 :root[data-theme="dark"] .twofa-card {
     background-color: #121827;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .twofa-status.on {
     background-color: #1a3d28;
@@ -3199,7 +3357,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .activity-filter {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #b0bac9;
     background-color: #1a2131
 }
@@ -3270,7 +3428,7 @@
 }
 :root[data-theme="dark"] .cert-preview-bar {
     background-color: #1a2131;
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .cert-preview-kicker {
     color: #a6a9d4
@@ -3302,7 +3460,7 @@
 }
 :root[data-theme="dark"] .gen-page .modal-body > .grid {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .gen-page .modal-body > .grid > div {
     border-top: 1px solid #454b54
@@ -3313,7 +3471,7 @@
 }
 :root[data-theme="dark"] .gen-page .modal-body > .grid > .cert-form-group {
     background: #212336;
-    border-top: 1px solid #2c3548
+    border-top: 1px solid #343f57
 }
 :root[data-theme="dark"] .gen-review-intro {
     color: #a0a8b6
@@ -3340,7 +3498,7 @@
 :root[data-theme="dark"] .reason-callout-neutral {
     color: #c4c9d3;
     background-color: #121827;
-    border-color: #2c3548
+    border-color: #343f57
 }
 :root[data-theme="dark"] .row-view {
     color: #a8aad1
@@ -3408,7 +3566,7 @@
     color: #9c96e3
 }
 :root[data-theme="dark"] .bn-panel {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131
 }
 :root[data-theme="dark"] .bn-title {
@@ -3595,7 +3753,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .duration-bar-track {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .sched-edit {
     color: #a8aad1
@@ -3620,7 +3778,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .ann-search-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #a3b3d7
 }
@@ -3628,12 +3786,12 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .ann-filter-select {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #c4c9d3;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .ann-clear-btn {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #c4c9d3
 }
@@ -3724,7 +3882,7 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .ann-kind-tabs {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .ann-kind-tab {
     color: #a0a8b6
@@ -3974,7 +4132,7 @@
 }
 :root[data-theme="dark"] .next-up-item {
     background: #1a2131;
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #a3b3d7
 }
 :root[data-theme="dark"] .next-up-item:hover {
@@ -4028,14 +4186,14 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .goal-progress-track {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .goal-progress-percent {
     color: #8b93a3
 }
 :root[data-theme="dark"] .donation-stat-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .donation-stat-label {
     color: #a0a8b6
@@ -4050,7 +4208,7 @@
     color: #8decb1
 }
 :root[data-theme="dark"] .donate-fund-btn {
-    border: 2px solid #2c3548;
+    border: 2px solid #343f57;
     color: #c4c9d3;
     background: #1a2131
 }
@@ -4060,13 +4218,13 @@
 :root[data-theme="dark"] .quick-amount-btn {
     color: #c4c9d3;
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .quick-amount-btn:hover {
     color: #a8aad1
 }
 :root[data-theme="dark"] .payment-method-btn {
-    border: 2px solid #2c3548;
+    border: 2px solid #343f57;
     color: #c4c9d3;
     background: #1a2131
 }
@@ -4082,7 +4240,7 @@
 }
 :root[data-theme="dark"] .btn-download-receipt {
     color: #a9abd1;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .btn-download-receipt:hover {
     color: #a1b0d9
@@ -4109,7 +4267,7 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .donate-next-steps li {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #aabacf
 }
@@ -4126,7 +4284,7 @@
     color: #a8aad1
 }
 :root[data-theme="dark"] .donate-qr {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131
 }
 :root[data-theme="dark"][data-theme="dark"] .mi-page :is(.donate-fund-btn,
@@ -4191,7 +4349,7 @@
 }
 :root[data-theme="dark"] .btn-view-booking,
 :root[data-theme="dark"] .btn-cancel-booking {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .btn-view-booking {
     color: #a9abd1
@@ -4222,7 +4380,7 @@
     background-color: #1a2131
 }
 :root[data-theme="dark"] .booking-fullscreen-heading {
-    border-left: 1px solid #2c3548
+    border-left: 1px solid #343f57
 }
 :root[data-theme="dark"] .booking-col {
     background-color: #1a2131;
@@ -4249,7 +4407,7 @@
 }
 :root[data-theme="dark"] .booking-fullscreen-footer {
     background-color: #1a2131;
-    border-top: 1px solid #2c3548
+    border-top: 1px solid #343f57
 }
 :root[data-theme="dark"] .bkcal-hint {
     color: #8b93a3
@@ -4292,7 +4450,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .bktime-slot {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .bktime-slot-label {
@@ -4335,7 +4493,7 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .booking-step-connector {
-    background-color: #2c3548
+    background-color: #343f57
 }
 /*  from user/css/user-mass-intentions.css  */
 :root[data-theme="dark"] .info-banner-icon {
@@ -4349,7 +4507,7 @@
 }
 :root[data-theme="dark"] .mi-stat-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .stat-label {
     color: #a0a8b6
@@ -4400,7 +4558,7 @@
     color: #a3b3d7
 }
 :root[data-theme="dark"] .mi-tabs {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .mi-tab {
     color: #a0a8b6
@@ -4440,7 +4598,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .sheet-find-clear {
-    background: #2c3548;
+    background: #343f57;
     color: #a0a8b6
 }
 :root[data-theme="dark"] .sheet-find-clear:hover {
@@ -4450,13 +4608,13 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .sheet-find-nav-btn {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131;
     color: #c4c9d3
 }
 :root[data-theme="dark"] .sheet-find-nav-btn:hover:not(:disabled) {
     background-color: #242c3e;
-    border-color: #2c3548
+    border-color: #343f57
 }
 :root[data-theme="dark"] .sheet-cat-btn {
     color: #c4c9d3;
@@ -4488,7 +4646,7 @@
 /*  from user/css/user-mass-schedule.css  */
 :root[data-theme="dark"] .season-banner {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .season-name {
     color: #a3b3d7
@@ -4497,18 +4655,18 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .season-progress-track {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .season-progress-label {
     color: #8b93a3
 }
 :root[data-theme="dark"] .date-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #b0bac9;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .btn-today {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #c4c9d3;
     background-color: #1a2131
 }
@@ -4516,7 +4674,7 @@
     background-color: #242c3e
 }
 :root[data-theme="dark"] .day-nav-arrow {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #c4c9d3
 }
@@ -4524,7 +4682,7 @@
     background-color: #242c3e
 }
 :root[data-theme="dark"] .day-nav-date {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131;
     color: #aabacf
 }
@@ -4546,7 +4704,7 @@
 }
 :root[data-theme="dark"] .btn-reminder {
     color: #a9abd1;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .btn-reminder:hover {
     color: #a1b0d9
@@ -4580,7 +4738,7 @@
 /*  from user/css/user-my-requests.css  */
 :root[data-theme="dark"] .stat-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .stat-label {
     color: #a0a8b6
@@ -4605,11 +4763,11 @@
 :root[data-theme="dark"] .status-tab {
     color: #a0a8b6;
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .status-tab:hover {
     background-color: #242c3e;
-    border-color: #2c3548
+    border-color: #343f57
 }
 :root[data-theme="dark"] .req-card {
     background: #1a2131;
@@ -4645,7 +4803,7 @@
 }
 :root[data-theme="dark"] .btn-view-details {
     color: #a9abd1;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .btn-view-details:hover {
     color: #a1b0d9
@@ -4664,11 +4822,11 @@
     border: 1px solid #6b2e2e
 }
 :root[data-theme="dark"] .req-timeline-step:not(:last-child)::before {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .req-timeline-dot {
-    background-color: #2c3548;
-    border: 2px solid #2c3548
+    background-color: #343f57;
+    border: 2px solid #343f57
 }
 :root[data-theme="dark"] .req-timeline-step.current .req-timeline-dot {
     background-color: #1a2131
@@ -4741,12 +4899,12 @@
     color: #b2b9c7
 }
 :root[data-theme="dark"] .ps-tab {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131;
     color: #b0bac9
 }
 :root[data-theme="dark"] .ps-conditions {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .ps-condition {
     color: #b0bac9
@@ -4757,7 +4915,7 @@
 }
 /*  from user/css/user-profile.css  */
 :root[data-theme="dark"] .avatar-lg {
-    border: 3px solid rgba(44, 53, 72, 0.25)
+    border: 3px solid rgba(52, 63, 87, 0.25)
 }
 :root[data-theme="dark"] .avatar-edit-btn {
     background-color: #1a2131;
@@ -4767,7 +4925,7 @@
     background-color: #242c3e
 }
 :root[data-theme="dark"] .profile-tabs {
-    border-bottom: 1px solid #2c3548
+    border-bottom: 1px solid #343f57
 }
 :root[data-theme="dark"] .profile-tab {
     color: #a0a8b6
@@ -4779,10 +4937,10 @@
     color: #a1b0d9
 }
 :root[data-theme="dark"] .pw-strength-track {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .pw-strength-fill {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .pw-strength-label {
     color: #8b93a3
@@ -4804,7 +4962,7 @@
 }
 :root[data-theme="dark"] .twofa-card {
     background-color: #121827;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .twofa-status.on {
     background-color: #1a3d28;
@@ -4839,7 +4997,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .activity-filter {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #b0bac9;
     background-color: #1a2131
 }
@@ -4848,7 +5006,7 @@
 }
 @media (max-width: 640px) {
     :root[data-theme="dark"] .profile-tab {
-        border: 1px solid #2c3548;
+        border: 1px solid #343f57;
         background-color: #1a2131;
         color: #aabacf
     }
@@ -4869,7 +5027,7 @@
 }
 :root[data-theme="dark"] .cert-type-card {
     background: linear-gradient(180deg, #1a2131 0%, #121827 100%);
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .cert-type-card:hover .cert-type-cta {
     color: #a8aad1
@@ -4887,7 +5045,7 @@
     color: #8febb0
 }
 :root[data-theme="dark"] .confirm-table-wrap {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .confirm-table tr:not(:last-child) th,
 :root[data-theme="dark"] .confirm-table tr:not(:last-child) td {
@@ -4950,7 +5108,7 @@
 }
 :root[data-theme="dark"] .req-screen-footer {
     background-color: #1a2131;
-    border-top: 1px solid #2c3548
+    border-top: 1px solid #343f57
 }
 :root[data-theme="dark"] .form-error-msg {
     color: #ee8c8c
@@ -4972,16 +5130,16 @@
 }
 :root[data-theme="dark"] .svc-success-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .svc-reminder {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .svc-reminder-title {
     color: #a3b3d7
 }
 :root[data-theme="dark"] .svc-reminder-option {
-    border: 1.5px solid #2c3548;
+    border: 1.5px solid #343f57;
     color: #aabacf
 }
 :root[data-theme="dark"] .svc-reminder-option:has(input:checked) {
@@ -4993,7 +5151,7 @@
 /*  from user/css/user-requested-services.css  */
 :root[data-theme="dark"] .stat-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .stat-label {
     color: #a0a8b6
@@ -5085,14 +5243,14 @@
 :root[data-theme="dark"] .svc-filter-chip {
     color: #c4c9d3;
     background-color: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .svc-filter-chip:hover {
     color: #a1b0d9
 }
 /*  from user/css/user-requirements.css  */
 :root[data-theme="dark"] .hp-btn-ghost {
-    border-color: rgba(44, 53, 72, 0.45)
+    border-color: rgba(52, 63, 87, 0.45)
 }
 /*  from user/css/user-settings.css  */
 :root[data-theme="dark"] .settings-row {
@@ -5108,7 +5266,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .settings-select {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #b0bac9;
     background-color: #1a2131
 }
@@ -5270,7 +5428,7 @@
 }
 :root[data-theme="dark"] .panel {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .panel-header {
     border-bottom: 1px solid #454954
@@ -5339,7 +5497,7 @@
 :root[data-theme="dark"] :is(.btn-gold,
 :root[data-theme="dark"] .btn-lavender,
 :root[data-theme="dark"] .btn-secondary)[aria-disabled="true"] {
-    background-color: #2c3548;
+    background-color: #343f57;
     color: #a0a8b6
 }
 :root[data-theme="dark"] .btn-secondary {
@@ -5347,13 +5505,13 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .btn-secondary:hover {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .form-label {
     color: #c4c9d3
 }
 :root[data-theme="dark"] .form-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #a3b3d7;
     background-color: #1a2131
 }
@@ -5420,7 +5578,7 @@
 }
 :root[data-theme="dark"] .user-menu-dropdown {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .user-menu-item {
     color: #b0bac9
@@ -5501,10 +5659,10 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .ci-scan-frame {
-    outline: 3px solid #2c3548
+    outline: 3px solid #343f57
 }
 :root[data-theme="dark"] .ci-scan-type {
-    border: 1px solid rgba(44, 53, 72, 0.5)
+    border: 1px solid rgba(52, 63, 87, 0.5)
 }
 :root[data-theme="dark"] .info-banner-icon {
     color: #a8aad1
@@ -5539,7 +5697,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .pager-btn {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131;
     color: #b0bac9
 }
@@ -5576,12 +5734,12 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .btn-secondary:hover {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .btn-filter {
     background-color: #1a2131;
     color: #c4c9d3;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .btn-filter:hover {
     background-color: #121827
@@ -5622,7 +5780,7 @@
     color: #c4c9d3
 }
 :root[data-theme="dark"] .form-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #a3b3d7;
     background-color: #1a2131
 }
@@ -5652,7 +5810,7 @@
     border-bottom: 1px solid #434956
 }
 :root[data-theme="dark"] .acct-table td {
-    border-bottom: 1px solid #2c3548;
+    border-bottom: 1px solid #343f57;
     color: #a3b3d7
 }
 :root[data-theme="dark"] .acct-ok {
@@ -5751,7 +5909,7 @@
     color: #eeb68b
 }
 :root[data-theme="dark"] .role-card {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background-color: #1a2131
 }
 :root[data-theme="dark"] .role-card:hover {
@@ -5777,10 +5935,10 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .role-card-actions {
-    border-top: 1px solid #2c3548
+    border-top: 1px solid #343f57
 }
 :root[data-theme="dark"] .perm-item {
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .perm-name {
     color: #a3b3d7
@@ -5890,7 +6048,7 @@
 }
 :root[data-theme="dark"] .ss-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .ss-card-title {
     color: #a3b3d7
@@ -5902,7 +6060,7 @@
     color: #a0a8b6
 }
 :root[data-theme="dark"] .ss-day {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     background: #1a2131;
     color: #c4c9d3
 }
@@ -5957,7 +6115,7 @@
 }
 /*  from Sacramedia/css/livestream.css  */
 :root[data-theme="dark"] .live-strip {
-    border: 1.5px solid #2c3548;
+    border: 1.5px solid #343f57;
     background: #121827;
     color: #b0bac9
 }
@@ -5979,7 +6137,7 @@
 }
 /*  from Sacramedia/css/media-dashboard.css  */
 :root[data-theme="dark"] .quick-action {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #b0bac9
 }
 :root[data-theme="dark"] .quick-action:hover {
@@ -5991,7 +6149,7 @@
 /*  from Sacramedia/css/media-library.css  */
 :root[data-theme="dark"] .media-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .media-card-icon {
     color: #a9abd1
@@ -6016,7 +6174,7 @@
     color: #a9abd1
 }
 :root[data-theme="dark"] .upload-progress-bar {
-    background: #2c3548
+    background: #343f57
 }
 :root[data-theme="dark"] .upload-progress-text {
     color: #b0bac9
@@ -6056,7 +6214,7 @@
     color: #8b93a3
 }
 :root[data-theme="dark"] .btn-lavender:disabled {
-    background-color: #2c3548;
+    background-color: #343f57;
     color: #a0a8b6
 }
 :root[data-theme="dark"] .btn-secondary {
@@ -6064,12 +6222,12 @@
     color: #b0bac9
 }
 :root[data-theme="dark"] .btn-secondary:hover {
-    background-color: #2c3548
+    background-color: #343f57
 }
 :root[data-theme="dark"] .btn-filter {
     background-color: #1a2131;
     color: #c4c9d3;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .btn-filter:hover {
     background-color: #121827
@@ -6104,7 +6262,7 @@
     color: #c4c9d3
 }
 :root[data-theme="dark"] .form-input {
-    border: 1px solid #2c3548;
+    border: 1px solid #343f57;
     color: #a3b3d7;
     background-color: #1a2131
 }
@@ -6138,7 +6296,7 @@
 /*  from Sacramedia/css/post-templates.css  */
 :root[data-theme="dark"] .template-card {
     background: #1a2131;
-    border: 1px solid #2c3548
+    border: 1px solid #343f57
 }
 :root[data-theme="dark"] .template-card:hover {
     border-color: #454954

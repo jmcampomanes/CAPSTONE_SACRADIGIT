@@ -32,6 +32,11 @@
    ITech and media sessions last only until the
    browser is closed — a session cookie marks them,
    and a staff login found without it is signed out.
+
+   Inactivity: every portal page signs out after
+   15 minutes with no activity for staff roles and
+   30 minutes for parishioners, with a 60-second
+   warning first (idle-logout.js).
    ============================================ */
 
 import './amplify-init.js'; // makes sure Amplify is configured first
@@ -43,6 +48,7 @@ import {
 
 const CACHE_KEY = 'sacradigit_user';
 const STAFF_SESSION_COOKIE = 'sacradigit_staff_session';
+const LAST_ACTIVE_KEY = 'sacradigit_last_active'; // idle-logout.js
 let justSignedIn = false; // set by signIn()/setNewPassword() on this page load
 
 export const ROLES = {
@@ -171,13 +177,18 @@ export async function loadUser() {
 }
 
 function clearCache() {
-  try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+  try { localStorage.removeItem(CACHE_KEY); localStorage.removeItem(LAST_ACTIVE_KEY); } catch { /* ignore */ }
   document.cookie = `${STAFF_SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
 }
 
 // No expiry → the browser drops it when it closes.
 function setStaffSession() {
   document.cookie = `${STAFF_SESSION_COOKIE}=1; path=/; SameSite=Lax`;
+}
+
+function markActive() {
+  justSignedIn = true;
+  try { localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now())); } catch { /* storage blocked */ }
 }
 
 function hasStaffSession() {
@@ -211,6 +222,7 @@ export async function guardPage(portal) {
   // Signed in this tab: the next page hides only <main> (auth-soft) while this check reruns
   try { sessionStorage.setItem('sdAuthOk', '1'); } catch { /* storage blocked */ }
   document.dispatchEvent(new CustomEvent('sacradigit:user', { detail: user }));
+  import('./idle-logout.js').then(m => m.startIdleWatch(user)).catch(() => {});
   return user;
 }
 
@@ -256,14 +268,14 @@ document.addEventListener('click', (e) => {
 
 export async function signIn(email, password) {
   const res = await cognitoSignIn({ username: email.trim().toLowerCase(), password });
-  if (res.isSignedIn) justSignedIn = true;
+  if (res.isSignedIn) markActive();
   return res.nextStep?.signInStep || (res.isSignedIn ? 'DONE' : 'UNKNOWN');
 }
 
 /** For accounts ITech created with a temporary password. */
 export async function setNewPassword(newPassword) {
   const res = await confirmSignIn({ challengeResponse: newPassword });
-  if (res.isSignedIn) justSignedIn = true;
+  if (res.isSignedIn) markActive();
   return res.nextStep?.signInStep || (res.isSignedIn ? 'DONE' : 'UNKNOWN');
 }
 

@@ -542,14 +542,14 @@
 :root[data-theme="dark"] .donate-no-charge { background-color: #1a2740; border-color: #2c4a7a; color: #c7d7fe; }
 :root[data-theme="dark"] .donate-next-icon { background-color: #15301f; color: #8decb1; }
 :root[data-theme="dark"] .donate-next-status { color: #c4c9d3; }
-:root[data-theme="dark"] .donate-next-steps li { background-color: #1a2131; border-color: #2c3548; color: #e3e6ec; }
+:root[data-theme="dark"] .donate-next-steps li { background-color: #1a2131; border-color: #343f57; color: #e3e6ec; }
 :root[data-theme="dark"] .donate-next-steps li::before { background-color: #8b8fc7; color: #0f1420; }
 :root[data-theme="dark"] :is(.donate-next-steps, .donate-next-after) a { color: #c7cbe8; }
 :root[data-theme="dark"] .donate-next-after { color: #a0a8b6; }
-:root[data-theme="dark"] .donate-copy { background-color: #1a2131; border-color: #2c3548; color: #c7cbe8; }
+:root[data-theme="dark"] .donate-copy { background-color: #1a2131; border-color: #343f57; color: #c7cbe8; }
 /* The QR itself stays black on white so scanners can read it. */
-:root[data-theme="dark"] .donate-qr { background-color: #1a2131; border-color: #2c3548; }
+:root[data-theme="dark"] .donate-qr { background-color: #1a2131; border-color: #343f57; }
 :root[data-theme="dark"] .donate-qr-code { padding: 0.5rem; border-radius: 0.5rem; }
 :root[data-theme="dark"] .donate-qr-amount { color: #f1f3f7; }
 :root[data-theme="dark"] .donate-qr-to { color: #a0a8b6; }
-:root[data-theme="dark"] .donate-qr-save { background-color: #1a2131; border-color: #2c3548; color: #c7cbe8; }
+:root[data-theme="dark"] .donate-qr-save { background-color: #1a2131; border-color: #343f57; color: #c7cbe8; }

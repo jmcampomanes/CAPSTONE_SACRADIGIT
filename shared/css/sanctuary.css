@@ -120,8 +120,158 @@
 :where(:root:has(#sidebar)) main .section-heading { font-size: 0.9375rem; font-weight: 600; color: #4b4e63; }
 
 /* ---------- Dark mode keeps the same sidebar; edges go dark ---------- */
-:root[data-theme="dark"] :where(#sidebar ~ * > header) { border-bottom-color: #2c3548 !important; }
-:root[data-theme="dark"]:has(#sidebar) :is(.stat-card, .panel, .quick-action-card) { border-color: #2c3548; }
+:root[data-theme="dark"] :where(#sidebar ~ * > header) { border-bottom-color: #343f57 !important; }
+:root[data-theme="dark"]:has(#sidebar) :is(.stat-card, .panel, .quick-action-card) { border-color: #343f57; }
 :root[data-theme="dark"]:has(#sidebar) .stat-card .stat-icon { background: transparent; color: #e5e8ef; border-color: #3d4860; }
 :root[data-theme="dark"]:has(#sidebar) .panel-title { color: #f1f3f7; }
 :root[data-theme="dark"]:has(#sidebar) main .section-heading { color: #cbd3e6; }
+
+/* ============================================
+   Dashboard layout (after the SnowUI kit), in
+   SacraDigit's own colours: white page with
+   soft tinted cards and no borders, 16px
+   corners, lavender and gold stat cards, status
+   shown as a coloured dot and word, quiet
+   tables. Colours stay the system's: slate-indigo
+   sidebar, gold active item, gold/lavender
+   buttons, navy dark mode.
+   Only with the default colour palette: Ocean,
+   Forest and High contrast keep the look above,
+   so every rule starts with :root:not([data-palette]).
+   The UI before this layout is tagged in git as
+   ui-before-figma.
+   ============================================ */
+
+:root {
+  --sp-page: #ffffff;
+  --sp-card: #f5f5f9;                       /* --sx-page, a touch lighter */
+  --sp-ink: #1e2a4a;
+  --sp-ink-2: #4b4e63;
+  --sp-muted: #6b6e82;
+  --sp-soft: rgba(139, 143, 199, 0.12);     /* lavender: hover, quiet fills */
+  --sp-line: #e9e9ef;
+  --sp-stat-a: #ecedf8;                     /* lavender tint */
+  --sp-stat-b: #f8efe0;                     /* gold tint */
+  --sp-r-card: 16px;
+  --sp-r-control: 10px;
+}
+:root[data-theme="dark"] {
+  --sp-page: #121827;
+  --sp-card: #1a2131;
+  --sp-ink: #f1f3f7;
+  --sp-ink-2: #cbd3e6;
+  --sp-muted: #9aa3b8;
+  --sp-soft: rgba(255, 255, 255, 0.06);
+  --sp-line: #343f57;
+  --sp-stat-a: #2a3150;
+  --sp-stat-b: #1f2a45;                     /* navy-blue: gold tint goes muddy on navy */
+}
+
+/* ---------- Page and top bar: one page colour, hairline under the bar ---------- */
+:root:not([data-palette]) body:has(#sidebar),
+:root:not([data-palette]) #sidebar ~ *,
+:root:not([data-palette]) #sidebar ~ * main { background-color: var(--sp-page) !important; }
+:root:not([data-palette]):has(#sidebar) { background-color: var(--sp-page); }
+:root:not([data-palette]) #sidebar ~ * > header {
+  background-color: var(--sp-page) !important;
+  border-bottom-color: var(--sp-line) !important;
+}
+
+/* ---------- Sidebar: same colours, calmer labels and rounder items ---------- */
+:root:not([data-palette]) #sidebar .sidebar-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+:root:not([data-palette]) #sidebar .sidebar-link { border-radius: 12px; }
+
+/* ---------- Cards: soft tint, no border, 16px corners ----------
+   Only colour and shape change. Each card keeps its own hover
+   (lift, shadow) and scroll animations from its page's CSS. */
+:root:not([data-palette]) #sidebar ~ * :is(.panel, .stat-card, .quick-action-card) {
+  background-color: var(--sp-card) !important;
+  border-color: transparent !important;
+  border-radius: var(--sp-r-card);
+}
+:root:not([data-palette]) #sidebar ~ * main :is(.rounded-xl, .rounded-2xl).border.bg-white {
+  background-color: var(--sp-card) !important;
+  border-color: transparent !important;
+}
+:root:not([data-palette]) #sidebar ~ * main :is(.rounded-xl, .rounded-2xl, .rounded-3xl) { border-radius: var(--sp-r-card); }
+:root:not([data-palette]) #sidebar ~ * .panel-header { border-bottom-color: transparent !important; }
+/* Panel titles lead their card: larger than anything listed inside (rows top out at 1rem). */
+:root:not([data-palette]) #sidebar ~ * .panel-title { font-size: 1.125rem; font-weight: 600; color: var(--sp-ink) !important; }
+:root:not([data-palette]) #sidebar ~ * .info-banner {
+  background: var(--sp-card) !important;
+  border-color: transparent !important;
+}
+
+/* Stat cards: lavender and gold tints in turn, a plain icon. */
+:root:not([data-palette]) #sidebar ~ * .stat-card { background-color: var(--sp-stat-a) !important; padding: 1.25rem 1.375rem; }
+:root:not([data-palette]) #sidebar ~ * .stat-card:nth-child(even) { background-color: var(--sp-stat-b) !important; }
+:root:not([data-palette]) #sidebar ~ * .stat-card :is(.stat-value, .stat-label, .stat-sub) { color: var(--sp-ink) !important; }
+:root:not([data-palette]) #sidebar ~ * .stat-card :is(.stat-label, .stat-sub) { opacity: 0.75; }
+:root:not([data-palette]) #sidebar ~ * .stat-card .stat-label { font-size: 0.875rem; font-weight: 500; }
+:root:not([data-palette]) #sidebar ~ * .stat-card .stat-icon {
+  width: 2rem; height: 2rem;
+  background: transparent !important;
+  border: 0;
+  color: var(--sp-ink) !important;
+}
+
+/* ---------- Status badges: a coloured dot and the word, no pill ----------
+   Each badge keeps its own text colour; the dot takes it. */
+:root:not([data-palette]) #sidebar ~ * main .badge {
+  background: transparent !important;
+  padding-left: 0;
+  padding-right: 0;
+  gap: 0.375rem;
+  font-weight: 500;
+}
+:root:not([data-palette]) #sidebar ~ * main .badge::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ---------- Buttons: same colours, one softer corner ---------- */
+:root:not([data-palette]) #sidebar ~ * :is(.btn-gold, .btn-lavender, .btn-teal, .btn-secondary, .btn-primary, .btn-danger) { border-radius: var(--sp-r-control); }
+
+/* ---------- Tables: quiet header, hairline rows ---------- */
+:root:not([data-palette]) #sidebar ~ * .records-table thead th {
+  font-weight: 400;
+  color: var(--sp-muted) !important;
+  background: transparent !important;
+  border-bottom: 1px solid var(--sp-line) !important;
+}
+:root:not([data-palette]) #sidebar ~ * .records-table tbody td { border-bottom: 1px solid var(--sp-line) !important; }
+:root:not([data-palette]) #sidebar ~ * .records-table tbody tr:hover td { background-color: var(--sp-soft) !important; }
+
+/* ---------- Welcome banners: the same card corner; the art stays ---------- */
+:root:not([data-palette]) #sidebar ~ * main :has(> [data-sacred-art]) { border-radius: var(--sp-r-card); }
+
+/* Sidebar avatar initials: white on deep lavender (5.7:1); plain lavender was 3:1. */
+:root:not([data-palette]) #sidebar .rounded-full.bg-lavender { background-color: #5b5fa8 !important; }
+
+/* ---------- Dark mode: a light lavender outline on hover and press ----------
+   Every card that reacts to the mouse (quick actions, service and certificate
+   pickers, fund, facility, request and media cards…) shows a light edge when
+   hovered, pressed or selected, so it stands out from the dark page.
+   Inset (negative offset) so grids with overflow:hidden don't clip it; the
+   keyboard focus ring from accessibility.css stays as it is. */
+:root[data-theme="dark"] :is(
+  .quick-action-card, .stat-card, .stat-card-clickable, .cert-type-card, .svc-type-card,
+  .fund-card, .facility-card, .req-card, .role-card, .schedule-card, .template-card,
+  .post-card, .user-ann-card, .media-card-link, .goal-card, .donation-goal-card,
+  .donation-stat-card, .mi-stat-card, .feature-card, .media-file-picker
+):is(:hover, :active, .active, .selected, [aria-pressed="true"], [aria-selected="true"], :has(input:checked)):not(:focus-visible) {
+  outline: 2px solid rgba(185, 188, 239, 0.75);
+  outline-offset: -2px;
+}
+:root[data-theme="dark"] :is(.quick-action-card, .stat-card-clickable, .cert-type-card, .svc-type-card, .fund-card, .facility-card, .req-card, .template-card, .media-card-link, .media-file-picker):active:not(:focus-visible) {
+  outline-color: #d4d6f7; /* a touch brighter while pressed */
+}

@@ -26,7 +26,7 @@
 }
 
 :root[data-theme="dark"] .ps-note { background: rgba(180, 83, 9, 0.16); border-color: rgba(252, 211, 77, 0.3); color: #fcd34d; }
-:root[data-theme="dark"] .ps-item { border-color: #2c3548; }
+:root[data-theme="dark"] .ps-item { border-color: #343f57; }
 :root[data-theme="dark"] .ps-name { color: #f1f3f7; }
 :root[data-theme="dark"] .ps-meta { color: #9aa3b5; }
 :root[data-theme="dark"] .ps-meta strong,

@@ -281,6 +281,10 @@ form('newpass').addEventListener('submit', (e) => {
 (async () => {
   const params = new URLSearchParams(window.location.search);
   if (params.get('view') === 'signup') show('signup');
+  // Signed out by idle-logout.js
+  let reason = null;
+  try { reason = sessionStorage.getItem('sdLogoutReason'); sessionStorage.removeItem('sdLogoutReason'); } catch { /* storage blocked */ }
+  if (reason === 'idle') setAlert("You've been logged out for your security because there was no activity for a while. Please sign in again.", 'ok');
   if (await isSignedIn()) {
     try { await finishSignIn(); } catch { /* stay on the form */ }
   }

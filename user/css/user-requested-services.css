@@ -52,11 +52,12 @@
 .svc-row:hover { border-color: #d8dbe3; box-shadow: 0 3px 10px rgba(30, 42, 74, 0.06); }
 .svc-row { cursor: pointer; } /* the whole row opens the details */
 
-/* Large status word, colored by status */
+/* Status word, colored by status. One step under the service name and the
+   panel title (.panel-title, 1.125rem) so the order reads title > service > status > date. */
 .svc-row-status {
-  margin-top: 0.3rem;
-  font-size: 1.125rem;
-  font-weight: 700;
+  margin-top: 0.2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
   line-height: 1.3;
   color: #374151;
 }
@@ -68,8 +69,8 @@
 /* The date + time, right under the status */
 .svc-row-when {
   margin-top: 0.15rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
   color: #1f2937;
 }
 
@@ -85,7 +86,7 @@
 }
 
 .svc-row-body { flex: 1; min-width: 0; }
-.svc-row-title { font-size: 0.9375rem; font-weight: 700; color: #111827; }
+.svc-row-title { font-size: 1rem; font-weight: 700; color: #111827; }
 .svc-row-meta { font-size: 0.75rem; color: #9ca3af; margin-top: 0.2rem; }
 
 .svc-row-schedule {

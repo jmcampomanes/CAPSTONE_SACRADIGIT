@@ -16,7 +16,7 @@
   --s-requested: rgba(245, 158, 11, 0.18); --s-requested-b: #f59e0b; --s-requested-t: #fcd34d;
   --s-reserved: rgba(139, 143, 199, 0.25); --s-reserved-b: #8b8fc7; --s-reserved-t: #dcdef5;
   --s-paid: #8b8fc7;       --s-paid-b: #8b8fc7;      --s-paid-t: #0f1420;
-  --s-blocked: #151b28;    --s-blocked-b: #2c3548;   --s-blocked-t: #5b6578;
+  --s-blocked: #151b28;    --s-blocked-b: #343f57;   --s-blocked-t: #5b6578;
 }
 .s-available { --bg: var(--s-available); --bd: var(--s-available-b); --tx: var(--s-available-t); }
 .s-requested { --bg: var(--s-requested); --bd: var(--s-requested-b); --tx: var(--s-requested-t); }
@@ -136,7 +136,7 @@
 @media (max-width: 480px) { .col-form-grid, .col-facts { grid-template-columns: 1fr; } }
 
 /* ---------- Dark ---------- */
-:root[data-theme="dark"] :is(.col-stat, .col-chip, .col-row, .col-inline-form) { background: #1a2131; border-color: #2c3548; }
+:root[data-theme="dark"] :is(.col-stat, .col-chip, .col-row, .col-inline-form) { background: #1a2131; border-color: #343f57; }
 :root[data-theme="dark"] .col-stat.is-alert { background: rgba(245, 158, 11, 0.12); border-color: #f59e0b; }
 :root[data-theme="dark"] .col-stat.is-alert .col-stat-value { color: #fcd34d; }
 :root[data-theme="dark"] .col-tabs { background: #1a2131; }
@@ -145,10 +145,10 @@
 :root[data-theme="dark"] :is(.col-stat-value, .col-row-main strong, .col-h, .col-facts dd, .col-setup-card h4, .col-occupants strong, .col-rownum) { color: #f1f3f7; }
 :root[data-theme="dark"] :is(.col-stat-label, .col-legend, .col-note, .col-row-main small, .col-row-money, .col-where, .col-hint, .col-setup-card p, .col-occupants small, .col-price, .col-table td) { color: #b6bdca; }
 :root[data-theme="dark"] .col-row-code { color: #c9cbf0; }
-:root[data-theme="dark"] .col-account { background: #151b28; border-color: #2c3548; color: #cfd4de; }
-:root[data-theme="dark"] .col-meter { background: #2c3548; }
+:root[data-theme="dark"] .col-account { background: #151b28; border-color: #343f57; color: #cfd4de; }
+:root[data-theme="dark"] .col-meter { background: #343f57; }
 :root[data-theme="dark"] .col-warn { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
-:root[data-theme="dark"] :is(.col-table th, .col-table td, .col-setup-card, .col-empty) { border-color: #2c3548; }
+:root[data-theme="dark"] :is(.col-table th, .col-table td, .col-setup-card, .col-empty) { border-color: #343f57; }
 :root[data-theme="dark"] .col-ok { color: #86efac; }
 :root[data-theme="dark"] .col-due { color: #fcd34d; }
 :root[data-theme="dark"] .col-code { background: #8b8fc7; color: #0f1420; }

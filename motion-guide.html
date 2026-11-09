@@ -29,13 +29,13 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #121827; --card: #1a2131; --line: #2c3548; --text: #f1f3f7; --muted: #9aa3b5; --soft: #242c3e;
+    --bg: #121827; --card: #1a2131; --line: #343f57; --text: #f1f3f7; --muted: #9aa3b5; --soft: #242c3e;
     --red-fg: #fca5a5; --amber-fg: #fcd34d; --green-fg: #86efac; --indigo-fg: #a5b4fc; --accent-ink: var(--gold-soft);
     --red-bg: rgba(185,28,28,.2); --amber-bg: rgba(180,83,9,.2); --green-bg: rgba(21,128,61,.2); --indigo-bg: rgba(91,95,168,.25); --amber-line: rgba(252,211,77,.35); --green-line: rgba(134,239,172,.35);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #121827; --card: #1a2131; --line: #2c3548; --text: #f1f3f7; --muted: #9aa3b5; --soft: #242c3e;
+  --bg: #121827; --card: #1a2131; --line: #343f57; --text: #f1f3f7; --muted: #9aa3b5; --soft: #242c3e;
   --red-fg: #fca5a5; --amber-fg: #fcd34d; --green-fg: #86efac; --indigo-fg: #a5b4fc; --accent-ink: var(--gold-soft);
   --red-bg: rgba(185,28,28,.2); --amber-bg: rgba(180,83,9,.2); --green-bg: rgba(21,128,61,.2); --indigo-bg: rgba(91,95,168,.25); --amber-line: rgba(252,211,77,.35); --green-line: rgba(134,239,172,.35);
 }
@@ -400,7 +400,7 @@ table.tok th { font-size: .66rem; text-transform: uppercase; letter-spacing: .05
 /* 26. Theme switch */
 .theme-sw { width: 64px; height: 32px; border-radius: 999px; background: #dbe3f3; position: relative; cursor: pointer; border: 0; transition: background var(--dur-base); }
 .theme-sw .k { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.2); transition: transform var(--dur-base) var(--ease-spring); color: var(--amber); }
-.theme-sw.dark { background: var(--navy); } .theme-sw.dark .k { transform: translateX(32px); background: #2c3548; color: var(--gold-soft); }
+.theme-sw.dark { background: var(--navy); } .theme-sw.dark .k { transform: translateX(32px); background: #343f57; color: var(--gold-soft); }
 .theme-sw .moon, .theme-sw.dark .sun { display: none; } .theme-sw.dark .moon { display: block; }
 
 /* pause looping demos while their card is scrolled out of view */

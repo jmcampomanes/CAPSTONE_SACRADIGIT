@@ -33,10 +33,10 @@
 @media (max-width: 860px) { .ucol-intro { grid-template-columns: 1fr; } }
 @media (max-width: 480px) { .ucol-facts { grid-template-columns: 1fr; } .ucol-map-body { padding: 0.75rem; } }
 
-:root[data-theme="dark"] :is(.ucol-fact, .ucol-pick) { background: #151b28; border-color: #2c3548; }
+:root[data-theme="dark"] :is(.ucol-fact, .ucol-pick) { background: #151b28; border-color: #343f57; }
 :root[data-theme="dark"] .ucol-fact h3 { color: #e0c271; }
 :root[data-theme="dark"] :is(.ucol-fact p, .ucol-intro-text p, .ucol-pick-where, .ucol-req-main small) { color: #cfd4de; }
-:root[data-theme="dark"] .ucol-req { border-color: #2c3548; }
+:root[data-theme="dark"] .ucol-req { border-color: #343f57; }
 :root[data-theme="dark"] .ucol-req-code { color: #c9cbf0; }
 :root[data-theme="dark"] .ucol-pick-price { color: #f1f3f7; }
 :root[data-theme="dark"] .ucol-pick-medal { background: #8b8fc7; color: #0f1420; }

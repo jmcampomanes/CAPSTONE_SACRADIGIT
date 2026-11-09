@@ -560,7 +560,7 @@
 :root[data-theme="dark"] .quick-time { background: #1a2131; border-color: #3a4459; color: #c7cbe8; }
 :root[data-theme="dark"] .quick-time:hover:not(:disabled) { background: #242c3e; border-color: #8b8fc7; }
 :root[data-theme="dark"] .quick-time.is-added { background: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
-:root[data-theme="dark"] .quick-time:disabled { background: #1f2533; border-color: #2c3548; color: #6b7385; }
+:root[data-theme="dark"] .quick-time:disabled { background: #1f2533; border-color: #343f57; color: #6b7385; }
 
 /* ---------- Page numbers (Upcoming Special Masses) ----------
    Same look as the Donations table pager (donations.css isn't loaded here);

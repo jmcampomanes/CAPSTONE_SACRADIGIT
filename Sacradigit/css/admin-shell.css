@@ -893,8 +893,8 @@ body .min-swap-tag { font-size: 0.6875rem; }
 :root[data-theme="dark"] .modal-overlay.adm-page,
 :root[data-theme="dark"] .modal-overlay.adm-page > .modal-card { background: #222635; }
 :root[data-theme="dark"] .modal-overlay.adm-page .modal-header,
-:root[data-theme="dark"] .modal-overlay.adm-page .modal-footer { background: #1a2131; border-color: #2c3548; }
-:root[data-theme="dark"] .modal-header .adm-page-back { color: #a3a6d6; border-right-color: #2c3548; }
+:root[data-theme="dark"] .modal-overlay.adm-page .modal-footer { background: #1a2131; border-color: #343f57; }
+:root[data-theme="dark"] .modal-header .adm-page-back { color: #a3a6d6; border-right-color: #343f57; }
 :root[data-theme="dark"] .modal-header .adm-page-back:hover { color: #f1f3f7; }
 
 /* Windows with their own heading (announcement post, request details):

@@ -356,7 +356,7 @@
     color: #ffffff;
   }
   .profile-tab.active::after { content: "✓"; font-size: 1rem; color: #ffffff; }
-  :root[data-theme="dark"] .profile-tabs .profile-tab { background-color: #1a2131; border-color: #2c3548; color: #e3e6ec; }
+  :root[data-theme="dark"] .profile-tabs .profile-tab { background-color: #1a2131; border-color: #343f57; color: #e3e6ec; }
   :root[data-theme="dark"] .profile-tabs .profile-tab.active { background-color: #8b8fc7; border-color: #8b8fc7; color: #0f1420; }
   :root[data-theme="dark"] .profile-tabs .profile-tab.active::after { color: #0f1420; }
 }
