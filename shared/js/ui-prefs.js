@@ -130,12 +130,16 @@ export function setTextSize(size) {
 
 export function setTheme(theme) {
   // Colours crossfade instead of snapping (where the browser supports it).
+  // The view transition runs this callback later (async), so the event is sent from
+  // inside it: listeners (My Settings switch, top-bar label) read currentTheme(), which
+  // must already be the new theme. Sending it before left the switch and label one
+  // step behind — on in light mode, off in dark mode.
+  write(THEME_KEY, theme);
   withViewTransition(() => {
     if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
     else delete document.documentElement.dataset.theme;
+    document.dispatchEvent(new CustomEvent('sacradigit:theme', { detail: theme }));
   });
-  write(THEME_KEY, theme);
-  document.dispatchEvent(new CustomEvent('sacradigit:theme', { detail: theme }));
 }
 
 /* ------------------------------------------
