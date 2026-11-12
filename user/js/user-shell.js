@@ -12,6 +12,7 @@ guardPage('parishioner').then(user => flushPendingConsent(client, user?.sub)); /
 import { initPageHelp } from '../../shared/js/help-tutorial.js';
 import { initUiPrefs, currentLang, setAccessibility } from '../../shared/js/ui-prefs.js';
 import { labelTopBarIcons } from '../../shared/js/top-bar-labels.js';
+import { markShellReady } from '../../shared/js/shell-ready.js';
 import { initTableCards } from '../../shared/js/table-cards.js';
 import { watchUnreadBadge } from '../../shared/js/chat.js';
 import { initParishAssistant } from '../../shared/js/assistant/parish-assistant.js';
@@ -485,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTableCards('table.user-table:not(.weekly-table)'); // phones: Giving History, My Bookings as cards (../../shared/js/table-cards.js)
   addSkipLink();
   askAboutTextSize();
+  markShellReady(); // show the top bar and page together once everything above is in (shell-ready.js)
 
 
   /* ------------------------------------------

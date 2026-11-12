@@ -80,6 +80,23 @@
 main { transition: opacity var(--dur-base) var(--ease-out); }
 .auth-soft main { opacity: 0; pointer-events: none; }
 
+/* Portal pages show in one piece: the top bar's contents and the page content
+   wait until the shell has added its parts (top-bar buttons, "What's on this
+   page?" box, the page's first render), then fade in together, so nothing pops
+   in or pushes the page down. shell-ready.js adds .sd-shell-ready. The bar's
+   background and edge stay, so the frame never flashes.
+   Usually ready in under a second on a page switch (about 2s on a first, uncached visit,
+   behind the splash). Capped: shown after 4s even if a script fails, so the page never stays blank.
+   <main> skips this while .auth-soft hides it for the sign-in check (above), so the
+   cap can't show staff content before that check passes. */
+#sidebar ~ * > header > * { transition: opacity var(--dur-base) var(--ease-out); }
+:root:has(#sidebar):not(.sd-shell-ready) #sidebar ~ * > header > *,
+:root:has(#sidebar):not(.sd-shell-ready):not(.auth-soft) main {
+  opacity: 0;
+  animation: sd-shell-cap 0s 4s forwards;
+}
+@keyframes sd-shell-cap { to { opacity: 1; } }
+
 /* ---------- Scroll parallax: banner art drifts slower than the page ----------
    Scroll-driven (no JS); browsers without it keep the art still. */
 @supports (animation-timeline: scroll()) {

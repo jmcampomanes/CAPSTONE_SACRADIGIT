@@ -50,6 +50,7 @@ function watchPendingPrayers(link) {
 // Adds the rotating sacred art to every navy page header (see sacred-art.js).
 import '../../shared/js/sacred-art.js';
 import { labelTopBarIcons } from '../../shared/js/top-bar-labels.js';
+import { markShellReady } from '../../shared/js/shell-ready.js';
 import { initTableCards } from '../../shared/js/table-cards.js';
 import { initFindPerson } from './find-person.js';
 import { initAdminPageViews } from './admin-page-view.js';
@@ -456,6 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initExtToggles(); // phones: name boxes one per line, Ext. (Jr., III) behind a checkbox (name-utils.js)
   initTableCards(); // phones: each table row as a card (below)
   initAdminPageViews(); // windows open as a page with Back, not a pop-up (admin-page-view.js)
+  markShellReady(); // show the top bar and page together once the shell's parts are in (shell-ready.js)
 
 
   /* ------------------------------------------

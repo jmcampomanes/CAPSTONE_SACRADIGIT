@@ -14,6 +14,7 @@ import '../../shared/js/sacred-art.js';
 import { initUiPrefs } from '../../shared/js/ui-prefs.js';
 import { initExtToggles } from '../../shared/js/name-utils.js';
 import { labelTopBarIcons } from '../../shared/js/top-bar-labels.js';
+import { markShellReady } from '../../shared/js/shell-ready.js';
 import { initTableCards } from '../../shared/js/table-cards.js';
 import { mountMediaPageInfo } from './media-page-info.js';
 
@@ -32,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ------------------------------------------ */
   const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
   mountMediaPageInfo(currentPage); // "What can I do here?" box, main button on the right (media-page-info.js)
+  markShellReady(); // show the top bar and page together once the shell's parts are in (../../shared/js/shell-ready.js)
   const sidebarLinks = document.querySelectorAll('.sidebar-link');
 
   sidebarLinks.forEach(link => {
