@@ -275,3 +275,46 @@
 :root[data-theme="dark"] :is(.quick-action-card, .stat-card-clickable, .cert-type-card, .svc-type-card, .fund-card, .facility-card, .req-card, .template-card, .media-card-link, .media-file-picker):active:not(:focus-visible) {
   outline-color: #d4d6f7; /* a touch brighter while pressed */
 }
+
+/* ============================================
+   Plain icons (from the Figma review, Nov 2026)
+   Icons stand on their own: no tinted square or
+   circle behind them, and each is sized to the
+   text beside it so it doesn't look tiny.
+   Every palette and dark mode. Kept last, with
+   !important, because the tiles' colours come
+   from page CSS, theme-dark.css and inline
+   styles set by the page scripts. Each icon
+   keeps its own colour.
+   Not touched: the logo, avatar initials, and
+   the badge result circles (white text needs
+   its colour behind it).
+   ============================================ */
+:where(body:has(#sidebar)) :is(
+  #sidebar ~ * > header .w-9.h-9.rounded-lg.shrink-0, .page-header-icon,
+  .stat-icon, .quick-action-icon, .fund-icon, .cert-icon, .req-card-icon, .svc-row-icon,
+  .intention-icon, .ci-card-icon, .greeting-icon, .blessing-icon, .request-icon,
+  .completed-icon, .special-icon, .special-mass-icon, .notif-row-icon, .activity-icon,
+  .schedule-box-icon, .folder-icon, .ss-card-icon, .intention-type-btn-icon,
+  .cloud-box-icon, .settings-row-icon, .info-banner-icon, .icon-wrap
+) {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Sizes, matched to the text beside each icon. */
+:where(body:has(#sidebar)) #sidebar ~ * > header :is(.w-9.h-9.rounded-lg.shrink-0, .page-header-icon) svg,
+:where(body:has(#sidebar)) .greeting-icon svg { width: 1.75rem; height: 1.75rem; }      /* beside the 24px page title */
+:where(body:has(#sidebar)) :is(
+  .stat-icon, .quick-action-icon, .fund-icon, .cert-icon, .req-card-icon, .svc-row-icon,
+  .intention-icon
+) svg { width: 1.5rem; height: 1.5rem; }                                                 /* beside card titles and stat labels */
+:where(body:has(#sidebar)) :is(
+  .blessing-icon, .request-icon, .completed-icon, .special-icon, .special-mass-icon,
+  .notif-row-icon, .activity-icon, .schedule-box-icon, .folder-icon, .ss-card-icon,
+  .intention-type-btn-icon, .cloud-box-icon, .settings-row-icon, .info-banner-icon
+) svg { width: 1.25rem; height: 1.25rem; }                                               /* beside list rows (13–14px) */
