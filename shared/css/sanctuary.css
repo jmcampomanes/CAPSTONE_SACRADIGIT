@@ -58,14 +58,18 @@
 @media (pointer: fine) {
   :root:not([data-a11y="on"]) #sidebar nav .sidebar-link { min-height: 0; }
 }
-#sidebar nav ul.mb-5 { margin-bottom: 1rem; }        /* = mb-4, as in the admin sidebar */
-#sidebar nav .sidebar-label.mt-5 { margin-top: 0; }
+/* Groups: one even gap above every category label (Finance, Faith Journey, Account…),
+   instead of each page's mix of mb-4 / mb-5 on the lists and mt-5 on some labels,
+   which left some groups touching and others far apart.
+   [class] matches admin-shell.css's own "#sidebar nav ul.mb-4" so this, loaded later, wins. */
+#sidebar nav ul[class] { margin-bottom: 0; }
+#sidebar nav ul + .sidebar-label { margin-top: 1.25rem; }
 /* Short laptop screens (e.g. 1366×768): the admin sidebar's tighter spacing
    (admin-shell.css), for every portal. */
 @media (min-width: 768px) and (max-height: 860px) and (pointer: fine) {
   :root:not([data-a11y="on"]) #sidebar nav .sidebar-link { padding-top: 0.34rem; padding-bottom: 0.34rem; }
   #sidebar nav .sidebar-label { margin-bottom: 0.25rem; }
-  #sidebar nav :is(ul.mb-4, ul.mb-5) { margin-bottom: 0.6rem; }
+  #sidebar nav ul + .sidebar-label { margin-top: 0.875rem; }
   #sidebar nav { padding-top: 0.6rem; padding-bottom: 0.6rem; }
 }
 
