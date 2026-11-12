@@ -55,6 +55,19 @@
   border-bottom: 1px solid #e9e9ef !important; /* replaces each portal's coloured 3px line (inline style) */
   box-shadow: none;
 }
+/* Pinned to the top while the page scrolls, with its pop-ups (Text size, Alerts,
+   Language…), so they never float over the page without their bar.
+   Below the mobile sidebar overlay (30) and the sidebar (40).
+   Not on very short screens (a phone held sideways), where a pinned bar,
+   two rows tall in Accessibility mode, would cover too much of the page. */
+#sidebar ~ * > header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+@media (max-height: 500px) {
+  #sidebar ~ * > header { position: relative; }
+}
 /* The page's icon beside its title: one tile in the system's colours on every page and
    role, replacing each page's own colour (inline style, page-accents.css). */
 :where(#sidebar ~ * > header) .w-9.h-9.rounded-lg.shrink-0 {
