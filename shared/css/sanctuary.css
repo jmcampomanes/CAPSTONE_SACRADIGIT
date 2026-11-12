@@ -50,6 +50,25 @@
 /* gold glide highlight (motion.css) */
 #sd-nav-pill { background: var(--sx-gold-soft); }
 
+/* One sidebar rhythm in every portal: the Head Admin's spacing.
+   The parishioner sidebar had 44px links (user-shell.css) and wider gaps between
+   groups (mb-5, plus mt-5 on two labels); IT and Media used mb-5 too.
+   Mouse and trackpad only: phones keep 44px links as touch targets, and
+   Accessibility mode keeps its own 44px minimum (accessibility.css). */
+@media (pointer: fine) {
+  :root:not([data-a11y="on"]) #sidebar nav .sidebar-link { min-height: 0; }
+}
+#sidebar nav ul.mb-5 { margin-bottom: 1rem; }        /* = mb-4, as in the admin sidebar */
+#sidebar nav .sidebar-label.mt-5 { margin-top: 0; }
+/* Short laptop screens (e.g. 1366×768): the admin sidebar's tighter spacing
+   (admin-shell.css), for every portal. */
+@media (min-width: 768px) and (max-height: 860px) and (pointer: fine) {
+  :root:not([data-a11y="on"]) #sidebar nav .sidebar-link { padding-top: 0.34rem; padding-bottom: 0.34rem; }
+  #sidebar nav .sidebar-label { margin-bottom: 0.25rem; }
+  #sidebar nav :is(ul.mb-4, ul.mb-5) { margin-bottom: 0.6rem; }
+  #sidebar nav { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+}
+
 /* ---------- Top bar: clean white, hairline bottom edge ---------- */
 :where(#sidebar ~ * > header) {
   border-bottom: 1px solid #e9e9ef !important; /* replaces each portal's coloured 3px line (inline style) */
