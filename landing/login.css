@@ -48,7 +48,12 @@ body {
   min-height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  background: var(--lg-bg);
 }
+/* The page colour is set on the page, the form side and the root itself, not only on
+   <body>: admin-shell.css (loaded after this file in the built site) also sets a light
+   <body> colour, and the form side then showed light beside a dark card in dark mode. */
+:root:has(.lg-page) { background-color: var(--lg-bg); }
 
 /* ---------- Left: sacred art ---------- */
 .lg-art {
@@ -103,6 +108,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 2rem 1.25rem;
+  background: var(--lg-bg);
 }
 
 .lg-card {
