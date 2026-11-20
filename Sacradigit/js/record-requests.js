@@ -13,6 +13,7 @@ import { notifyCertificateUpdate } from '../../shared/js/email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../../shared/js/marriage-request-form.js';
 import { createCertStepForm } from '../../shared/js/certificate-step-forms.js';
 import { showToast, confirmDialog, reportEmail } from './admin-ui.js';
+import { attachMockAutofill } from '../../shared/js/mock-autofill.js';
 import { trackArrivals, isFresh } from '../../shared/js/motion.js'; // new rows arrive gold (motion-guide.html)
 
 // CertificateRequest has no dedicated email field — a parishioner's own
@@ -1327,6 +1328,39 @@ document.addEventListener('DOMContentLoaded', () => {
     new MutationObserver(() => { if (!modal.classList.contains('hidden')) setMode(false); })
       .observe(modal, { attributes: true, attributeFilter: ['class'] });
     setMode(false);
+  });
+
+  /* ------------------------------------------
+     Autofill from mock_data (MockParishioner table).
+     Type a name on a certificate form and the person's
+     details and family tree fill in. Only empty fields are
+     filled; see shared/js/mock-autofill.js.
+  ------------------------------------------ */
+  attachMockAutofill({
+    name: 'cert-child-name', birth: true,
+    fill: { father: 'cert-father-name', mother: 'cert-mother-name', birthDate: 'cert-birth-date', birthPlace: 'cert-birthplace', baptismDate: 'cert-baptism-date' },
+  });
+  attachMockAutofill({
+    name: 'confirm-cert-name', birth: true,
+    fill: { father: 'confirm-cert-father-name', mother: 'confirm-cert-mother-name', baptismDate: 'confirm-cert-baptism-date', baptismChurch: 'confirm-cert-baptism-church' },
+  });
+  attachMockAutofill({
+    name: 'fc-cert-name', birth: true,
+    fill: { communionDate: 'fc-cert-communion-date' },
+  });
+  attachMockAutofill({
+    name: 'marriage-cert-groom-name', birth: true,
+    fill: { father: 'marriage-cert-groom-father', mother: 'marriage-cert-groom-mother', marriageDate: 'marriage-cert-marriage-date', marriagePlace: 'marriage-cert-marriage-place' },
+    spouse: { name: 'marriage-cert-bride-name', birth: true, fill: { father: 'marriage-cert-bride-father', mother: 'marriage-cert-bride-mother' } },
+  });
+  attachMockAutofill({
+    name: 'marriage-cert-bride-name', birth: true,
+    fill: { father: 'marriage-cert-bride-father', mother: 'marriage-cert-bride-mother', marriageDate: 'marriage-cert-marriage-date', marriagePlace: 'marriage-cert-marriage-place' },
+    spouse: { name: 'marriage-cert-groom-name', birth: true, fill: { father: 'marriage-cert-groom-father', mother: 'marriage-cert-groom-mother' } },
+  });
+  attachMockAutofill({
+    name: 'death-cert-name',
+    fill: { deathDate: 'death-cert-death-date', age: 'death-cert-age' },
   });
 
 });

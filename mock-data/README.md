@@ -78,3 +78,17 @@ Each scenario gives an `input` (what someone typed) and an `expected` result. Ex
 - Every person, record, household and request has `isMock: true`.
 
 If this data is ever loaded into a shared database, load it into a test environment. Certificate emails go to whatever address a row holds, and the `.test` domain only protects you while the rows stay unchanged.
+
+## Loading it into AWS (mock_data) and the autofill
+
+The `MockParishioner` table (in `amplify/data/resource.ts` of the Amplify project) is the separate `mock_data` storage: one row per person, with the family tree copied onto the row. It holds no accounts, so Cognito users, roles and parishioner-owned rows are never mixed with it. Admin, Secretary and IT can read it; a parishioner cannot.
+
+```
+node tools/mock-community/generate.mjs                       # once: builds the JSON
+node tools/mock-community/seed-aws.mjs                       # dry run: counts and a sample row, sends nothing
+SEED_USERNAME=... SEED_PASSWORD=... node tools/mock-community/seed-aws.mjs --send --outputs <sandbox amplify_outputs.json>
+```
+
+Deploy the new table to a sandbox first (`npx ampx sandbox`), seed that, and only then production. Re-running the seed updates rows instead of duplicating them.
+
+The autofill is `shared/js/mock-autofill.js`, wired in `Sacradigit/js/record-requests.js` to the Baptismal, Confirmation, First Communion, Marriage and Death certificate forms. Type a first and last name: one match fills the form, several show a list to pick from. It fills only empty fields, never what the encoder typed.
