@@ -28,7 +28,7 @@ Every custom mutation below uses this shape, like `setServerRole`:
 - Never trust names, status or amounts from the browser when the server can work them out. Take the caller's identity from the event.
 - Rows a Lambda creates for a parishioner must set `owner` to `<sub>::<username>`, the format Amplify writes, or the person can't read their own row.
 - Grant each function access with `allow.resource(fn)` on the schema.
-- Read parish rules from the single `ParishSettings` row, merged over these defaults: `freeCancelDays` 3, `serverSignupCloseDays` 3, `fees.massIntentionMin` 50, `fees.blessingMin` 200.
+- Read parish rules from the single `ParishSettings` row, merged over these defaults: `freeCancelDays` 3, `serverSignupCloseDays` 3, `fees.massIntentionMin` 50, `fees.blessingMin` 200, `fees.houseBusinessBlessingMin` 1000, `blessingMaxKm` 5.
 
 ---
 
@@ -139,7 +139,8 @@ Do not reuse `certificateUploads/*`: any signed-in user can read it.
 - Remove `details['Temporary Approval']` if present.
 - Check the slot still has room, using the same count as `takenSlots`. For a public baptism (`details['Public Baptism Date Id']`), read that `Announcement` and check `media.baptism.capacity`, `closesOn` and that it isn't `cancelled`.
 - Refuse a private Baptism on the date and time of an announced public date. The browser hides those slots.
-- Blessings (`House Blessing`, `Vehicle / Item Blessing`, `Business Dedication`, `Pet Blessing`): refuse when `details['Offered Amount']` is below `fees.blessingMin`.
+- Blessings: refuse when `details['Offered Amount']` is below `fees.houseBusinessBlessingMin` (`House Blessing`, `Business Dedication`) or `fees.blessingMin` (`Vehicle / Item Blessing`, `Pet Blessing`). Also refuse a House Blessing or Business Dedication whose pin is more than `blessingMaxKm` from the parish pin.
+
 - `Wedding`: repeat the form's checks. Refuse unless the account's first and last name match `details["Groom's Full Name"]` or `details["Bride's Full Name"]`, both `{ firstName, middleName, lastName, extension }`. Refuse if `details["Groom's Birthdate"]` or `details["Bride's Birthdate"]` makes that person under 18 on the wedding date. Staff walk-ins don't use this mutation.
 
 **`changeMyRequest({ id, action, date, time, reason, reminder })`**. The caller must own the row.

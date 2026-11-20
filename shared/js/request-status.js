@@ -132,6 +132,17 @@ export function distanceCharge(pin, rules = parishRules()) {
   return band ? { km, surcharge: band.surcharge, outOfRange: false } : { km, surcharge: 0, outOfRange: true };
 }
 
+/**
+ * House / business blessings are only for places in the parish's own area.
+ * { km, tooFar, maxKm } or null when there is no pin to check.
+ */
+export function blessingReach(pin, rules = parishRules()) {
+  const at = typeof pin === 'string' ? parsePin(pin) : pin;
+  if (!at || !(rules.blessingMaxKm > 0)) return null;
+  const km = Math.round(kmBetween(rules.pin, at) * 10) / 10;
+  return { km, tooFar: km > rules.blessingMaxKm, maxKm: rules.blessingMaxKm };
+}
+
 /** The amount to suggest when the office approves, from what the request recorded. */
 export function suggestedAmount(record, baseFee) {
   const d = parseDetails(record);
