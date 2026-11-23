@@ -52,6 +52,7 @@ export const PAGE_MODULES = {
   'parish-rules.html': 'parishRules',
   'payment-reports.html': 'reports',
   'statistics.html': 'reports',
+  'families.html': 'records',
   'roles-access.html': 'roles',
 };
 

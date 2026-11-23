@@ -29,7 +29,7 @@ import { loadParishRules } from '../../shared/js/parish-rules.js';
 import { createServiceRequest, changeMyRequest } from '../../shared/js/secure-actions.js';
 import { feeFor, parishRules, peso } from '../../shared/js/parish-rules.js';
 import { paymentsReady } from '../../shared/js/payments.js';
-import { cancellationTerms, distanceCharge, OFFERED_KEY, DISTANCE_KEY, DISTANCE_FEE_KEY, DISTANCE_CHECK_KEY } from '../../shared/js/request-status.js';
+import { cancellationTerms, distanceCharge, blessingReach, OFFERED_KEY, DISTANCE_KEY, DISTANCE_FEE_KEY, DISTANCE_CHECK_KEY } from '../../shared/js/request-status.js';
 import { requirementsBeforeFormHtml, hasChecklist, UPLOADS_KEY } from '../../shared/js/sacrament-prep.js';
 import { uploadsReady, uploadProblem, uploadRequirement } from '../../shared/js/requirement-uploads.js';
 import {
@@ -306,6 +306,7 @@ export function initServiceRequestPage(serviceId) {
       onChange: (latlng) => {
         if (!latlng) return;
         setStatus(`Pinned: ${formatLatLng(latlng)} — drag the pin to adjust.`, 'ok');
+        setTimeout(() => renderDistance(), 0); // pinMap is set by then; shows the "too far" notice
         // Keep the address in step with the pin (debounced — the free geocoder allows ~1 lookup a second)
         clearTimeout(lookupTimer);
         lookupTimer = setTimeout(() => lookupAddress(latlng), 700);
@@ -436,7 +437,14 @@ export function initServiceRequestPage(serviceId) {
   function renderDistance() {
     const box = document.getElementById('svc-distance');
     if (!box) return;
-    const charge = distanceCharge(pinMap?.getValue() ? formatLatLng(pinMap.getValue()) : '');
+    const pinText = pinMap?.getValue() ? formatLatLng(pinMap.getValue()) : '';
+    const reach = mapField ? blessingReach(pinText) : null;
+    if (reach?.tooFar) {
+      box.classList.remove('hidden');
+      box.textContent = `This address is about ${reach.km} km from the parish. ${svc.name} is only available within about ${reach.maxKm} km of the parish, so we can't take this request. Please pin a place within the parish area.`;
+      return;
+    }
+    const charge = distanceCharge(pinText);
     box.classList.toggle('hidden', !charge || (!charge.surcharge && !charge.outOfRange));
     if (!charge) return;
     box.textContent = charge.outOfRange
@@ -553,6 +561,15 @@ export function initServiceRequestPage(serviceId) {
       }
       const { blocked } = weddingCheck();
       if (blocked.length) { window.showToast(blocked.join(' '), true); return; }
+    }
+
+    // House / business blessings: only places within the parish's own area.
+    const reach = mapField ? blessingReach(pinMap?.getValue() ? formatLatLng(pinMap.getValue()) : '', parishRules()) : null;
+    if (reach?.tooFar) {
+      renderDistance();
+      window.showToast(`${svc.name} is only for places within about ${reach.maxKm} km of the parish. Your pin is about ${reach.km} km away.`, true);
+      document.getElementById('svc-distance')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
     }
 
     const terms = document.getElementById('svc-terms');

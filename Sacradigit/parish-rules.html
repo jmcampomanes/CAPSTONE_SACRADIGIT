@@ -239,6 +239,11 @@
           <div class="panel-header"><h2 class="panel-title">Distance Fees</h2></div>
           <div class="p-5">
             <p class="text-sm text-gray-600 mb-3">Added to services away from the parish, by straight-line distance. Beyond the last band, the office confirms the request.</p>
+            <div class="mb-4" style="max-width: 20rem">
+              <label class="form-label" for="pr-maxkm">House &amp; Business blessings: farthest distance from the parish (km)</label>
+              <input id="pr-maxkm" type="number" min="0.5" step="0.5" class="form-input" />
+              <p class="text-xs text-gray-500 mt-1">A pin beyond this can't be sent. Applies to House Blessing and Business Dedication only.</p>
+            </div>
             <p id="pr-bands-empty" class="pr-note hidden">Not set. No distance fee is added until you enter the bands.</p>
             <div id="pr-bands" class="mt-3"></div>
             <button type="button" id="pr-band-add" class="btn-secondary">Add Band</button>

@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     Object.keys(FEE_LABELS).forEach(k => { $(`pr-fee-${k}`).value = r.fees[k]; });
     DAY_FIELDS.forEach(([k]) => { $(`pr-${k}`).value = r[k]; });
     $('pr-refund').value = r.refundTerms || '';
+    $('pr-maxkm').value = r.blessingMaxKm;
     $('pr-bands').innerHTML = r.distanceBands.map(bandRow).join('');
     $('pr-bands-empty').classList.toggle('hidden', r.distanceBands.length > 0);
     document.querySelectorAll('#pr-form input, #pr-form textarea, #pr-form button').forEach(el => { el.disabled = !editable; });
@@ -76,6 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       fees,
       ...Object.fromEntries(DAY_FIELDS.map(([k]) => [k, Number($(`pr-${k}`).value)])),
       refundTerms: $('pr-refund').value.trim(),
+      blessingMaxKm: Number($('pr-maxkm').value),
       distanceBands: bands,
     };
   }
@@ -86,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!next.address || !Number.isFinite(next.pin.lat) || !Number.isFinite(next.pin.lng)) { showToast('Please check the address and map pin.', true); return; }
     if (Object.values(next.fees).some(v => !(v >= 0))) { showToast('Fees can’t be blank or negative.', true); return; }
     if (next.fees.weddingDown > next.fees.weddingTotal) { showToast('The down payment can’t be more than the wedding total.', true); return; }
+    if (!(next.blessingMaxKm > 0)) { showToast('Enter how far from the parish a house or business blessing can be.', true); return; }
     if (next.distanceBands.some(b => !(b.upToKm > 0) || !(b.surcharge >= 0))) { showToast('Each distance band needs a distance and a fee.', true); return; }
     $('pr-save').disabled = true;
     try {

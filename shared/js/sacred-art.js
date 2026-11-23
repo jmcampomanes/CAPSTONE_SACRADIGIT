@@ -3,7 +3,7 @@
    A small gallery of real, public-domain medieval and
    Byzantine devotional artworks — the Hagia Sophia Deësis
    mosaic (Christ Pantocrator with the Virgin Mary and John
-   the Baptist), the Theotokos of Vladimir icon, the Good
+   the Baptist), Duccio's Maestà, the Good
    Shepherd mosaic from the Mausoleum of Galla Placidia,
    Pieter Bruegel the Elder's The Fall of the Rebel Angels
    (Saint Michael), and Leonardo da Vinci's The Last Supper.
@@ -29,28 +29,45 @@ export const SACRED_ART = [
     id: 'christ-pantocrator',
     title: 'Christ Pantocrator with the Virgin Mary and John the Baptist — Deësis mosaic, Hagia Sophia (13th century)',
     src: new URL('../../sacradigit-images/sacred-art/christ-pantocrator (1).jpg', import.meta.url).href,
+    credit: { by: 'Photograph: Myrabella', license: 'Public domain', url: 'https://commons.wikimedia.org/wiki/File:Deesis_mosaic_Hagia_Sophia.jpg' },
   },
   {
-    id: 'theotokos',
-    title: 'Theotokos of Vladimir (12th century icon)',
+    id: 'maesta',
+    title: 'Maestà — Duccio di Buoninsegna (1308–1311)',
     src: new URL('../../sacradigit-images/sacred-art/theotokos (1).jpg', import.meta.url).href,
+    credit: { by: 'Duccio di Buoninsegna — Maestà', license: 'Public domain', url: 'https://en.wikipedia.org/wiki/Maest%C3%A0_%28Duccio%29#/media/File:Duccio_maesta1021.jpg' },
   },
   {
     id: 'good-shepherd',
     title: 'The Good Shepherd — mosaic, Mausoleum of Galla Placidia (5th century)',
     src: new URL('../../sacradigit-images/sacred-art/good-shepherd.jpg', import.meta.url).href,
+    credit: { by: 'Gsimonov', license: 'CC0', url: 'https://en.wikipedia.org/wiki/Mausoleum_of_Galla_Placidia#/media/File:Ravenna_%E2%80%94_The_Good_Shepherd_mosaic.jpg' },
   },
   {
     id: 'st-michael',
     title: 'Saint Michael the Archangel — The Fall of the Rebel Angels, Pieter Bruegel the Elder (1562)',
     src: new URL('../../sacradigit-images/sacred-art/st-michael (1).jpg', import.meta.url).href,
+    credit: { by: 'Pieter Bruegel the Elder — The Fall of the Rebel Angels', license: 'Public domain', url: 'https://en.wikipedia.org/wiki/The_Fall_of_the_Rebel_Angels#/media/File:Pieter_Bruegel_the_Elder_-_The_Fall_of_the_Rebel_Angels_-_RMFAB_584_(derivative_work).jpg' },
   },
   {
     id: 'last-supper',
     title: 'The Last Supper — Leonardo da Vinci (1495–1498)',
     src: new URL('../../sacradigit-images/sacred-art/last-supper.jpg', import.meta.url).href,
+    credit: { by: 'Leonardo da Vinci — The Last Supper', license: 'Public domain', url: 'https://en.wikipedia.org/wiki/The_Last_Supper_(Leonardo)#/media/File:The_Last_Supper_-_Leonardo_Da_Vinci_-_High_Resolution_32x16.jpg' },
   },
 ];
+
+// Pages that want to credit the artwork (the sign-in page) add an element
+// marked [data-sacred-credit]; it names the piece's source and links to it.
+const escHtml = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function showCredit(art) {
+  document.querySelectorAll('[data-sacred-credit]').forEach((box) => {
+    const c = art.credit;
+    if (!c) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = `<span aria-hidden="true">©</span> <a href="${escHtml(c.url)}" target="_blank" rel="noopener noreferrer">${escHtml(c.by)}</a> · ${escHtml(c.license)} · via Wikimedia Commons`;
+  });
+}
 
 /* ---------- Rotator ---------- */
 
@@ -91,6 +108,7 @@ export function initSacredArt(container) {
 
     const previousLayers = Array.from(el.querySelectorAll('.sacred-art-layer'));
     el.appendChild(layer);
+    showCredit(art);
     // Force a layout flush first, so the opacity transition below actually animates
     // instead of snapping straight to visible.
     void layer.offsetWidth;

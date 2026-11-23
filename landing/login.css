@@ -74,6 +74,23 @@ body {
     linear-gradient(180deg, rgba(22, 33, 58, 0.35) 0%, rgba(22, 33, 58, 0.9) 85%);
 }
 
+.lg-art-credit {
+  position: absolute;
+  z-index: 3;
+  top: 1rem;
+  right: 1.25rem;
+  left: 1.25rem;
+  margin: 0;
+  text-align: right;
+  font-size: calc(0.75rem * var(--lg-t));
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.lg-art-credit[hidden] { display: none; }
+.lg-art-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.lg-art-credit a:hover { color: var(--lg-gold); }
+
 .lg-art-text {
   position: relative;
   z-index: 2;

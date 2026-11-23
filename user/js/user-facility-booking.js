@@ -25,9 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // The parish's two bookable facilities — keep in step with
   // Sacradigit/facility-booking.js and assistant/assistant-knowledge.js.
-  // ⚠ Placeholder photos (the parish exterior and the church) until real
-  // photos of each facility are taken — replace the files in
-  // sacradigit-images/facilities/. `capacity: null` hides "Up to … pax".
+  // Photos live in sacradigit-images/facilities/ — replace the files there
+  // to change them. `capacity: null` hides "Up to … pax".
   const facilities = [
     { id: 'multi-purpose', name: 'Multi-Purpose Hall', desc: 'Flexible open space for receptions, youth activities, seminars, and community events.', capacity: 150, availability: 'available', barColor: '#16a34a',
       photo: new URL('../../sacradigit-images/facilities/multi-purpose-hall.jpg', import.meta.url).href },

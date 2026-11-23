@@ -28,8 +28,9 @@ export const DEFAULT_RULES = {
   pin: { lat: 14.6161576, lng: 121.0078355 },
   fees: {
     massIntentionMin: 50,      // per intention, however many names it has
-    blessingMin: 200,
-    baptismPublic: 700,        // published as Common Baptism
+    blessingMin: 200,          // vehicle / item and pet blessings
+    houseBusinessBlessingMin: 1000, // House Blessing and Business Dedication
+    baptismPublic: 700,       // published as Common Baptism
     baptismPrivate: 3000,      // published as Solo Baptism
     sponsorExtraPublic: 50,    // each additional sponsor
     sponsorExtraPrivate: 100,
@@ -42,13 +43,17 @@ export const DEFAULT_RULES = {
   serverSignupCloseDays: 3,
   // [{ upToKm, surcharge }], nearest first. Empty until the Head Admin sets them.
   distanceBands: [],
-  refundTerms: '',             // the parish's own wording, shown with the cancellation terms
+  // House Blessing and Business Dedication are only for places within the
+  // parish's own area: a pin farther than this from the parish can't be sent.
+  blessingMaxKm: 5,
+  refundTerms: '',           // the parish's own wording, shown with the cancellation terms
 };
 
 /* Labels are what the Parish Rules & Fees page shows. */
 export const FEE_LABELS = {
   massIntentionMin: 'Mass intention (minimum per intention)',
-  blessingMin: 'Blessings (minimum)',
+  houseBusinessBlessingMin: 'House & Business blessings (minimum)',
+  blessingMin: 'Vehicle / Item & Pet blessings (minimum)',
   baptismPublic: 'Public Baptism (Common)',
   baptismPrivate: 'Private Baptism (Solo)',
   sponsorExtraPublic: 'Public Baptism, each additional sponsor',
@@ -129,6 +134,9 @@ export function feeFor(typeName, { baptismType = '', rules = current } = {}) {
   }
   if (typeName === 'Wedding') {
     return { kind: 'fixed', amount: f.weddingTotal, label: `${peso(f.weddingTotal)} total, ${peso(f.weddingDown)} down payment` };
+  }
+  if (/^(house blessing|business dedication)$/i.test(typeName || '')) {
+    return { kind: 'minimum', amount: f.houseBusinessBlessingMin, label: `Minimum of ${peso(f.houseBusinessBlessingMin)}` };
   }
   if (/blessing|dedication/i.test(typeName || '')) {
     return { kind: 'minimum', amount: f.blessingMin, label: `Minimum of ${peso(f.blessingMin)}` };

@@ -30,7 +30,8 @@ Sacramedia/                         Media team portal (pages + js/ + css/)
 sacradigit-images/                  Images
 public/                             Copied as-is to the site root (sw.js, manifest, offline page)
 tools/                              Dev tools (dark theme builder, special masses import, mock community data)
-server/                             Back-end helpers (AI chat proxy, email notifier)
+server/                             Back-end helpers (AI chat proxy, email notifier,
+                                    ai-ocr: local PaddleOCR + Qwen2.5-VL document reader — see its README)
 ocr/, loading screen test/          Experiments, not linked from the portals
 amplify_outputs.json                Amplify backend config (keep at the root)
 ```
