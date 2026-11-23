@@ -106,6 +106,7 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     runLabel.textContent = 'Scan Document';
     docTypeSel.value = 'birth';
     recTypeSel.value = DOC_TYPES.birth.archiveAs;
+    syncNameLabels();
     thresholdCb.checked = false;
     clearResultInputs();
     applyZoom();
@@ -224,7 +225,16 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
 
   /* ---------- document type ---------- */
 
+  // The name boxes are named after who the document is for: a marriage has a groom and a bride, no separate "record name".
+  function syncNameLabels() {
+    const t = DOC_TYPES[docTypeSel.value];
+    const who = t && t.fields.find(f => f.target === 'fullName');
+    $('scan-name-label').innerHTML = `${escapeXml(who ? who.label : 'Name')} <span class="text-red-500">*</span>`;
+    $('scan-spouse-group').classList.toggle('hidden', docTypeSel.value !== 'marriage');
+  }
+
   docTypeSel.addEventListener('change', () => {
+    syncNameLabels();
     const t = DOC_TYPES[docTypeSel.value];
     if (t && t.archiveAs) recTypeSel.value = t.archiveAs;
     $('scan-spouse-group').classList.toggle('hidden', docTypeSel.value !== 'marriage');
@@ -417,7 +427,8 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     const type = recTypeSel.value;
     const name = readNameFields('scan-name');
     if (!type) { showToast('Please choose which record type to save this as.', true); recTypeSel.focus(); return; }
-    if (!nameFieldsFilled('scan-name')) { showToast('Please enter at least the first and last name.', true); $('scan-name-first').focus(); return; }
+    if (!nameFieldsFilled('scan-name')) { showToast(docTypeSel.value === 'marriage' ? 'Please enter the groom’s first and last name.' : 'Please enter at least the first and last name.', true); $('scan-name-first').focus(); return; }
+    if (docTypeSel.value === 'marriage' && !nameFieldsFilled('scan-spouse')) { showToast('Please enter the bride’s first and last name.', true); $('scan-spouse-first').focus(); return; }
 
     let fullName = formatFullName(name);
     if (docTypeSel.value === 'marriage' && nameFieldsFilled('scan-spouse')) fullName += ` & ${formatFullName(readNameFields('scan-spouse'))}`;
