@@ -37,6 +37,16 @@ const clean = (n) => ({
 const placeText = (p) => (p ? [p.city, p.region].filter(Boolean).join(', ') : null);
 const addressText = (a) => (a ? [a.line, a.barangay && `Brgy. ${a.barangay}`, a.city, a.region].filter(Boolean).join(', ') : null);
 
+/** A register entry's form fields, using the correct spelling where the entry has a deliberate flaw. */
+function registerDetails(record) {
+  const details = { ...(record.details || {}) };
+  for (const [field, name] of Object.entries(record.dataQuality?.canonicalNames || {})) {
+    if (field in details) details[field] = name;
+  }
+  delete details.extraGodparents;
+  return details;
+}
+
 export function buildMockParishionerRows({ persons, unions, households = [], records = [] }) {
   const byId = new Map(persons.map(p => [p.id, p]));
   const unionById = new Map(unions.map(u => [u.id, u]));
@@ -56,7 +66,13 @@ export function buildMockParishionerRows({ persons, unions, households = [], rec
   for (const r of records) {
     for (const pid of r.personIds || []) {
       if (!recordsOf.has(pid)) recordsOf.set(pid, []);
-      recordsOf.get(pid).push({ type: r.type, recordId: r.id, date: r.date || null, register: r.register || null });
+      if (r.duplicateOf) continue; // a double entry: the original already carries the facts
+      recordsOf.get(pid).push({
+        type: r.type, recordId: r.id, date: r.date || null, register: r.register || null,
+        officiant: r.officiant || null,
+        // what the register says, with each name as it should be written (not the clerk's typo or ALL CAPS)
+        details: registerDetails(r),
+      });
     }
   }
 

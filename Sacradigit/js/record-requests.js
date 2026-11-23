@@ -1336,31 +1336,47 @@ document.addEventListener('DOMContentLoaded', () => {
      details and family tree fill in. Only empty fields are
      filled; see shared/js/mock-autofill.js.
   ------------------------------------------ */
+  // "record" is the register entry the form is about; its details (sponsors, priest, Book/Page/Line, ...) fill in too.
   attachMockAutofill({
-    name: 'cert-child-name', birth: true,
-    fill: { father: 'cert-father-name', mother: 'cert-mother-name', birthDate: 'cert-birth-date', birthPlace: 'cert-birthplace', baptismDate: 'cert-baptism-date' },
+    name: 'cert-child-name', birth: true, record: 'baptism',
+    fill: {
+      father: 'cert-father-name', mother: 'cert-mother-name', birthDate: 'cert-birth-date', birthPlace: 'cert-birthplace', baptismDate: 'cert-baptism-date',
+      sponsor1: 'cert-sponsor-1', sponsor2: 'cert-sponsor-2', officiant: 'cert-priest', bookNo: 'cert-book-no', page: 'cert-page', line: 'cert-line',
+    },
   });
   attachMockAutofill({
-    name: 'confirm-cert-name', birth: true,
-    fill: { father: 'confirm-cert-father-name', mother: 'confirm-cert-mother-name', baptismDate: 'confirm-cert-baptism-date', baptismChurch: 'confirm-cert-baptism-church' },
+    name: 'confirm-cert-name', birth: true, record: 'confirmation',
+    fill: {
+      father: 'confirm-cert-father-name', mother: 'confirm-cert-mother-name', baptismDate: 'confirm-cert-baptism-date', baptismChurch: 'confirm-cert-baptism-church',
+      confirmationName: 'confirm-cert-received-name', confirmationDate: 'confirm-cert-date', confirmSponsor: 'confirm-cert-sponsor', officiant: 'confirm-cert-bishop',
+    },
   });
   attachMockAutofill({
-    name: 'fc-cert-name', birth: true,
-    fill: { communionDate: 'fc-cert-communion-date' },
+    name: 'fc-cert-name', birth: true, record: 'first-communion',
+    fill: { communionDate: 'fc-cert-communion-date', officiant: 'fc-cert-priest', bookNo: 'fc-cert-book-no', page: 'fc-cert-page', line: 'fc-cert-line' },
   });
   attachMockAutofill({
-    name: 'marriage-cert-groom-name', birth: true,
-    fill: { father: 'marriage-cert-groom-father', mother: 'marriage-cert-groom-mother', marriageDate: 'marriage-cert-marriage-date', marriagePlace: 'marriage-cert-marriage-place' },
+    name: 'marriage-cert-groom-name', birth: true, record: 'marriage',
+    fill: {
+      father: 'marriage-cert-groom-father', mother: 'marriage-cert-groom-mother', marriageDate: 'marriage-cert-marriage-date', marriagePlace: 'marriage-cert-marriage-place',
+      witness1: 'marriage-cert-witness-1', witness2: 'marriage-cert-witness-2', officiant: 'marriage-cert-priest', bookNo: 'marriage-cert-book-no', page: 'marriage-cert-page', line: 'marriage-cert-line',
+    },
     spouse: { name: 'marriage-cert-bride-name', birth: true, fill: { father: 'marriage-cert-bride-father', mother: 'marriage-cert-bride-mother' } },
   });
   attachMockAutofill({
-    name: 'marriage-cert-bride-name', birth: true,
-    fill: { father: 'marriage-cert-bride-father', mother: 'marriage-cert-bride-mother', marriageDate: 'marriage-cert-marriage-date', marriagePlace: 'marriage-cert-marriage-place' },
+    name: 'marriage-cert-bride-name', birth: true, record: 'marriage',
+    fill: {
+      father: 'marriage-cert-bride-father', mother: 'marriage-cert-bride-mother', marriageDate: 'marriage-cert-marriage-date', marriagePlace: 'marriage-cert-marriage-place',
+      witness1: 'marriage-cert-witness-1', witness2: 'marriage-cert-witness-2', officiant: 'marriage-cert-priest', bookNo: 'marriage-cert-book-no', page: 'marriage-cert-page', line: 'marriage-cert-line',
+    },
     spouse: { name: 'marriage-cert-groom-name', birth: true, fill: { father: 'marriage-cert-groom-father', mother: 'marriage-cert-groom-mother' } },
   });
   attachMockAutofill({
-    name: 'death-cert-name',
-    fill: { deathDate: 'death-cert-death-date', age: 'death-cert-age' },
+    name: 'death-cert-name', record: 'death',
+    fill: {
+      deathDate: 'death-cert-death-date', age: 'death-cert-age', placeOfDeath: 'death-cert-place-of-death', burialDate: 'death-cert-burial-date', burialPlace: 'death-cert-burial-place',
+      officiant: 'death-cert-priest', bookNo: 'death-cert-book-no', page: 'death-cert-page', line: 'death-cert-line',
+    },
   });
 
 });

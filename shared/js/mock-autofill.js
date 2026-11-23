@@ -17,10 +17,11 @@
      several         shows a short list under the name; pick one
      none / no table nothing happens, the encoder types as before
 
-   It never overwrites what the encoder typed: a field is
-   filled only while it is empty, or still holds what this
-   file wrote there. Picking another person from the list
-   replaces the earlier autofill.
+   When a person is found, every field mapped in `fill` is replaced
+   with that person's data (parents, dates, place, and the details of
+   their register entry: sponsors or witnesses, priest, Book/Page/Line).
+   The name being typed is completed, never replaced by another
+   name. A value the person has no data for leaves the box alone.
 
    Staff only. The table's rules let admin, staff and itech
    read it; a parishioner's session gets nothing back.
@@ -127,24 +128,49 @@ function ageAt(birth, on) {
 }
 
 /** Values a row can give a form, keyed by the names used in `fill`. */
-function valuesOf(row) {
+function valuesOf(row, recordType) {
   const sp = mainSpouse(row);
   const baptism = parishRecord(row, 'baptism');
   const elsewhere = row.sacraments?.baptism;
   const communion = parishRecord(row, 'first-communion');
+  // the register entry this form is about (the person's baptism, marriage, ...) and what it says
+  const rec = recordType ? latestRecord(row, recordType) : null;
+  const d = rec?.details || {};
+  const text = (v) => (v && typeof v === 'object' ? nameOf(v) : v || '');
   return {
     father: row.family?.father ? { ...row.family.father.birthName } : null,
     mother: row.family?.mother ? { ...row.family.mother.birthName } : null, // registers use her maiden name
-    birthDate: row.birthDate,
-    birthPlace: row.birthPlace,
-    deathDate: row.deathDate,
-    age: ageAt(row.birthDate, row.deathDate),
-    baptismDate: baptism?.date || elsewhere?.date || '',
-    baptismChurch: baptism ? PARISH : elsewhere?.church || '',
-    communionDate: communion?.date || '',
-    marriageDate: sp?.weddingDate || '',
-    marriagePlace: sp?.weddingPlace || '',
+    birthDate: d['birth-date'] || row.birthDate,
+    birthPlace: d.birthplace || row.birthPlace,
+    deathDate: d['death-date'] || row.deathDate,
+    age: d.age ? String(d.age) : ageAt(row.birthDate, row.deathDate),
+    baptismDate: d['baptism-date'] || baptism?.date || elsewhere?.date || '',
+    baptismChurch: d['baptism-church'] || (baptism ? PARISH : elsewhere?.church) || '',
+    communionDate: d['fc-communion-date'] || communion?.date || '',
+    marriageDate: d['marriage-date'] || sp?.weddingDate || '',
+    marriagePlace: d['marriage-place'] || sp?.weddingPlace || '',
+    // from the register entry
+    officiant: rec?.officiant || '',
+    bookNo: rec?.register?.bookNo || '',
+    page: rec?.register?.page || '',
+    line: rec?.register?.line || '',
+    sponsor1: d['sponsor-1'] || null,
+    sponsor2: d['sponsor-2'] || null,
+    confirmSponsor: d['sponsor-name'] || null,
+    witness1: d['witness-1'] || null,
+    witness2: d['witness-2'] || null,
+    confirmationName: text(d['confirmation-name']),
+    confirmationDate: d['confirmation-date'] || '',
+    placeOfDeath: d['place-of-death'] || '',
+    burialDate: d['burial-date'] || '',
+    burialPlace: d['burial-place'] || '',
   };
+}
+
+/** The person's newest register entry of this type. */
+function latestRecord(row, type) {
+  const list = (row.sacraments?.parishRecords || []).filter(r => r.type === type);
+  return list.sort((a, b) => (a.date || '').localeCompare(b.date || '')).slice(-1)[0] || null;
 }
 
 /* ---------- writing to the form ---------- */
@@ -197,7 +223,7 @@ function completeAnchor(prefix, name) {
 
 /** Fills one person's fields. Returns how many form fields changed. */
 function applyRow(row, cfg) {
-  const values = valuesOf(row);
+  const values = valuesOf(row, cfg.record);
   let count = 0;
   const before = (cfg.birth ? registerName(row) : currentName(row));
   completeAnchor(cfg.name, before);
@@ -210,7 +236,7 @@ function applyRow(row, cfg) {
   return count;
 }
 
-async function applyAll(row, cfg, { replace = false } = {}) {
+async function applyAll(row, cfg, { replace = true } = {}) {
   replacing = replace;
   try { return await applyAllNow(row, cfg); } finally { replacing = false; }
 }
@@ -313,11 +339,10 @@ export function attachMockAutofill(cfg) {
 
   const clearPanel = () => { panel.innerHTML = ''; };
 
-  async function choose(row, replace = false) {
+  async function choose(row, replace = true) {
     clearPanel();
     const { count, spouseName } = await applyAll(row, cfg, { replace });
-    panel.innerHTML = `<div class="mock-af-note"><span>Filled from parish mock data${count ? '' : ' (nothing new to fill)'}: ${esc(summary(row, spouseName))}.</span><button type="button" data-replace title="Overwrite what is already typed in these fields">Replace all fields with parish data</button><button type="button" data-clear>Dismiss</button></div>`;
-    panel.querySelector('[data-replace]').addEventListener('click', () => choose(row, true));
+    panel.innerHTML = `<div class="mock-af-note"><span>Filled from parish mock data${count ? '' : ' (nothing new to fill)'}: ${esc(summary(row, spouseName))}.</span><button type="button" data-clear>Dismiss</button></div>`;
     panel.querySelector('[data-clear]').addEventListener('click', clearPanel);
   }
 
