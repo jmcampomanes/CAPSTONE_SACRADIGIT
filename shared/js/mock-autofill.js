@@ -160,7 +160,8 @@ function fire(el) {
   } finally { filling = false; }
 }
 
-const canWrite = (el) => !!el && !el.disabled && (!el.value.trim() || written.get(el.id) === el.value);
+let replacing = false;     // true when the encoder asked to overwrite what is already in the form
+const canWrite = (el) => !!el && !el.disabled && (replacing || !el.value.trim() || written.get(el.id) === el.value);
 
 function writeField(id, value) {
   const el = document.getElementById(id);
@@ -209,7 +210,12 @@ function applyRow(row, cfg) {
   return count;
 }
 
-async function applyAll(row, cfg) {
+async function applyAll(row, cfg, { replace = false } = {}) {
+  replacing = replace;
+  try { return await applyAllNow(row, cfg); } finally { replacing = false; }
+}
+
+async function applyAllNow(row, cfg) {
   const total = applyRow(row, cfg);
   let spouseName = '';
   if (cfg.spouse) {
@@ -307,10 +313,11 @@ export function attachMockAutofill(cfg) {
 
   const clearPanel = () => { panel.innerHTML = ''; };
 
-  async function choose(row) {
+  async function choose(row, replace = false) {
     clearPanel();
-    const { count, spouseName } = await applyAll(row, cfg);
-    panel.innerHTML = `<div class="mock-af-note"><span>Filled from parish mock data${count ? '' : ' (nothing new to fill)'}: ${esc(summary(row, spouseName))}.</span><button type="button" data-clear>Dismiss</button></div>`;
+    const { count, spouseName } = await applyAll(row, cfg, { replace });
+    panel.innerHTML = `<div class="mock-af-note"><span>Filled from parish mock data${count ? '' : ' (nothing new to fill)'}: ${esc(summary(row, spouseName))}.</span><button type="button" data-replace title="Overwrite what is already typed in these fields">Replace all fields with parish data</button><button type="button" data-clear>Dismiss</button></div>`;
+    panel.querySelector('[data-replace]').addEventListener('click', () => choose(row, true));
     panel.querySelector('[data-clear]').addEventListener('click', clearPanel);
   }
 
