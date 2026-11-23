@@ -13,6 +13,10 @@ const PAGE_INFO = {
     title: 'What’s on this page?',
     text: 'How many events the parish held each month, with their dates and priests. Press a month to see its events.',
   },
+  'families.html': {
+    title: 'What’s on this page?',
+    text: 'Every family the records show: couples from marriage records, and children linked to the parents named on certificate requests. Open a family to see its people and their records.',
+  },
   'payment-reports.html': {
     title: 'What’s on this page?',
     text: 'Every payment recorded, by request, method, status and date. Only verified payments count as received.',

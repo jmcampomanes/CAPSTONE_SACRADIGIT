@@ -588,6 +588,10 @@ export function splitName(text) {
 // "NAME" but not "MAIDEN NAME", "NAME IN PRINT", "NAME OF …"
 const PLAIN_NAME = /(?<!MAIDEN\s{0,4})\bNAME\b(?!\s*IN\s*PRINT)(?!\s+OF\b)/;
 
+// Only what the archive needs to find a document again: who, which event
+// date, and the printed document number. The scanned image is the record.
+const DOC_NO = { key: 'docNo', label: 'Document / Registry No.', kind: 'text', match: /REGISTRY\s+NO|CERTIFICATE\s+NO|DOCUMENT\s+NO|\bNO\.\s*:/ };
+
 export const DOC_TYPES = {
   birth: {
     label: 'Birth Certificate (PSA)',
@@ -596,11 +600,7 @@ export const DOC_TYPES = {
       // PSA Form 102: the typed value sits in the box under each printed label.
       { key: 'childName', label: 'Name of Child', kind: 'name', match: PLAIN_NAME, below: true, target: 'fullName' },
       { key: 'birthDate', label: 'Date of Birth', kind: 'date', match: /DATE\s+OF\s+BIRTH/, below: true, target: 'dateOfEvent' },
-      { key: 'birthPlace', label: 'Place of Birth', kind: 'text', match: /PLACE\s+OF\b(?!\s+MARRIAGE)/, below: true, ignore: /^BIRTH$/ },
-      { key: 'motherName', label: "Mother's Maiden Name", kind: 'name', match: /\bMA[I1L]?[DO]EN\b/, below: true },
-      { key: 'fatherName', label: "Father's Name", kind: 'name', match: PLAIN_NAME, after: 'motherName', skipRows: 1, below: true },
-      { key: 'parentsMarriage', label: 'Date & Place of Parents’ Marriage', kind: 'text', match: /PLACE\s+OF\s+MARRIAGE|MARRIAGE\s+OF\s+PAR/, below: true },
-      { key: 'registryNo', label: 'Registry No.', kind: 'text', match: /REGISTRY\s+NO/ },
+      DOC_NO,
     ],
   },
   baptism: {
@@ -608,15 +608,8 @@ export const DOC_TYPES = {
     archiveAs: 'baptism',
     fields: [
       { key: 'name', label: 'Name of Baptized', kind: 'name', match: /CERTIFY\s+THAT|\bNAME\b(?!\s+OF)/, target: 'fullName' },
-      { key: 'parents', label: 'Parents', kind: 'text', match: /CHILD\s+OF|\bPARENTS\b/ },
-      { key: 'fatherName', label: "Father's Name", kind: 'name', match: /\bFATHER\b/ },
-      { key: 'motherName', label: "Mother's Name", kind: 'name', match: /\bMOTHER\b/ },
-      { key: 'birthDate', label: 'Date of Birth', kind: 'date', match: /\bBORN\s+ON\b|DATE\s+OF\s+BIRTH/ },
-      { key: 'birthPlace', label: 'Place of Birth', kind: 'text', match: /\bBORN\s+(?:ON\s+.*?\s)?(?:AT|IN)\b|PLACE\s+OF\s+BIRTH/ },
       { key: 'baptismDate', label: 'Date of Baptism', kind: 'date', match: /BAPTI[ZS]ED\s+ON|DATE\s+OF\s+BAPTISM/, target: 'dateOfEvent' },
-      { key: 'sponsors', label: 'Sponsors / Godparents', kind: 'text', match: /\bSPONSORS?\b|GODPARENTS?|PADRINOS?/ },
-      { key: 'minister', label: 'Officiating Minister', kind: 'text', match: /\bMINISTER\b|OFFICIATING|\bBY\s+(?:THE\s+)?REV|\bREV\.?\s|\bBY\s+FR\b/, target: 'officiant' },
-      { key: 'bookPageLine', label: 'Book / Page / Line', kind: 'row', match: /\bBOOK\b|\bLIBRO\b/ },
+      DOC_NO,
     ],
   },
   confirmation: {
@@ -624,12 +617,8 @@ export const DOC_TYPES = {
     archiveAs: 'confirmation',
     fields: [
       { key: 'name', label: 'Name of Confirmed', kind: 'name', match: /CERTIFY\s+THAT|\bNAME\b(?!\s+OF)/, target: 'fullName' },
-      { key: 'parents', label: 'Parents', kind: 'text', match: /CHILD\s+OF|\bPARENTS\b/ },
       { key: 'confirmationDate', label: 'Date of Confirmation', kind: 'date', match: /CONFIRMED\s+ON|DATE\s+OF\s+CONFIRMATION/, target: 'dateOfEvent' },
-      { key: 'place', label: 'Place', kind: 'text', match: /\bAT\s+THE\b|PLACE\s+OF\s+CONFIRMATION|\bCHURCH\s+OF\b/ },
-      { key: 'sponsor', label: 'Sponsor', kind: 'text', match: /\bSPONSORS?\b|PADRINO|MADRINA/ },
-      { key: 'minister', label: 'Minister / Bishop', kind: 'text', match: /\bBISHOP\b|MOST\s+REV|\bMINISTER\b|OFFICIATING/, target: 'officiant' },
-      { key: 'bookPageLine', label: 'Book / Page / Line', kind: 'row', match: /\bBOOK\b|\bLIBRO\b/ },
+      DOC_NO,
     ],
   },
   marriage: {
@@ -639,10 +628,7 @@ export const DOC_TYPES = {
       { key: 'husbandName', label: 'Husband / Groom', kind: 'name', match: /\bHUSBAND\b|\bGROOM\b/, target: 'fullName' },
       { key: 'wifeName', label: 'Wife / Bride', kind: 'name', match: /\bWIFE\b|\bBRIDE\b/, target: 'fullName' },
       { key: 'marriageDate', label: 'Date of Marriage', kind: 'date', match: /DATE\s+OF\s+MARRIAGE|MARRIED\s+ON/, target: 'dateOfEvent' },
-      { key: 'marriagePlace', label: 'Place of Marriage', kind: 'text', match: /PLACE\s+OF\s+MARRIAGE/ },
-      { key: 'officiant', label: 'Solemnizing Officer', kind: 'text', match: /SOLEMNIZING\s+OFFICER|OFFICIATING|\bBY\s+(?:THE\s+)?REV/, target: 'officiant' },
-      { key: 'witnesses', label: 'Witnesses', kind: 'text', match: /\bWITNESS(?:ES)?\b/ },
-      { key: 'registryNo', label: 'Registry No.', kind: 'text', match: /REGISTRY\s+NO/ },
+      DOC_NO,
     ],
   },
   death: {
@@ -650,14 +636,8 @@ export const DOC_TYPES = {
     archiveAs: 'death',
     fields: [
       { key: 'deceasedName', label: 'Name of Deceased', kind: 'name', match: /DECEASED|PLAIN_NAME_PLACEHOLDER/, target: 'fullName' },
-      { key: 'sex', label: 'Sex', kind: 'text', match: /\bSEX\b/ },
-      { key: 'age', label: 'Age', kind: 'text', match: /\bAGE\b/ },
       { key: 'deathDate', label: 'Date of Death', kind: 'date', match: /DATE\s+OF\s+DEATH|\bDIED\s+ON\b/, target: 'dateOfEvent' },
-      { key: 'deathPlace', label: 'Place of Death', kind: 'text', match: /PLACE\s+OF\s+DEATH|\bDIED\s+(?:AT|IN)\b/ },
-      { key: 'cause', label: 'Cause of Death', kind: 'text', match: /\bCAUSES?\s+OF\s+DEATH|IMMEDIATE\s+CAUSE/ },
-      { key: 'burialDate', label: 'Date of Burial', kind: 'date', match: /DATE\s+OF\s+BURIAL|\bBURIED\s+ON\b/ },
-      { key: 'burialPlace', label: 'Place of Burial / Cemetery', kind: 'text', match: /PLACE\s+OF\s+BURIAL|CEMETERY/ },
-      { key: 'officiant', label: 'Officiating Minister', kind: 'text', match: /OFFICIATING|\bBY\s+(?:THE\s+)?REV|\bMINISTER\b/, target: 'officiant' },
+      DOC_NO,
     ],
   },
   other: {
@@ -893,7 +873,7 @@ export function extractFields(rows, docTypeKey) {
           if (!m[0].length) { re.lastIndex++; continue; }
           if (++seen === (field.occurrence || 1)) {
             // "by Rev. Fr. …" / "Rev. …": the title is part of the value, not the label
-            const title = m[0].search(/(?:REV|FR|MSGR|MOST)/);
+            const title = m[0].search(/\b(?:REV|FR|MSGR|MOST)\b/);
             hit = { ri, si, end: m.index + (title > 0 || (title === 0 && !/^s*(?:MINISTER|OFFICIATING)/.test(m[0])) ? title : m[0].length) };
             break outer;
           }

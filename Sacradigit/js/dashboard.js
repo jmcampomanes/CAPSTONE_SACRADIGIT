@@ -17,6 +17,7 @@ guardPage('admin').then((user) => {
 /* Sidebar group for the report and settings pages, shown by role (permissions.js). */
 const ADMIN_TOOLS = [
   ['payment-reports.html', 'Payment Reports', 'payments', 'reports'],
+  ['families.html', 'Families', 'families', 'records'],
   ['statistics.html', 'Statistics', 'statistics', 'reports'],
   ['parish-rules.html', 'Parish Rules & Fees', 'parish-rules', 'parishRules'],
   ['roles-access.html', 'Roles & Access', 'roles-access', 'roles'],

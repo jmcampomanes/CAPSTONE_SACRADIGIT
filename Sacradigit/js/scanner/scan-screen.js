@@ -16,8 +16,10 @@ import { currentUserName } from '../../../shared/js/auth.js';
 import { uploadData } from 'aws-amplify/storage';
 import { readNameFields, setNameFields, nameFieldsFilled, formatFullName } from '../../../shared/js/name-utils.js';
 import { DOC_TYPES, extractFields } from './scan-engine.js';
+import { attachNameSuggest, knownNames } from './name-suggest.js';
 import { confirmNotDuplicate } from '../record-duplicates.js';
 import { openDocument, rotateCanvas, scanPage, warmUpOcr, isPdf } from './document-scanner.js';
+import { aiReaderReady, scanPageAi, aiFieldsToFound } from './ai-reader.js';
 
 const LOW_CONF = 60;          // below this, a word/field is flagged "please check"
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -53,6 +55,16 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
   const saveBtn     = $('scan-save');
   const thresholdCb = $('scan-threshold');
   const showBoxesCb = $('scan-show-boxes');
+
+  // Names already in the archive: suggested while typing, and used to correct near-misses after a scan.
+  let knownCache = { src: null, n: -1, list: [] };
+  const getKnown = () => {
+    const src = getRecords();
+    if (knownCache.src !== src || knownCache.n !== src.length) knownCache = { src, n: src.length, list: knownNames(src) };
+    return knownCache.list;
+  };
+  const nameSuggest = attachNameSuggest('scan-name', getKnown);
+  const spouseSuggest = attachNameSuggest('scan-spouse', getKnown);
 
   docTypeSel.innerHTML = Object.entries(DOC_TYPES)
     .map(([key, t]) => `<option value="${key}">${t.label}</option>`).join('');
@@ -102,6 +114,8 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
   function clearResultInputs() {
     setNameFields('scan-name', null);
     setNameFields('scan-spouse', null);
+    nameSuggest.clear();
+    spouseSuggest.clear();
     $('scan-date').value = '';
     $('scan-officiant').value = '';
     fieldsWrap.innerHTML = '';
@@ -217,6 +231,10 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     // Re-read the fields from what's already been scanned — no need to OCR again.
     const scanned = [...pages.values()].filter(p => p.scan);
     if (scanned.length) fillFromScans(true);
+    // The AI answered for the type that was selected when it scanned.
+    if (scanned.some(p => p.scan.ai && p.scan.ai.docType !== docTypeSel.value)) {
+      showToast('Scan again to have the AI read the page as this document type.');
+    }
   });
 
   /* ---------- scanning ---------- */
@@ -239,15 +257,28 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     const st = await pageState(pageNo);
     setBusy(true, 'Cleaning up the image…');
     try {
-      const scan = await scanPage(currentSource(st), {
-        threshold: thresholdCb.checked,
-        onProgress: ({ stage: s, progress: p }) => {
-          if (s === 'enhance') { progressTxt.textContent = 'Straightening and cleaning up the image…'; progressBar.style.width = '8%'; }
-          if (s === 'load') { progressTxt.textContent = 'Loading the text reader (first scan only)…'; progressBar.style.width = `${8 + p * 12}%`; }
-          if (s === 'ocr') { progressTxt.textContent = `Reading text… ${Math.round(p * 100)}%`; progressBar.style.width = `${20 + p * 65}%`; }
-          if (s === 'recheck') { progressTxt.textContent = 'Taking a closer look at unclear words…'; progressBar.style.width = `${85 + p * 15}%`; }
-        },
-      });
+      const onProgress = ({ stage: s, progress: p, seconds }) => {
+        if (s === 'ai') { progressTxt.textContent = `Reading with AI… ${seconds ? `${seconds}s — ` : ''}this can take a minute or two.`; progressBar.style.width = `${5 + p * 90}%`; }
+        if (s === 'enhance') { progressTxt.textContent = 'Straightening and cleaning up the image…'; progressBar.style.width = '8%'; }
+        if (s === 'load') { progressTxt.textContent = 'Loading the text reader (first scan only)…'; progressBar.style.width = `${8 + p * 12}%`; }
+        if (s === 'ocr') { progressTxt.textContent = `Reading text… ${Math.round(p * 100)}%`; progressBar.style.width = `${20 + p * 65}%`; }
+        if (s === 'recheck') { progressTxt.textContent = 'Taking a closer look at unclear words…'; progressBar.style.width = `${85 + p * 15}%`; }
+      };
+
+      // AI reader (PaddleOCR + Qwen2.5-VL) when its service is running;
+      // otherwise — or if it fails — the built-in Tesseract reader.
+      let scan = null;
+      if (await aiReaderReady()) {
+        try {
+          scan = await scanPageAi(currentSource(st), { docTypeKey: docTypeSel.value, onProgress });
+        } catch (err) {
+          console.warn('AI reader failed, using the basic reader:', err);
+          showToast('The AI reader had a problem, so the basic reader was used instead.', true);
+        }
+      }
+      if (!scan) {
+        scan = await scanPage(currentSource(st), { threshold: thresholdCb.checked, onProgress });
+      }
       st.scan = scan;
       draw(st);
       fillFromScans(false);
@@ -279,15 +310,20 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     const spec = DOC_TYPES[docTypeSel.value];
     const found = {};
     for (const [, p] of scanned) {
-      const f = extractFields(p.scan.rows, docTypeSel.value);
+      // AI answers win (only if they were read for this same document type);
+      // the rule-based reader fills in anything the AI left blank.
+      const aiHits = p.scan.ai && p.scan.ai.docType === docTypeSel.value ? aiFieldsToFound(p.scan.ai, spec) : {};
+      const f = { ...extractFields(p.scan.rows, docTypeSel.value), ...aiHits };
       for (const [k, v] of Object.entries(f)) if (!found[k]) found[k] = v;
     }
+    const usedAi = scanned.some(([, p]) => p.scan.ai);
 
     const conf = Math.round(scanned.reduce((a, [, p]) => a + p.scan.confidence, 0) / scanned.length);
     const skew = scanned.find(([n]) => n === pageNo)?.[1].scan.skew || 0;
     const tone = conf >= 75 ? 'good' : conf >= LOW_CONF ? 'fair' : 'poor';
     summary.innerHTML = `
       <span class="scan-chip scan-chip-${tone}">${conf}% read clearly</span>
+      ${usedAi ? '<span class="scan-chip scan-chip-good" title="Letters the basic reader missed were filled in by AI. Amber = please check.">Read with AI</span>' : ''}
       <span class="scan-summary-text">${
         tone === 'good' ? 'Clear scan. Still give every field a quick check.'
         : tone === 'fair' ? 'Some words were hard to read — they’re marked in amber.'
@@ -302,6 +338,9 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     if (dateField && /^\d{4}-\d{2}-\d{2}$/.test(found[dateField.key].value) && (overwrite || !$('scan-date').value)) $('scan-date').value = found[dateField.key].value;
     const offField = spec.fields.find(f => f.target === 'officiant' && found[f.key]);
     if (offField && (overwrite || !$('scan-officiant').value)) $('scan-officiant').value = found[offField.key].text;
+    // Offer the closest name already in the archive (never applied without a click).
+    nameSuggest.check();
+    if (docTypeSel.value === 'marriage') spouseSuggest.check(); else spouseSuggest.clear();
     flagLow($('scan-name-first'), primary && found[primary.key].conf);
     flagLow($('scan-date'), dateField && found[dateField.key].conf);
     flagLow($('scan-officiant'), offField && found[offField.key].conf);
@@ -381,36 +420,21 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     let fullName = formatFullName(name);
     if (docTypeSel.value === 'marriage' && nameFieldsFilled('scan-spouse')) fullName += ` & ${formatFullName(readNameFields('scan-spouse'))}`;
     const scannedName = (key) => fieldsWrap.querySelector(`input[data-key="${key}"]`)?.value.trim() || '';
-    const parents = [{ father: scannedName('fatherName'), mother: scannedName('motherName') }];
-    if (!(await confirmNotDuplicate(getRecords(), { fullName, type, dateOfEvent: $('scan-date').value, parents }))) return;
+    if (!(await confirmNotDuplicate(getRecords(), { fullName, type, dateOfEvent: $('scan-date').value }))) return;
 
-    const fields = {};
-    fieldsWrap.querySelectorAll('input[data-key]').forEach(i => {
-      const spec = DOC_TYPES[docTypeSel.value].fields.find(f => f.key === i.dataset.key);
-      if (i.value.trim()) fields[spec ? spec.label : i.dataset.key] = i.value.trim();
-    });
-    const scanned = [...pages.entries()].filter(([, p]) => p.scan);
-    const transcript = {
-      version: 1,
-      documentType: DOC_TYPES[docTypeSel.value].label,
-      scannedAt: new Date().toISOString(),
-      confidence: Math.round(scanned.reduce((a, [, p]) => a + p.scan.confidence, 0) / Math.max(1, scanned.length)),
-      fields,
-      text: textArea.value,
-    };
+    // The scanned image is the record. Its file name carries the tags
+    // (name, event date, document number) so it can be found in storage too.
+    const docNo = scannedName('docNo');
 
     saveBtn.disabled = true;
     const label = saveBtn.textContent;
     saveBtn.textContent = 'Saving…';
     try {
-      const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-      const path = `cloudFiles/parishRecords/${Date.now()}_${safeName}`;
+      const tag = (v) => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '');
+      const ext = (file.name.match(/\.[A-Za-z0-9]{1,5}$/) || [''])[0].toLowerCase();
+      const base = [tag(name.lastName), tag(name.firstName), tag(type), tag($('scan-date').value), tag(docNo)].filter(Boolean).join('_') || tag(file.name.replace(/\.[^.]+$/, ''));
+      const path = `cloudFiles/parishRecords/${Date.now()}_${base}${ext}`;
       await uploadData({ path, data: file, options: { contentType: file.type || undefined } }).result;
-      await uploadData({
-        path: path + SCAN_SUFFIX,
-        data: new Blob([JSON.stringify(transcript, null, 2)], { type: 'application/json' }),
-        options: { contentType: 'application/json' },
-      }).result;
 
       const date = $('scan-date').value;
       const officiant = $('scan-officiant').value.trim();

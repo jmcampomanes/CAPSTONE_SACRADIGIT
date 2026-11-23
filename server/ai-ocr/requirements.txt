@@ -1,0 +1,8 @@
+paddlepaddle
+paddleocr
+fastapi
+uvicorn[standard]
+python-multipart
+pillow
+numpy
+httpx
