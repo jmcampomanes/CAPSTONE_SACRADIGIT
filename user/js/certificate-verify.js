@@ -116,6 +116,7 @@ export function mountRecordCheck(formWrap, selectedType, onDone) {
       if (res.errors?.length) throw new Error(res.errors.map(e => e.message).join('; '));
       const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
       if (data?.match) showRecord(data);
+      else if (data?.error) fail(data.error);
       else fail('We couldn’t find that record. Check the details, or use Fill In the Form Instead and the parish office will look for it.');
     } catch (err) {
       console.error('Record check failed:', err);
