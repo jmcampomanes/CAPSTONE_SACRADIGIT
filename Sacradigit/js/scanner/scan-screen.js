@@ -348,7 +348,9 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
     // Every field for this document type, editable
     const prev = {};
     fieldsWrap.querySelectorAll('input[data-key]').forEach(i => { prev[i.dataset.key] = i.value; });
-    fieldsWrap.innerHTML = spec.fields.map(f => {
+    // Names and the date already sit in the Archive Record boxes above; only the extras (document number) are listed here.
+    const extraFields = spec.fields.filter(f => !f.target);
+    fieldsWrap.innerHTML = extraFields.map(f => {
       const hit = found[f.key];
       let val = hit ? displayValue(f, hit) : '';
       if (!overwrite && prev[f.key]) val = prev[f.key];
@@ -359,7 +361,7 @@ export function initScanScreen({ showToast, getRecords = () => [] }) {
           <input type="text" id="scan-f-${f.key}" class="form-input" data-key="${f.key}" value="${escapeXml(val)}" placeholder="${hit ? '' : 'Not found — type it or click words'}" />
         </div>`;
     }).join('');
-    fieldsSect.classList.toggle('hidden', !spec.fields.length);
+    fieldsSect.classList.toggle('hidden', !extraFields.length);
     saveBtn.disabled = false;
   }
 
