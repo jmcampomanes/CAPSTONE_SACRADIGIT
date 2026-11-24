@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tr.innerHTML = `
           <td class="col-select">${select}</td>
-          <td class="font-medium text-gray-900">${who}</td>
+          <td class="font-medium text-gray-900">${who}${r.linkedRecordId ? ' <span class="badge badge-blue" title="The parishioner’s answers matched a parish record">Verified</span>' : ''}</td>
           <td>${escapeHtml(r.certificateType)}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td class="purpose-cell" title="${escapeHtml(r.purpose)}">${escapeHtml(r.purpose) || '—'}</td>
@@ -711,6 +711,8 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (certType === 'Marriage Certificate') openGenerateMarriageCertModal(id);
     else if (certType === 'Death Certificate') openGenerateDeathCertModal(id);
     else openGenerateCertModal(id);
+    const r = requests.find(x => x.id === id);
+    if (r) fillGenerateFromRecord(r);
   }
 
   // "Generate certificate" inside View — for pending and approved requests.
@@ -741,8 +743,52 @@ document.addEventListener('DOMContentLoaded', () => {
     viewStatusBadge.className = `badge ${badgeClass[r.status] || 'badge-gray'}`;
 
     viewLinkedWrap.classList.toggle('hidden', !r.linkedRecordId);
+    const linkedDetail = document.getElementById('view-linked-detail');
+    if (linkedDetail) linkedDetail.textContent = '';
+    if (r.linkedRecordId) {
+      // What the parish already holds for this request, so the office checks it rather than retypes it.
+      linkedRecordFor(r).then(rec => {
+        if (!rec || viewModal.classList.contains('hidden') || !linkedDetail) return;
+        linkedDetail.textContent = [rec.fullName, rec.dateOfEvent ? formatDate(rec.dateOfEvent) : '', rec.officiant ? `Officiant: ${rec.officiant}` : ''].filter(Boolean).join(' · ');
+      });
+    }
 
     openModal(viewModal);
+  }
+
+  /* The archive entry a verified request points to (cached; null if it can't be read). */
+  const linkedRecordCache = new Map();
+  async function linkedRecordFor(r) {
+    if (!r.linkedRecordId) return null;
+    if (!linkedRecordCache.has(r.linkedRecordId)) {
+      linkedRecordCache.set(r.linkedRecordId, client.models.ParishRecord.get({ id: r.linkedRecordId })
+        .then(res => res.data || null).catch(() => null));
+    }
+    return linkedRecordCache.get(r.linkedRecordId);
+  }
+
+  /* Generate: the request's own answers fill the form first; whatever is still
+     empty (the verified ones hold no typed answers) comes from the linked
+     archive entry — the person's name and the date of the event. */
+  const GENERATE_FROM_RECORD = {
+    'Baptismal Certificate':       { name: ['cert-child-name'], date: 'cert-baptism-date' },
+    'Confirmation Certificate':    { name: ['confirm-cert-name'], date: 'confirm-cert-date' },
+    'First Communion Certificate': { name: ['fc-cert-name'], date: 'fc-cert-communion-date' },
+    'Marriage Certificate':        { name: ['marriage-cert-groom-name', 'marriage-cert-bride-name'], date: 'marriage-cert-marriage-date' },
+    'Death Certificate':           { name: ['death-cert-name'], date: 'death-cert-death-date' },
+  };
+  async function fillGenerateFromRecord(r) {
+    const map = GENERATE_FROM_RECORD[r.certificateType];
+    const rec = map && await linkedRecordFor(r);
+    if (!rec) return;
+    // Marriage entries read "Groom & Bride"; the others are one name.
+    const names = rec.fullName ? (map.name.length > 1 ? rec.fullName.split('&') : [rec.fullName]) : [];
+    map.name.forEach((fid, i) => {
+      const full = (names[i] || '').trim();
+      if (full && isNameEmpty(readNameFields(fid))) setNameFields(fid, { firstName: full });
+    });
+    const dateEl = document.getElementById(map.date);
+    if (dateEl && !dateEl.value && rec.dateOfEvent) dateEl.value = rec.dateOfEvent;
   }
 
   /* ------------------------------------------

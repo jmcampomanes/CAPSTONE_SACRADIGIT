@@ -557,7 +557,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const name      = readNameFields('new-name');
     const type      = document.getElementById('new-type').value;
     const date      = document.getElementById('new-date').value;
-    const officiant = document.getElementById('new-officiant').value.trim();
 
     if (!nameFieldsFilled('new-name') || !type || !date) { showToast('Please fill in name, type, and date.', true); return; }
 
@@ -569,7 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fullName,
         type: type.toLowerCase(),
         dateOfEvent: date,
-        officiant: officiant || undefined,
         addedByName: currentUserName() || 'Parish Office',
         status: 'digitized',
       });
@@ -578,7 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
       closeModal(newRecordModal);
       showToast(`Record for "${fullName}" saved.`);
       setNameFields('new-name', null);
-      ['new-officiant', 'new-notes'].forEach(id => { document.getElementById(id).value = ''; });
       document.getElementById('new-type').value = '';
       document.getElementById('new-date').value = '';
     } catch (err) {
