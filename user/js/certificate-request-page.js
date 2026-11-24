@@ -16,7 +16,7 @@ import { currentUserName, currentUser } from '../../shared/js/auth.js';
 import { nameFieldsHtml, readNameFields, nameFieldsFilled, formatFullName, isNameEmpty } from '../../shared/js/name-utils.js';
 import { createMarriageForm, MARRIAGE_STEPS, TODAY_ISO, MIN_DATE_ISO, isReasonableDate, guardDateInputRange } from '../../shared/js/marriage-request-form.js';
 import { createCertStepForm, hasCertStepForm } from '../../shared/js/certificate-step-forms.js';
-import { mountRecordCheck } from './certificate-verify.js';
+import { mountRecordCheck, saveCertificateRequest } from './certificate-verify.js';
 
 // GUARDIAN_RELATIONSHIPS, TODAY_ISO / MIN_DATE_ISO, isReasonableDate()
 // and guardDateInputRange() — the "Add Guardian" options and the date
@@ -468,16 +468,12 @@ export function initCertificateRequestPage(typeId) {
     confirmBtn.disabled = true;
 
     try {
-      const result = await client.models.CertificateRequest.create({
-        requesterName: REQUESTER_NAME,
+      await saveCertificateRequest({
         certificateType: selectedType.name,
-        email: currentUser()?.email || undefined, // where the "ready for pickup" email goes
         purpose: pendingSubmission.purpose,
-        notes: pendingSubmission.notes || undefined,
-        details: JSON.stringify(pendingSubmission.details),
-        status: 'pending',
+        notes: pendingSubmission.notes,
+        details: pendingSubmission.details,
       });
-      if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeConfirmModal();
       requestFormWrap.classList.add('hidden');
