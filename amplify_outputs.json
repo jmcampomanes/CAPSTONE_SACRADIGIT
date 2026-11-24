@@ -76,9 +76,7 @@
             "type": {
               "name": "type",
               "isArray": false,
-              "type": {
-                "enum": "ParishRecordType"
-              },
+              "type": "String",
               "isRequired": false,
               "attributes": []
             },
@@ -182,7 +180,8 @@
                     "operations": [
                       "create",
                       "read",
-                      "update"
+                      "update",
+                      "delete"
                     ],
                     "groups": [
                       "staff"
@@ -532,6 +531,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "owner": {
+              "name": "owner",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "createdAt": {
               "name": "createdAt",
               "isArray": false,
@@ -564,13 +570,11 @@
                     "provider": "userPools",
                     "ownerField": "owner",
                     "allow": "owner",
-                    "identityClaim": "cognito:username",
                     "operations": [
-                      "create",
-                      "update",
-                      "delete",
-                      "read"
-                    ]
+                      "read",
+                      "delete"
+                    ],
+                    "identityClaim": "cognito:username"
                   },
                   {
                     "groupClaim": "cognito:groups",
@@ -593,7 +597,8 @@
                     "operations": [
                       "create",
                       "read",
-                      "update"
+                      "update",
+                      "delete"
                     ],
                     "groups": [
                       "staff"
@@ -5525,15 +5530,6 @@
         }
       },
       "enums": {
-        "ParishRecordType": {
-          "name": "ParishRecordType",
-          "values": [
-            "baptism",
-            "confirmation",
-            "marriage",
-            "death"
-          ]
-        },
         "ParishRecordStatus": {
           "name": "ParishRecordStatus",
           "values": [
@@ -6170,6 +6166,20 @@
               "name": "id",
               "isArray": false,
               "type": "ID",
+              "isRequired": true
+            }
+          }
+        },
+        "submitCertificateRequest": {
+          "name": "submitCertificateRequest",
+          "isArray": false,
+          "type": "AWSJSON",
+          "isRequired": false,
+          "arguments": {
+            "input": {
+              "name": "input",
+              "isArray": false,
+              "type": "AWSJSON",
               "isRequired": true
             }
           }
