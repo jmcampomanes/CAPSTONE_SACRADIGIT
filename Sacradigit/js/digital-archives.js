@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Schema stores status as lowercase enum values; UI shows Title Case
   const statusLabel = { digitized: 'Digitized', processing: 'Processing', queued: 'Queued' };
   // Record types are stored lowercase ('baptism'); show them as words ('Baptism').
-  const recordTypeLabel = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : '—');
+  const recordTypeLabel = (t) => (t ? (t.charAt(0).toUpperCase() + t.slice(1)).replace(/-/g, ' ') : '—');
   const badgeClass  = { digitized: 'badge-green', processing: 'badge-amber', queued: 'badge-gray' };
 
   function escapeHtml(str) {
