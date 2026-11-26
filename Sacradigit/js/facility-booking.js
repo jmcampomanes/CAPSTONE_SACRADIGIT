@@ -22,6 +22,10 @@ import { readMinistry } from './ministry-booking.js';
 import { showToast, reportEmail } from './admin-ui.js';
 import { trackArrivals, isFresh } from '../../shared/js/motion.js'; // new rows arrive gold (motion-guide.html)
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
+import { loadParishRules } from '../../shared/js/parish-rules.js';
+import { paymentsReady } from '../../shared/js/payments.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
+import { initFacilityPayment } from './facility-payment.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -43,6 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   let bookings = []; // kept in sync via observeQuery, each has .id
+
+  // Fees come from Parish Rules & Fees. A booking with a fee is held 'pending' until its payment is checked.
+  loadParishRules(client);
+  const facilityPay = initFacilityPayment({
+    showToast,
+    onConfirmed: (b) => reportEmail(notifyServiceUpdate({
+      ...bookingEmailFields(b), status: 'approved',
+      detailsLines: [b.purpose && `Purpose: ${b.purpose}`, b.attendees && `Attendees: ${b.attendees}`].filter(Boolean),
+    }), b.requesterName, `Booking for ${b.facilityName} confirmed.`),
+  });
 
   const tbody          = document.getElementById('bookings-tbody');
   const bookingsEmpty   = document.getElementById('bookings-empty');
@@ -134,7 +148,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (b.status === 'pending') {
         actionsHtml = `
           <div class="row-actions">
-            <button type="button" class="act-btn act-approve row-approve" data-id="${b.id}">Approve</button>
+            ${paymentsReady()
+              ? `<button type="button" class="act-btn act-approve row-view" data-id="${b.id}">Check payment</button>`
+              : `<button type="button" class="act-btn act-approve row-approve" data-id="${b.id}">Approve</button>`}
             <button type="button" class="act-btn row-view" data-id="${b.id}">View</button>
             <button type="button" class="act-btn act-danger row-reject" data-id="${b.id}">Cancel…</button>
           </div>`;
@@ -251,6 +267,17 @@ document.addEventListener('DOMContentLoaded', () => {
     extra('Booked For', b.requesterName);
     extra('Expected Attendees', b.attendees);
     extra('Notes', ministry ? ministry.note : b.notes, true);
+    extra('Reference no.', trackingId('booking', b.id));
+
+    // The payment to check (or record) before a booking with a fee is confirmed.
+    let payPanel = grid.parentElement.querySelector('.fb-pay');
+    if (!payPanel) {
+      payPanel = document.createElement('div');
+      payPanel.className = 'fb-pay mt-3';
+      grid.insertAdjacentElement('afterend', payPanel);
+    }
+    if (ministry) payPanel.innerHTML = '';
+    else facilityPay.mount(payPanel, b);
 
     detailsStatusBadge.textContent = statusLabel[b.status] || b.status;
     detailsStatusBadge.className = `badge ${badgeClass[b.status] || 'badge-gray'}`;

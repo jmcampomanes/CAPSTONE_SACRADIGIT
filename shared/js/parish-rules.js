@@ -36,6 +36,9 @@ export const DEFAULT_RULES = {
     sponsorExtraPrivate: 100,
     weddingTotal: 18000,
     weddingDown: 5000,
+    // Hall rental, per hour. These two are starting figures: the Head Admin sets the real rates in Parish Rules & Fees.
+    facilityMultiPurposeHour: 500,
+    facilityThirdFloorHour: 300,
   },
   paymentDeadlineDays: 3,      // after temporary approval
   freeCancelDays: 3,           // before the event
@@ -60,6 +63,8 @@ export const FEE_LABELS = {
   sponsorExtraPrivate: 'Private Baptism, each additional sponsor',
   weddingTotal: 'Wedding (total)',
   weddingDown: 'Wedding (down payment)',
+  facilityMultiPurposeHour: 'Multi-Purpose Hall (per hour)',
+  facilityThirdFloorHour: '3rd Floor Hall (per hour)',
 };
 
 const copy = (o) => JSON.parse(JSON.stringify(o));
@@ -142,6 +147,19 @@ export function feeFor(typeName, { baptismType = '', rules = current } = {}) {
     return { kind: 'minimum', amount: f.blessingMin, label: `Minimum of ${peso(f.blessingMin)}` };
   }
   return { kind: 'quoted', amount: 0, label: 'To be confirmed by the parish office' };
+}
+
+/**
+ * What a facility booking costs: the hall's hourly rate times the hours.
+ * Returns { perHour, hours, min, label }; min is 0 when the parish sets no rate (no payment is asked).
+ */
+export function facilityFee(facilityName, hours, { rules = current } = {}) {
+  const f = rules.fees;
+  const name = String(facilityName || '');
+  const perHour = /multi/i.test(name) ? f.facilityMultiPurposeHour : /3rd|third/i.test(name) ? f.facilityThirdFloorHour : 0;
+  const rate = Math.max(0, Number(perHour) || 0);
+  const h = Math.max(1, Number(hours) || 1);
+  return { perHour: rate, hours: h, min: rate * h, label: `${peso(rate)} per hour × ${h} hour${h === 1 ? '' : 's'} = ${peso(rate * h)}` };
 }
 
 /** Straight-line kilometres between two { lat, lng } points. */

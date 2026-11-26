@@ -12,7 +12,7 @@
    but only admin and staff can update this model
    (BACKEND_CHANGES.md).
 
-   requestType  'Service' | 'Mass Intention' | 'Donation'
+   requestType  'Service' | 'Mass Intention' | 'Donation' | 'Facility Booking'
    status       'submitted' | 'verified' | 'rejected'
 
    Used by the request forms, the Donations and

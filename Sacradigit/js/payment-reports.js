@@ -14,7 +14,7 @@ import { peso } from '../../shared/js/parish-rules.js';
 import { showToast } from './admin-ui.js';
 import { trackingId } from '../../shared/js/tracking-id.js';
 
-const REQUEST_TYPES = ['Service', 'Mass Intention', 'Donation'];
+const REQUEST_TYPES = ['Service', 'Mass Intention', 'Donation', 'Facility Booking'];
 
 document.addEventListener('DOMContentLoaded', async () => {
   const $ = (id) => document.getElementById(id);
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const dayOf = (r) => (r.createdAt || '').slice(0, 10);
   // The number the person was given for what they paid for (the request's own number).
-  const REQUEST_KINDS = { Service: 'service', 'Mass Intention': 'intention', Donation: 'donation' };
+  const REQUEST_KINDS = { Service: 'service', 'Mass Intention': 'intention', Donation: 'donation', 'Facility Booking': 'booking' };
   const requestRef = (r) => trackingId(REQUEST_KINDS[r.requestType], r.requestId);
   function filtered() {
     const [type, method, status, from, to] = ['pay-type', 'pay-method-filter', 'pay-status', 'pay-from', 'pay-to'].map(id => $(id).value);

@@ -18,6 +18,10 @@ import { watchTakenSlots } from '../../shared/js/public-data.js';
 import { currentUserName, currentUser } from '../../shared/js/auth.js';
 import { watchClosures, closureOn } from '../../shared/js/service-schedule.js';
 import { stepHistory } from '../../shared/js/step-history.js';
+import { loadParishRules, facilityFee, peso } from '../../shared/js/parish-rules.js';
+import { paymentsReady, submitPayment } from '../../shared/js/payments.js';
+import { askPayment } from '../../shared/js/payment-wall.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -35,6 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   let myBookings = [];
+  // Pay-first: what the person chose in the payment pop-up for the booking in step 3.
+  // { type: 'paid', amount, method, referenceNumber, min } or { type: 'parish', min }
+  let payChoice = null;
+  const bookingFee = (facility, duration) => {
+    if (!paymentsReady()) return null;
+    const fee = facilityFee(facility, duration);
+    return fee.min > 0 ? fee : null;
+  };
+  loadParishRules(client).then(() => { if (bookingStep === 3) renderBookingConfirmation(); });
 
   const badgeClass = { pending: 'badge-amber', approved: 'badge-green', declined: 'badge-red' };
   const statusLabel = { pending: 'Pending', approved: 'Confirmed', declined: 'Cancelled' };
@@ -437,6 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     bookingBackBtn.textContent = step === 1 ? 'Cancel' : 'Back';
     bookingNextBtn.textContent = step === 3 ? 'Submit Booking' : 'Next';
+    if (step < 3) payChoice = null;
     if (step === 3) renderBookingConfirmation();
     // On small screens the middle area scrolls — start each step at its top.
     bookingBody.scrollTop = 0;
@@ -452,6 +466,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const startTime24                  = `${String(bkSelectedStartHour).padStart(2, '0')}:00`;
     const endTime24                        = `${String(bkSelectedStartHour + duration).padStart(2, '0')}:00`;
 
+    const fee = bookingFee(facility, duration);
+    if (payChoice && (!fee || payChoice.min !== fee.min)) payChoice = null; // the fee changed: ask again
+    const feeBlock = !fee ? '' : `
+      <div style="grid-column: 1 / -1;"><p class="modal-detail-item-label">Fee</p>
+        <p class="modal-detail-item-value">${escapeHtml(fee.label)}</p>
+        <p class="text-xs text-gray-600 mt-1">${payChoice?.type === 'paid'
+          ? `Payment noted: ${escapeHtml(peso(payChoice.amount))} by ${escapeHtml(payChoice.method)}, transaction no. ${escapeHtml(payChoice.referenceNumber)}. Press Submit Booking to send it.`
+          : payChoice?.type === 'parish'
+          ? 'You will settle the fee at the parish office. Press Submit Booking to send it.'
+          : 'You’ll be asked to pay when you press Submit Booking.'}</p>
+      </div>`;
+
     bookingConfirmGrid.innerHTML = `
       <div><p class="modal-detail-item-label">Facility</p><p class="modal-detail-item-value">${escapeHtml(facility)}</p></div>
       <div><p class="modal-detail-item-label">Date</p><p class="modal-detail-item-value">${formatShortDate(bkSelectedDateIso)}</p></div>
@@ -460,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div style="grid-column: 1 / -1;"><p class="modal-detail-item-label">Purpose</p><p class="modal-detail-item-value">${escapeHtml(purpose)}</p></div>
       ${attendees ? `<div><p class="modal-detail-item-label">Expected Attendees</p><p class="modal-detail-item-value">${escapeHtml(attendees)}</p></div>` : ''}
       ${notes ? `<div style="grid-column: 1 / -1;"><p class="modal-detail-item-label">Notes</p><p class="modal-detail-item-value">${escapeHtml(notes)}</p></div>` : ''}
+      ${feeBlock}
     `;
   }
 
@@ -553,6 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     statusBadge.className = `badge ${badgeClass[b.status] || 'badge-gray'}`;
 
     document.getElementById('detail-grid').innerHTML = `
+      <div><p class="modal-detail-item-label">Reference no.</p><p class="modal-detail-item-value">${trackingId('booking', b.id)}</p></div>
       <div><p class="modal-detail-item-label">Facility</p><p class="modal-detail-item-value">${escapeHtml(b.facilityName)}</p></div>
       <div><p class="modal-detail-item-label">Date</p><p class="modal-detail-item-value">${formatShortDate(b.date)}</p></div>
       <div><p class="modal-detail-item-label">Time</p><p class="modal-detail-item-value">${escapeHtml(formatTimeRange(b))}</p></div>
@@ -670,6 +698,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // The payment wall: pay online, cancel, or settle it at the parish. It opens before the booking is sent.
+    const fee = bookingFee(facility, duration);
+    if (fee && !payChoice) {
+      const answer = await askPayment({
+        title: `Pay for ${facility}`, min: fee.min, label: fee.label,
+        parishNote: 'Your booking goes to the office without a payment. Your slot is held, and it is confirmed once you settle the fee at the parish office.',
+      });
+      if (answer.type === 'cancel') return;
+      payChoice = { ...answer, min: fee.min };
+      renderBookingConfirmation();
+      window.showToast(answer.type === 'paid' ? 'Payment noted. Now press Submit Booking.' : 'Okay. Press Submit Booking, and settle the fee at the parish office.');
+      return;
+    }
+
     bookingNextBtn.disabled = true;
     try {
       const result = await client.models.FacilityBooking.create({
@@ -681,13 +723,33 @@ document.addEventListener('DOMContentLoaded', () => {
         endTime: formatTime12(endTime24),
         purpose,
         attendees: attendeesInput.value ? parseInt(attendeesInput.value, 10) : undefined,
-        notes: notesInput.value.trim() || undefined,
-        status: 'approved', // confirmed instantly — the slot picker already rules out conflicts
+        notes: [notesInput.value.trim(), fee && payChoice?.type === 'parish' ? 'Will pay at the parish office.' : ''].filter(Boolean).join('\n') || undefined,
+        // Confirmed instantly when there is no fee. With a fee the slot is held as 'pending' until the office checks the payment.
+        status: fee ? 'pending' : 'approved',
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
+      let paymentSaved = true;
+      if (fee && payChoice?.type === 'paid') {
+        try {
+          await submitPayment({
+            requestType: 'Facility Booking', requestId: result.data?.id, payerName: REQUESTER_NAME,
+            amount: payChoice.amount, method: payChoice.method, referenceNumber: payChoice.referenceNumber, note: 'Paid with the booking',
+          });
+        } catch (payErr) {
+          paymentSaved = false;
+          console.error('Booking saved, but its payment record was not:', payErr);
+          window.showToast(`Your booking was sent, but we couldn’t save the payment record. Please show transaction no. ${payChoice.referenceNumber} to the parish office.`, true);
+        }
+      }
+      const ref = trackingId('booking', result.data?.id);
+      payChoice = null;
       closeBookingPage();
-      window.showToast(`${facility} is booked for ${formatShortDate(bkSelectedDateIso)}, ${formatTime12(startTime24)}–${formatTime12(endTime24)}.`);
+      if (paymentSaved) {
+        window.showToast(fee
+          ? `${facility} is held for ${formatShortDate(bkSelectedDateIso)}, ${formatTime12(startTime24)}–${formatTime12(endTime24)}. The parish office will confirm it once your payment is checked. Reference ${ref}.`
+          : `${facility} is booked for ${formatShortDate(bkSelectedDateIso)}, ${formatTime12(startTime24)}–${formatTime12(endTime24)}.`);
+      }
     } catch (err) {
       console.error('Failed to submit booking:', err);
       window.showToast(err.message || "Couldn't submit the booking.", true);
