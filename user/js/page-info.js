@@ -57,10 +57,6 @@ const PAGE_INFO = {
     title: 'Who is this for?',
     text: 'Anyone who serves the parish — lectors, choir, altar servers, ushers, catechists, office staff and parish groups. Apply here; the parish office verifies it.',
   },
-  'user-ministry.html': {
-    title: 'How do I volunteer?',
-    text: 'Pick your ministry, find a Mass that still needs people, and tap Volunteer. You can withdraw until the day before; after that, ask for a swap so someone else can take your place.',
-  },
   'user-badges.html': {
     title: 'What are badges?',
     text: 'You earn badges for coming to Mass, giving and serving in the parish. Check in at Mass to count your visits — the code is on the church screen.',

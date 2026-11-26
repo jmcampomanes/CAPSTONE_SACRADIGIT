@@ -81,10 +81,6 @@ const PAGE_INFO = {
     title: 'What’s on this page?',
     text: 'From the QR check-ins at Mass: which Masses fill up, how attendance changes over time, and the busiest days and times.',
   },
-  'ministry-roster.html': {
-    title: 'What’s on this page?',
-    text: 'Lectors, choir, altar servers and ushers who signed up for each weekend and special Mass this month. Print it for the sacristy.',
-  },
   'badge-maker.html': {
     title: 'What are badges?',
     text: 'Badges parishioners earn automatically from their records, or that you give by hand for a special honor. They show up on each parishioner’s My Badges page.',
