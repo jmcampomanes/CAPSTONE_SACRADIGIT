@@ -19,8 +19,7 @@
    Asking for a swap or taking one over is allowed up
    to the day of the Mass.
 
-   Used by user/user-ministry.js (sign-ups) and
-   Sacradigit/ministry-roster.js (office roster).
+   Shared ministry sign-up data.
    Serving earns the "Faithful Servant" badge (badges.js).
    ============================================ */
 

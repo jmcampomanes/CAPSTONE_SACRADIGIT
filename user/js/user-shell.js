@@ -60,19 +60,6 @@ const HELP_CONTENT = {
       'Your requests and the office’s answer appear under “My niche requests.” Use “Request an Inurnment” to schedule placing a loved one’s ashes.',
     ],
   },
-  'user-ministry.html': {
-    title: 'Ministry Sign-ups',
-    intro: 'Serve as a lector, choir member, altar server or usher at Mass.',
-    steps: [
-      'Use ‹ › to pick a month and the chips to show one ministry.',
-      'Apply under Become a Parish Server first. Once the admin assesses you, press Volunteer under an open slot.',
-      'Sign-ups close 3 days before the Mass. Before that you can cancel with a reason.',
-      'After that, cancelling is an emergency: give a reason, and the office is told right away.',
-      'Can’t make it? Press Ask for swap — anyone can then take your slot.',
-      'See “Swap needed” on someone’s slot? Press Take this slot to serve in their place.',
-      'Serving 4 times earns the Faithful Servant badge.',
-    ],
-  },
   'user-requirements.html': {
     title: 'Requirements & Rules',
     intro: 'What you need for a Baptism or a Wedding: documents, rules and fees.',
@@ -334,12 +321,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </a>
           </li>
           <li>
-            <a href="user-ministry.html" data-nav="ministry" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-              Ministry Sign-ups
-            </a>
-          </li>
-          <li>
             <a href="user-badges.html" data-nav="badges" class="sidebar-link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg>
               My Badges
@@ -349,8 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* "Parish Server" (user-parish-server.html) — apply to be verified as serving the parish, after Ministry Sign-ups. */
-  const minLink = sidebarNav?.querySelector('[data-nav="ministry"]');
+  /* "Parish Server" (user-parish-server.html) — apply to be verified as serving the parish, after Prayer Wall. */
+  const minLink = sidebarNav?.querySelector('[data-nav="prayer-wall"]');
   if (minLink && !sidebarNav.querySelector('[data-nav="parish-server"]')) {
     minLink.closest('li').insertAdjacentHTML('afterend', `
           <li><a href="user-parish-server.html" data-nav="parish-server" class="sidebar-link">

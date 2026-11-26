@@ -209,16 +209,6 @@ const HELP_CONTENT = {
       'Only the Head Admin can create, edit, hide or delete badges. The Secretary can give them.',
     ],
   },
-  'ministry-roster.html': {
-    title: 'Ministry Roster',
-    intro: 'Who is serving at each weekend and special Mass this month.',
-    steps: [
-      'Parishioners sign up from their portal’s Ministry Sign-ups page; this table updates live.',
-      '“Open” shows slots that still need volunteers; “Swap” marks someone who asked to be replaced.',
-      'Click × to remove someone from a slot. Print Roster prints the month for the sacristy.',
-      'How many lectors, choir members, altar servers and ushers each Mass needs is set in ministry.js.',
-    ],
-  },
   'parish-servers.html': {
     title: 'Parish Servers',
     intro: 'Parishioners who serve the parish apply on their portal to be verified. The Head Admin approves or declines each one.',
@@ -331,17 +321,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </a>
           </li>`);
   }
-  if (fbLi && !document.querySelector('#sidebar a.sidebar-link[href="ministry-roster.html"]')) {
-    fbLi.insertAdjacentHTML('afterend', `
-          <li>
-            <a href="ministry-roster.html" data-nav="ministry-roster" class="sidebar-link">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-              Ministry Roster
-            </a>
-          </li>`);
-  }
-  /* "Parish Servers" — approve parishioners who serve the parish, after Ministry Roster. */
-  const rosterLi = document.querySelector('#sidebar a.sidebar-link[href="ministry-roster.html"]')?.closest('li');
+  /* "Parish Servers" — approve parishioners who serve the parish, after Prayer Wall. */
+  const rosterLi = document.querySelector('#sidebar a.sidebar-link[href="prayer-wall.html"]')?.closest('li');
   if (rosterLi && !document.querySelector('#sidebar a.sidebar-link[href="parish-servers.html"]')) {
     rosterLi.insertAdjacentHTML('afterend', `
           <li>
@@ -394,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
      page's copy of the sidebar ends up in the same order. */
   const NAV_GROUPS = [
     ['Main', ['dashboard.html']],
-    ['Masses', ['masses.html', 'special-schedules.html', 'ministry-roster.html', 'parish-servers.html', 'attendance.html']],
+    ['Masses', ['masses.html', 'special-schedules.html', 'parish-servers.html', 'attendance.html']],
     ['Requests', ['record-requests.html', 'schedule-offers.html', 'blessings.html', 'facility-booking.html', 'ministry-bookings.html', 'mass-intentions.html']],
     ['Records & Finance', ['digital-archives.html', 'donations.html', 'columbary.html']],
     ['Communications', ['announcements.html', 'messages.html', 'prayer-wall.html', 'badge-maker.html', 'parish-info.html']],

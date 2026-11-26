@@ -208,8 +208,6 @@ export const PORTAL_DIRECTORY = [
   { section: { en: 'Faith Journey', fil: 'Paglalakbay sa Pananampalataya' }, pages: [
     { page: 'user-prayer-wall.html', en: 'Prayer Wall', fil: 'Pader ng Panalangin',
       what: { en: 'Post a prayer request (anonymously if you like) and pray for others.', fil: 'Mag-post ng kahilingan sa panalangin (puwedeng anonymous) at ipanalangin ang iba.' } },
-    { page: 'user-ministry.html', en: 'Ministry Sign-ups', fil: 'Pagpapalista sa Ministeryo',
-      what: { en: 'Volunteer as lector, choir, altar server or usher; ask for or take swaps.', fil: 'Magboluntaryo bilang lector, koro, sakristan o usher; humingi o kumuha ng palit.' } },
     { page: 'user-badges.html', en: 'My Badges', fil: 'Aking mga Badge',
       what: { en: 'Your Faith Journey badges for Mass attendance, giving and parish life.', fil: 'Iyong mga badge sa Paglalakbay sa Pananampalataya para sa pagsisimba, pagbibigay at buhay-parokya.' } },
   ] },

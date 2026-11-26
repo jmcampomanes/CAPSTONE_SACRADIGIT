@@ -69,7 +69,7 @@ export function mountNeedsYou(el) {
       tag: s.massDate === today ? 'Today' : 'Swap', tone: s.massDate === today ? 'badge-amber' : 'badge-gray', when: s.massDate,
       title: `${s.volunteerName || 'A volunteer'} can't serve`, who: '',
       sub: `${fmtDay(s.massDate)}${s.massTime ? `, ${s.massTime}` : ''} · needs a stand-in`,
-      href: 'ministry-roster.html', action: 'Find cover',
+      href: 'ministry-bookings.html', action: 'Find cover',
     }));
     return out.sort((a, b) => (a.when || '9999').localeCompare(b.when || '9999'));
   }
