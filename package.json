@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/jmcampomanes/CAPSTONE_SACRADIGIT#readme",
   "devDependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1178.0",
     "vite": "^8.2.1"
   },
   "dependencies": {
