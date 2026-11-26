@@ -1,9 +1,9 @@
 {
   "auth": {
-    "user_pool_id": "ap-southeast-1_Cah0tLhhg",
+    "user_pool_id": "ap-southeast-1_ClI16rsLh",
     "aws_region": "ap-southeast-1",
-    "user_pool_client_id": "77338fo11ahqsgucn2n91ksn58",
-    "identity_pool_id": "ap-southeast-1:6854157d-293b-4087-a74c-4eb9437084eb",
+    "user_pool_client_id": "7173a3k0lf84el31r4b1bbmk9l",
+    "identity_pool_id": "ap-southeast-1:5194e6e7-d1ea-4ad2-b458-6d88669119dc",
     "mfa_methods": [],
     "standard_required_attributes": [
       "email"
@@ -52,9 +52,9 @@
     "unauthenticated_identities_enabled": true
   },
   "data": {
-    "url": "https://uef4ahoyxrhzxkrqunox4oriwe.appsync-api.ap-southeast-1.amazonaws.com/graphql",
+    "url": "https://hetsejgshzgqlpfu4dwrqg4rxa.appsync-api.ap-southeast-1.amazonaws.com/graphql",
     "aws_region": "ap-southeast-1",
-    "api_key": "da2-tbbwpukuy5b27hccnd2yncc3tu",
+    "api_key": "da2-bzd2ehqvx5exxn3c2p7sftl3cy",
     "default_authorization_type": "AMAZON_COGNITO_USER_POOLS",
     "authorization_types": [
       "API_KEY",
@@ -6281,11 +6281,11 @@
   },
   "storage": {
     "aws_region": "ap-southeast-1",
-    "bucket_name": "amplify-d31e163v4z38kf-ma-sacradigitfilesbucket799-pcmckn6eodsk",
+    "bucket_name": "amplify-sacradigitamplify-sacradigitfilesbucket799-knf3nnygifhn",
     "buckets": [
       {
         "name": "sacradigitFiles",
-        "bucket_name": "amplify-d31e163v4z38kf-ma-sacradigitfilesbucket799-pcmckn6eodsk",
+        "bucket_name": "amplify-sacradigitamplify-sacradigitfilesbucket799-knf3nnygifhn",
         "aws_region": "ap-southeast-1",
         "paths": {
           "announcements/*": {
