@@ -12,7 +12,8 @@ import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFul
 import { notifyCertificateUpdate } from '../../shared/js/email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../../shared/js/marriage-request-form.js';
 import { createCertStepForm } from '../../shared/js/certificate-step-forms.js';
-import { splitName } from './scanner/scan-engine.js';
+import { lookupPerson, splitFullName } from './seed-data/family-directory.js';
+import { getUrl } from 'aws-amplify/storage';
 import { showToast, confirmDialog, reportEmail } from './admin-ui.js';
 import { attachMockAutofill } from '../../shared/js/mock-autofill.js';
 import { trackArrivals, isFresh } from '../../shared/js/motion.js'; // new rows arrive gold (motion-guide.html)
@@ -813,11 +814,41 @@ document.addEventListener('DOMContentLoaded', () => {
     viewLinkedWrap.classList.toggle('hidden', !r.linkedRecordId);
     const linkedDetail = document.getElementById('view-linked-detail');
     if (linkedDetail) linkedDetail.textContent = '';
+    // Start from the details; a linked record with a scan swaps them for the scan itself.
+    const scanBox = document.getElementById('view-scan');
+    const infoBox = document.getElementById('view-info');
+    const card = viewModal.querySelector('.modal-card');
+    scanBox.classList.add('hidden');
+    scanBox.innerHTML = '';
+    infoBox.classList.remove('hidden');
+    card.style.maxWidth = '';
+
     if (r.linkedRecordId) {
       // What the parish already holds for this request, so the office checks it rather than retypes it.
-      linkedRecordFor(r).then(rec => {
-        if (!rec || viewModal.classList.contains('hidden') || !linkedDetail) return;
-        linkedDetail.textContent = [rec.fullName, rec.dateOfEvent ? formatDate(rec.dateOfEvent) : '', rec.officiant ? `Officiant: ${rec.officiant}` : ''].filter(Boolean).join(' · ');
+      linkedRecordFor(r).then(async rec => {
+        if (!rec || viewModal.classList.contains('hidden')) return;
+        if (linkedDetail) linkedDetail.textContent = [rec.fullName, rec.dateOfEvent ? formatDate(rec.dateOfEvent) : '', rec.officiant ? `Officiant: ${rec.officiant}` : ''].filter(Boolean).join(' · ');
+        if (!rec.fileURL) return;
+        try {
+          const { url } = await getUrl({ path: rec.fileURL, options: { expiresIn: 3600 } });
+          if (viewModal.classList.contains('hidden') || viewGenerateBtn?.dataset.id !== r.id) return; // moved on
+          const href = escapeHtml(url.toString());
+          const isPdf = /\.pdf$/i.test(rec.fileURL);
+          scanBox.innerHTML = `
+            ${isPdf
+              ? `<iframe src="${href}" title="Scanned record" style="width:100%;height:70vh;border:0;border-radius:8px;"></iframe>`
+              : `<img id="view-scan-image" src="${href}" alt="Scanned record of ${escapeHtml(rec.fullName)}" style="display:block;width:100%;max-height:70vh;object-fit:contain;border-radius:8px;background:#f5f5f4;" />`}
+            <a href="${href}" target="_blank" rel="noopener" class="certificate-chip mt-3">Open in a new tab</a>`;
+          scanBox.classList.remove('hidden');
+          infoBox.classList.add('hidden');
+          card.style.maxWidth = 'min(52rem, 95vw)';
+          // If the picture won't load, the details come back.
+          document.getElementById('view-scan-image')?.addEventListener('error', () => {
+            scanBox.classList.add('hidden'); infoBox.classList.remove('hidden'); card.style.maxWidth = '';
+          });
+        } catch (err) {
+          console.error("Couldn't load the scanned record:", err);
+        }
       });
     }
 
@@ -839,8 +870,10 @@ document.addEventListener('DOMContentLoaded', () => {
      empty (the verified ones hold no typed answers) comes from the linked
      archive entry — the person's name and the date of the event. */
   const GENERATE_FROM_RECORD = {
-    'Baptismal Certificate':       { name: ['cert-child-name'], date: 'cert-baptism-date', birth: 'cert-birth-date', officiant: 'cert-priest' },
-    'Confirmation Certificate':    { name: ['confirm-cert-name'], date: 'confirm-cert-date', officiant: 'confirm-cert-bishop' },
+    'Baptismal Certificate':       { name: ['cert-child-name'], date: 'cert-baptism-date', birth: 'cert-birth-date', officiant: 'cert-priest',
+                                     father: 'cert-father-name', mother: 'cert-mother-name', birthplace: 'cert-birthplace' },
+    'Confirmation Certificate':    { name: ['confirm-cert-name'], date: 'confirm-cert-date', officiant: 'confirm-cert-bishop',
+                                     father: 'confirm-cert-father-name', mother: 'confirm-cert-mother-name' },
     'First Communion Certificate': { name: ['fc-cert-name'], date: 'fc-cert-communion-date', officiant: 'fc-cert-priest' },
     'Marriage Certificate':        { name: ['marriage-cert-groom-name', 'marriage-cert-bride-name'], date: 'marriage-cert-marriage-date', officiant: 'marriage-cert-priest' },
     'Death Certificate':           { name: ['death-cert-name'], date: 'death-cert-death-date', officiant: 'death-cert-priest' },
@@ -891,6 +924,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!map) return;
     let filled = 0;
 
+    // 0. A name that arrived as one string ("Maria Elena Cruz Villaruel" in the first box)
+    //    is split into first / middle / last / extension.
+    const [, allNameIds] = generateDetailMaps()[r.certificateType];
+    allNameIds.forEach(fid => {
+      const n = readNameFields(fid);
+      if (n.firstName && !n.middleName && !n.lastName) setNameFields(fid, splitFullName(n.firstName));
+    });
+
     // 1. The archive entry the request was verified against.
     // Falls back to the copy saved on the request when the archive entry can't be read.
     const saved = parseDetails(r);
@@ -902,7 +943,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const names = rec.fullName ? (map.name.length > 1 ? rec.fullName.split('&') : [rec.fullName]) : [];
       map.name.forEach((fid, i) => {
         const full = (names[i] || '').trim();
-        if (full && isNameEmpty(readNameFields(fid))) { setNameFields(fid, splitName(full)); filled++; }
+        if (full && isNameEmpty(readNameFields(fid))) { setNameFields(fid, splitFullName(full)); filled++; }
       });
       const setIfEmpty = (fid, value) => {
         const el = fid && document.getElementById(fid);
@@ -925,6 +966,22 @@ document.addEventListener('DOMContentLoaded', () => {
         (subjectKey && SUBJECT_KEYS.some(k => nameKey(parseDetails(o)[k]) === subjectKey))))
       .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
     related.forEach(o => { filled += fillEmptyFromDetails(mapping, parseDetails(o), nameIds); });
+
+    // 3. The family directory: parents, birthdate and birthplace of people it knows.
+    const person = lookupPerson(formatFullName(readNameFields(map.name[0])));
+    if (person) {
+      const setNameIfEmpty = (fid, name) => {
+        if (fid && name && isNameEmpty(readNameFields(fid))) { setNameFields(fid, name); filled++; }
+      };
+      const setIfEmpty = (fid, value) => {
+        const el = fid && document.getElementById(fid);
+        if (el && value && !el.value) { el.value = value; filled++; }
+      };
+      setNameIfEmpty(map.father, person.father);
+      setNameIfEmpty(map.mother, person.mother);
+      setIfEmpty(map.birth, person.birthdate);
+      setIfEmpty(map.birthplace, person.birthplace);
+    }
 
     if (filled) showToast('Form filled in from the parish records — please check it before generating.');
   }
