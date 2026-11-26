@@ -28,7 +28,8 @@ import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-numb
 import { loadParishRules } from '../../shared/js/parish-rules.js';
 import { createServiceRequest, changeMyRequest } from '../../shared/js/secure-actions.js';
 import { feeFor, parishRules, peso } from '../../shared/js/parish-rules.js';
-import { paymentsReady } from '../../shared/js/payments.js';
+import { paymentsReady, submitPayment } from '../../shared/js/payments.js';
+import { mountPaymentBox } from '../../shared/js/payment-box.js';
 import { cancellationTerms, distanceCharge, blessingReach, OFFERED_KEY, DISTANCE_KEY, DISTANCE_FEE_KEY, DISTANCE_CHECK_KEY } from '../../shared/js/request-status.js';
 import { requirementsBeforeFormHtml, hasChecklist, UPLOADS_KEY } from '../../shared/js/sacrament-prep.js';
 import { uploadsReady, uploadProblem, uploadRequirement } from '../../shared/js/requirement-uploads.js';
@@ -383,13 +384,15 @@ export function initServiceRequestPage(serviceId) {
     }
   }
 
-  function showServiceSuccess({ slot, approval, location, bookingId, name = svc.name }) {
+  function showServiceSuccess({ slot, approval, location, bookingId, name = svc.name, payment = null }) {
     document.body.classList.remove('req-screen-open');
     formView.classList.add('hidden');
     if (pinMap) { pinMap.destroy(); pinMap = null; }
 
     document.getElementById('svc-success-title').textContent = approval ? 'Request Sent!' : 'Request Submitted!';
-    document.getElementById('svc-success-desc').textContent = approval
+    document.getElementById('svc-success-desc').textContent = payment
+      ? `Your ${name} request and payment were sent. The parish office will check your transaction number, and your slot is held for you. You'll be notified once it's confirmed.`
+      : approval
       ? `Your ${name} request is waiting for the parish office to approve it — your slot is held for you, and you'll be notified once it's approved.`
       : `Your ${name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under My Service Bookings.`;
     const row = (label, value) => value ? `<div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>` : '';
@@ -397,7 +400,8 @@ export function initServiceRequestPage(serviceId) {
       row('Service', name),
       row(approval ? 'Requested Slot' : 'Schedule', `${fmtLongDate(slot.date)} at ${slot.time}`),
       row('Location', location),
-      row('Status', approval ? 'Awaiting Approval' : 'Scheduled'),
+      row('Status', payment ? 'Payment being checked' : approval ? 'Awaiting Approval' : 'Scheduled'),
+      payment ? row('Payment', `${peso(payment.amount)} by ${payment.method}, transaction no. ${payment.referenceNumber}`) : '',
     ].join('');
     const detailsEl = document.getElementById('svc-success-details');
     detailsEl.parentElement.querySelector('.svc-reminder')?.remove();
@@ -418,6 +422,123 @@ export function initServiceRequestPage(serviceId) {
   /* --- What it costs, what's needed, and the cancellation terms --- */
   const usesPayments = paymentsReady();
   const needsOffice = usesPayments || needsApproval(svc.name);
+
+  /* --- Pay first: the payment wall (shared/js/payment-box.js) ---
+     Once a date and time are chosen, the person pays at least the fee (more is fine, less is
+     not), types the transaction number and presses "I Have Paid", then comes back to press
+     Submit. The payment is saved together with the request as a PaymentRecord, and the parish
+     office checks the transaction number before confirming. Services whose price the office
+     quotes later have no wall and are paid after approval, as before. */
+  let paid = null; // { amount, method, referenceNumber } once "I Have Paid" is pressed
+  const pinText = () => (pinMap?.getValue() ? formatLatLng(pinMap.getValue()) : '');
+
+  /** { min, surcharge } the person must pay at least, or null when this service has no payment wall. */
+  function payMin() {
+    if (!usesPayments) return null;
+    if (isBaptism && !baptismType) return null;
+    const fee = feeFor(svc.name, { baptismType: baptismType || (isBaptism ? 'private' : '') });
+    if (fee.kind !== 'fixed' && fee.kind !== 'minimum') return null;
+    const surcharge = distanceCharge(pinText(), parishRules())?.surcharge || 0;
+    return { min: fee.amount + surcharge, surcharge, label: fee.label };
+  }
+
+  const payEl = document.createElement('div');
+  payEl.id = 'svc-pay';
+  payEl.className = 'hidden';
+  payEl.style.cssText = 'margin-top:1.25rem';
+  (document.getElementById('req-screen-body') || svcSubmitBtn.parentElement).appendChild(payEl);
+
+  const hasSlot = () => (baptismType === 'public' ? !!publicDateId : !!slotPicker.getValue());
+  let payShell = '';   // which layout is drawn: 'wait' | 'pay' | 'paid'
+  let payBoxKey = '';  // the amount the QR was drawn for
+  let payLastMin = 0;
+
+  function renderPay() {
+    const req = payMin();
+    if (!req) { payEl.classList.add('hidden'); payShell = ''; return; }
+    payEl.classList.remove('hidden');
+
+    if (paid) {
+      const short = paid.amount < req.min;
+      payShell = 'paid';
+      payEl.innerHTML = `
+        <div class="pay-box">
+          <p class="pay-title">Payment noted</p>
+          <p class="pay-amount">${escapeHtml(peso(paid.amount))}</p>
+          <p class="pay-hint">${escapeHtml(paid.method)}, transaction no. <strong>${escapeHtml(paid.referenceNumber)}</strong></p>
+          ${short ? `<p class="form-error-msg" role="alert">The fee is now ${escapeHtml(peso(req.min))}, which is more than you paid. Please undo your changes, or ask the parish office.</p>` : ''}
+          <p class="pay-hint">Now press <strong>Submit Request</strong> below. Your payment is saved when you submit, and the parish office will check the transaction number before confirming.</p>
+          <button type="button" class="btn-secondary" id="svc-pay-edit">Change payment details</button>
+        </div>`;
+      return;
+    }
+
+    if (!hasSlot()) {
+      payShell = 'wait';
+      payEl.innerHTML = `<p class="form-label">Payment</p><p class="svc-fee-note text-sm text-gray-600">Choose a date and time above, then pay here. The fee is ${escapeHtml(req.label)}.</p>`;
+      return;
+    }
+
+    if (payShell !== 'pay') {
+      payShell = 'pay';
+      payBoxKey = '';
+      payLastMin = 0;
+      payEl.innerHTML = `
+        <p class="form-label">Payment</p>
+        <p class="text-sm text-gray-600" id="svc-pay-note"></p>
+        <label class="form-label mt-2" for="svc-pay-amount">Amount to pay (₱) <span class="text-red-500">*</span></label>
+        <input type="number" id="svc-pay-amount" class="form-input" step="50" />
+        <p class="form-error-msg hidden" id="svc-pay-amount-error" role="alert"></p>
+        <div id="svc-pay-box" class="mt-3"></div>`;
+    }
+    const input = payEl.querySelector('#svc-pay-amount');
+    const raised = payLastMin && Number(input.value) > payLastMin; // keep what they chose above the minimum
+    input.min = req.min;
+    if (!input.value || !raised) input.value = req.min;
+    payLastMin = req.min;
+    payEl.querySelector('#svc-pay-note').textContent = `The fee is ${req.label}${req.surcharge ? `, plus ${peso(req.surcharge)} for the distance` : ''}. You can pay more, but not less than ${peso(req.min)}. After you pay, come back here and press Submit Request.`;
+
+    const amount = Number(input.value);
+    const err = payEl.querySelector('#svc-pay-amount-error');
+    const boxEl = payEl.querySelector('#svc-pay-box');
+    if (!(amount >= req.min)) {
+      err.textContent = `The minimum is ${peso(req.min)}.`;
+      err.classList.remove('hidden');
+      boxEl.innerHTML = '';
+      payBoxKey = '';
+      return;
+    }
+    err.classList.add('hidden');
+    if (payBoxKey === String(amount)) return;
+    const keepRef = boxEl.querySelector('#pay-ref')?.value || '';
+    payBoxKey = String(amount);
+    mountPaymentBox(boxEl, {
+      amount,
+      title: 'Pay Now',
+      confirmLabel: 'I Have Paid',
+      onConfirm: async ({ method, referenceNumber }) => {
+        const now = payMin();
+        const chosen = Number(payEl.querySelector('#svc-pay-amount')?.value);
+        if (!now || !hasSlot()) throw new Error('Please choose a date and time first.');
+        if (!(chosen >= now.min)) throw new Error(`The minimum is ${peso(now.min)}.`);
+        paid = { amount: chosen, method, referenceNumber };
+        renderPay();
+        window.showToast('Payment noted. Now press Submit Request.');
+        svcSubmitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      },
+    });
+    const ref = boxEl.querySelector('#pay-ref');
+    if (ref && keepRef) ref.value = keepRef;
+  }
+
+  let paySoon = 0;
+  const payLater = (ms = 0) => { clearTimeout(paySoon); paySoon = setTimeout(renderPay, ms); };
+  payEl.addEventListener('click', (e) => { if (e.target.closest('#svc-pay-edit')) { paid = null; payShell = ''; renderPay(); } });
+  payEl.addEventListener('input', (e) => { if (e.target.id === 'svc-pay-amount') payLater(450); });
+  const screenBody = document.querySelector('.req-screen-body');
+  screenBody?.addEventListener('click', () => payLater());
+  screenBody?.addEventListener('change', () => payLater());
+
   const feeBox = document.createElement('div');
   feeBox.id = 'svc-fee';
   svcNotesInput.parentElement.before(feeBox);
@@ -428,10 +549,11 @@ export function initServiceRequestPage(serviceId) {
     feeBox.innerHTML = `
       <p class="form-label">Fee</p>
       <p class="svc-fee-amount">${isBaptism && !baptismType ? 'Shown when you choose the type above' : fee.label}</p>
-      ${fee.kind === 'minimum' ? `
+      ${fee.kind === 'minimum' && !payMin() ? `
         <label class="form-label mt-2" for="svc-offered">Your offering (₱) <span class="text-red-500">*</span></label>
         <input type="number" id="svc-offered" class="form-input" min="${fee.amount}" step="50" value="${chosen || fee.amount}" />` : ''}`;
     renderDistance();
+    renderPay();
   }
 
   function renderDistance() {
@@ -471,7 +593,7 @@ export function initServiceRequestPage(serviceId) {
     renderFee();
   });
   if (usesPayments) {
-    document.getElementById('svc-booking-note').textContent = 'Your slot is held while the parish office reviews this. They will tell you the amount to pay, and the slot is confirmed once your payment is checked.';
+    document.getElementById('svc-booking-note').textContent = 'Your slot is held while the parish office reviews this. Services with a set fee are paid right here before you submit; the slot is confirmed once the office checks your payment.';
   }
   document.querySelector('.req-screen-body')?.addEventListener('click', () => renderDistance());
 
@@ -584,6 +706,16 @@ export function initServiceRequestPage(serviceId) {
     const badFile = files.map(i => uploadProblem(i.files[0])).find(Boolean);
     if (badFile) { window.showToast(badFile, true); return; }
 
+    const payReq = payMin();
+    if (payReq) {
+      if (!paid) missing.push(['payment: pay, then press "I Have Paid"', payEl]);
+      else if (paid.amount < payReq.min) {
+        window.showToast(`The fee is now ${peso(payReq.min)}, more than the ${peso(paid.amount)} you paid. Please undo your changes, or ask the parish office.`, true);
+        payEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+
     if (missing.length) {
       // Say exactly what's missing, then bring the first one into view.
       const names = missing.map(([label]) => label === 'date and time' ? 'a date and time' : label.replace(/\s*\(.*?\)/g, ''));
@@ -613,6 +745,11 @@ export function initServiceRequestPage(serviceId) {
     });
 
     if (offeredEl) details[OFFERED_KEY] = Number(offeredEl.value);
+    if (payReq && paid) {
+      // Payment truth is the PaymentRecord saved below; this line lets the office see it on the request too.
+      details[OFFERED_KEY] = paid.amount - payReq.surcharge;
+      details['Paid With Request'] = `${peso(paid.amount)} by ${paid.method}, transaction no. ${paid.referenceNumber}`;
+    }
     if (isWedding) {
       const { docs } = weddingCheck();
       if (docs.length) details[AGE_DOCS_KEY] = docs;
@@ -678,6 +815,20 @@ export function initServiceRequestPage(serviceId) {
         status,
       });
 
+      let paymentSaved = true;
+      if (payReq && paid) {
+        try {
+          await submitPayment({
+            requestType: 'Service', requestId: result.data?.id, payerName: REQUESTER_NAME,
+            amount: paid.amount, method: paid.method, referenceNumber: paid.referenceNumber, note: 'Paid with the request',
+          });
+        } catch (payErr) {
+          paymentSaved = false;
+          console.error('Request saved, but its payment record was not:', payErr);
+          window.showToast(`Your request was sent, but we couldn’t save the payment record. Please show transaction no. ${paid.referenceNumber} to the parish office.`, true);
+        }
+      }
+
       await recordConsent(client, currentUser()?.sub, 'service-request');
 
       // The couple both hear about the request, whoever sent it.
@@ -702,7 +853,7 @@ export function initServiceRequestPage(serviceId) {
         }).catch(err => console.warn('Could not save details to the profile:', err));
       }
 
-      showServiceSuccess({ slot, approval, location, bookingId: result.data?.id, name: isBaptism ? serviceLabel(result.data) : svc.name });
+      showServiceSuccess({ slot, approval, location, bookingId: result.data?.id, name: isBaptism ? serviceLabel(result.data) : svc.name, payment: payReq && paid ? { ...paid, saved: paymentSaved } : null });
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);

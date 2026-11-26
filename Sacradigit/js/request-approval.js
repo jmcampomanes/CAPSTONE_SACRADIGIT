@@ -15,7 +15,7 @@ import { currentUserName } from '../../shared/js/auth.js';
 import { logActivity } from '../../shared/js/activity-log.js';
 import { feeFor, peso } from '../../shared/js/parish-rules.js';
 import {
-  liveStatus, tempApprovalOf, detailsWithTempApproval, suggestedAmount, STATUS_LABELS, DISTANCE_CHECK_KEY,
+  liveStatus, tempApprovalOf, detailsWithTempApproval, suggestedAmount, STATUS_LABELS, DISTANCE_CHECK_KEY, DISTANCE_FEE_KEY,
 } from '../../shared/js/request-status.js';
 import {
   paymentsReady, listPayments, paymentFor, reviewPayment, recordOfficePayment, duplicateReferences, normalizeReference, PAYMENT_METHODS,
@@ -74,8 +74,22 @@ export function initRequestApproval({ showToast, onChange = () => {} }) {
     const type = baptismTypeOf(record);
     const fee = feeFor(record.type, { baptismType: type });
     let body = '';
+    // Paid on the booking form: the payment arrived with the request, so the office checks it first.
+    const paidWithRequest = status === 'pending' && pay && pay.status === 'submitted';
 
-    if (status === 'pending') {
+    if (paidWithRequest) {
+      const need = fee.kind === 'quoted' ? 0 : fee.amount + (Number(detailsOf(record)[DISTANCE_FEE_KEY]) || 0);
+      body = `
+        <p class="bt-admin-sub">Paid with the request: ${esc(peso(pay.amount))} by ${esc(pay.method)}, transaction no. <strong>${esc(pay.referenceNumber)}</strong>.</p>
+        <p class="bt-admin-sub">Check this against the ${esc(pay.method || 'payment')} history. Confirming saves the payment to the records and confirms the booking.</p>
+        ${need && Number(pay.amount) < need ? `<p class="bt-admin-warn">Paid less than the ${esc(peso(need))} minimum.</p>` : ''}
+        ${dup ? '<p class="bt-admin-warn">This transaction number was used on another payment.</p>' : ''}
+        ${needsDistanceCheck ? '<p class="bt-admin-warn">Outside the distance bands. Check that the priest can go before confirming.</p>' : ''}
+        <div class="flex gap-2 mt-3">
+          <button type="button" class="btn-lavender" data-ra="verify">Verify and Confirm</button>
+          <button type="button" class="btn-danger-outline" data-ra="reject">Reject Payment</button>
+        </div>`;
+    } else if (status === 'pending') {
       body = `
         ${needsDistanceCheck ? '<p class="bt-admin-warn">Outside the distance bands. Check that the priest can go before approving.</p>' : ''}
         <p class="bt-admin-sub">Standard fee: ${esc(fee.label)}</p>
@@ -111,7 +125,7 @@ export function initRequestApproval({ showToast, onChange = () => {} }) {
     }
     target.innerHTML = body ? `
       <section class="bn-panel ra-panel">
-        <h4 class="bn-title">Approval and Payment <span class="badge badge-gray">${esc(STATUS_LABELS[status] || status)}</span></h4>
+        <h4 class="bn-title">Approval and Payment <span class="badge badge-gray">${esc(paidWithRequest ? 'Paid, waiting for check' : (STATUS_LABELS[status] || status))}</span></h4>
         ${body}
       </section>` : '';
   }
@@ -145,8 +159,15 @@ export function initRequestApproval({ showToast, onChange = () => {} }) {
       logActivity('Approve', `Payment verified — ${label} for ${record.requesterName}`, { targetType: 'Blessing', targetId: record.id });
       email('approved', `${label} confirmed for ${record.requesterName}.`);
     } else if (name === 'reject') {
-      await reviewPayment(paymentFor(payments, record.id).id, 'rejected', by);
-      await update({ status: 'temporary-approval' });
+      const rejected = paymentFor(payments, record.id);
+      await reviewPayment(rejected.id, 'rejected', by);
+      if (record.status === 'payment-submitted') {
+        // No approval on the request (it was paid on the form)? Set one at the amount they paid so they can try again.
+        await update({
+          status: 'temporary-approval',
+          ...(tempApprovalOf(record) ? {} : { details: detailsWithTempApproval(record, { amount: rejected.amount, note: 'Your payment could not be verified', by }) }),
+        });
+      }
       logActivity('Decline', `Payment rejected — ${label} for ${record.requesterName}`, { targetType: 'Blessing', targetId: record.id });
       email('rescheduled', `Payment rejected. ${record.requesterName} was told to check it.`, 'We could not find your payment. Please check your transaction number and send it again before the deadline.');
     } else if (name === 'void') {
