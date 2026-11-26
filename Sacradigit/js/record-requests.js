@@ -707,61 +707,9 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------
      13. VIEW DETAILS MODAL — read-only summary
   ------------------------------------------ */
-  /* A request whose linked archive entry already has a scanned file needs no new
-     certificate: show that filed copy, ready to print. */
   const previewKicker = document.getElementById('cert-preview-kicker');
   const previewPrintBtn = document.getElementById('cert-preview-print');
   const previewBackBtn = document.getElementById('cert-preview-back');
-  let filedCopyUrl = '';
-
-  async function openFiledCopy(r, rec) {
-    let url;
-    try { url = (await getUrl({ path: rec.fileURL, options: { expiresIn: 3600 } })).url.toString(); }
-    catch (err) { console.error('Filed copy not available:', err); return false; }
-    filedCopyUrl = url;
-    previewFromModal = null;
-    previewKicker.textContent = 'Filed copy · from the archives';
-    document.getElementById('cert-preview-title').textContent = `${r.certificateType} — ${rec.fullName || r.requesterName}`;
-    document.getElementById('cert-preview-newtab').href = url;
-    previewBackBtn.classList.add('hidden');
-    previewPrintBtn.classList.remove('hidden');
-    previewLoading.classList.remove('hidden');
-    previewFrame.classList.add('is-loading');
-    previewFrame.src = url;
-    previewScreen.classList.remove('hidden');
-    document.body.classList.add('cert-preview-open');
-    return true;
-  }
-
-  previewPrintBtn.addEventListener('click', async () => {
-    try {
-      // A same-origin copy of the file, so the browser can print just it.
-      const blob = await (await fetch(filedCopyUrl)).blob();
-      const src = URL.createObjectURL(blob);
-      const printer = document.createElement('iframe');
-      printer.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
-      const done = () => { printer.remove(); URL.revokeObjectURL(src); };
-      if (blob.type.startsWith('image/')) {
-        // The scan is a large image: fit it to one page instead of printing it at full size.
-        printer.srcdoc = `<!doctype html><meta charset="utf-8"><title>${(document.getElementById('cert-preview-title').textContent || 'Certificate').replace(/[<&]/g, ' ')}</title>
-          <style>@page{size:auto;margin:10mm}html,body{margin:0;background:#fff}
-          img{display:block;width:100%;max-height:255mm;object-fit:contain;margin:0 auto}</style>
-          <img src="${src}" alt="">`;
-        printer.addEventListener('load', () => {
-          const img = printer.contentDocument.querySelector('img');
-          const go = () => { printer.contentWindow.focus(); printer.contentWindow.print(); };
-          if (img.complete) go(); else img.addEventListener('load', go, { once: true });
-        });
-      } else {
-        printer.src = src; // a PDF prints as it is
-        printer.addEventListener('load', () => { printer.contentWindow.focus(); printer.contentWindow.print(); }, { once: true });
-      }
-      document.body.appendChild(printer);
-      setTimeout(done, 120000); // long enough for the print dialog
-    } catch {
-      window.open(filedCopyUrl, '_blank', 'noopener'); // print from the opened tab
-    }
-  });
 
   function resetPreviewChrome() {
     previewKicker.textContent = 'Certificate Preview';
@@ -769,21 +717,45 @@ document.addEventListener('DOMContentLoaded', () => {
     previewPrintBtn.classList.add('hidden');
   }
 
+  /* Generate: builds the certificate from the parishioner's data (see
+     resolveCertificateData) and shows it as the finished certificate. The
+     Generate window is only the way there: it is filled and submitted out of
+     sight, and "Back to Edit" in the preview opens it again. If something the
+     certificate needs is missing, the window stays open, so it can be filled in. */
+  const GENERATE_WINDOW = {
+    'Baptismal Certificate':       ['generate-cert-modal', 'cert-generate-submit'],
+    'Confirmation Certificate':    ['generate-confirmation-cert-modal', 'confirm-cert-generate-submit'],
+    'First Communion Certificate': ['generate-first-communion-cert-modal', 'fc-cert-generate-submit'],
+    'Marriage Certificate':        ['generate-marriage-cert-modal', 'marriage-cert-generate-submit'],
+    'Death Certificate':           ['generate-death-cert-modal', 'death-cert-generate-submit'],
+  };
+
   async function openGenerateFor(id, certType) {
-    const found = requests.find(x => x.id === id);
-    const rec = found && await linkedRecordFor(found);
-    if (rec?.fileURL && await openFiledCopy(found, rec)) return;
-    resetPreviewChrome();
-    if (certType === 'Confirmation Certificate') openGenerateConfirmationCertModal(id);
-    else if (certType === 'First Communion Certificate') openGenerateFirstCommunionCertModal(id);
-    else if (certType === 'Marriage Certificate') openGenerateMarriageCertModal(id);
-    else if (certType === 'Death Certificate') openGenerateDeathCertModal(id);
-    else openGenerateCertModal(id);
     const r = requests.find(x => x.id === id);
-    if (r) fillGenerateFromRecord(r);
+    const win = GENERATE_WINDOW[certType] || GENERATE_WINDOW['Baptismal Certificate'];
+    if (!r || !win) return;
+    const modal = document.getElementById(win[0]);
+    resetPreviewChrome();
+    modal.style.visibility = 'hidden';
+    try {
+      if (certType === 'Confirmation Certificate') openGenerateConfirmationCertModal(id);
+      else if (certType === 'First Communion Certificate') openGenerateFirstCommunionCertModal(id);
+      else if (certType === 'Marriage Certificate') openGenerateMarriageCertModal(id);
+      else if (certType === 'Death Certificate') openGenerateDeathCertModal(id);
+      else openGenerateCertModal(id);
+      await fillGenerateFromRecord(r, { quiet: true });
+      const submit = document.getElementById(win[1]);
+      submit.click(); // the window's first press goes to its Review step…
+      submit.click(); // …the second one generates and opens the preview
+    } catch (err) {
+      console.error("Couldn't generate the certificate:", err);
+      showToast("Couldn't generate the certificate. Please try again.", true);
+    } finally {
+      modal.style.visibility = ''; // still open (something missing)? now it can be seen
+    }
   }
 
-  // "Generate certificate" inside View — for pending and approved requests.
+  // "Generate certificate" inside View — only once the request is approved.
   const viewGenerateBtn = document.getElementById('view-generate');
   viewGenerateBtn?.addEventListener('click', () => {
     closeModal(viewModal);
@@ -794,7 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const r = requests.find(x => x.id === id);
     if (!r) return;
 
-    const canGenerate = (r.status === 'pending' || r.status === 'approved') && GENERATABLE_CERT_TYPES.has(r.certificateType);
+    const canGenerate = r.status === 'approved' && GENERATABLE_CERT_TYPES.has(r.certificateType);
     viewGenerateBtn?.classList.toggle('hidden', !canGenerate);
     if (viewGenerateBtn) { viewGenerateBtn.dataset.id = r.id; viewGenerateBtn.dataset.certType = r.certificateType; }
 
@@ -813,43 +785,17 @@ document.addEventListener('DOMContentLoaded', () => {
     viewLinkedWrap.classList.toggle('hidden', !r.linkedRecordId);
     const linkedDetail = document.getElementById('view-linked-detail');
     if (linkedDetail) linkedDetail.textContent = '';
-    // Start from the details; a linked record with a scan swaps them for the scan itself.
-    const scanBox = document.getElementById('view-scan');
-    const infoBox = document.getElementById('view-info');
-    const card = viewModal.querySelector('.modal-card');
-    scanBox.classList.add('hidden');
-    scanBox.innerHTML = '';
-    infoBox.classList.remove('hidden');
-    card.style.maxWidth = '';
-
     if (r.linkedRecordId) {
       // What the parish already holds for this request, so the office checks it rather than retypes it.
-      linkedRecordFor(r).then(async rec => {
-        if (!rec || viewModal.classList.contains('hidden')) return;
-        if (linkedDetail) linkedDetail.textContent = [rec.fullName, rec.dateOfEvent ? formatDate(rec.dateOfEvent) : '', rec.officiant ? `Officiant: ${rec.officiant}` : ''].filter(Boolean).join(' · ');
-        if (!rec.fileURL) return;
-        try {
-          const { url } = await getUrl({ path: rec.fileURL, options: { expiresIn: 3600 } });
-          if (viewModal.classList.contains('hidden') || viewGenerateBtn?.dataset.id !== r.id) return; // moved on
-          const href = escapeHtml(url.toString());
-          const isPdf = /\.pdf$/i.test(rec.fileURL);
-          scanBox.innerHTML = `
-            ${isPdf
-              ? `<iframe src="${href}" title="Scanned record" style="width:100%;height:70vh;border:0;border-radius:8px;"></iframe>`
-              : `<img id="view-scan-image" src="${href}" alt="Scanned record of ${escapeHtml(rec.fullName)}" style="display:block;width:100%;max-height:70vh;object-fit:contain;border-radius:8px;background:#f5f5f4;" />`}
-            <a href="${href}" target="_blank" rel="noopener" class="certificate-chip mt-3">Open in a new tab</a>`;
-          scanBox.classList.remove('hidden');
-          infoBox.classList.add('hidden');
-          card.style.maxWidth = 'min(52rem, 95vw)';
-          // If the picture won't load, the details come back.
-          document.getElementById('view-scan-image')?.addEventListener('error', () => {
-            scanBox.classList.add('hidden'); infoBox.classList.remove('hidden'); card.style.maxWidth = '';
-          });
-        } catch (err) {
-          console.error("Couldn't load the scanned record:", err);
-        }
+      linkedRecordFor(r).then(rec => {
+        if (!rec || viewModal.classList.contains('hidden') || !linkedDetail) return;
+        linkedDetail.textContent = [rec.fullName, rec.dateOfEvent ? formatDate(rec.dateOfEvent) : '', rec.officiant ? `Officiant: ${rec.officiant}` : ''].filter(Boolean).join(' · ');
       });
     }
+
+    // The parishioner's details, from the full name down to the certificate's own
+    // information, filled in by the system from the request and the parish records.
+    renderCertDetails(r);
 
     openModal(viewModal);
   }
@@ -865,17 +811,59 @@ document.addEventListener('DOMContentLoaded', () => {
     return linkedRecordCache.get(r.linkedRecordId);
   }
 
-  /* Generate: the request's own answers fill the form first; whatever is still
-     empty (the verified ones hold no typed answers) comes from the linked
-     archive entry — the person's name and the date of the event. */
+  /* ------------------------------------------
+     What the system already knows about a request.
+     resolveCertificateData() gathers it once, and both
+     View (shows it) and Generate (fills the certificate
+     with it) use it, so they always agree. Sources, in order
+     of priority: the request's own answers, the linked
+     archive record, the requester's name, the person's other
+     requests (parents, sponsors, places), the family directory.
+     Keys are the request form's detail keys; 'officiant' is
+     added from the register.
+  ------------------------------------------ */
   const GENERATE_FROM_RECORD = {
-    'Baptismal Certificate':       { name: ['cert-child-name'], date: 'cert-baptism-date', birth: 'cert-birth-date', officiant: 'cert-priest',
-                                     father: 'cert-father-name', mother: 'cert-mother-name', birthplace: 'cert-birthplace' },
-    'Confirmation Certificate':    { name: ['confirm-cert-name'], date: 'confirm-cert-date', officiant: 'confirm-cert-bishop',
-                                     father: 'confirm-cert-father-name', mother: 'confirm-cert-mother-name' },
-    'First Communion Certificate': { name: ['fc-cert-name'], date: 'fc-cert-communion-date', officiant: 'fc-cert-priest' },
-    'Marriage Certificate':        { name: ['marriage-cert-groom-name', 'marriage-cert-bride-name'], date: 'marriage-cert-marriage-date', officiant: 'marriage-cert-priest' },
-    'Death Certificate':           { name: ['death-cert-name'], date: 'death-cert-death-date', officiant: 'death-cert-priest' },
+    'Baptismal Certificate':       { name: ['cert-child-name'], officiant: 'cert-priest' },
+    'Confirmation Certificate':    { name: ['confirm-cert-name'], officiant: 'confirm-cert-bishop' },
+    'First Communion Certificate': { name: ['fc-cert-name'], officiant: 'fc-cert-priest' },
+    'Marriage Certificate':        { name: ['marriage-cert-groom-name', 'marriage-cert-bride-name'], officiant: 'marriage-cert-priest' },
+    'Death Certificate':           { name: ['death-cert-name'], officiant: 'death-cert-priest' },
+  };
+
+  // subject: the detail key(s) naming the person(s) the certificate is about;
+  // date / birth: the detail keys the archive record's event date and birthdate fill.
+  const CERT_SPEC = {
+    'Baptismal Certificate':       { subject: ['baptized-name'],  date: 'baptism-date',       birth: 'birth-date', requesterIsSubject: true },
+    'Confirmation Certificate':    { subject: ['confirmed-name'], date: 'confirmation-date',  requesterIsSubject: true },
+    'First Communion Certificate': { subject: ['fc-name'],        date: 'fc-communion-date',  requesterIsSubject: true },
+    'Marriage Certificate':        { subject: ['groom-name', 'bride-name'], date: 'marriage-date' },
+    'Death Certificate':           { subject: ['deceased-name'],  date: 'death-date' },
+  };
+
+  // The View window's layout: [section, [[detail key, label, 'date'?], …]].
+  const CERT_VIEW_LAYOUT = {
+    'Baptismal Certificate': [
+      ['Baptized person', [['baptized-name', 'Full name'], ['birth-date', 'Date of birth', 'date'], ['birthplace', 'Place of birth'], ['baptism-date', 'Date of baptism', 'date'], ['officiant', 'Officiant']]],
+      ['Family', [['father-name', "Father's name"], ['mother-name', "Mother's name"]]],
+      ['Godparents', [['sponsor-1', 'Sponsor 1'], ['sponsor-2', 'Sponsor 2']]],
+    ],
+    'Confirmation Certificate': [
+      ['Confirmand', [['confirmed-name', 'Full name'], ['baptism-date', 'Date of baptism', 'date'], ['confirmation-name', 'Confirmation name'], ['confirmation-date', 'Date of confirmation', 'date'], ['officiant', 'Bishop']]],
+      ['Family', [['father-name', "Father's name"], ['mother-name', "Mother's name"]]],
+      ['Sponsor', [['sponsor-name', "Sponsor's name"]]],
+    ],
+    'First Communion Certificate': [
+      ['Communicant', [['fc-name', 'Full name'], ['fc-communion-date', 'Date of First Communion', 'date'], ['officiant', 'Officiant']]],
+    ],
+    'Marriage Certificate': [
+      ['Groom', [['groom-name', 'Full name'], ['groom-father', "Father's name"], ['groom-mother', "Mother's maiden name"]]],
+      ['Bride', [['bride-name', 'Full name'], ['bride-father', "Father's name"], ['bride-mother', "Mother's maiden name"]]],
+      ['Wedding', [['marriage-date', 'Date of marriage', 'date'], ['marriage-place', 'Place of marriage'], ['witness-1', 'Witness 1'], ['witness-2', 'Witness 2'], ['officiant', 'Officiant']]],
+    ],
+    'Death Certificate': [
+      ['Deceased', [['deceased-name', 'Full name'], ['age', 'Age'], ['death-date', 'Date of death', 'date'], ['place-of-death', 'Place of death']]],
+      ['Burial', [['burial-date', 'Date of burial', 'date'], ['burial-place', 'Place of burial']]],
+    ],
   };
 
   /* Request-form key → Generate field, and which of those fields are name groups, per type
@@ -900,89 +888,122 @@ document.addEventListener('DOMContentLoaded', () => {
     return !!el && !el.value;
   };
 
-  /* Fills only the boxes that are still empty, so nothing the office typed or the
-     request itself supplied is overwritten. Returns how many boxes it filled. */
+  async function resolveCertificateData(r) {
+    const spec = CERT_SPEC[r.certificateType];
+    const maps = generateDetailMaps()[r.certificateType];
+    if (!spec || !maps) return {};
+    const [mapping, nameIds] = maps;
+    const isName = (k) => nameIds.includes(mapping[k]);
+    const data = {};
+
+    // First value wins; empty values and keys this certificate doesn't use are ignored.
+    const put = (k, v) => {
+      if ((!(k in mapping) && k !== 'officiant') || data[k] !== undefined) return;
+      if (isName(k)) {
+        if (typeof v === 'string') v = v.trim() ? splitFullName(v) : null;
+        else if (v && typeof v === 'object' && v.firstName && !v.middleName && !v.lastName) v = splitFullName(v.firstName);
+        if (!v || typeof v !== 'object' || isNameEmpty(v)) return;
+      } else {
+        if (typeof v === 'number') v = String(v);
+        if (typeof v !== 'string' || !v.trim()) return;
+      }
+      data[k] = v;
+    };
+
+    // 1. The request's own answers.
+    const own = parseDetails(r);
+    Object.entries(own).forEach(([k, v]) => put(k, v));
+
+    // 2. The archive entry it was verified against (or the copy saved on the request).
+    const rec = (await linkedRecordFor(r)) || (own['Record Name'] ? {
+      fullName: own['Record Name'], dateOfEvent: own['Record Event Date'], officiant: own['Record Officiant'],
+    } : null);
+    if (rec) {
+      // Marriage entries read "Groom & Bride"; the others are one name.
+      const names = String(rec.fullName || '').split('&').map(s => s.trim()).filter(Boolean);
+      spec.subject.forEach((k, i) => put(k, spec.subject.length > 1 ? names[i] : rec.fullName));
+      put(spec.date, rec.dateOfEvent);
+      if (spec.birth) put(spec.birth, rec.birthdate);
+      put('officiant', rec.officiant);
+    }
+
+    // 3. Still no name: the requester's own.
+    if (spec.requesterIsSubject) put(spec.subject[0], r.requesterName);
+
+    // 4. The same person's other requests (parents, sponsors, places), newest first.
+    const subjectKey = nameKey(data[spec.subject[0]]);
+    requests
+      .filter(o => o.id !== r.id && o.details && (
+        (r.linkedRecordId && o.linkedRecordId === r.linkedRecordId) ||
+        (subjectKey && SUBJECT_KEYS.some(k => nameKey(parseDetails(o)[k]) === subjectKey))))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+      .forEach(o => Object.entries(parseDetails(o)).forEach(([k, v]) => put(k, v)));
+
+    // 5. The family directory: parents, birthdate and birthplace of people it knows.
+    const person = data[spec.subject[0]] && lookupPerson(formatFullName(data[spec.subject[0]]));
+    if (person) {
+      put('father-name', person.father); put('mother-name', person.mother);
+      put('birth-date', person.birthdate); put('birthplace', person.birthplace);
+    }
+    return data;
+  }
+
+  /* View: the request's details, filled in by the system. */
+  function renderCertDetails(r) {
+    const box = document.getElementById('view-cert-details');
+    const layout = CERT_VIEW_LAYOUT[r.certificateType];
+    if (!layout) { box.innerHTML = ''; return; }
+    box.innerHTML = '<p class="text-xs text-gray-400 mt-3">Loading details from the parish records…</p>';
+    resolveCertificateData(r).then(data => {
+      if (viewModal.classList.contains('hidden') || viewGenerateBtn?.dataset.id !== r.id) return; // moved on
+      const show = (v, kind) => (!v ? '' : typeof v === 'object' ? formatFullName(v) : kind === 'date' ? longDate(v) : String(v));
+      box.innerHTML = layout.map(([title, rows]) => `
+        <div class="mt-4">
+          <p class="so-detail-label" style="font-weight:700;letter-spacing:.04em;text-transform:uppercase;">${escapeHtml(title)}</p>
+          <div class="so-detail-grid mt-2">${rows.map(([key, label, kind]) => {
+            const text = show(data[key], kind);
+            return `<div><p class="so-detail-label">${escapeHtml(label)}</p><p class="so-detail-value">${text ? escapeHtml(text) : '<span class="text-gray-400">—</span>'}</p></div>`;
+          }).join('')}</div>
+        </div>`).join('');
+    }).catch(err => {
+      console.error("Couldn't load the request details:", err);
+      box.innerHTML = '<p class="text-xs text-red-500 mt-3">Couldn’t load the details from the parish records.</p>';
+    });
+  }
+
+  /* Generate: puts the same data into the certificate's boxes (only empty ones,
+     so nothing already typed is overwritten). Returns how many it filled. */
   function fillEmptyFromDetails(mapping, details, nameIds) {
     let filled = 0;
     Object.entries(mapping).forEach(([detailKey, fid]) => {
       const value = details[detailKey];
       if (!value || !isFieldEmpty(fid, nameIds)) return;
-      if (nameIds.includes(fid)) {
-        if (typeof value !== 'object' || isNameEmpty(value)) return;
-        setNameFields(fid, value);
-      } else if (typeof value === 'string') {
-        document.getElementById(fid).value = value;
-      } else return;
+      if (nameIds.includes(fid)) setNameFields(fid, value);
+      else document.getElementById(fid).value = value;
       filled++;
     });
     return filled;
   }
 
-  async function fillGenerateFromRecord(r) {
+  async function fillGenerateFromRecord(r, { quiet = false } = {}) {
     const map = GENERATE_FROM_RECORD[r.certificateType];
     if (!map) return;
-    let filled = 0;
+    const [mapping, nameIds] = generateDetailMaps()[r.certificateType];
 
-    // 0. A name that arrived as one string ("Maria Elena Cruz Villaruel" in the first box)
-    //    is split into first / middle / last / extension.
-    const [, allNameIds] = generateDetailMaps()[r.certificateType];
-    allNameIds.forEach(fid => {
+    // A name that arrived as one string ("Maria Elena Cruz Villaruel" in the first box)
+    // is split into first / middle / last / extension.
+    nameIds.forEach(fid => {
       const n = readNameFields(fid);
       if (n.firstName && !n.middleName && !n.lastName) setNameFields(fid, splitFullName(n.firstName));
     });
 
-    // 1. The archive entry the request was verified against.
-    // Falls back to the copy saved on the request when the archive entry can't be read.
-    const saved = parseDetails(r);
-    const rec = (await linkedRecordFor(r)) || (saved['Record Name'] ? {
-      fullName: saved['Record Name'], dateOfEvent: saved['Record Event Date'], officiant: saved['Record Officiant'],
-    } : null);
-    if (rec) {
-      // Marriage entries read "Groom & Bride"; the others are one name.
-      const names = rec.fullName ? (map.name.length > 1 ? rec.fullName.split('&') : [rec.fullName]) : [];
-      map.name.forEach((fid, i) => {
-        const full = (names[i] || '').trim();
-        if (full && isNameEmpty(readNameFields(fid))) { setNameFields(fid, splitFullName(full)); filled++; }
-      });
-      const setIfEmpty = (fid, value) => {
-        const el = fid && document.getElementById(fid);
-        if (el && value && !el.value) { el.value = value; filled++; }
-      };
-      setIfEmpty(map.date, rec.dateOfEvent);
-      setIfEmpty(map.birth, rec.birthdate);
-      // Whoever signed the register entry is the officiant; replaces the office's default.
-      const officiantEl = document.getElementById(map.officiant);
-      if (officiantEl && rec.officiant) { officiantEl.value = rec.officiant; filled++; }
-    }
+    const data = await resolveCertificateData(r);
+    let filled = fillEmptyFromDetails(mapping, data, nameIds);
+    // Whoever signed the register entry is the officiant; replaces the office's default.
+    const officiantEl = document.getElementById(map.officiant);
+    if (officiantEl && data.officiant) { officiantEl.value = data.officiant; filled++; }
 
-    // 2. What the parish already holds about the same person from other requests
-    //    (parents, sponsors, places), newest first, so none of it is typed twice.
-    const [mapping, nameIds] = generateDetailMaps()[r.certificateType];
-    const subjectKey = nameKey(readNameFields(map.name[0]));
-    const related = requests
-      .filter(o => o.id !== r.id && o.details && (
-        (r.linkedRecordId && o.linkedRecordId === r.linkedRecordId) ||
-        (subjectKey && SUBJECT_KEYS.some(k => nameKey(parseDetails(o)[k]) === subjectKey))))
-      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-    related.forEach(o => { filled += fillEmptyFromDetails(mapping, parseDetails(o), nameIds); });
-
-    // 3. The family directory: parents, birthdate and birthplace of people it knows.
-    const person = lookupPerson(formatFullName(readNameFields(map.name[0])));
-    if (person) {
-      const setNameIfEmpty = (fid, name) => {
-        if (fid && name && isNameEmpty(readNameFields(fid))) { setNameFields(fid, name); filled++; }
-      };
-      const setIfEmpty = (fid, value) => {
-        const el = fid && document.getElementById(fid);
-        if (el && value && !el.value) { el.value = value; filled++; }
-      };
-      setNameIfEmpty(map.father, person.father);
-      setNameIfEmpty(map.mother, person.mother);
-      setIfEmpty(map.birth, person.birthdate);
-      setIfEmpty(map.birthplace, person.birthplace);
-    }
-
-    if (filled) showToast('Form filled in from the parish records — please check it before generating.');
+    if (filled && !quiet) showToast('Form filled in from the parish records — please check it before generating.');
   }
 
   /* ------------------------------------------
@@ -1131,11 +1152,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     prefillCertFieldsFromDetails(requestDetailsToCertField, details, certNameFieldIds);
 
-    // Fallback if the requester's own name wasn't captured as the
-    // baptized person's name (e.g. a draft with no linked request).
-    if (isNameEmpty(readNameFields('cert-child-name')) && r.requesterName) {
-      setNameFields('cert-child-name', { firstName: r.requesterName });
-    }
     document.getElementById('cert-priest').value = 'Fredrick Edward C. Simon';
     document.getElementById('cert-dated').value = new Date().toISOString().slice(0, 10);
 
@@ -1209,9 +1225,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     prefillCertFieldsFromDetails(requestDetailsToConfirmationCertField, details, confirmationCertNameFieldIds);
 
-    if (isNameEmpty(readNameFields('confirm-cert-name')) && r.requesterName) {
-      setNameFields('confirm-cert-name', { firstName: r.requesterName });
-    }
     document.getElementById('confirm-cert-bishop').value = document.getElementById('confirm-cert-bishop').value || 'Honesto F. Ongtioco';
     document.getElementById('confirm-cert-dated').value = new Date().toISOString().slice(0, 10);
 
@@ -1276,9 +1289,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     prefillCertFieldsFromDetails(requestDetailsToFirstCommunionCertField, details, firstCommunionCertNameFieldIds);
 
-    if (isNameEmpty(readNameFields('fc-cert-name')) && r.requesterName) {
-      setNameFields('fc-cert-name', { firstName: r.requesterName });
-    }
     document.getElementById('fc-cert-priest').value = 'Fredrick Edward C. Simon';
     document.getElementById('fc-cert-purpose').value = r.purpose || '';
     document.getElementById('fc-cert-dated').value = new Date().toISOString().slice(0, 10);
