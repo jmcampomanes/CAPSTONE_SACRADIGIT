@@ -5,9 +5,19 @@
 import { guardPage, homeFor } from '../../shared/js/auth.js';
 import { can, PAGE_MODULES } from '../../shared/js/permissions.js';
 
+/* Pages hidden from the menu (and bounced to the dashboard if opened by link) while they are not ready,
+   e.g. for a presentation. Empty this list to bring them back. */
+const HIDDEN_PAGES = ['columbary.html', 'families.html'];
+if (HIDDEN_PAGES.length) {
+  const st = document.createElement('style');
+  st.textContent = HIDDEN_PAGES.map(h => `li:has(> a.sidebar-link[href="${h}"])`).join(',') + '{display:none !important}';
+  document.head.appendChild(st);
+}
+
 // Only signed-in people with the right role get past this (see auth.js).
 const thisPage = window.location.pathname.split('/').pop();
 guardPage('admin').then((user) => {
+  if (HIDDEN_PAGES.includes(thisPage)) { window.location.replace('dashboard.html'); return; }
   addToolLinks(user);
   // The role matrix decides the pages added after the portal was built.
   const module = PAGE_MODULES[thisPage];
