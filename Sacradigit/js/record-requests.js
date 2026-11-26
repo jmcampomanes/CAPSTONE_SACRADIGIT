@@ -12,6 +12,7 @@ import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFul
 import { notifyCertificateUpdate } from '../../shared/js/email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../../shared/js/marriage-request-form.js';
 import { createCertStepForm } from '../../shared/js/certificate-step-forms.js';
+import { splitName } from './scanner/scan-engine.js';
 import { showToast, confirmDialog, reportEmail } from './admin-ui.js';
 import { attachMockAutofill } from '../../shared/js/mock-autofill.js';
 import { trackArrivals, isFresh } from '../../shared/js/motion.js'; // new rows arrive gold (motion-guide.html)
@@ -772,24 +773,94 @@ document.addEventListener('DOMContentLoaded', () => {
      empty (the verified ones hold no typed answers) comes from the linked
      archive entry — the person's name and the date of the event. */
   const GENERATE_FROM_RECORD = {
-    'Baptismal Certificate':       { name: ['cert-child-name'], date: 'cert-baptism-date' },
-    'Confirmation Certificate':    { name: ['confirm-cert-name'], date: 'confirm-cert-date' },
-    'First Communion Certificate': { name: ['fc-cert-name'], date: 'fc-cert-communion-date' },
-    'Marriage Certificate':        { name: ['marriage-cert-groom-name', 'marriage-cert-bride-name'], date: 'marriage-cert-marriage-date' },
-    'Death Certificate':           { name: ['death-cert-name'], date: 'death-cert-death-date' },
+    'Baptismal Certificate':       { name: ['cert-child-name'], date: 'cert-baptism-date', birth: 'cert-birth-date', officiant: 'cert-priest' },
+    'Confirmation Certificate':    { name: ['confirm-cert-name'], date: 'confirm-cert-date', officiant: 'confirm-cert-bishop' },
+    'First Communion Certificate': { name: ['fc-cert-name'], date: 'fc-cert-communion-date', officiant: 'fc-cert-priest' },
+    'Marriage Certificate':        { name: ['marriage-cert-groom-name', 'marriage-cert-bride-name'], date: 'marriage-cert-marriage-date', officiant: 'marriage-cert-priest' },
+    'Death Certificate':           { name: ['death-cert-name'], date: 'death-cert-death-date', officiant: 'death-cert-priest' },
   };
+
+  /* Request-form key → Generate field, and which of those fields are name groups, per type
+     (the tables are declared with each Generate window below). */
+  const generateDetailMaps = () => ({
+    'Baptismal Certificate':       [requestDetailsToCertField, certNameFieldIds],
+    'Confirmation Certificate':    [requestDetailsToConfirmationCertField, confirmationCertNameFieldIds],
+    'First Communion Certificate': [requestDetailsToFirstCommunionCertField, firstCommunionCertNameFieldIds],
+    'Marriage Certificate':        [requestDetailsToMarriageCertField, marriageCertNameFieldIds],
+    'Death Certificate':           [requestDetailsToDeathCertField, deathCertNameFieldIds],
+  });
+
+  const nameKey = (n) => {
+    const clean = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
+    return n && clean(n.firstName) && clean(n.lastName) ? `${clean(n.firstName)}|${clean(n.lastName)}` : '';
+  };
+  const SUBJECT_KEYS = ['baptized-name', 'confirmed-name', 'fc-name', 'deceased-name', 'groom-name'];
+  const parseDetails = (q) => { try { return q.details ? JSON.parse(q.details) : {}; } catch { return {}; } };
+  const isFieldEmpty = (fid, nameIds) => {
+    if (nameIds.includes(fid)) return isNameEmpty(readNameFields(fid));
+    const el = document.getElementById(fid);
+    return !!el && !el.value;
+  };
+
+  /* Fills only the boxes that are still empty, so nothing the office typed or the
+     request itself supplied is overwritten. Returns how many boxes it filled. */
+  function fillEmptyFromDetails(mapping, details, nameIds) {
+    let filled = 0;
+    Object.entries(mapping).forEach(([detailKey, fid]) => {
+      const value = details[detailKey];
+      if (!value || !isFieldEmpty(fid, nameIds)) return;
+      if (nameIds.includes(fid)) {
+        if (typeof value !== 'object' || isNameEmpty(value)) return;
+        setNameFields(fid, value);
+      } else if (typeof value === 'string') {
+        document.getElementById(fid).value = value;
+      } else return;
+      filled++;
+    });
+    return filled;
+  }
+
   async function fillGenerateFromRecord(r) {
     const map = GENERATE_FROM_RECORD[r.certificateType];
-    const rec = map && await linkedRecordFor(r);
-    if (!rec) return;
-    // Marriage entries read "Groom & Bride"; the others are one name.
-    const names = rec.fullName ? (map.name.length > 1 ? rec.fullName.split('&') : [rec.fullName]) : [];
-    map.name.forEach((fid, i) => {
-      const full = (names[i] || '').trim();
-      if (full && isNameEmpty(readNameFields(fid))) setNameFields(fid, { firstName: full });
-    });
-    const dateEl = document.getElementById(map.date);
-    if (dateEl && !dateEl.value && rec.dateOfEvent) dateEl.value = rec.dateOfEvent;
+    if (!map) return;
+    let filled = 0;
+
+    // 1. The archive entry the request was verified against.
+    // Falls back to the copy saved on the request when the archive entry can't be read.
+    const saved = parseDetails(r);
+    const rec = (await linkedRecordFor(r)) || (saved['Record Name'] ? {
+      fullName: saved['Record Name'], dateOfEvent: saved['Record Event Date'], officiant: saved['Record Officiant'],
+    } : null);
+    if (rec) {
+      // Marriage entries read "Groom & Bride"; the others are one name.
+      const names = rec.fullName ? (map.name.length > 1 ? rec.fullName.split('&') : [rec.fullName]) : [];
+      map.name.forEach((fid, i) => {
+        const full = (names[i] || '').trim();
+        if (full && isNameEmpty(readNameFields(fid))) { setNameFields(fid, splitName(full)); filled++; }
+      });
+      const setIfEmpty = (fid, value) => {
+        const el = fid && document.getElementById(fid);
+        if (el && value && !el.value) { el.value = value; filled++; }
+      };
+      setIfEmpty(map.date, rec.dateOfEvent);
+      setIfEmpty(map.birth, rec.birthdate);
+      // Whoever signed the register entry is the officiant; replaces the office's default.
+      const officiantEl = document.getElementById(map.officiant);
+      if (officiantEl && rec.officiant) { officiantEl.value = rec.officiant; filled++; }
+    }
+
+    // 2. What the parish already holds about the same person from other requests
+    //    (parents, sponsors, places), newest first, so none of it is typed twice.
+    const [mapping, nameIds] = generateDetailMaps()[r.certificateType];
+    const subjectKey = nameKey(readNameFields(map.name[0]));
+    const related = requests
+      .filter(o => o.id !== r.id && o.details && (
+        (r.linkedRecordId && o.linkedRecordId === r.linkedRecordId) ||
+        (subjectKey && SUBJECT_KEYS.some(k => nameKey(parseDetails(o)[k]) === subjectKey))))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    related.forEach(o => { filled += fillEmptyFromDetails(mapping, parseDetails(o), nameIds); });
+
+    if (filled) showToast('Form filled in from the parish records — please check it before generating.');
   }
 
   /* ------------------------------------------

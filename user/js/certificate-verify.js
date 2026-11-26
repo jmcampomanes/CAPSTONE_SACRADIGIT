@@ -115,7 +115,14 @@ export function mountRecordCheck(formWrap, selectedType, onDone) {
         await saveCertificateRequest({
           certificateType: selectedType.name,
           purpose,
-          details: { 'Verified Against Record': 'Yes' },
+          // What the parish matched, kept on the request so the office sees it without
+          // opening the archive. The server overwrites these from the record itself.
+          details: {
+            'Verified Against Record': 'Yes',
+            ...(record.fullName ? { 'Record Name': record.fullName } : {}),
+            ...(record.dateOfEvent ? { 'Record Event Date': record.dateOfEvent } : {}),
+            ...(record.officiant ? { 'Record Officiant': record.officiant } : {}),
+          },
           verification: input, // the server checks these again
           recordId: record.recordId, // used only by the pre-deploy fallback
         });
