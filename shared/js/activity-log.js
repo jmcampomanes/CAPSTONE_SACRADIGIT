@@ -49,7 +49,13 @@ let logClient = null;
 // them (BACKEND_CHANGES.md). Sending a field the model lacks fails the whole write.
 const HAS_AUDIT_FIELDS = !!outputs.data?.model_introspection?.models?.AccessLog?.fields?.actorRole;
 const SNAPSHOT_LIMIT = 2000;
-const snapshot = (obj) => (obj ? JSON.stringify(obj).slice(0, SNAPSHOT_LIMIT) : undefined);
+// Long values are shortened one by one so the saved text stays valid JSON the audit page can read.
+const snapshot = (obj) => {
+  if (!obj) return undefined;
+  const cap = (n) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, typeof v === 'string' && v.length > n ? v.slice(0, n) + '…' : v]));
+  for (const n of [600, 250, 100]) { const text = JSON.stringify(cap(n)); if (text.length <= SNAPSHOT_LIMIT) return text; }
+  return JSON.stringify(cap(100)).slice(0, SNAPSHOT_LIMIT);
+};
 
 /** The fields that say who wrote a log entry, for any AccessLog.create. */
 export const actorFields = () => {
@@ -116,6 +122,14 @@ export function installActivityLog(client) {
         if (HAS_AUDIT_FIELDS && op === 'update' && input?.id && signedInStaff()) {
           const { data } = await api.get({ id: input.id }).catch(() => ({}));
           if (data) before = Object.fromEntries(Object.keys(input).map(k => [k, data[k]]));
+        }
+        // A deleted record is gone afterwards, so keep what it held for the audit trail.
+        if (HAS_AUDIT_FIELDS && op === 'delete' && input?.id && signedInStaff()) {
+          const { data } = await api.get({ id: input.id }).catch(() => ({}));
+          if (data) {
+            const { id, createdAt, updatedAt, owner, ...rest } = data; // eslint-disable-line no-unused-vars
+            before = Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== null && v !== undefined && v !== ''));
+          }
         }
         const result = await original(input, options);
         if (result && !result.errors && signedInStaff()) {

@@ -13,6 +13,10 @@ const PAGE_INFO = {
     title: 'What’s on this page?',
     text: 'How many events the parish held each month, with their dates and priests. Press a month to see its events.',
   },
+  'audit-log.html': {
+    title: 'What’s on this page?',
+    text: 'Who added, edited, deleted or opened a parishioner’s archive record, certificate request or profile, and exactly which details changed. Pick an account to see only its changes, and export the list as a CSV.',
+  },
   'families.html': {
     title: 'What’s on this page?',
     text: 'Every family the records show: couples from marriage records, and children linked to the parents named on certificate requests. Open a family to see its people and their records.',

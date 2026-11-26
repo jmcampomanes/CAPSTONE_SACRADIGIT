@@ -29,6 +29,7 @@ const ADMIN_TOOLS = [
   ['payment-reports.html', 'Payment Reports', 'payments', 'reports'],
   ['families.html', 'Families', 'families', 'records'],
   ['statistics.html', 'Statistics', 'statistics', 'reports'],
+  ['audit-log.html', 'Audit Log', 'audit-log', 'logs'],
   ['parish-rules.html', 'Parish Rules & Fees', 'parish-rules', 'parishRules'],
   ['roles-access.html', 'Roles & Access', 'roles-access', 'roles'],
 ];

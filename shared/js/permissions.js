@@ -53,6 +53,7 @@ export const PAGE_MODULES = {
   'payment-reports.html': 'reports',
   'statistics.html': 'reports',
   'families.html': 'records',
+  'audit-log.html': 'logs',
   'roles-access.html': 'roles',
 };
 
