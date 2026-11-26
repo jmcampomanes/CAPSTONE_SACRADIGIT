@@ -198,8 +198,6 @@ export const PORTAL_DIRECTORY = [
       what: { en: 'Offer a Mass intention (Thanksgiving, Special Intention, or for a Soul) and track it.', fil: 'Mag-alay ng intensyon sa Misa (Pasasalamat, Espesyal na Intensyon, o para sa Kaluluwa) at subaybayan ito.' } },
     { page: 'user-facility-booking.html', en: 'Facility Booking', fil: 'Pag-book ng Pasilidad',
       what: { en: 'Book the Multi-Purpose Hall or the 3rd Floor Hall; see or cancel your bookings.', fil: 'Mag-book ng Multi-Purpose Hall o ng 3rd Floor Hall; tingnan o kanselahin ang iyong booking.' } },
-    { page: 'user-columbary.html', en: 'Columbary', fil: 'Columbary',
-      what: { en: 'See which columbary niches are available, ask the office to reserve one, and track your requests.', fil: 'Tingnan kung aling niche sa columbary ang bakante, mag-request na i-reserve ang isa, at subaybayan ang iyong request.' } },
   ] },
   { section: { en: 'Finance', fil: 'Pananalapi' }, pages: [
     { page: 'user-donations.html', en: 'Donations', fil: 'Mga Donasyon',
