@@ -42,6 +42,7 @@ import {
   BAPTISM_TYPE_KEY, BAPTISM_TYPE_LABELS, PUBLIC_DATE_KEY, typeChooserHtml, dateListHtml, watchDates, holdRows,
   dateState, serviceLabel,
 } from '../../shared/js/public-baptism.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 // A pending blessing holds its slot until the office decides, so one person
 // can only have this many waiting at once (keeps spam from filling the calendar).
@@ -400,10 +401,12 @@ export function initServiceRequestPage(serviceId) {
     const row = (label, value) => value ? `<div><p class="modal-detail-item-label">${escapeHtml(label)}</p><p class="modal-detail-item-value">${escapeHtml(value)}</p></div>` : '';
     document.getElementById('svc-success-details').innerHTML = [
       row('Service', name),
+      row('Reference no.', trackingId('service', bookingId)),
       row(approval ? 'Requested Slot' : 'Schedule', `${fmtLongDate(slot.date)} at ${slot.time}`),
       row('Location', location),
       row('Status', payment ? 'Payment being checked' : approval ? 'Awaiting Approval' : 'Scheduled'),
       payment ? row('Payment', `${peso(payment.amount)} by ${payment.method}, transaction no. ${payment.referenceNumber}`) : '',
+      payment?.recordId ? row('Payment ref.', trackingId('payment', payment.recordId)) : '',
     ].join('');
     const detailsEl = document.getElementById('svc-success-details');
     detailsEl.parentElement.querySelector('.svc-reminder')?.remove();
@@ -889,12 +892,14 @@ export function initServiceRequestPage(serviceId) {
       });
 
       let paymentSaved = true;
+      let paymentRecordId = '';
       if (payReq && paid) {
         try {
-          await submitPayment({
+          const savedPayment = await submitPayment({
             requestType: 'Service', requestId: result.data?.id, payerName: REQUESTER_NAME,
             amount: paid.amount, method: paid.method, referenceNumber: paid.referenceNumber, note: 'Paid with the request',
           });
+          paymentRecordId = savedPayment?.id || '';
         } catch (payErr) {
           paymentSaved = false;
           console.error('Request saved, but its payment record was not:', payErr);
@@ -926,7 +931,7 @@ export function initServiceRequestPage(serviceId) {
         }).catch(err => console.warn('Could not save details to the profile:', err));
       }
 
-      showServiceSuccess({ slot, approval, location, bookingId: result.data?.id, name: isBaptism ? serviceLabel(result.data) : svc.name, payment: payReq && paid ? { ...paid, saved: paymentSaved } : null, atParish: !!(payReq && !paid) });
+      showServiceSuccess({ slot, approval, location, bookingId: result.data?.id, name: isBaptism ? serviceLabel(result.data) : svc.name, payment: payReq && paid ? { ...paid, saved: paymentSaved, recordId: paymentRecordId } : null, atParish: !!(payReq && !paid) });
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);

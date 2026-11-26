@@ -12,6 +12,7 @@ import { printReport, tableHtml } from '../../shared/js/print-report.js';
 import { logActivity } from '../../shared/js/activity-log.js';
 import { peso } from '../../shared/js/parish-rules.js';
 import { showToast } from './admin-ui.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 const REQUEST_TYPES = ['Service', 'Mass Intention', 'Donation'];
 
@@ -30,6 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('pay-status').innerHTML = `<option value="">All statuses</option>${Object.entries(PAYMENT_STATUS_LABELS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}`;
 
   const dayOf = (r) => (r.createdAt || '').slice(0, 10);
+  // The number the person was given for what they paid for (the request's own number).
+  const REQUEST_KINDS = { Service: 'service', 'Mass Intention': 'intention', Donation: 'donation' };
+  const requestRef = (r) => trackingId(REQUEST_KINDS[r.requestType], r.requestId);
   function filtered() {
     const [type, method, status, from, to] = ['pay-type', 'pay-method-filter', 'pay-status', 'pay-from', 'pay-to'].map(id => $(id).value);
     return rows.filter(r => (!type || r.requestType === type) && (!method || r.method === method) && (!status || r.status === status)
@@ -48,17 +52,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('pay-by-type').innerHTML = REQUEST_TYPES.map(t => `<li><span>${t}</span><strong>${peso(sum(verified.filter(r => r.requestType === t)))}</strong></li>`).join('');
     $('pay-rows').innerHTML = shown.length ? shown.map(r => `
       <tr>
-        <td>${esc(dayOf(r))}</td><td>${esc(r.requestType)}</td><td>${esc(r.payerName)}</td>
+        <td>${esc(dayOf(r))}</td><td>${esc(r.requestType)}</td><td class="whitespace-nowrap">${esc(requestRef(r))}</td><td class="whitespace-nowrap">${esc(trackingId('payment', r.id))}</td><td>${esc(r.payerName)}</td>
         <td>${esc(peso(r.amount))}</td><td>${esc(r.method)}</td>
         <td>${esc(r.referenceNumber)}${dup.has(normalizeReference(r.referenceNumber)) ? ' <span class="badge badge-red">Used twice</span>' : ''}</td>
         <td>${esc(PAYMENT_STATUS_LABELS[r.status] || r.status)}</td>
-      </tr>`).join('') : '<tr><td colspan="7" class="text-center text-gray-400 py-6">No payments match.</td></tr>';
+      </tr>`).join('') : '<tr><td colspan="9" class="text-center text-gray-400 py-6">No payments match.</td></tr>';
   }
 
   ['pay-type', 'pay-method-filter', 'pay-status', 'pay-from', 'pay-to'].forEach(id => $(id).addEventListener('change', render));
 
-  const HEAD = ['Date', 'Request', 'Payer', 'Amount', 'Method', 'Transaction No.', 'Status'];
-  const cells = (r) => [dayOf(r), r.requestType, r.payerName, r.amount, r.method, r.referenceNumber, PAYMENT_STATUS_LABELS[r.status] || r.status];
+  const HEAD = ['Date', 'Request', 'Request Ref.', 'Payment Ref.', 'Payer', 'Amount', 'Method', 'Transaction No.', 'Status'];
+  const cells = (r) => [dayOf(r), r.requestType, requestRef(r), trackingId('payment', r.id), r.payerName, r.amount, r.method, r.referenceNumber, PAYMENT_STATUS_LABELS[r.status] || r.status];
 
   $('pay-export').addEventListener('click', () => {
     const quote = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;

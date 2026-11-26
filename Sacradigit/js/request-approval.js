@@ -24,6 +24,7 @@ import { baptismTypeOf, serviceLabel, fmtLong } from '../../shared/js/public-bap
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
 import { coupleEmails } from '../../shared/js/wedding-rules.js';
 import { reportEmail } from './admin-ui.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
 const detailsOf = (r) => { try { return (typeof r.details === 'string' ? JSON.parse(r.details) : r.details) || {}; } catch { return {}; } };
@@ -126,6 +127,7 @@ export function initRequestApproval({ showToast, onChange = () => {} }) {
     target.innerHTML = body ? `
       <section class="bn-panel ra-panel">
         <h4 class="bn-title">Approval and Payment <span class="badge badge-gray">${esc(paidWithRequest ? 'Paid, waiting for check' : (STATUS_LABELS[status] || status))}</span></h4>
+        <p class="bt-admin-sub">Reference no. <strong>${esc(trackingId('service', record.id))}</strong>${pay ? ` · Payment ${esc(trackingId('payment', pay.id))}` : ''}</p>
         ${body}
       </section>` : '';
   }

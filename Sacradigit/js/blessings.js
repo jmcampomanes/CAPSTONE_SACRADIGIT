@@ -28,6 +28,7 @@ import { liveStatus, isInProgress, STATUS_LABELS } from '../../shared/js/request
 import { notifyServiceUpdate } from '../../shared/js/email-notify.js';
 import { coupleEmails } from '../../shared/js/wedding-rules.js';
 import { showToast, reportEmail } from './admin-ui.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 // Where this request's emails go: saved on the record when the parishioner
 // submits it (or typed in by the office for a walk-in). Never the record's
@@ -1038,6 +1039,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!record) return;
+    extraRows = `<div><p class="so-detail-label">Reference no.</p><p class="so-detail-value">${trackingId('service', record.id)}</p></div>` + extraRows;
 
     const row = (label, value, wide) => `<div${wide ? ' style="grid-column: 1 / -1;"' : ''}><p class="so-detail-label">${escapeHtml(label)}</p><p class="so-detail-value">${escapeHtml(value)}</p></div>`;
     if (section !== 'upcoming' && record.location) extraRows += row('Location', record.location);

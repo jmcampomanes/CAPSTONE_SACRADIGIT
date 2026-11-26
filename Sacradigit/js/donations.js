@@ -11,6 +11,7 @@ import { reasonDialog } from '../../shared/js/staff-ui.js';
 import { currentUserName } from '../../shared/js/auth.js';
 import { logActivity } from '../../shared/js/activity-log.js';
 import { showToast } from './admin-ui.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -598,6 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     donationDetailBody.innerHTML = `
       <div class="so-detail-grid">
+        <div><p class="so-detail-label">Reference no.</p><p class="so-detail-value">${trackingId('donation', d.id)}</p></div>
         <div><p class="so-detail-label">Donor</p><p class="so-detail-value">${escapeHtml(d.donor)}</p></div>
         <div><p class="so-detail-label">Amount</p><p class="so-detail-value">${formatPeso(d.amount)}</p></div>
         <div><p class="so-detail-label">Payment Method</p><p class="so-detail-value">${escapeHtml(d.method)}</p></div>

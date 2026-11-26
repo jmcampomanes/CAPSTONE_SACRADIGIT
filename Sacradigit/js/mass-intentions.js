@@ -22,6 +22,7 @@ import { createIntentionForm } from '../../shared/js/mass-intention-form.js';
 import { showToast, reportEmail } from './admin-ui.js';
 import { trackArrivals, isFresh } from '../../shared/js/motion.js'; // new rows arrive gold (motion-guide.html)
 import { notifyMassIntentionUpdate } from '../../shared/js/email-notify.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -541,6 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     detailsBody.innerHTML = `
       <div class="so-detail-grid">
+        <div><p class="so-detail-label">Reference no.</p><p class="so-detail-value">${trackingId('intention', it.id)}</p></div>
         <div><p class="so-detail-label">Donor</p><p class="so-detail-value">${escapeHtml(it.donor)}</p></div>
         <div><p class="so-detail-label">Intention Type</p><p class="so-detail-value">${escapeHtml(it.type)}</p></div>
         <div><p class="so-detail-label">Status</p><p class="so-detail-value">${statusLabel[it.status] || it.status}</p></div>

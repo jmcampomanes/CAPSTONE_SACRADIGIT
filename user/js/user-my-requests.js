@@ -10,6 +10,7 @@ import { client } from '../../shared/js/amplify-init.js';
 import { getUrl } from 'aws-amplify/storage';
 import { formatFullName, isNameEmpty } from '../../shared/js/name-utils.js';
 import { createPager } from './pager.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -275,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalViewCertBtn.classList.toggle('hidden', !hasOfficialCopy(r));
 
     document.getElementById('modal-title').textContent = r.certificateType;
-    document.getElementById('modal-date').textContent  = `Submitted ${formatShortDate(r.createdAt)}`;
+    document.getElementById('modal-date').textContent  = `Submitted ${formatShortDate(r.createdAt)} · Ref. ${trackingId('certificate', r.id)}`;
 
     const statusBadge = document.getElementById('modal-status-badge');
     statusBadge.textContent = statusLabel[r.status] || r.status;

@@ -19,6 +19,7 @@ import { mountPaymentBox } from '../../shared/js/payment-box.js';
 import { paymentsReady, submitPayment, donationFieldsReady, isCounted } from '../../shared/js/payments.js';
 import { hasDonationMutation, submitDonation } from '../../shared/js/secure-actions.js';
 import { currentUserName } from '../../shared/js/auth.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -213,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tbody.innerHTML = sorted.map(d => `
       <tr>
-        <td class="font-medium text-gray-900">${escapeHtml(d.purpose)}</td>
+        <td class="font-medium text-gray-900">${escapeHtml(d.purpose)}<br><span class="text-xs text-gray-400">Ref. ${trackingId('donation', d.id)}</span></td>
         <td class="donation-amount">${formatPeso(d.amount)}</td>
         <td><span class="payment-pill">${escapeHtml(d.method)}</span></td>
         <td class="text-gray-400">${formatShortDate(d.date)}</td>

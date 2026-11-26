@@ -22,6 +22,7 @@ import { trackArrivals, isFresh } from '../../shared/js/motion.js'; // new rows 
 // convention as Sacradigit/blessings.js.
 const recipientEmail = (r) => r?.email || ''; // saved when the parishioner submits; never the owner (staff for office-made requests)
 const certEmail = (r, status, reason) => notifyCertificateUpdate({ to: recipientEmail(r), name: r.requesterName, certificateType: r.certificateType, status, reason });
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -732,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     viewName.textContent = r.requesterName;
     viewType.textContent = r.certificateType;
-    viewDate.textContent = formatDate(r.createdAt);
+    viewDate.textContent = `${formatDate(r.createdAt)} · Ref. ${trackingId('certificate', r.id)}`;
     viewPurpose.textContent = r.purpose || '—';
 
     const showReason = r.status === 'rejected' && !!r.rejectionReason;

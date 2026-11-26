@@ -33,6 +33,7 @@ import { formatFullName, isNameEmpty } from '../../shared/js/name-utils.js';
 import { createPager } from './pager.js';
 import { SERVICE_TYPES, needsApproval } from '../../shared/js/service-catalog.js';
 import { downloadBookingIcs, MAP_PIN_LABEL, googleMapsUrl, createSlotPicker, slotHasRoom, watchClosures, RESCHEDULE_REASON_LABEL, APPROVED_LABEL, detailsWithRescheduleReason, createReasonField, canReschedule, isPastSchedule } from '../../shared/js/service-schedule.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -236,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('detail-modal-title').textContent = `${serviceLabel(r) || svc.name} Request`;
     modalStatusBadge.textContent = labelFor(r);
     modalStatusBadge.className = `badge ${notApproved(r) ? 'badge-red' : (badgeClass[effectiveStatus(r)] || 'badge-gray')}`;
-    modalSubmittedDate.textContent = `Submitted ${fmtDate(r.createdAt)}`;
+    modalSubmittedDate.textContent = `Submitted ${fmtDate(r.createdAt)} · Ref. ${trackingId('service', r.id)}`;
 
     modalDetails.innerHTML = Object.entries(details)
       .filter(([label]) => !isPrepKey(label))

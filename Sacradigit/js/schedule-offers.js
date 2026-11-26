@@ -34,6 +34,7 @@ import { liveStatus, isInProgress } from '../../shared/js/request-status.js';
 import { uploadedFileUrl } from '../../shared/js/requirement-uploads.js';
 import { initPublicBaptismPanel } from './public-baptism-panel.js';
 import { BAPTISM_TYPE_KEY, NOT_SPECIFIED, baptismTypeOf, serviceLabel, detailsWithBaptismType } from '../../shared/js/public-baptism.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -601,6 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ['Name', escapeHtml(o.requesterName) || '—'],
       ['Contact', escapeHtml(o.contact) || '—'],
       ['Submitted', fmtDateTime(o.createdAt)],
+      ['Reference no.', escapeHtml(trackingId('service', o.id))],
     ];
 
     const infoRows = Object.entries(details)

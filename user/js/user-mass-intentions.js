@@ -16,6 +16,7 @@ import { loadCommunityIntentions } from '../../shared/js/public-data.js';
 import { currentUserName, currentUser } from '../../shared/js/auth.js';
 import { formatFullName } from '../../shared/js/name-utils.js';
 import { createIntentionForm } from '../../shared/js/mass-intention-form.js';
+import { trackingId } from '../../shared/js/tracking-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -541,6 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="name-chip-list">${names.map(n => `<span class="name-chip">${escapeHtml(nameDisplay(n))}</span>`).join('')}</div>
       </div>
       <div class="modal-detail-grid">
+        <div><p class="modal-detail-item-label">Reference no.</p><p class="modal-detail-item-value">${trackingId('intention', it.id)}</p></div>
         <div><p class="modal-detail-item-label">Submitted</p><p class="modal-detail-item-value">${formatShort(it.createdAt)}</p></div>
         <div><p class="modal-detail-item-label">Mass Date</p><p class="modal-detail-item-value">${it.massDate ? formatShort(it.massDate) : 'Awaiting assignment'}</p></div>
         <div><p class="modal-detail-item-label">Offering</p><p class="modal-detail-item-value text-green-700">${formatPeso(it.offering)}</p></div>

@@ -11,12 +11,13 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
+import { trackingId, trackingQuery } from '../../shared/js/tracking-id.js';
 
 const SOURCES = [
-  { model: 'CertificateRequest', name: r => r.requesterName, title: r => r.certificateType, date: r => r.createdAt, kind: 'Certificate', href: 'record-requests.html' },
-  { model: 'Blessing', name: r => r.requesterName, title: r => r.type, date: r => r.preferredDate || r.date || r.createdAt, kind: 'Service', href: 'blessings.html' },
-  { model: 'FacilityBooking', name: r => r.requesterName, title: r => r.facilityName, date: r => r.date || r.createdAt, kind: 'Facility', href: 'facility-booking.html' },
-  { model: 'MassIntention', name: r => r.donor, title: r => `Mass intention · ${r.type || ''}`, date: r => r.massDate || r.createdAt, kind: 'Intention', href: 'mass-intentions.html' },
+  { model: 'CertificateRequest', track: 'certificate', name: r => r.requesterName, title: r => r.certificateType, date: r => r.createdAt, kind: 'Certificate', href: 'record-requests.html' },
+  { model: 'Blessing', track: 'service', name: r => r.requesterName, title: r => r.type, date: r => r.preferredDate || r.date || r.createdAt, kind: 'Service', href: 'blessings.html' },
+  { model: 'FacilityBooking', track: 'booking', name: r => r.requesterName, title: r => r.facilityName, date: r => r.date || r.createdAt, kind: 'Facility', href: 'facility-booking.html' },
+  { model: 'MassIntention', track: 'intention', name: r => r.donor, title: r => `Mass intention · ${r.type || ''}`, date: r => r.massDate || r.createdAt, kind: 'Intention', href: 'mass-intentions.html' },
   { model: 'ParishRecord', name: r => r.fullName, title: r => `${r.type ? r.type.charAt(0).toUpperCase() + r.type.slice(1) : 'Parish'} record`, date: r => r.dateOfEvent || r.createdAt, kind: 'Record', href: 'digital-archives.html' },
 ];
 const STATUS_TONE = { pending: 'badge-amber', approved: 'badge-green', scheduled: 'badge-green', released: 'badge-blue', completed: 'badge-blue', digitized: 'badge-green', rejected: 'badge-red', cancelled: 'badge-red', declined: 'badge-red' };
@@ -121,10 +122,13 @@ export function initFindPerson() {
 
   function render() {
     const q = norm(input.value);
-    if (q.length < 2) { body.innerHTML = '<p class="fp-hint">Type at least 2 letters of a name. Results cover certificate requests, blessings and other services, facility bookings, Mass intentions and archive records.</p>'; return; }
+    const code = trackingQuery(input.value); // a reference number, e.g. SRV-1A2B-3C4D
+    if (!code && q.length < 2) { body.innerHTML = '<p class="fp-hint">Type at least 2 letters of a name. Results cover certificate requests, blessings and other services, facility bookings, Mass intentions and archive records.</p>'; return; }
     if (!rows) { body.innerHTML = '<p class="fp-hint">Loading…</p>'; return; }
     const words = q.split(' ');
-    const hits = rows.filter(x => words.every(w => x.key.includes(w)));
+    const hits = code
+      ? rows.filter(x => x.src.track && trackingId(x.src.track, x.r.id).replace(/-/g, '').startsWith(code))
+      : rows.filter(x => words.every(w => x.key.includes(w)));
     if (!hits.length) { body.innerHTML = `<p class="fp-hint">No one named “${esc(input.value.trim())}” in requests, services, bookings, intentions or records.</p>`; return; }
     // Group by person, newest first inside each.
     const people = new Map();
