@@ -13,7 +13,6 @@ import { notifyCertificateUpdate } from '../../shared/js/email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../../shared/js/marriage-request-form.js';
 import { createCertStepForm } from '../../shared/js/certificate-step-forms.js';
 import { lookupPerson, splitFullName } from './seed-data/family-directory.js';
-import { getUrl } from 'aws-amplify/storage';
 import { showToast, confirmDialog, reportEmail } from './admin-ui.js';
 import { attachMockAutofill } from '../../shared/js/mock-autofill.js';
 import { trackArrivals, isFresh } from '../../shared/js/motion.js'; // new rows arrive gold (motion-guide.html)
