@@ -7,7 +7,7 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
-import { uploadData } from 'aws-amplify/storage';
+import { uploadData, getUrl } from 'aws-amplify/storage';
 import { setNameFields, readNameFields, nameFieldsFilled, isNameEmpty, formatFullName } from '../../shared/js/name-utils.js';
 import { notifyCertificateUpdate } from '../../shared/js/email-notify.js';
 import { createMarriageForm, MARRIAGE_STEPS } from '../../shared/js/marriage-request-form.js';
@@ -707,7 +707,73 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------
      13. VIEW DETAILS MODAL — read-only summary
   ------------------------------------------ */
-  function openGenerateFor(id, certType) {
+  /* A request whose linked archive entry already has a scanned file needs no new
+     certificate: show that filed copy, ready to print. */
+  const previewKicker = document.getElementById('cert-preview-kicker');
+  const previewPrintBtn = document.getElementById('cert-preview-print');
+  const previewBackBtn = document.getElementById('cert-preview-back');
+  let filedCopyUrl = '';
+
+  async function openFiledCopy(r, rec) {
+    let url;
+    try { url = (await getUrl({ path: rec.fileURL, options: { expiresIn: 3600 } })).url.toString(); }
+    catch (err) { console.error('Filed copy not available:', err); return false; }
+    filedCopyUrl = url;
+    previewFromModal = null;
+    previewKicker.textContent = 'Filed copy · from the archives';
+    document.getElementById('cert-preview-title').textContent = `${r.certificateType} — ${rec.fullName || r.requesterName}`;
+    document.getElementById('cert-preview-newtab').href = url;
+    previewBackBtn.classList.add('hidden');
+    previewPrintBtn.classList.remove('hidden');
+    previewLoading.classList.remove('hidden');
+    previewFrame.classList.add('is-loading');
+    previewFrame.src = url;
+    previewScreen.classList.remove('hidden');
+    document.body.classList.add('cert-preview-open');
+    return true;
+  }
+
+  previewPrintBtn.addEventListener('click', async () => {
+    try {
+      // A same-origin copy of the file, so the browser can print just it.
+      const blob = await (await fetch(filedCopyUrl)).blob();
+      const src = URL.createObjectURL(blob);
+      const printer = document.createElement('iframe');
+      printer.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+      const done = () => { printer.remove(); URL.revokeObjectURL(src); };
+      if (blob.type.startsWith('image/')) {
+        // The scan is a large image: fit it to one page instead of printing it at full size.
+        printer.srcdoc = `<!doctype html><meta charset="utf-8"><title>${(document.getElementById('cert-preview-title').textContent || 'Certificate').replace(/[<&]/g, ' ')}</title>
+          <style>@page{size:auto;margin:10mm}html,body{margin:0;background:#fff}
+          img{display:block;width:100%;max-height:255mm;object-fit:contain;margin:0 auto}</style>
+          <img src="${src}" alt="">`;
+        printer.addEventListener('load', () => {
+          const img = printer.contentDocument.querySelector('img');
+          const go = () => { printer.contentWindow.focus(); printer.contentWindow.print(); };
+          if (img.complete) go(); else img.addEventListener('load', go, { once: true });
+        });
+      } else {
+        printer.src = src; // a PDF prints as it is
+        printer.addEventListener('load', () => { printer.contentWindow.focus(); printer.contentWindow.print(); }, { once: true });
+      }
+      document.body.appendChild(printer);
+      setTimeout(done, 120000); // long enough for the print dialog
+    } catch {
+      window.open(filedCopyUrl, '_blank', 'noopener'); // print from the opened tab
+    }
+  });
+
+  function resetPreviewChrome() {
+    previewKicker.textContent = 'Certificate Preview';
+    previewBackBtn.classList.remove('hidden');
+    previewPrintBtn.classList.add('hidden');
+  }
+
+  async function openGenerateFor(id, certType) {
+    const found = requests.find(x => x.id === id);
+    const rec = found && await linkedRecordFor(found);
+    if (rec?.fileURL && await openFiledCopy(found, rec)) return;
+    resetPreviewChrome();
     if (certType === 'Confirmation Certificate') openGenerateConfirmationCertModal(id);
     else if (certType === 'First Communion Certificate') openGenerateFirstCommunionCertModal(id);
     else if (certType === 'Marriage Certificate') openGenerateMarriageCertModal(id);
@@ -933,6 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
     previewScreen.classList.add('hidden');
     document.body.classList.remove('cert-preview-open');
     previewFrame.src = 'about:blank';
+    resetPreviewChrome();
     if (backToEdit && previewFromModal) openModal(previewFromModal);
     previewFromModal = null;
   }
