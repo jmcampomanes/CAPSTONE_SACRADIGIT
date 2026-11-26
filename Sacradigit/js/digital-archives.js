@@ -381,37 +381,51 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><p class="so-detail-label">Date Added</p><p class="so-detail-value">${formatDate(r.createdAt)}</p></div>
       </div>`;
 
+    // A record with a scanned file shows the document itself; the details grid
+    // is only the fallback for records without a file (or one that won't load).
     // fileURL is a bare S3 path (bucket is private), not a directly-usable
-    // link — show a loading state while it's resolved to a signed URL, same
-    // as user-my-requests.js's openOfficialCertificate does for the same field.
-    viewRecordBody.innerHTML = detailGridHtml +
-      (r.fileURL ? `<p class="text-xs text-gray-400 mt-3">Loading scanned file…</p>` : '');
+    // link, so it's resolved to a signed URL first, as user-my-requests.js's
+    // openOfficialCertificate does for the same field.
+    const card = viewRecordModal.querySelector('.modal-card');
+    const title = viewRecordModal.querySelector('.modal-title');
+    const showDetails = (note = '') => {
+      card.style.maxWidth = '';
+      title.textContent = 'Record Details';
+      viewRecordBody.innerHTML = detailGridHtml + note;
+    };
 
+    if (!r.fileURL) {
+      showDetails();
+      openModal(viewRecordModal);
+      return;
+    }
+
+    card.style.maxWidth = 'min(52rem, 95vw)';
+    title.textContent = `${recordTypeLabel(r.type)} — ${r.fullName || 'Record'}`;
+    viewRecordBody.innerHTML = `<p class="text-sm text-gray-400 text-center py-10">Loading scanned file…</p>`;
     openModal(viewRecordModal);
 
-    if (r.fileURL) {
-      try {
-        const url = await resolveFileUrl(r.fileURL);
-        // Guard against the modal having moved on to a different record
-        // (or closed) while the signed URL was resolving.
-        if (viewRecordModal.classList.contains('hidden')) return;
-        const fileLinkHtml = `
-          <div class="mt-3"><a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="certificate-chip">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4"/></svg>
-            View scanned file
-          </a></div>`;
-        viewRecordBody.innerHTML = detailGridHtml + fileLinkHtml;
-
-        // Records made with Scan Document also have the read text stored
-        // beside the file; older uploads don't, so a miss is silent.
-        const transcript = await loadTranscript(r.fileURL);
-        if (transcript && !viewRecordModal.classList.contains('hidden')) {
-          viewRecordBody.innerHTML = detailGridHtml + fileLinkHtml + transcriptHtml(transcript);
-        }
-      } catch (err) {
-        console.error('Failed to resolve scanned file URL:', err);
-        viewRecordBody.innerHTML = detailGridHtml + `<p class="text-xs text-red-500 mt-3">Couldn't load the scanned file.</p>`;
-      }
+    try {
+      const url = await resolveFileUrl(r.fileURL);
+      // Guard against the modal having moved on to a different record
+      // (or closed) while the signed URL was resolving.
+      if (viewRecordModal.classList.contains('hidden') || viewingId !== id) return;
+      const safe = escapeHtml(url);
+      const isPdf = /\.pdf$/i.test(r.fileURL);
+      viewRecordBody.innerHTML = `
+        ${isPdf
+          ? `<iframe src="${safe}" title="Scanned record" style="width:100%;height:70vh;border:0;border-radius:8px;"></iframe>`
+          : `<img id="view-record-image" src="${safe}" alt="Scanned ${escapeHtml(recordTypeLabel(r.type))} of ${escapeHtml(r.fullName)}" style="display:block;width:100%;max-height:75vh;object-fit:contain;border-radius:8px;background:#f5f5f4;" />`}
+        <div class="mt-3"><a href="${safe}" target="_blank" rel="noopener" class="certificate-chip">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4"/></svg>
+          Open in a new tab
+        </a></div>`;
+      document.getElementById('view-record-image')?.addEventListener('error', () => {
+        showDetails(`<p class="text-xs text-red-500 mt-3">Couldn't display the scanned file.</p>`);
+      });
+    } catch (err) {
+      console.error('Failed to resolve scanned file URL:', err);
+      showDetails(`<p class="text-xs text-red-500 mt-3">Couldn't load the scanned file.</p>`);
     }
   }
 

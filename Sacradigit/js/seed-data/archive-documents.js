@@ -31,4 +31,8 @@ export const ARCHIVE_DOCUMENTS = [
     fullName: 'Miguel Angelo Cruz Villaruel', dateOfEvent: '2008-03-05', birthdate: '2008-03-05', officiant: 'Dr. Rosario L. Mendoza' },
   { file: 'birth_villaruel-sofia-isabel-cruz_2011-09-18.jpg', type: 'birth',
     fullName: 'Sofia Isabel Cruz Villaruel', dateOfEvent: '2011-09-18', birthdate: '2011-09-18', officiant: 'Dr. Rosario L. Mendoza' },
+
+  // A second family, so the demo has a record outside the Villaruels.
+  { file: 'confirmation_salvador-andrea-nicole-mercado_2018-12-08.jpg', type: 'confirmation',
+    fullName: 'Andrea Nicole Mercado Salvador', dateOfEvent: '2018-12-08', birthdate: '2007-04-03', officiant: 'Most Rev. Cornelio V. Yap, D.D.' },
 ];

@@ -62,10 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
   /* Archive documents: upload each renamed scan, then add its Digital Archives record. */
   document.getElementById('btn-seed-archive')?.addEventListener('click', async () => {
     let ids = []; try { ids = JSON.parse(localStorage.getItem(ARCHIVE_KEY)) || []; } catch { /* none yet */ }
-    if (ids.length && !confirm(`${ids.length} archive documents were already added from this browser. Add them again (duplicates)?`)) return;
     busy(true);
     logEl.innerHTML = '';
-    const r = await inBatches(ARCHIVE_DOCUMENTS, 'Archive documents', async (doc) => {
+    // Skip documents already in Digital Archives (same type, name and date), so running
+    // this again only adds what's new.
+    const existing = new Set();
+    try {
+      let nextToken = null;
+      do {
+        const res = await client.models.ParishRecord.list({ limit: 1000, nextToken });
+        res.data.forEach(x => existing.add(`${x.type}|${x.fullName}|${x.dateOfEvent}`));
+        nextToken = res.nextToken;
+      } while (nextToken);
+    } catch (err) { log(`Couldn't check existing records (${err.message || 'failed'}); adding everything.`, true); }
+    const todo = ARCHIVE_DOCUMENTS.filter(d => !existing.has(`${d.type}|${d.fullName}|${d.dateOfEvent}`));
+    if (!todo.length) { statusEl.textContent = 'Every archive document is already in Digital Archives.'; busy(false); return; }
+    const r = await inBatches(todo, 'Archive documents', async (doc) => {
       const url = ARCHIVE_IMAGES[`./seed-data/archive/${doc.file}`];
       if (!url) throw new Error(`${doc.file} is missing`);
       const blob = await (await fetch(url)).blob();
