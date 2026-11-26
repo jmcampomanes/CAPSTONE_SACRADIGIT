@@ -19,12 +19,14 @@ import { client } from '../../shared/js/amplify-init.js';
 import { uploadData } from 'aws-amplify/storage';
 import seed from './seed-data/csv-certificate-requests.json';
 import { ARCHIVE_DOCUMENTS } from './seed-data/archive-documents.js';
+import { DEMO_REQUESTS } from './seed-data/demo-record-requests.js';
 
 // The renamed scans, as URLs. They stay out of the production build (this page isn't built).
 const ARCHIVE_IMAGES = import.meta.glob('./seed-data/archive/*.jpg', { query: '?url', import: 'default', eager: true });
 
 const STORAGE_KEY = 'sacradigit_mock_csv_requests';
 const ARCHIVE_KEY = 'sacradigit_mock_archive_documents';
+const DEMO_KEY = 'sacradigit_mock_demo_requests'; // ids of the presentation requests (this browser only)
 const BATCH = 8; // rows written at once
 
 const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { records: [], requests: [] }; } catch { return { records: [], requests: [] }; } };
@@ -44,7 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
     logEl.appendChild(line);
     logEl.scrollTop = logEl.scrollHeight;
   };
-  const busy = (on) => { seedBtn.disabled = clearBtn.disabled = on; const a = document.getElementById('btn-seed-archive'); if (a) a.disabled = on; };
+  const busy = (on) => {
+    seedBtn.disabled = clearBtn.disabled = on;
+    ['btn-seed-archive', 'btn-seed-demo', 'btn-clear-demo'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = on; });
+  };
   const check = (res) => { if (res.errors) throw new Error(res.errors.map(e => e.message).join('; ')); return res.data; };
 
   /** Runs fn over items, BATCH at a time, and reports progress. */
@@ -92,6 +97,64 @@ document.addEventListener('DOMContentLoaded', () => {
       log(`✓ ${doc.type}: ${doc.fullName}`);
     });
     statusEl.textContent = `Done — ${r.done} archive documents added${r.failed ? `, ${r.failed} failed` : ''}.`;
+    busy(false);
+  });
+
+  /* Presentation requests: ten pending requests, two per certificate type, each with
+     every answer the request form asks for (see seed-data/demo-record-requests.js). */
+  const loadDemoIds = () => { try { return JSON.parse(localStorage.getItem(DEMO_KEY)) || []; } catch { return []; } };
+  document.getElementById('btn-seed-demo')?.addEventListener('click', async () => {
+    const ids = loadDemoIds();
+    if (ids.length && !confirm(`${ids.length} demo requests were already added from this browser. Add them again (duplicates)?`)) return;
+    busy(true);
+    logEl.innerHTML = '';
+
+    // The verified request points at Andrea's archive record, if it has been added.
+    let archive = [];
+    try {
+      let nextToken = null;
+      do {
+        const res = await client.models.ParishRecord.list({ limit: 1000, nextToken });
+        archive.push(...res.data);
+        nextToken = res.nextToken;
+      } while (nextToken);
+    } catch (err) { log(`Couldn't read Digital Archives (${err.message || 'failed'}); verified requests are added without the link.`, true); }
+
+    const r = await inBatches(DEMO_REQUESTS, 'Demo requests', async (req) => {
+      const details = { ...req.details };
+      let linkedRecordId;
+      if (req.verifiedRecord) {
+        const v = req.verifiedRecord;
+        const rec = archive.find(x => x.type === v.type && x.fullName === v.fullName && x.dateOfEvent === v.dateOfEvent);
+        if (rec) linkedRecordId = rec.id;
+        else log(`${v.fullName}: not in Digital Archives yet — click Add Archive Documents first to link it. Added without the link.`, true);
+        // The saved copy of the record, as the real "Verify Your Record" flow keeps it.
+        details['Record Name'] = v.fullName; details['Record Event Date'] = v.dateOfEvent; details['Record Officiant'] = v.officiant;
+      }
+      const row = check(await client.models.CertificateRequest.create({
+        requesterName: req.requesterName,
+        certificateType: req.certificateType,
+        purpose: req.purpose,
+        details: JSON.stringify(details),
+        status: 'pending',
+        linkedRecordId,
+      }));
+      ids.push(row.id);
+      localStorage.setItem(DEMO_KEY, JSON.stringify(ids));
+      log(`✓ ${req.certificateType}: ${req.requesterName}`);
+    });
+    statusEl.textContent = `Done — ${r.done} demo requests added${r.failed ? `, ${r.failed} failed` : ''}. Open Record Requests to see them.`;
+    busy(false);
+  });
+
+  document.getElementById('btn-clear-demo')?.addEventListener('click', async () => {
+    const ids = loadDemoIds();
+    if (!ids.length) { statusEl.textContent = 'No demo requests recorded on this browser to remove.'; return; }
+    busy(true);
+    logEl.innerHTML = '';
+    const a = await inBatches(ids, 'Removing demo requests', async (id) => check(await client.models.CertificateRequest.delete({ id })));
+    localStorage.setItem(DEMO_KEY, JSON.stringify([]));
+    statusEl.textContent = `Removed ${a.done} demo requests.`;
     busy(false);
   });
 

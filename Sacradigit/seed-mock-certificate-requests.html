@@ -76,6 +76,8 @@
       <div class="flex flex-wrap items-center gap-2.5">
         <button id="btn-seed" type="button" class="btn-lavender">Seed Requests &amp; Records</button>
         <button id="btn-seed-archive" type="button" class="btn-gold">Add Archive Documents</button>
+        <button id="btn-seed-demo" type="button" class="btn-gold">Add Record Request Demo (10)</button>
+        <button id="btn-clear-demo" type="button" class="btn-secondary">Remove Demo Requests</button>
         <button id="btn-clear" type="button" class="btn-secondary">Clear Mock Data</button>
         <span id="seed-status" class="seed-status"></span>
       </div>
@@ -84,6 +86,7 @@
 
     <div class="panel p-5 text-xs text-gray-500 leading-relaxed space-y-1.5">
       <p><strong class="text-gray-700">Archive documents:</strong> uploads Andrea Salvador’s confirmation certificate and adds it to Digital Archives. Scans already there are skipped. Uploaded files stay in storage after Clear Mock Data, like any archive delete.</p>
+      <p><strong class="text-gray-700">Record request demo:</strong> adds 10 pending requests, two for each certificate type, each with every answer the request form asks for. Andrea Salvador’s confirmation is a verified request linked to her archive record (click Add Archive Documents first), so View and Generate fill it in from the record. "Remove Demo Requests" deletes only these.</p>
       <p><strong class="text-gray-700">Rebuild the data:</strong> <code>node tools/mock-community/seed-csv-requests.mjs path/to/fake-account-candidates.csv</code></p>
       <p><strong class="text-gray-700">Cleanup:</strong> "Clear Mock Data" deletes exactly the rows this tool created (tracked in this browser).</p>
       <p><strong class="text-gray-700">Note:</strong> the requests are owned by whoever runs this page. To see them under My Requests, sign in as the matching account.</p>
