@@ -31,7 +31,6 @@ import { client } from './amplify-init.js';
 import { readNameFields, formatFullName } from './name-utils.js';
 
 const PARISH = 'Our Lady of Fatima Parish';
-const MAX_SUGGESTIONS = 8;
 const DEBOUNCE_MS = 450;
 
 const stripAccents = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -61,9 +60,21 @@ async function search(first, last, middle, birthDate) {
   const m = model();
   if (!m) return [];
   const args = { firstKey: { beginsWith: key(first) } };
+  // No cap: follow nextToken until every page has been read.
+  const all = async (query) => {
+    const out = [];
+    let nextToken;
+    do {
+      const res = await query({ ...args, limit: 1000, nextToken });
+      if (res.errors?.[0]) return { errors: res.errors, data: out };
+      out.push(...(res.data || []));
+      nextToken = res.nextToken;
+    } while (nextToken);
+    return { data: out };
+  };
   const [now, maiden] = await Promise.all([
-    m.mockParishionersByLastName({ lastKey: key(last), ...args, limit: 25 }),
-    m.mockParishionersByMaidenName({ maidenKey: key(last), ...args, limit: 25 }),
+    all((a) => m.mockParishionersByLastName({ lastKey: key(last), ...a })),
+    all((a) => m.mockParishionersByMaidenName({ maidenKey: key(last), ...a })),
   ]);
   const err = now.errors?.[0] || maiden.errors?.[0];
   if (err) { console.warn('mock_data search failed:', err.message); return []; }
@@ -272,7 +283,7 @@ const STYLE = `
   .mock-af { margin-top: .35rem; font-size: .8125rem; color: #374151; }
   .mock-af-note { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; padding: .4rem .6rem; border-radius: .5rem; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
   .mock-af-note button { border: 0; background: none; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
-  .mock-af-list { margin: 0; padding: 0; list-style: none; border: 1px solid #e5e7eb; border-radius: .5rem; background: #fff; overflow: hidden; }
+  .mock-af-list { margin: 0; padding: 0; list-style: none; border: 1px solid #e5e7eb; border-radius: .5rem; background: #fff; overflow-x: hidden; overflow-y: auto; max-height: 24rem; }
   .mock-af-list-title { padding: .35rem .6rem; background: #f9fafb; color: #6b7280; font-size: .75rem; border-bottom: 1px solid #e5e7eb; }
   .mock-af-list button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: .5rem .6rem; cursor: pointer; font: inherit; color: inherit; min-height: 2.5rem; }
   .mock-af-list li + li button { border-top: 1px solid #f3f4f6; }
@@ -348,7 +359,7 @@ export function attachMockAutofill(cfg) {
 
   function showChoices(rows) {
     panel.innerHTML = `<ul class="mock-af-list"><li class="mock-af-list-title">${rows.length} people match. Pick the right one to fill the form:</li>${
-      rows.slice(0, MAX_SUGGESTIONS).map((r, i) => `<li><button type="button" data-i="${i}">${esc(nameOf(registerName(r)))}${r.maidenLastName ? ` <em>(${esc(nameOf(currentName(r)))})</em>` : ''}<small>${esc(describe(r)) || 'No other details'}</small></button></li>`).join('')
+      rows.map((r, i) => `<li><button type="button" data-i="${i}">${esc(nameOf(registerName(r)))}${r.maidenLastName ? ` <em>(${esc(nameOf(currentName(r)))})</em>` : ''}<small>${esc(describe(r)) || 'No other details'}</small></button></li>`).join('')
     }</ul>`;
     panel.querySelectorAll('button[data-i]').forEach(b => b.addEventListener('click', () => choose(rows[Number(b.dataset.i)])));
   }
