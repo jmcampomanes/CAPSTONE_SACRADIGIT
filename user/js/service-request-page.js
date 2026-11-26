@@ -384,7 +384,7 @@ export function initServiceRequestPage(serviceId) {
     }
   }
 
-  function showServiceSuccess({ slot, approval, location, bookingId, name = svc.name, payment = null }) {
+  function showServiceSuccess({ slot, approval, location, bookingId, name = svc.name, payment = null, atParish = false }) {
     document.body.classList.remove('req-screen-open');
     formView.classList.add('hidden');
     if (pinMap) { pinMap.destroy(); pinMap = null; }
@@ -392,6 +392,8 @@ export function initServiceRequestPage(serviceId) {
     document.getElementById('svc-success-title').textContent = approval ? 'Request Sent!' : 'Request Submitted!';
     document.getElementById('svc-success-desc').textContent = payment
       ? `Your ${name} request and payment were sent. The parish office will check your transaction number, and your slot is held for you. You'll be notified once it's confirmed.`
+      : atParish
+      ? `Your ${name} request was sent. Your slot is held for you. The parish office will tell you the amount, and you settle the fee at the parish office.`
       : approval
       ? `Your ${name} request is waiting for the parish office to approve it — your slot is held for you, and you'll be notified once it's approved.`
       : `Your ${name} is booked — please arrive 15 minutes early. You can reschedule or cancel it anytime under My Service Bookings.`;
@@ -430,6 +432,7 @@ export function initServiceRequestPage(serviceId) {
      office checks the transaction number before confirming. Services whose price the office
      quotes later have no wall and are paid after approval, as before. */
   let paid = null; // { amount, method, referenceNumber } once "I Have Paid" is pressed
+  let payAtParish = false; // chose to settle the fee at the parish office instead
   const pinText = () => (pinMap?.getValue() ? formatLatLng(pinMap.getValue()) : '');
 
   /** { min, surcharge } the person must pay at least, or null when this service has no payment wall. */
@@ -442,65 +445,93 @@ export function initServiceRequestPage(serviceId) {
     return { min: fee.amount + surcharge, surcharge, label: fee.label };
   }
 
+  /* The wall is a pop-up. It opens when the person presses Submit (or "Pay now") and has three
+     ways out: pay online and come back, Cancel (nothing changes), or "Pay at the parish instead"
+     (the request goes to the office without a payment, and they settle it there). The form itself
+     only shows a one-line summary of where that stands. */
   const payEl = document.createElement('div');
   payEl.id = 'svc-pay';
   payEl.className = 'hidden';
   payEl.style.cssText = 'margin-top:1.25rem';
-  (document.getElementById('req-screen-body') || svcSubmitBtn.parentElement).appendChild(payEl);
+  (slotPickerEl.closest('.req-screen-col') || document.getElementById('req-screen-body') || svcSubmitBtn.parentElement).appendChild(payEl);
+
+  const payModal = document.createElement('div');
+  payModal.id = 'svc-pay-modal';
+  payModal.className = 'modal-overlay hidden';
+  payModal.setAttribute('role', 'dialog');
+  payModal.setAttribute('aria-modal', 'true');
+  payModal.setAttribute('aria-labelledby', 'svc-pay-title');
+  payModal.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="svc-pay-title">Payment</h3>
+        <button type="button" class="modal-close" id="svc-pay-x" aria-label="Cancel payment">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-gray-600" id="svc-pay-note"></p>
+        <label class="form-label mt-3" for="svc-pay-amount">Amount to pay (₱) <span class="text-red-500">*</span></label>
+        <input type="number" id="svc-pay-amount" class="form-input" step="50" />
+        <p class="form-error-msg hidden" id="svc-pay-amount-error" role="alert"></p>
+        <div id="svc-pay-box" class="mt-3"></div>
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button type="button" class="btn-secondary" id="svc-pay-cancel">Cancel</button>
+          <button type="button" class="btn-secondary" id="svc-pay-parish">Pay at the parish instead</button>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">Paying at the parish: your request goes to the office without a payment, and you settle the fee at the office.</p>
+      </div>
+    </div>`;
+  document.body.appendChild(payModal);
 
   const hasSlot = () => (baptismType === 'public' ? !!publicDateId : !!slotPicker.getValue());
-  let payShell = '';   // which layout is drawn: 'wait' | 'pay' | 'paid'
   let payBoxKey = '';  // the amount the QR was drawn for
   let payLastMin = 0;
+  const payModalOpen = () => !payModal.classList.contains('hidden');
 
+  /** The one-line summary on the form. */
   function renderPay() {
     const req = payMin();
-    if (!req) { payEl.classList.add('hidden'); payShell = ''; return; }
+    if (!req) { payEl.classList.add('hidden'); return; }
     payEl.classList.remove('hidden');
-
     if (paid) {
       const short = paid.amount < req.min;
-      payShell = 'paid';
       payEl.innerHTML = `
         <div class="pay-box">
           <p class="pay-title">Payment noted</p>
           <p class="pay-amount">${escapeHtml(peso(paid.amount))}</p>
           <p class="pay-hint">${escapeHtml(paid.method)}, transaction no. <strong>${escapeHtml(paid.referenceNumber)}</strong></p>
-          ${short ? `<p class="form-error-msg" role="alert">The fee is now ${escapeHtml(peso(req.min))}, which is more than you paid. Please undo your changes, or ask the parish office.</p>` : ''}
-          <p class="pay-hint">Now press <strong>Submit Request</strong> below. Your payment is saved when you submit, and the parish office will check the transaction number before confirming.</p>
-          <button type="button" class="btn-secondary" id="svc-pay-edit">Change payment details</button>
+          ${short ? `<p class="form-error-msg" role="alert">The fee is now ${escapeHtml(peso(req.min))}, which is more than you paid. Please change your payment, or pay at the parish.</p>` : ''}
+          <p class="pay-hint">Now press <strong>Submit Request</strong>. Your payment is saved when you submit, and the parish office will check the transaction number before confirming.</p>
+          <button type="button" class="btn-secondary" id="svc-pay-edit">Change payment</button>
         </div>`;
-      return;
-    }
-
-    if (!hasSlot()) {
-      payShell = 'wait';
-      payEl.innerHTML = `<p class="form-label">Payment</p><p class="svc-fee-note text-sm text-gray-600">Choose a date and time above, then pay here. The fee is ${escapeHtml(req.label)}.</p>`;
-      return;
-    }
-
-    if (payShell !== 'pay') {
-      payShell = 'pay';
-      payBoxKey = '';
-      payLastMin = 0;
+    } else if (payAtParish) {
+      payEl.innerHTML = `
+        <div class="pay-box">
+          <p class="pay-title">Paying at the parish</p>
+          <p class="pay-hint">Press <strong>Submit Request</strong>. The office will tell you the amount (at least ${escapeHtml(peso(req.min))}) and you settle it at the parish office.</p>
+          <button type="button" class="btn-secondary" id="svc-pay-edit">Pay online instead</button>
+        </div>`;
+    } else {
       payEl.innerHTML = `
         <p class="form-label">Payment</p>
-        <p class="text-sm text-gray-600" id="svc-pay-note"></p>
-        <label class="form-label mt-2" for="svc-pay-amount">Amount to pay (₱) <span class="text-red-500">*</span></label>
-        <input type="number" id="svc-pay-amount" class="form-input" step="50" />
-        <p class="form-error-msg hidden" id="svc-pay-amount-error" role="alert"></p>
-        <div id="svc-pay-box" class="mt-3"></div>`;
+        <p class="text-sm text-gray-600">The fee is ${escapeHtml(req.label)}. When you press Submit Request you’ll be asked to pay online, or you can choose to settle it at the parish.</p>
+        <button type="button" class="btn-secondary mt-2" id="svc-pay-now">Pay now</button>`;
     }
-    const input = payEl.querySelector('#svc-pay-amount');
+  }
+
+  /** The pop-up's amount box and QR. */
+  function renderPayModal() {
+    const req = payMin();
+    if (!req) { closePayModal(); return; }
+    const input = payModal.querySelector('#svc-pay-amount');
     const raised = payLastMin && Number(input.value) > payLastMin; // keep what they chose above the minimum
     input.min = req.min;
     if (!input.value || !raised) input.value = req.min;
     payLastMin = req.min;
-    payEl.querySelector('#svc-pay-note').textContent = `The fee is ${req.label}${req.surcharge ? `, plus ${peso(req.surcharge)} for the distance` : ''}. You can pay more, but not less than ${peso(req.min)}. After you pay, come back here and press Submit Request.`;
+    payModal.querySelector('#svc-pay-note').textContent = `The fee is ${req.label}${req.surcharge ? `, plus ${peso(req.surcharge)} for the distance` : ''}. You can pay more, but not less than ${peso(req.min)}. After you pay, you’ll come back to the form to press Submit Request.`;
 
     const amount = Number(input.value);
-    const err = payEl.querySelector('#svc-pay-amount-error');
-    const boxEl = payEl.querySelector('#svc-pay-box');
+    const err = payModal.querySelector('#svc-pay-amount-error');
+    const boxEl = payModal.querySelector('#svc-pay-box');
     if (!(amount >= req.min)) {
       err.textContent = `The minimum is ${peso(req.min)}.`;
       err.classList.remove('hidden');
@@ -518,10 +549,12 @@ export function initServiceRequestPage(serviceId) {
       confirmLabel: 'I Have Paid',
       onConfirm: async ({ method, referenceNumber }) => {
         const now = payMin();
-        const chosen = Number(payEl.querySelector('#svc-pay-amount')?.value);
-        if (!now || !hasSlot()) throw new Error('Please choose a date and time first.');
+        const chosen = Number(payModal.querySelector('#svc-pay-amount').value);
+        if (!now) throw new Error('This payment is no longer needed.');
         if (!(chosen >= now.min)) throw new Error(`The minimum is ${peso(now.min)}.`);
         paid = { amount: chosen, method, referenceNumber };
+        payAtParish = false;
+        closePayModal();
         renderPay();
         window.showToast('Payment noted. Now press Submit Request.');
         svcSubmitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -531,13 +564,48 @@ export function initServiceRequestPage(serviceId) {
     if (ref && keepRef) ref.value = keepRef;
   }
 
+  function openPayModal() {
+    if (!payMin()) return;
+    if (!hasSlot()) { window.showToast('Please choose a date and time first.', true); return; }
+    payBoxKey = '';
+    payLastMin = 0;
+    payModal.querySelector('#svc-pay-amount').value = '';
+    payModal.classList.remove('hidden');
+    renderPayModal();
+    payModal.querySelector('#svc-pay-x').focus({ preventScroll: true });
+  }
+  function closePayModal() { payModal.classList.add('hidden'); }
+
+  payModal.addEventListener('click', (e) => { if (e.target === payModal) closePayModal(); });
+  payModal.querySelector('#svc-pay-x').addEventListener('click', closePayModal);
+  payModal.querySelector('#svc-pay-cancel').addEventListener('click', closePayModal);
+  payModal.querySelector('#svc-pay-parish').addEventListener('click', () => {
+    paid = null;
+    payAtParish = true;
+    closePayModal();
+    renderPay();
+    window.showToast('Okay. Press Submit Request, and settle the fee at the parish office.');
+    svcSubmitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  let payTyping = 0;
+  payModal.addEventListener('input', (e) => { if (e.target.id === 'svc-pay-amount') { clearTimeout(payTyping); payTyping = setTimeout(renderPayModal, 450); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && payModalOpen()) closePayModal(); });
+
+  payEl.addEventListener('click', (e) => {
+    if (e.target.closest('#svc-pay-now')) openPayModal();
+    if (e.target.closest('#svc-pay-edit')) {
+      const wasParish = payAtParish;
+      paid = null;
+      payAtParish = false;
+      renderPay();
+      if (wasParish) openPayModal();
+    }
+  });
   let paySoon = 0;
-  const payLater = (ms = 0) => { clearTimeout(paySoon); paySoon = setTimeout(renderPay, ms); };
-  payEl.addEventListener('click', (e) => { if (e.target.closest('#svc-pay-edit')) { paid = null; payShell = ''; renderPay(); } });
-  payEl.addEventListener('input', (e) => { if (e.target.id === 'svc-pay-amount') payLater(450); });
+  const payLater = () => { clearTimeout(paySoon); paySoon = setTimeout(renderPay, 0); };
   const screenBody = document.querySelector('.req-screen-body');
-  screenBody?.addEventListener('click', () => payLater());
-  screenBody?.addEventListener('change', () => payLater());
+  screenBody?.addEventListener('click', payLater);
+  screenBody?.addEventListener('change', payLater);
 
   const feeBox = document.createElement('div');
   feeBox.id = 'svc-fee';
@@ -707,13 +775,10 @@ export function initServiceRequestPage(serviceId) {
     if (badFile) { window.showToast(badFile, true); return; }
 
     const payReq = payMin();
-    if (payReq) {
-      if (!paid) missing.push(['payment: pay, then press "I Have Paid"', payEl]);
-      else if (paid.amount < payReq.min) {
-        window.showToast(`The fee is now ${peso(payReq.min)}, more than the ${peso(paid.amount)} you paid. Please undo your changes, or ask the parish office.`, true);
-        payEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-      }
+    if (payReq && paid && paid.amount < payReq.min) {
+      window.showToast(`The fee is now ${peso(payReq.min)}, more than the ${peso(paid.amount)} you paid. Please change your payment, or pay at the parish.`, true);
+      payEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
     }
 
     if (missing.length) {
@@ -726,6 +791,9 @@ export function initServiceRequestPage(serviceId) {
       if (first.matches('input, textarea, select')) first.focus({ preventScroll: true });
       return;
     }
+
+    // Everything else is filled in: now the payment wall, unless they already paid or chose the parish.
+    if (payReq && !paid && !payAtParish) { openPayModal(); return; }
 
     const details = {};
     svc.fields.forEach(f => {
@@ -745,10 +813,15 @@ export function initServiceRequestPage(serviceId) {
     });
 
     if (offeredEl) details[OFFERED_KEY] = Number(offeredEl.value);
-    if (payReq && paid) {
-      // Payment truth is the PaymentRecord saved below; this line lets the office see it on the request too.
-      details[OFFERED_KEY] = paid.amount - payReq.surcharge;
-      details['Paid With Request'] = `${peso(paid.amount)} by ${paid.method}, transaction no. ${paid.referenceNumber}`;
+    if (payReq) {
+      // The server needs the offered amount on a blessing; with no payment it is the minimum.
+      details[OFFERED_KEY] = (paid ? paid.amount : payReq.min) - payReq.surcharge;
+      if (paid) {
+        // Payment truth is the PaymentRecord saved below; this line lets the office see it on the request too.
+        details['Paid With Request'] = `${peso(paid.amount)} by ${paid.method}, transaction no. ${paid.referenceNumber}`;
+      } else {
+        details['Payment'] = 'Will pay at the parish office';
+      }
     }
     if (isWedding) {
       const { docs } = weddingCheck();
@@ -853,7 +926,7 @@ export function initServiceRequestPage(serviceId) {
         }).catch(err => console.warn('Could not save details to the profile:', err));
       }
 
-      showServiceSuccess({ slot, approval, location, bookingId: result.data?.id, name: isBaptism ? serviceLabel(result.data) : svc.name, payment: payReq && paid ? { ...paid, saved: paymentSaved } : null });
+      showServiceSuccess({ slot, approval, location, bookingId: result.data?.id, name: isBaptism ? serviceLabel(result.data) : svc.name, payment: payReq && paid ? { ...paid, saved: paymentSaved } : null, atParish: !!(payReq && !paid) });
     } catch (err) {
       console.error('Failed to submit request:', err);
       window.showToast(err.message || "Couldn't submit the request.", true);
