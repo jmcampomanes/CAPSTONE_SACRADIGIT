@@ -723,5 +723,6 @@
 {"familyName":"Reynoso","root":{"id":"P07810","name":"Joey Concepcion Reynoso (1991)","families":[{"unionId":"U03203","kind":"live-in","spouse":{"id":"P16513","name":"Joanna Ignacio Madrid (1998)"},"children":[{"id":"P16798","name":"Lorenzo Madrid Reynoso (2026)"}]}]}},
 {"familyName":"Salonga","root":{"id":"P07287","name":"Philip Mangubat Salonga (1991)","families":[{"unionId":"U03206","kind":"church","spouse":{"id":"P08334","name":"Claudine De Leon Salonga (1994)"},"children":[]}]}},
 {"familyName":"Manalastas","root":{"id":"P10094","name":"Edison Cruz Manalastas (2002)","families":[{"unionId":"U03220","kind":"church","spouse":{"id":"P16540","name":"Emma Arellano Manalastas (2007)"},"children":[]}]}},
-{"familyName":"Reyes","root":{"id":"P08380","name":"Martin Nolasco Reyes (1993)","families":[{"unionId":"U03228","kind":"church","spouse":{"id":"P16549","name":"Sarah Bautista Reyes (1996)"},"children":[]}]}}
+{"familyName":"Reyes","root":{"id":"P08380","name":"Martin Nolasco Reyes (1993)","families":[{"unionId":"U03228","kind":"church","spouse":{"id":"P16549","name":"Sarah Bautista Reyes (1996)"},"children":[]}]}},
+{"familyName":"Villaruel","root":{"id":"P99001","name":"Ricardo Domingo Villaruel (1978)","families":[{"unionId":"U99001","kind":"church","spouse":{"id":"P99002","name":"Maria Elena Cruz Villaruel (1981)"},"children":[{"id":"P99003","name":"Miguel Angelo Cruz Villaruel (2008)","families":[]},{"id":"P99004","name":"Sofia Isabel Cruz Villaruel (2011)","families":[]}]}]}}
 ]

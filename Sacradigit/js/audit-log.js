@@ -84,6 +84,12 @@ function dataTypeOf(log) {
   return hit ? DATA_TYPES[hit[1]] : '';
 }
 
+/** What the record is called, without the "Certificate Request — " prefix or the "(status: approved)" tail (the change column says that). */
+const recordText = (log) => String(log.fileName || '').replace(/^[^—]*—\s*/, '').replace(/\s*\((?:status: [^)]*|published|draft)\)\s*$/, '');
+
+/** "Maria Cruz · Secretary", or just the name when the role would repeat it ("Head Admin · Head Admin"). */
+const whoLabel = (actor) => (actor.role && actor.role !== actor.name ? `${actor.name} · ${actor.role}` : actor.name);
+
 function actorOf(log) {
   const [name, role] = String(log.userName || '').split(' · ');
   return { name: name || 'Unknown', role: log.actorRole || role || '' };
@@ -134,9 +140,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ? slice.map((e) => `
         <tr>
           <td class="text-gray-500" style="white-space:nowrap">${esc(new Date(e.log.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }))}</td>
-          <td><span class="font-medium text-gray-900">${esc(e.actor.name)}</span><br /><span class="text-xs text-gray-500">${esc(e.actor.role)}</span></td>
+          <td><span class="font-medium text-gray-900">${esc(e.actor.name)}</span>${e.actor.role && e.actor.role !== e.actor.name ? `<br /><span class="text-xs text-gray-500">${esc(e.actor.role)}</span>` : ''}</td>
           <td><span class="au-tag" data-a="${esc(e.log.action)}">${esc(e.log.action === 'Create' ? 'Added' : e.log.action === 'Edit' ? 'Edited' : e.log.action === 'Delete' ? 'Deleted' : e.log.action)}</span></td>
-          <td class="wrap"><span class="text-xs text-gray-500">${esc(e.dataType)}</span><br />${esc((e.log.fileName || '').replace(/^[^—]*—\s*/, ''))}</td>
+          <td class="wrap"><span class="text-xs text-gray-500">${esc(e.dataType)}</span><br />${esc(recordText(e.log))}</td>
           <td class="wrap">${changesCell(e)}</td>
         </tr>`).join('')
       : `<tr><td colspan="5" class="empty-state">${entries.length ? 'Nothing matches these filters.' : 'No changes to parishioner data have been recorded yet.'}</td></tr>`;
@@ -190,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const header = ['When', 'Account', 'Role', 'Action', 'Data type', 'Record', 'Field', 'Old value', 'New value', 'Record ID'];
     const lines = [header];
     for (const e of rows) {
-      const base = [e.log.createdAt, e.actor.name, e.actor.role, e.log.action, e.dataType, (e.log.fileName || '').replace(/^[^—]*—\s*/, '')];
+      const base = [e.log.createdAt, e.actor.name, e.actor.role, e.log.action, e.dataType, recordText(e.log)];
       if (!e.changes.length) lines.push([...base, '', '', '', e.log.targetId || '']);
       else for (const c of e.changes) lines.push([...base, c.field, c.from, c.to, e.log.targetId || '']);
     }
@@ -214,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
       entries = items
         .map((log) => ({ log, dataType: dataTypeOf(log), actor: actorOf(log) }))
         .filter((e) => e.dataType)
-        .map((e) => ({ ...e, who: `${e.actor.name}${e.actor.role ? ` · ${e.actor.role}` : ''}`, changes: changesOf(e.log) }))
+        .map((e) => ({ ...e, who: whoLabel(e.actor), changes: changesOf(e.log) }))
         .sort((a, b) => new Date(b.log.createdAt) - new Date(a.log.createdAt));
       renderAccounts();
       render();
