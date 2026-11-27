@@ -72,8 +72,27 @@ async function save(client, subjectKey, c) {
   if (res.errors?.length) throw new Error(res.errors.map(e => e.message).join('; '));
 }
 
+const markerKey = (subjectKey, purpose) => `sacradigit_consented:${subjectKey}:${purpose}:${CONSENT_VERSION}`;
+
+/**
+ * Has this person already agreed to the current text for this purpose?
+ * Used to keep the consent box ticked on later visits. Checks this browser's
+ * marker first, then the saved ConsentRecord rows.
+ */
+export async function hasConsent(client, subjectKey, purpose) {
+  if (!subjectKey) return false;
+  try { if (localStorage.getItem(markerKey(subjectKey, purpose))) return true; } catch { /* private mode */ }
+  try {
+    if (!client.models.ConsentRecord) return false;
+    const { data } = await client.models.ConsentRecord.list({ filter: { subjectKey: { eq: subjectKey }, purpose: { eq: purpose }, version: { eq: CONSENT_VERSION } }, limit: 1 });
+    if (data?.length) { try { localStorage.setItem(markerKey(subjectKey, purpose), '1'); } catch { /* private mode */ } return true; }
+  } catch (err) { console.warn('Could not look up consent:', err); }
+  return false;
+}
+
 /** Saves a consent now, or queues it when the model isn't deployed. */
 export async function recordConsent(client, subjectKey, purpose) {
+  try { if (subjectKey) localStorage.setItem(markerKey(subjectKey, purpose), '1'); } catch { /* private mode */ }
   const c = { purpose, version: CONSENT_VERSION, acceptedAt: new Date().toISOString() };
   if (!client.models.ConsentRecord || !subjectKey) { writePending([...readPending(), c]); return; }
   try { await save(client, subjectKey, c); } catch (err) {

@@ -34,7 +34,7 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
-import { consentBoxHtml, recordConsent } from '../../shared/js/consent.js';
+import { consentBoxHtml, recordConsent, hasConsent } from '../../shared/js/consent.js';
 import { profileDetailsReady } from '../../shared/js/profile-details.js';
 import { currentUserName, currentUser } from '../../shared/js/auth.js';
 import { initPasswordChange } from '../../shared/js/password-change.js';
@@ -231,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const personalOn = profileDetailsReady();
   document.getElementById('pf-personal').classList.toggle('hidden', !personalOn);
   if (personalOn) document.getElementById('pf-consent-mount').innerHTML = consentBoxHtml('pf-consent', 'I agree that the parish may keep these personal details.');
+  if (personalOn) hasConsent(client, me.sub, 'profile').then((yes) => { if (yes) document.getElementById('pf-consent').checked = true; });
   const showPwdType = () => document.getElementById('pf-pwd-type-wrap').classList.toggle('hidden', pwdSelect.value !== 'yes');
   pwdSelect.addEventListener('change', showPwdType);
   function fillPersonal(pref) {
