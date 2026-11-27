@@ -231,9 +231,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const personalOn = profileDetailsReady();
   document.getElementById('pf-personal').classList.toggle('hidden', !personalOn);
   if (personalOn) document.getElementById('pf-consent-mount').innerHTML = consentBoxHtml('pf-consent', 'I agree that the parish may keep these personal details.');
+  let lockConsent = () => {};
   if (personalOn) {
     const consentBox = document.getElementById('pf-consent');
-    hasConsent(client, me.sub, 'profile').then((yes) => { if (yes) consentBox.checked = true; });
+    // Once they've agreed, the box stays ticked and can't be clicked again.
+    lockConsent = () => { consentBox.checked = true; consentBox.disabled = true; consentBox.title = 'You already agreed.'; };
+    hasConsent(client, me.sub, 'profile').then((yes) => { if (yes) lockConsent(); });
     consentBox.addEventListener('change', () => rememberConsent(me.sub, 'profile', consentBox.checked)); // stays ticked next visit
   }
   const showPwdType = () => document.getElementById('pf-pwd-type-wrap').classList.toggle('hidden', pwdSelect.value !== 'yes');
@@ -293,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
         about: pfBio.value.trim(),
         ...details,
       });
-      if (sharing || (personalOn && document.getElementById('pf-consent').checked)) await recordConsent(client, me.sub, 'profile');
+      if (sharing || (personalOn && document.getElementById('pf-consent').checked)) { await recordConsent(client, me.sub, 'profile'); lockConsent(); }
 
       defaults.phone = pfPhone.value;
       defaults.address = pfAddress.value;
