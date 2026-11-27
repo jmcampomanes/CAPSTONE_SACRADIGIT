@@ -15,6 +15,7 @@ import { showToast, confirmDialog } from './admin-ui.js';
 document.addEventListener('DOMContentLoaded', () => {
 
   let records = []; // kept in sync via observeQuery, each has .id
+  let loaded = false; // false until the first data arrives
   let linkedParents = new Map(); // record id -> parents named on its released certificate
 
   // Records plus their parents, for the duplicate check to tell namesakes apart.
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput    = document.getElementById('search-input');
   const typeFilter      = document.getElementById('type-filter');
   const dateFilter      = document.getElementById('date-filter');
+  const dateBasis       = document.getElementById('date-basis');
   const selectAll       = document.getElementById('select-all');
   const bulkBar         = document.getElementById('bulk-bar');
   const bulkCount       = document.getElementById('bulk-count');
@@ -84,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nextToken = res.nextToken;
       } while (nextToken);
       linkedParents = parentsByRecord(rows);
+      dupesCache = null; // parents change what counts as a duplicate
       renderRecords();
     } catch (err) {
       console.error("Couldn't load parents for the duplicate check:", err);
@@ -95,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
   client.models.ParishRecord.observeQuery().subscribe({
     next: ({ items }) => {
       records = items;
+      loaded = true;
       // Drop ticks for records that no longer exist (deleted here or elsewhere)
       const ids = new Set(items.map(r => r.id));
       selected.forEach(id => { if (!ids.has(id)) selected.delete(id); });
@@ -103,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     error: (err) => {
       console.error('Failed to load records:', err);
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-red-500 text-sm py-8">Couldn't load records.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-red-500 text-sm py-8">Couldn't load records.</td></tr>`;
     },
   });
 
@@ -137,12 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
      count on screen always matches the card you clicked); Digitized /
      Pending jump straight to those rows.
   ------------------------------------------ */
-  let statusQuickFilter = ''; // '', 'digitized', or 'pending'
+  let statusQuickFilter = ''; // '', 'digitized', 'pending', or 'month' (added this calendar month)
 
   const statCardsByStatus = [
     { card: document.getElementById('stat-total').closest('.stat-card'),     status: '' },
     { card: document.getElementById('stat-digitized').closest('.stat-card'), status: 'digitized' },
     { card: document.getElementById('stat-pending').closest('.stat-card'),   status: 'pending' },
+    { card: document.getElementById('stat-month').closest('.stat-card'),     status: 'month' },
   ];
 
   statCardsByStatus.forEach(({ card, status }) => {
@@ -166,32 +171,84 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* --- Sorting (click a column heading; click again to reverse) --- */
+  let sortKey = 'createdAt';
+  let sortDir = 'desc';
+  const isDateKey = (k) => k === 'createdAt' || k === 'dateOfEvent';
+  const sortValue = (r, key) => {
+    if (isDateKey(key)) return r[key] ? new Date(r[key]).getTime() : null;
+    return (r[key] || '').toString().toLowerCase();
+  };
+  function compareRecords(a, b) {
+    const va = sortValue(a, sortKey), vb = sortValue(b, sortKey);
+    // Empty values always sink to the bottom, whichever way it's sorted
+    const ea = va === null || va === '', eb = vb === null || vb === '';
+    if (ea || eb) return ea && eb ? 0 : ea ? 1 : -1;
+    const c = va < vb ? -1 : va > vb ? 1 : 0;
+    return sortDir === 'asc' ? c : -c;
+  }
+  function updateSortHeaders() {
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      const active = btn.dataset.sort === sortKey;
+      btn.closest('th').setAttribute('aria-sort', active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none');
+      btn.dataset.dir = active ? sortDir : '';
+    });
+  }
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (sortKey === btn.dataset.sort) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = btn.dataset.sort; sortDir = isDateKey(sortKey) ? 'desc' : 'asc'; }
+      updateSortHeaders();
+      renderRecords();
+    });
+  });
+  updateSortHeaders();
+
+  /* The duplicate check is the slow part of a render, so it only reruns when the records change. */
+  let dupesCache = null;
+  let dupesFor = null;
+  function currentDupes() {
+    if (dupesFor !== records || !dupesCache) { dupesCache = duplicateIds(recordsWithParents()); dupesFor = records; }
+    return dupesCache;
+  }
+
+  // Everything a search can match, in one lowercase string.
+  const searchText = (r) => [
+    r.fullName, r.type, recordTypeLabel(r.type), r.officiant, r.addedByName,
+    r.bookNo, r.pageNo, r.lineNo, r.bookNo && r.pageNo ? `${r.bookNo}/${r.pageNo}` : '',
+  ].filter(Boolean).join(' ').toLowerCase();
+
   function renderRecords() {
-    const query   = searchInput.value.trim().toLowerCase();
+    if (!loaded) return; // the "Loading records…" row stays until the first data arrives
+
+    // Search words can come in any order: "villaruel ricardo" finds "Ricardo Domingo Villaruel".
+    const words   = searchInput.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const typeVal = typeFilter.value;
     const dateVal = dateFilter.value;
+    const byEvent = dateBasis.value === 'event';
     const now = new Date();
 
-    const dupes = duplicateIds(recordsWithParents());
+    const dupes = currentDupes();
     const filtered = records.filter(r => {
-      const matchesQuery = !query ||
-        (r.fullName || '').toLowerCase().includes(query) ||
-        (r.type || '').toLowerCase().includes(query);
+      const text = searchText(r);
+      const matchesQuery = words.every(w => text.includes(w));
 
       const matchesType = !typeVal || r.type === typeVal.toLowerCase();
 
       let matchesDate = true;
-      if (dateVal && dateVal !== 'all') {
+      if (dateVal) {
         const days = parseInt(dateVal, 10);
-        const recordDate = new Date(r.createdAt);
-        const diffDays = (now - recordDate) / (1000 * 60 * 60 * 24);
-        matchesDate = diffDays <= days;
+        const when = byEvent ? r.dateOfEvent : r.createdAt;
+        // A record with no event date can't be in a date-of-event range
+        matchesDate = !!when && (now - new Date(when)) / (1000 * 60 * 60 * 24) <= days;
       }
 
-      const matchesStatus = !statusQuickFilter ||
-        (statusQuickFilter === 'pending'
-          ? (r.status === 'processing' || r.status === 'queued')
-          : r.status === statusQuickFilter);
+      let matchesStatus = true;
+      if (statusQuickFilter === 'pending') matchesStatus = r.status === 'processing' || r.status === 'queued';
+      else if (statusQuickFilter === 'month') {
+        const d = new Date(r.createdAt);
+        matchesStatus = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      } else if (statusQuickFilter) matchesStatus = r.status === statusQuickFilter;
 
       return matchesQuery && matchesType && matchesDate && matchesStatus;
     });
@@ -200,17 +257,22 @@ document.addEventListener('DOMContentLoaded', () => {
     visibleIds = filtered.map(r => r.id);
 
     if (filtered.length === 0) {
+      const archiveEmpty = records.length === 0;
+      document.getElementById('empty-title').textContent = archiveEmpty ? 'No records yet' : 'No records match your filters';
+      document.getElementById('empty-sub').textContent = archiveEmpty
+        ? 'Scan a document, upload a file, or add a record by hand to start the archive.'
+        : 'Try a different search term or filter.';
       emptyState.classList.remove('hidden');
     } else {
       emptyState.classList.add('hidden');
-      const sorted = filtered.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      sorted.forEach(r => {
+      filtered.slice().sort(compareRecords).forEach(r => {
         const tr = document.createElement('tr');
         tr.classList.toggle('row-selected', selected.has(r.id));
         tr.innerHTML = `
           <td class="col-select head-admin-only"><input type="checkbox" class="row-check row-select" data-id="${r.id}" aria-label="Select ${escapeHtml(r.fullName)}" ${selected.has(r.id) ? 'checked' : ''} /></td>
           <td class="font-medium text-gray-900">${escapeHtml(r.fullName)}${dupes.has(r.id) ? ' <span class="dup-tag" title="Same type and name as another record — check it isn’t a duplicate">Possible duplicate</span>' : ''}</td>
           <td>${escapeHtml(recordTypeLabel(r.type))}</td>
+          <td>${formatDate(r.dateOfEvent)}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td>${escapeHtml(r.addedByName)}</td>
           <td><span class="badge ${badgeClass[r.status] || 'badge-gray'}" data-sd-status="s-${r.id}:${r.status}">${statusLabel[r.status] || r.status}</span></td>
@@ -237,9 +299,11 @@ document.addEventListener('DOMContentLoaded', () => {
     selectAll.indeterminate = shownTicked > 0 && shownTicked < visibleIds.length;
   }
 
-  searchInput.addEventListener('input', renderRecords);
+  let searchTimer;
+  searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(renderRecords, 200); });
   typeFilter.addEventListener('change', renderRecords);
   dateFilter.addEventListener('change', renderRecords);
+  dateBasis.addEventListener('change', renderRecords);
 
   tbody.addEventListener('click', (e) => {
     const btn = e.target.closest('.row-action');
@@ -328,19 +392,47 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-new-record').addEventListener('click', () => openModal(newRecordModal));
 
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', () => allModals.forEach(closeModal));
+    btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay')));
   });
 
   allModals.forEach(modal => {
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
   });
 
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const openModals = []; // stack: the last one is on top, with the element to give focus back to
+  const visibleFocusable = (modal) => [...modal.querySelectorAll(FOCUSABLE)].filter(el => el.getClientRects().length);
+
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') allModals.forEach(closeModal);
+    const top = openModals[openModals.length - 1];
+    if (!top) return;
+    if (e.key === 'Escape') { closeModal(top.modal); return; }
+    if (e.key === 'Tab') { // keep Tab inside the dialog
+      const items = visibleFocusable(top.modal);
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !top.modal.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (document.activeElement === last || !top.modal.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+    }
   });
 
-  function openModal(modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
-  function closeModal(modal) { if (modal.classList.contains('hidden')) return; modal.classList.add('hidden'); document.body.style.overflow = ''; }
+  function openModal(modal) {
+    if (openModals.some(o => o.modal === modal)) return;
+    openModals.push({ modal, opener: document.activeElement });
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    // Focus the first field, or the close button when there are none
+    const target = modal.querySelector('input:not([type="hidden"]):not([type="file"]), select, textarea') || visibleFocusable(modal)[0];
+    if (target) setTimeout(() => target.focus(), 0);
+  }
+  function closeModal(modal) {
+    if (modal.classList.contains('hidden')) return;
+    modal.classList.add('hidden');
+    const i = openModals.findIndex(o => o.modal === modal);
+    const opener = i >= 0 ? openModals.splice(i, 1)[0].opener : null;
+    if (!openModals.length) document.body.style.overflow = '';
+    if (opener && opener.focus && document.contains(opener)) opener.focus();
+  }
 
   async function loadTranscript(fileURL) {
     try {
@@ -504,12 +596,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileInput       = document.getElementById('upload-file-input');
   const uploadFilename   = document.getElementById('upload-filename');
 
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files.length > 0) {
-      uploadFilename.textContent = `Selected: ${fileInput.files[0].name}`;
+  const uploadError = document.getElementById('upload-error');
+  const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+  const ALLOWED_UPLOAD = /\.(pdf|jpe?g|png)$/i;
+
+  // Returns a message if the file can't be uploaded, otherwise ''. Drag-and-drop skips the input's accept list, so it is checked here.
+  function uploadProblem(file) {
+    if (!ALLOWED_UPLOAD.test(file.name)) return 'Only PDF, JPG or PNG files can be uploaded.';
+    if (file.size > MAX_UPLOAD_BYTES) return `That file is ${(file.size / 1048576).toFixed(1)} MB. The limit is 20 MB.`;
+    if (file.size === 0) return 'That file is empty.';
+    return '';
+  }
+
+  function showPickedFile(file) {
+    const problem = file ? uploadProblem(file) : '';
+    uploadError.textContent = problem;
+    uploadError.classList.toggle('hidden', !problem);
+    if (problem) { fileInput.value = ''; uploadFilename.classList.add('hidden'); return; }
+    if (file) {
+      uploadFilename.textContent = `Selected: ${file.name}`;
       uploadFilename.classList.remove('hidden');
     }
-  });
+  }
+
+  fileInput.addEventListener('change', () => showPickedFile(fileInput.files[0]));
 
   ['dragover', 'dragenter'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); }));
   ['dragleave', 'dragend'].forEach(evt => dropzone.addEventListener(evt, () => dropzone.classList.remove('dragover')));
@@ -518,8 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dropzone.classList.remove('dragover');
     if (e.dataTransfer.files.length > 0) {
       fileInput.files = e.dataTransfer.files;
-      uploadFilename.textContent = `Selected: ${e.dataTransfer.files[0].name}`;
-      uploadFilename.classList.remove('hidden');
+      showPickedFile(e.dataTransfer.files[0]);
     }
   });
 
@@ -528,6 +637,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = readNameFields('upload-name');
 
     if (!fileInput.files.length) { showToast('Please select a file to upload.', true); return; }
+    const problem = uploadProblem(fileInput.files[0]);
+    if (problem) { showToast(problem, true); return; }
     if (!type || !nameFieldsFilled('upload-name')) { showToast('Please fill in record type and name.', true); return; }
 
     const fullName = formatFullName(name);
@@ -538,23 +649,31 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.textContent = 'Uploading…';
 
     try {
-      const path = `cloudFiles/parishRecords/${Date.now()}_${file.name}`;
+      // Keep the extension, but not whatever else the filename holds (spaces, slashes, accents, "../")
+      const ext = (file.name.match(/\.(pdf|jpe?g|png)$/i) || [''])[0].toLowerCase();
+      const path = `cloudFiles/parishRecords/${Date.now()}_${crypto.randomUUID()}${ext}`;
       await uploadData({ path, data: file }).result;
 
       const result = await client.models.ParishRecord.create({
         fullName,
         type: type.toLowerCase(),
         addedByName: currentUserName() || 'Parish Office',
-        status: 'processing',
+        dateOfEvent: document.getElementById('upload-date').value || null,
+        officiant: document.getElementById('upload-officiant').value.trim() || null,
+        // The file is already stored and viewable; nothing else processes it, so it isn't left "Processing" forever
+        status: 'digitized',
         fileURL: path, // bare S3 path — resolved to a signed URL on demand, see resolveFileUrl()
       });
       if (result.errors) throw new Error(result.errors.map(e => e.message).join('; '));
 
       closeModal(uploadModal);
-      showToast(`"${fullName}" uploaded and queued for processing.`);
+      showToast(`"${fullName}" uploaded to the archive.`);
       fileInput.value = '';
       uploadFilename.classList.add('hidden');
       document.getElementById('upload-type').value = '';
+      document.getElementById('upload-date').value = '';
+      document.getElementById('upload-officiant').value = '';
+      uploadError.classList.add('hidden');
       setNameFields('upload-name', null);
     } catch (err) {
       console.error('Failed to save record:', err);

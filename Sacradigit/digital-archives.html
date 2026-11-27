@@ -275,7 +275,7 @@
         <div class="filter-bar">
           <div class="search-wrap">
             <svg class="w-4 h-4 search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-            <input id="search-input" type="text" placeholder="Search by name, record type, or reference no." class="search-input" />
+            <input id="search-input" type="text" placeholder="Search by name, record type, officiant, or book / page no." class="search-input" aria-label="Search records" />
           </div>
 
           <div class="relative shrink-0">
@@ -291,12 +291,19 @@
           </div>
 
           <div class="relative shrink-0">
-            <select id="date-filter" class="filter-select" aria-label="Date added">
+            <select id="date-basis" class="filter-select" aria-label="Filter dates by">
+              <option value="added">Date added</option>
+              <option value="event">Date of event</option>
+            </select>
+          </div>
+
+          <div class="relative shrink-0">
+            <select id="date-filter" class="filter-select" aria-label="Date range">
               <option value="">Any date</option>
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
-              <option value="all">All time</option>
+              <option value="365">Last year</option>
             </select>
           </div>
         </div>
@@ -323,22 +330,23 @@
               <thead>
                 <tr>
                   <th class="col-select head-admin-only"><input type="checkbox" id="select-all" class="row-check" aria-label="Select all records shown" /></th>
-                  <th>Record Name</th>
-                  <th>Type</th>
-                  <th>Date Added</th>
+                  <th aria-sort="none"><button type="button" class="sort-btn" data-sort="fullName">Record Name</button></th>
+                  <th aria-sort="none"><button type="button" class="sort-btn" data-sort="type">Type</button></th>
+                  <th aria-sort="none"><button type="button" class="sort-btn" data-sort="dateOfEvent">Date of Event</button></th>
+                  <th aria-sort="descending"><button type="button" class="sort-btn" data-sort="createdAt">Date Added</button></th>
                   <th>Added By</th>
                   <th>Status</th>
                   <th class="text-right">Action</th>
                 </tr>
               </thead>
               <tbody id="records-tbody">
-                <!-- Rows injected by digital-archives.js -->
+                <tr><td colspan="8" class="text-center text-gray-400 text-sm py-8">Loading records…</td></tr>
               </tbody>
             </table>
             <div id="empty-state" class="empty-state hidden">
               <svg class="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-              <p class="text-sm font-medium text-gray-600">No records match your filters</p>
-              <p class="text-xs text-gray-400 mt-1">Try a different search term or filter.</p>
+              <p class="text-sm font-medium text-gray-600" id="empty-title">No records match your filters</p>
+              <p class="text-xs text-gray-400 mt-1" id="empty-sub">Try a different search term or filter.</p>
             </div>
           </div>
         </div>
@@ -348,10 +356,10 @@
   </div>
 
   <!-- ========== UPLOAD MODAL ========== -->
-  <div id="upload-modal" class="modal-overlay adm-page hidden">
+  <div id="upload-modal" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Upload Scanned Record</h3>
+        <h3 class="modal-title" id="upload-modal-title">Upload Scanned Record</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -364,6 +372,7 @@
           <input type="file" id="upload-file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png" />
         </label>
         <p id="upload-filename" class="text-xs text-gray-600 mt-3 hidden"></p>
+        <p id="upload-error" class="text-xs text-red-500 mt-2 hidden" role="alert"></p>
 
         <div class="grid grid-cols-2 gap-3 mt-4">
           <div>
@@ -374,6 +383,8 @@
               <option value="Confirmation">Confirmation</option>
               <option value="Marriage">Marriage</option>
               <option value="Death">Death</option>
+              <option value="Birth">Birth</option>
+              <option value="Civil-marriage">Civil marriage</option>
             </select>
           </div>
           <div class="col-span-2 name-field-group">
@@ -385,6 +396,14 @@
               <input type="text" id="upload-name-ext" class="form-input name-ext-input" placeholder="Ext. (Jr., III)" />
             </div>
           </div>
+          <div>
+            <label class="form-label" for="upload-date">Date of Event</label>
+            <input type="date" id="upload-date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label" for="upload-officiant">Officiant / Recorded By</label>
+            <input type="text" id="upload-officiant" class="form-input" />
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -395,10 +414,10 @@
   </div>
 
   <!-- ========== NEW RECORD MODAL ========== -->
-  <div id="new-record-modal" class="modal-overlay adm-page hidden">
+  <div id="new-record-modal" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="new-record-modal-title">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">New Record — Manual Entry</h3>
+        <h3 class="modal-title" id="new-record-modal-title">New Record — Manual Entry</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -422,6 +441,8 @@
               <option value="Confirmation">Confirmation</option>
               <option value="Marriage">Marriage</option>
               <option value="Death">Death</option>
+              <option value="Birth">Birth</option>
+              <option value="Civil-marriage">Civil marriage</option>
             </select>
           </div>
           <div>
@@ -441,10 +462,10 @@
   </div>
 
   <!-- ========== VIEW RECORD MODAL ========== -->
-  <div id="view-record-modal" class="modal-overlay adm-page hidden">
+  <div id="view-record-modal" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="view-record-modal-title">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Record Details</h3>
+        <h3 class="modal-title" id="view-record-modal-title">Record Details</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -462,10 +483,10 @@
   </div>
 
   <!-- ========== EDIT RECORD MODAL (Head Admin only) ========== -->
-  <div id="edit-record-modal" class="modal-overlay adm-page hidden">
+  <div id="edit-record-modal" class="modal-overlay adm-page hidden" role="dialog" aria-modal="true" aria-labelledby="edit-record-modal-title">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">Edit Record</h3>
+        <h3 class="modal-title" id="edit-record-modal-title">Edit Record</h3>
         <button class="modal-close" data-close-modal aria-label="Close">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -591,6 +612,8 @@
                 <option value="confirmation">Confirmation</option>
                 <option value="marriage">Marriage</option>
                 <option value="death">Death</option>
+                <option value="birth">Birth</option>
+                <option value="civil-marriage">Civil marriage</option>
               </select>
             </div>
           </div>

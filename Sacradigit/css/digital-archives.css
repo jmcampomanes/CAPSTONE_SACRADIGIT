@@ -546,3 +546,29 @@
     grid-template-columns: 1fr;
   }
 }
+/* ---------- Sortable column headings ---------- */
+.sort-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sort-btn::after {
+  content: '↕';
+  font-size: 0.7em;
+  opacity: 0.35;
+}
+
+.sort-btn[data-dir="asc"]::after  { content: '↑'; opacity: 1; }
+.sort-btn[data-dir="desc"]::after { content: '↓'; opacity: 1; }
+
+.sort-btn:hover::after { opacity: 0.8; }
+.sort-btn:focus-visible { outline: 2px solid #5b5fa8; outline-offset: 2px; border-radius: 2px; }
