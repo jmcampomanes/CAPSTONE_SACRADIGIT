@@ -34,7 +34,7 @@
    ============================================ */
 
 import { client } from '../../shared/js/amplify-init.js';
-import { consentBoxHtml, recordConsent, hasConsent } from '../../shared/js/consent.js';
+import { consentBoxHtml, recordConsent, hasConsent, rememberConsent } from '../../shared/js/consent.js';
 import { profileDetailsReady } from '../../shared/js/profile-details.js';
 import { currentUserName, currentUser } from '../../shared/js/auth.js';
 import { initPasswordChange } from '../../shared/js/password-change.js';
@@ -231,7 +231,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const personalOn = profileDetailsReady();
   document.getElementById('pf-personal').classList.toggle('hidden', !personalOn);
   if (personalOn) document.getElementById('pf-consent-mount').innerHTML = consentBoxHtml('pf-consent', 'I agree that the parish may keep these personal details.');
-  if (personalOn) hasConsent(client, me.sub, 'profile').then((yes) => { if (yes) document.getElementById('pf-consent').checked = true; });
+  if (personalOn) {
+    const consentBox = document.getElementById('pf-consent');
+    hasConsent(client, me.sub, 'profile').then((yes) => { if (yes) consentBox.checked = true; });
+    consentBox.addEventListener('change', () => rememberConsent(me.sub, 'profile', consentBox.checked)); // stays ticked next visit
+  }
   const showPwdType = () => document.getElementById('pf-pwd-type-wrap').classList.toggle('hidden', pwdSelect.value !== 'yes');
   pwdSelect.addEventListener('change', showPwdType);
   function fillPersonal(pref) {
@@ -289,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         about: pfBio.value.trim(),
         ...details,
       });
-      if (sharing) await recordConsent(client, me.sub, 'profile');
+      if (sharing || (personalOn && document.getElementById('pf-consent').checked)) await recordConsent(client, me.sub, 'profile');
 
       defaults.phone = pfPhone.value;
       defaults.address = pfAddress.value;

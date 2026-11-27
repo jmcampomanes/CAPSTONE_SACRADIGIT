@@ -90,6 +90,12 @@ export async function hasConsent(client, subjectKey, purpose) {
   return false;
 }
 
+/** Remembers (or forgets) a ticked consent box in this browser, so it stays ticked on the next visit. */
+export function rememberConsent(subjectKey, purpose, on) {
+  if (!subjectKey) return;
+  try { if (on) localStorage.setItem(markerKey(subjectKey, purpose), '1'); else localStorage.removeItem(markerKey(subjectKey, purpose)); } catch { /* private mode */ }
+}
+
 /** Saves a consent now, or queues it when the model isn't deployed. */
 export async function recordConsent(client, subjectKey, purpose) {
   try { if (subjectKey) localStorage.setItem(markerKey(subjectKey, purpose), '1'); } catch { /* private mode */ }
