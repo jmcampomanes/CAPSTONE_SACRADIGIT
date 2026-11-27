@@ -43,6 +43,7 @@ import { getPreference, preferencesReady, saveProfileDetails } from '../../share
 import { markSaved } from './leave-warning.js';
 import { isMobile, mobileDigits, MOBILE_HINT } from '../../shared/js/mobile-number.js';
 import { setCardPhoto } from '../../shared/js/profile-photo.js';
+import { initTwoFactorToggle } from '../../shared/js/two-factor.js';
 import { NOTIF_TYPES, loadPrefs, savePrefs, enableDeviceAlerts } from '../../shared/js/notifications/parish-notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -325,17 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const twofaToggle = document.getElementById('twofa-toggle');
   const twofaStatus = document.getElementById('twofa-status');
 
-  twofaToggle.addEventListener('change', () => {
-    if (twofaToggle.checked) {
-      twofaStatus.textContent = 'On';
-      twofaStatus.className = 'twofa-status on';
-      showToast('Extra sign-in protection turned on.');
-    } else {
-      twofaStatus.textContent = 'Off';
-      twofaStatus.className = 'twofa-status off';
-      showToast('Extra sign-in protection turned off.');
-    }
-  });
+  initTwoFactorToggle({ toggle: twofaToggle, statusEl: twofaStatus, showToast });
 
 
   /* ------------------------------------------

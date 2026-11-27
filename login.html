@@ -177,6 +177,16 @@
           <button type="submit" class="lg-btn">Save and Continue</button>
         </form>
 
+        <!-- Extra sign-in protection: code emailed to the account's own address -->
+        <form class="lg-view hidden" data-view="twofa" novalidate>
+          <h2 class="lg-title">Check your email</h2>
+          <p class="lg-sub">For your security, we sent a 6-digit sign-in code to <strong id="tf-email-label">your email</strong>. Enter it below.</p>
+          <label class="lg-label" for="tf-code">Sign-in Code</label>
+          <input class="lg-input lg-code" id="tf-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required />
+          <button type="submit" class="lg-btn">Verify and Sign In</button>
+          <p class="lg-foot">Didn’t get it? <button type="button" class="lg-link" id="tf-resend">Send a new code</button> · <button type="button" class="lg-link" id="tf-cancel">Use a different account</button></p>
+        </form>
+
         <p class="lg-foot"><a class="lg-link" href="index.html">← Visit the parish homepage</a></p>
 
         <p class="lg-legal">By signing in you agree to the Terms and Data Privacy Statement and to use parish records only for parish business. Personal information is handled by the parish office under the Data Privacy Act of 2012.</p>

@@ -11,6 +11,7 @@
 
 import { initPasswordChange } from './password-change.js';
 import { showToast } from '../../Sacradigit/js/admin-ui.js';
+import { initTwoFactorToggle } from './two-factor.js';
 import { initStaffProfile } from './staff-profile.js';
 
 let PROFILE_KEY;
@@ -63,20 +64,6 @@ export function initPortalProfile(profileKey) {
   const twofaToggle = document.getElementById('twofa-toggle');
   const twofaStatus = document.getElementById('twofa-status');
 
-  function renderTwofa() {
-    const p = readProfile();
-    twofaToggle.checked = !!p.twoFactor;
-    twofaStatus.textContent = p.twoFactor ? 'On' : 'Off';
-    twofaStatus.className = 'twofa-status ' + (p.twoFactor ? 'on' : 'off');
-  }
-
-  twofaToggle.addEventListener('change', () => {
-    const p = readProfile();
-    writeProfile({ ...p, twoFactor: twofaToggle.checked });
-    renderTwofa();
-    showToast(twofaToggle.checked ? 'Two-factor authentication enabled.' : 'Two-factor authentication disabled.');
-  });
-
-  renderTwofa();
+  initTwoFactorToggle({ toggle: twofaToggle, statusEl: twofaStatus, showToast });
   });
 }

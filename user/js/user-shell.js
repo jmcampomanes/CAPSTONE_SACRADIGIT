@@ -175,7 +175,7 @@ const HELP_CONTENT = {
     steps: [
       'Update your Profile Information, then save to keep the changes.',
       'Use Change Password to update your login password.',
-      'Turn on Extra sign-in protection (a code sent to your phone) to keep your account safer.',
+      'Turn on Extra sign-in protection (a code sent to your email) to keep your account safer.',
       'Adjust Notification Preferences to control what you’re alerted about.',
       'Export your Recent Activity if you’d like a copy for your records.',
     ],

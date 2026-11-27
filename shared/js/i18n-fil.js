@@ -2229,7 +2229,7 @@ export const FIL = {
   "You earn badges for coming to Mass, giving and serving in the parish. Check in at Mass to count your visits — the code is on the church screen.": "Nakakakuha ka ng badge sa pagsisimba, pagbibigay at paglilingkod sa parokya. Mag-check in sa Misa para mabilang ang iyong pagdalo — nasa screen ng simbahan ang code.",
   "Your contact details, password, the notices you get, and a record of your activity in the portal.": "Ang iyong contact details, password, mga abisong natatanggap mo, at talaan ng iyong aktibidad sa portal.",
   "Make the letters bigger, switch to dark mode, or change the language to Filipino. Your choices are saved on this device.": "Palakihin ang mga letra, lumipat sa dark mode, o palitan ang wika sa Filipino. Naka-save ang iyong mga pinili sa device na ito.",
-  "Extra sign-in protection (a code sent to your phone)": "Dagdag na proteksyon sa pag-sign in (isang code na ipapadala sa iyong phone)",
+  "Extra sign-in protection (a code sent to your email)": "Dagdag na proteksyon sa pag-sign in (isang code na ipapadala sa iyong email)",
   "Ask for a code when I sign in": "Humingi ng code tuwing mag-sign in ako",
   "Parish member": "Miyembro ng parokya",
   "Member of the parish": "Miyembro ng parokya",

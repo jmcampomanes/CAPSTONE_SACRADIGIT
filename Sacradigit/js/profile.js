@@ -18,6 +18,7 @@ import { client } from '../../shared/js/amplify-init.js';
 import { currentUser, isHeadAdmin } from '../../shared/js/auth.js';
 import { initPasswordChange } from '../../shared/js/password-change.js';
 import { showToast } from './admin-ui.js';
+import { initTwoFactorToggle } from '../../shared/js/two-factor.js';
 import { initStaffProfile } from '../../shared/js/staff-profile.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -82,17 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const twofaToggle = document.getElementById('twofa-toggle');
   const twofaStatus = document.getElementById('twofa-status');
 
-  twofaToggle.addEventListener('change', () => {
-    if (twofaToggle.checked) {
-      twofaStatus.textContent = 'On';
-      twofaStatus.className = 'twofa-status on';
-      showToast('Two-factor authentication enabled.');
-    } else {
-      twofaStatus.textContent = 'Off';
-      twofaStatus.className = 'twofa-status off';
-      showToast('Two-factor authentication disabled.');
-    }
-  });
+  initTwoFactorToggle({ toggle: twofaToggle, statusEl: twofaStatus, showToast });
 
 
   /* ------------------------------------------

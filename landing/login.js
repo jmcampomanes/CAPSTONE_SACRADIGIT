@@ -8,8 +8,9 @@
 
 import {
   signIn, signUp, confirmCode, resendCode, startPasswordReset, finishPasswordReset,
-  setNewPassword, loadUser, homeFor, isSignedIn, friendlyAuthError, PORTAL_ACCESS,
+  setNewPassword, signOut, loadUser, homeFor, isSignedIn, friendlyAuthError, PORTAL_ACCESS,
 } from '../shared/js/auth.js';
+import { twoFaPassed, markTwoFaPassed, twoFactorEnabled, sendTwoFactorCode, checkTwoFactorCode } from '../shared/js/two-factor.js';
 import { initUiPrefs } from '../shared/js/ui-prefs.js';
 import { portalHandoff } from '../shared/js/motion.js';
 import { notifySignupCode, notifyPasswordReset } from '../shared/js/email-notify.js';
@@ -38,9 +39,27 @@ function destinationFor(user) {
   return homeFor(user.role);
 }
 
+/* Extra sign-in protection: when it's on, the password isn't enough — a code is emailed to the account's own address. */
+async function needsEmailCode() {
+  if (twoFaPassed()) return false;
+  let on = false;
+  try { on = await twoFactorEnabled(); } catch (err) { console.warn('Extra sign-in protection: check skipped', err); }
+  if (!on) { markTwoFaPassed(); return false; }
+  return true;
+}
+
+async function askForEmailCode() {
+  const { hint } = await sendTwoFactorCode('signin');
+  $('tf-email-label').textContent = hint;
+  $('tf-code').value = '';
+  show('twofa');
+  setAlert('We emailed you a sign-in code.', 'ok');
+}
+
 async function finishSignIn() {
   const user = await loadUser();
   if (!user) throw new Error('Signed in, but your account could not be loaded. Please try again.');
+  if (await needsEmailCode()) { await askForEmailCode(); return; }
   if (user.role !== 'parishioner') {
     // Loaded here so the sign-in page doesn't carry the data client until it's needed.
     const [{ logActivity }] = await Promise.all([import('../shared/js/activity-log.js'), import('../shared/js/amplify-init.js')]);
@@ -265,6 +284,22 @@ form('reset').addEventListener('submit', (e) => {
     setAlert('Password changed. You can sign in now.', 'ok');
   });
 });
+
+form('twofa').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const code = $('tf-code').value.trim();
+  if (code.length !== 6) { setAlert('Please enter the 6-digit code from your email.'); return; }
+  busy(e.target, async () => {
+    await checkTwoFactorCode('signin', code);
+    markTwoFaPassed();
+    await finishSignIn();
+  });
+});
+$('tf-resend').addEventListener('click', async () => {
+  try { await askForEmailCode(); setAlert('We sent you a new code.', 'ok'); } catch (err) { setAlert(err.message || friendlyAuthError(err)); }
+});
+$('tf-cancel').addEventListener('click', async () => { await signOut(); show('signin'); });
+$('tf-code').addEventListener('input', () => { $('tf-code').value = $('tf-code').value.replace(/D/g, ''); });
 
 form('newpass').addEventListener('submit', (e) => {
   e.preventDefault();

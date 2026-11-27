@@ -40,6 +40,7 @@
    ============================================ */
 
 import './amplify-init.js'; // makes sure Amplify is configured first
+import { twoFaPassed, markTwoFaPassed, clearTwoFa, twoFactorEnabled } from './two-factor.js';
 import {
   signIn as cognitoSignIn, signUp as cognitoSignUp, confirmSignUp, resendSignUpCode,
   confirmSignIn, signOut as cognitoSignOut, fetchAuthSession, fetchUserAttributes,
@@ -215,6 +216,13 @@ export async function guardPage(portal) {
   if (!user) { goToLogin(); return new Promise(() => {}); }
   const ok = allowed.includes('parishioner') || allowed.some(r => user.groups.includes(r));
   if (!ok) { window.location.replace(homeFor(user.role)); return new Promise(() => {}); }
+  // Extra sign-in protection: if it's on and this tab hasn't entered the emailed code, go back to the code step.
+  if (!twoFaPassed()) {
+    let needsCode = false;
+    try { needsCode = await twoFactorEnabled(); } catch (err) { console.warn('Extra sign-in protection: check skipped', err); }
+    if (needsCode) { goToLogin(); return new Promise(() => {}); }
+    markTwoFaPassed();
+  }
   markRole(user);
   const paint = () => paintUserCard(user);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', paint); else paint();
@@ -267,6 +275,7 @@ document.addEventListener('click', (e) => {
 /* ---------- sign in / sign up / reset ---------- */
 
 export async function signIn(email, password) {
+  clearTwoFa(); // a new sign-in always starts without the email-code pass
   const res = await cognitoSignIn({ username: email.trim().toLowerCase(), password });
   if (res.isSignedIn) markActive();
   return res.nextStep?.signInStep || (res.isSignedIn ? 'DONE' : 'UNKNOWN');
@@ -301,6 +310,7 @@ export async function isSignedIn() {
 export async function signOut() {
   clearCache();
   try { sessionStorage.removeItem('sdAuthOk'); } catch { /* storage blocked */ }
+  clearTwoFa();
   try { await cognitoSignOut(); } catch { /* already signed out */ }
   window.location.replace(pageUrl('login.html'));
 }
